@@ -1,0 +1,100 @@
+{
+  "id": "sinbad",
+  "render":
+  {
+    "resources":
+    {
+      "Sinbad":
+      [
+        "Zip:resources/models/packs/Sinbad.zip"
+      ]
+    },
+    "root":
+    {
+      "name": "sinbad",
+      "offset": "0,5,0",
+      "scale":"0.6,0.6,0.6",
+      "rotation":"1,0,0,0",
+      "children":
+      [
+        {
+          "type": "model",
+          "name": "sinbad",
+          "mesh": "Sinbad.mesh",
+          "castShadows": true,
+          "query": "dynamic"
+        }
+      ]
+    },
+    "animations":
+    {
+      "states":
+      {
+        "run": {"base": "sinbad.RunBase", "top": "sinbad.RunTop"},
+        "idle": {"base": "sinbad.IdleBase", "top": "sinbad.IdleTop"},
+        "jumpStart": {"base": "sinbad.JumpStart", "top": ""},
+        "jumpLoop": {"base": "sinbad.JumpLoop", "top": ""},
+        "jumpEnd": {"base": "sinbad.JumpEnd", "top": ""},
+        "drawWearpon": {"top": "sinbad.DrawSwords"},
+        "attack1": {"top": "sinbad.SliceHorizontal"},
+        "attack2": {"top": "sinbad.SliceVertical"},
+        "closeHands": {"hands": "sinbad.HandsClosed"},
+        "relaxHands": {"hands": "sinbad.HandsRelaxed"},
+        "die": {"top": "sinbad.JumpLoop"}
+      },
+      "defaultSpeed": 0.5,
+      "defaultState": "idle"
+    }
+  },
+  "movement":
+  {
+    "speed": 12,
+    "moveAnimation": "run",
+    "animSpeedRatio": "0.1"
+  },
+  "combat":
+  {
+    "level": 1,
+    "maxHP": 100000,
+    "hp": 60000,
+    "experience": 0,
+    "sp": 100,
+    "atk": 3000,
+    "attackDistance": 5
+  },
+  "script":
+  {
+    "setupScript": "
+      local player = entity.get('sinbad')
+      local model = player.render.root:getChild('model', 'sinbad')
+      -- this causes an error, will fix it later
+
+      local sword = {
+          type = 'model',
+          mesh = 'Sword.mesh',
+          castShadows = 'true'
+      }
+
+      model:attachToBone('Handle.R', 's1', sword)
+      model:attachToBone('Handle.L', 's2', sword)
+      player.render:playAnimation('closeHands', 1, 0, 0, false)
+      function initStatusBar()
+        statusBar.setMaximumHP(player.stats:getNumber('maxHP', 1))
+        statusBar.setCurrentHP(player.stats:getNumber('hp', 1))
+      end
+
+      function updateHp(event)
+        if event.id == 'maxHP' then
+          statusBar.setMaximumHP(player.stats:getNumber('maxHP', 1))
+        end
+
+        if event.id == 'hp' then
+          statusBar.setCurrentHP(player.stats:getNumber('hp', 1))
+        end
+      end
+
+      initStatusBar()
+      event:bind(player.stats, 'statChange', updateHp)",
+    "behavior": "healthChecker"
+  }
+}

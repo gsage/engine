@@ -1,0 +1,42 @@
+button,
+input.submit
+{
+	display: inline-block;
+  font-family: Delicious;
+
+	width: 140px;
+	height: 42px;
+
+	padding-top: 8px;
+	vertical-align: -18px;
+
+  font-weight: bold;
+
+	font-size: 15;
+	text-align: center;
+	tab-index: auto;
+
+  shadow-font-effect: shadow;
+  shadow-offset: 1px 1px;
+  shadow-color: black;
+
+	background-decorator: image;
+	background-image: buttons.png 0px 0px 240px 50px;
+}
+
+button:focus,
+input.submit:focus
+{
+}
+
+button:hover,
+input.submit:hover
+{
+	background-image-t: 50px 100px;
+}
+
+button:active,
+input.submit:active
+{
+	background-image-t: 100px 150px;
+}

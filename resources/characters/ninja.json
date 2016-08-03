@@ -1,0 +1,74 @@
+{
+  "id": "%name%",
+  "flags": ["dynamic"],
+  "render":
+  {
+    "resources":
+    {
+      "%name%":
+      [
+        "Zip:resources/models/packs/ninja.zip"
+      ]
+    },
+    "root":
+    {
+      "name": "%name%",
+      "position": "-100,0,10",
+      "scale":"0.03,0.03,0.03",
+      "rotation":"1,0,0.5,0",
+      "orientationVector": "0,0,-1",
+      "children":
+      [
+        {
+          "type": "model",
+          "query": "dynamic",
+          "name": "%name%",
+          "mesh": "ninja.mesh",
+          "castShadows": true
+        }
+      ]
+    },
+    "animations":
+    {
+      "states":
+      {
+        "walk": {"body": "%name%.Walk"},
+        "astd": {"body": ""},
+        "idle": {"body": ""},
+        "attack1": {"top": "%name%.Attack1"},
+        "attack2": {"top": "%name%.Attack2"},
+        "attack3": {"top": "%name%.Attack3"}
+      },
+      "defaultState": "idle",
+      "defaultSpeed": 1
+    }
+  },
+  "movement":
+  {
+    "speed": 10,
+    "moveAnimation": "walk",
+    "animSpeedRatio": 0.15
+  },
+  "combat":
+  {
+    "atk": 500,
+    "attackDistance": 5,
+    "aggroDistance": 20,
+    "followDistance": 30,
+    "enemy": "sinbad",
+    "hp": 12000
+  },
+  "script":
+  {
+    "setupScript": "
+      local self = entity.get('%name%')
+      local function checkHp(event)
+        if self.stats:getNumber(event.id) <= 0 then
+          core:removeEntity(self.id)
+        end
+      end
+      event:bind(self.stats, 'statChange', checkHp)
+    ",
+    "behavior": "dumbMonster"
+  }
+}

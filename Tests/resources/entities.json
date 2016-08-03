@@ -1,0 +1,26 @@
+{
+  "entities":
+  [
+    {
+      "id": "firstEntity",
+      "testComponent":
+      {
+        "booleanValue": false,
+        "intValue": 1,
+        "doubleValue": 2.56,
+        "stringValue": "Hello",
+        "nestedComponent": {
+          "stringValue": "World"
+        }
+      }
+    },
+
+    {
+      "id": "secondEntity",
+      "smallComponent":
+      {
+        "stringValue": "Hi there"
+      }
+    }
+  ]
+}

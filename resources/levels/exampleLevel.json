@@ -1,0 +1,113 @@
+{
+  "settings": {
+    "render": {
+      "resources": {
+        "exampleLevel": [
+          "Zip:resources/models/packs/exampleLevel.zip"
+        ]
+      },
+
+      "colourBackground": "0xc0c0c",
+      "colourAmbient": "0x7F7F7F",
+      "colourDiffuse": "0xc0c0c",
+      "camera": {
+        "type": "isometric",
+        "id": "main",
+        "bgColour": "0x000000",
+
+        "maxDistance": 100,
+        "minDistance": 20,
+        "maxAngle": 190,
+        "minAngle": 10,
+
+        "target": "sinbad",
+        "uAngle": 45,
+        "vAngle": 290,
+        "distance": 30,
+        "clipDistance": 0.01,
+        "cameraOffset": "0,4,0",
+        "zoomStepMultiplier": 0.015
+      }
+    }
+  },
+  "entities": [
+  {
+    "id": "castle",
+    "render": {
+      "root": {
+        "position": "0,0,0",
+        "rotation": "1,0,-1,0",
+        "scale": "1,1,1",
+        "children": [{
+          "type": "model",
+          "mesh": "castle.mesh",
+          "name": "castle",
+          "castShadows": true
+        }]
+      }
+    }
+  }, {
+      "id": "Lamp",
+      "render": {
+        "root": {
+          "position": "0,0,0",
+          "rotation": "0.570947,0.169076,0.755880,-0.272171",
+          "scale": "1.000000,1.000000,1.000000",
+          "name": "Lamp",
+          "children": [{
+            "type": "light",
+            "colourSpecular": "0xffffff",
+            "direction": "0,-0.5,0.5",
+            "name": "Lamp",
+            "castShadows": true,
+            "position": "40,10,40",
+            "colourShadow": "0xffffff",
+            "colourDiffuse": "0xffffff",
+            "lightType": "directional"
+          }]
+        }
+      }
+  }, {
+    "id": "MagicFountain",
+    "render": {
+      "root": {
+        "position": "100,0,100",
+        "children": [{
+          "type": "puSystem",
+          "name": "magicFountain",
+          "template": "MagicFountain1",
+          "startOnCreate": true
+        }]
+      }
+    }
+  }, {
+    "id": "GlobalParticleSystems",
+    "render": {
+      "root": {
+        "position": "0, 30, 0",
+        "children": [{
+          "type": "particleSystem",
+          "name": "damageHit",
+          "template": "Damage/Hit"
+        }, {
+          "type": "particleSystem",
+          "name": "damageMiss",
+          "template": "Damage/Miss"
+        }, {
+          "type": "particleSystem",
+          "name": "damageEnemy",
+          "template": "Damage/Enemy"
+        }]
+      }
+    },
+    "script": {
+      "setupScript": "
+      local e = entity.get('GlobalParticleSystems')
+      damageHit = e.render.root: getChild('particleSystem', 'damageHit')
+      damageMiss = e.render.root: getChild('particleSystem', 'damageMiss')
+      damageEnemy = e.render.root: getChild('particleSystem', 'damageEnemy')
+      "
+    }
+
+  }]
+}

@@ -1,0 +1,34 @@
+<rml>
+	<head>
+		<title>Demo</title>
+		<link type="text/template" href="console.rml" />
+		<style>
+			body
+			{
+        font-family: Lucida Console;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 12;
+        color: white;
+
+				width: 100%;
+				height: 200px;
+
+        z-index: 9999;	
+				margin: 0px 0px 0px 0px;
+			}
+			
+			div#title_bar div#icon
+			{
+				display: none;
+			}
+			
+			div#content
+			{
+				text-align: left;
+			}
+		</style>
+	</head>
+	<body template="console">
+	</body>
+</rml>

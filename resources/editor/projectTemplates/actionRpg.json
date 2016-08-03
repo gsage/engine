@@ -1,0 +1,12 @@
+{
+  "plugins": [],
+  "systems": {
+    "render": "OgreRenderSystem",
+    "movement": "RecastMovementSystem",
+    "stats": "StatsSystem",
+    "script": "LuaScriptSystem"
+  },
+  "resources": [
+    "local:resources"
+  ]
+}

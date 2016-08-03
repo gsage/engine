@@ -1,0 +1,83 @@
+<rml>
+  <head>
+    <link type="text/rcss" href="rkt.rcss"/>
+    <link type="text/rcss" href="console.rcss"/>
+    <style>
+      body
+      {
+        font-family: Lucida Console;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 12;
+        color: white;
+
+        width: 100%;
+        height: 200px;
+      }
+
+      div#overlay
+      {
+        width: 300px;
+        height: 101px;
+
+        icon-decorator: image;
+        icon-image: healthbar.png 0px 0px 300px 101px;
+        z-index: 100;
+      }
+
+      div#hp
+      {
+        display: block;
+        position: absolute;
+        left: 85px;
+        width: 214px;
+        height: 12px;
+        background-decorator: image;
+
+        z-index: 1;
+        top: 64px;
+        background-image: health.png 0px 0px 224px 14px;
+      }
+
+      div#mana
+      {
+        display: block;
+        position: absolute;
+        left: 85px;
+        width: 214px;
+        height: 12px;
+        background-decorator: image;
+
+        z-index: 0;
+        top: 87px;
+        background-image: mana.png 0px 0px 224px 14px;
+      }
+    </style>
+    <script>
+      statusBar = statusBar or {}
+
+      function statusBar.onLoad(document)
+        statusBar.hpBar = document:GetElementById('hp')
+        statusBar.initialSize = statusBar.hpBar.client_width
+        statusBar.maxHP = 1
+        statusBar.currentHP = 1
+      end
+
+      function statusBar.setMaximumHP(value)
+        statusBar.maxHP = value
+      end
+
+      function statusBar.setCurrentHP(value)
+        statusBar.currentHP = value
+        statusBar.hpBar.style.width = math.min(statusBar.initialSize, statusBar.initialSize * (statusBar.currentHP / statusBar.maxHP)) .. "px"
+      end
+    </script>
+  </head>
+  <body onload="statusBar.onLoad(document)">
+    <div style="display: inline-block">
+      <div id="mana"></div>
+      <div id="overlay"></div>
+      <div id="hp"></div>
+    </div>
+  </body>
+</rml>

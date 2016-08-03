@@ -1,0 +1,120 @@
+/*
+-----------------------------------------------------------------------------
+This file is a part of Gsage engine
+
+Copyright (c) 2014-2016 Artem Chernyshev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-----------------------------------------------------------------------------
+*/
+
+#ifndef _LuaScriptSystem_H_
+#define _LuaScriptSystem_H_
+
+#include "ComponentStorage.h"
+#include <luabind/luabind.hpp>
+
+struct lua_State;
+
+namespace Gsage
+{
+  class Component;
+  class Entity;
+  class ScriptComponent;
+
+  class LuaScriptSystem : public ComponentStorage<ScriptComponent>
+  {
+    public:
+      enum RunType
+      {
+        FROM_FILE,
+        FROM_STRING
+      };
+
+      LuaScriptSystem();
+      virtual ~LuaScriptSystem();
+
+      /**
+       * Registers the script in the script system
+       * @param component ScriptComponent that contains all stuff
+       * @param data DataNode with the script serialized data
+       */
+      bool fillComponentData(ScriptComponent* component, const DataNode& data);
+
+      /**
+       * Initialize script system with the specified lua state
+       * Should be called only once
+       *
+       * @param L lua state
+       */
+      bool setLuaState(lua_State* L);
+
+      /**
+       * Update the system
+       *
+       * @param time Elapsed time
+       */
+      void update(const double& time);
+
+      /**
+       * Override script component update logic
+       *
+       * @param component ScriptComponent
+       * @param entity Entity that owns the component
+       * @param time Elapsed time
+       */
+      void updateComponent(ScriptComponent* component, Entity* entity, const double& time);
+
+      /**
+       * Called on component remove
+       *
+       * @param component ScriptComponent to remove
+       */
+      bool removeComponent(ScriptComponent* component);
+
+      /**
+       * Run script in the LuaScriptSystem
+       *
+       * @param script Script or file with it
+       * @param runType Set run behaviour (file or string)
+       * @returns run result, false if error happened
+       */
+      bool runScript(const std::string& script, const RunType& runType);
+
+      /**
+       * Add lua function which will be called on each update of the system
+       * @param function Luabind function object, only LUA_TFUNCTION will be added as listener
+       */
+      bool addUpdateListener(const luabind::object& function);
+
+      /**
+       * Remove lua function from update listeners list
+       * @param function Luabind function object
+       */
+      bool removeUpdateListener(const luabind::object& function);
+
+    private:
+
+      lua_State* mState;
+
+      typedef std::vector<luabind::object> UpdateListeners;
+      UpdateListeners mUpdateListeners;
+  };
+}
+#endif

@@ -1,0 +1,49 @@
+{
+  "dataManager":
+  {
+    "extension": "json",
+    "charactersFolder": "resources/characters",
+    "levelsFolder": "resources/levels",
+    "savesFolder": "resources/templates"
+  },
+  "startupScript": "resources/scripts/start.lua",
+
+  "plugins":
+  [
+  ],
+
+  "render":
+  {
+    "pluginsFile": "resources/plugins.cfg",
+    "configFile": "resources/ogreConfig.cfg",
+    "globalResources": 
+    {
+      "General":
+      [
+        "FileSystem:resources/materials/",
+        "FileSystem:resources/programs/",
+        "FileSystem:resources/particles/PU",
+        "FileSystem:resources/particles/Ogre"
+      ],
+      "Rocket":
+      [
+        "FileSystem:resources/fonts/",
+        "FileSystem:resources/ui/"
+      ]
+    },
+
+    "window":
+    {
+      "name": "Game",
+      "width": 1280,
+      "height": 800,
+      "params":
+      {
+        "FSAA": 4,
+        "displayFrequency": 50,
+        "vsync": false
+      }
+    }
+  }
+
+}

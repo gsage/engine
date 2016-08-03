@@ -1,0 +1,46 @@
+system TorchFire
+{
+	technique
+	{
+		renderer				Billboard
+		{
+			billboard_type			point
+		}
+
+		material				Examples/Flare
+		default_particle_width			2
+		default_particle_height			2
+		visual_particle_quota		1000	
+		
+		emitter					Point
+		{
+			// Position adjusted for use with Particle Universe Viewer
+			position			-0.7 0.4 0
+			emission_rate			10
+			angle				3
+			direction			0 1 0
+			velocity			dyn_random
+			{
+				min		1
+				max		3
+			}
+			time_to_live		 1
+		}
+
+		affector				TextureRotator
+		{
+			// Decrease of rotation speed if a particle collides is only possible if the particle controls 
+			// its own rotation speed.
+			tex_rot_use_own_rotation	true
+			tex_rot_speed			0
+		}
+
+		affector				Colour
+		{
+			colour_aff_time_colour		0 0.5 0.2 0.2 0.1
+			colour_aff_time_colour		0.3 0.5 0.5 0 1
+			colour_aff_time_colour		0.5 0.5 0 0 1
+			colour_aff_time_colour		1 0 0 0 0
+		}
+	}
+}

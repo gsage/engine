@@ -1,0 +1,22 @@
+//-----------------------------------------------------------------------------------------------------------------------------------------------
+material ParticleUniverse/MagicFountainDrop
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+			scene_blend add
+			fog_override true
+
+			texture_unit
+			{
+				texture pu_flare_17_256x256.png
+				tex_address_mode clamp
+			}
+		}
+	}
+}
+//-----------------------------------------------------------------------------------------------------------------------------------------------
+
