@@ -52,7 +52,7 @@
 
 ##### Dependencies:
 ```bash
-  sudo apt-get install libluabind-dev libois-dev
+  sudo apt-get install libluabind-dev libois-dev libluajit-5.1-dev
 ```
 ##### Building:
 ```bash
