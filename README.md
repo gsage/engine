@@ -74,6 +74,13 @@ variable in the PATH to the Qt cmake modules
   /home/artem/Qt/5.2.0/gcc_64/lib/cmake
 ```
 
+##### Running an example
+
+```bash
+cd build/bin
+./game
+```
+
 #### Notes:
 
 - plugins.cfg has a ParticleUniverse plugin defined, you can remove it,
