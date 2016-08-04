@@ -1,3 +1,51 @@
+# Graphics system agnostic game engine
+
+The main idea of this engine is to be a core for a game, which brings together render, sound, physics engines and allows to script everything in lua.
+This engine is based [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture. 
+Each system it loads has it's own component in the object.
+
+Component and systems are configured using json files.
+During the game loop, engine iterates all installed systems and calls update for each.
+Systems, which have components list, iterate through it and update each component depending on it's settings.
+
+Each entity defined in the engine is combined from 1 to N components, for example:
+
+```
+{
+  "id": "%name%",
+  "flags": ["dynamic"],
+  "render":
+  {
+    "root":
+    {
+      "name": "%name%",
+      "position": "-100,0,10",
+      "scale":"0.07,0.07,0.07",
+      "rotation":"1,0,0.5,0",
+      "orientationVector": "0,0,-1",
+      "children":
+      [
+        {
+          "type": "model",
+          "query": "dynamic",
+          "name": "%name%",
+          "mesh": "model.mesh",
+          "castShadows": true
+        }
+      ]
+    }
+  },
+  "movement":
+  {
+    "speed": 4,
+    "moveAnimation": "walk",
+    "animSpeedRatio": 0.3
+  },
+}
+```
+
+It means that entity has movement component, which is managed by installed movement system and also has render component which means that it is displayed on the scene.
+
 
 # Linux build instructions
 
@@ -90,3 +138,15 @@ cd build/bin
 - write Windows step by step instructions.
 - describe how to build and install ParticleUniverse plugin (it doesn't
   have install step, so maybe I'll fork it and add this functional).
+
+# Contributing
+
+1. Fork this repo
+2. Create feature branch and push it to your fork
+3. Create PR basing on your branch
+
+Note that I want you to have only one commit in your PR. So squash it if you have several commits there.
+
+# LICENSE
+
+This project is licensed under MIT
