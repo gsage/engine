@@ -1,15 +1,9 @@
 # Graphics system agnostic game engine
 
 The main idea of this engine is to be a core for a game, which brings together render, sound, physics engines and allows to script everything in lua.
-This engine is based [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture. 
-Each system it loads has it's own component in the object.
-
-Component and systems are configured using json files.
-During the game loop, engine iterates all installed systems and calls update for each.
-Systems, which have components list, iterate through it and update each component depending on it's settings.
+This engine is based on [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture. 
 
 Each entity defined in the engine is combined from 1 to N components, for example:
-
 ```
 {
   "id": "%name%",
@@ -43,9 +37,10 @@ Each entity defined in the engine is combined from 1 to N components, for exampl
   },
 }
 ```
-
 It means that entity has movement component, which is managed by installed movement system and also has render component which means that it is displayed on the scene.
 
+During the game loop, engine iterates all installed systems and calls update for each.
+Each systems updates all it's component on each game loop.
 
 # Linux build instructions
 
