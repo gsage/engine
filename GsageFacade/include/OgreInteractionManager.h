@@ -1,3 +1,6 @@
+#ifndef _OgreInteractionManager_H_
+#define _OgreInteractionManager_H_
+#
 /*
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
@@ -24,15 +27,52 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "ogre/Camera.h"
+#include "GsageDefinitions.h"
+#include "Serializable.h"
+#include "EventSubscriber.h"
 
-namespace Gsage {
-  Camera::Camera()
-  {
-  }
-
-  Camera::~Camera()
-  {
-  }
-
+namespace MOC
+{
+  class CollisionTools;
 }
+
+namespace Gsage
+{
+  class Engine;
+  class MouseEvent;
+  class SelectEvent;
+  class OgreRenderSystem;
+
+  class OgreInteractionManager : public EventSubscriber<OgreInteractionManager>
+  {
+    public:
+      OgreInteractionManager();
+      virtual ~OgreInteractionManager();
+      /**
+       * State update
+       * @param time Time const
+       */
+      virtual void update(const double& time);
+
+      /**
+       * Initialize interaction manager
+       */
+      void initialize(OgreRenderSystem* renderSystem, Engine* engine);
+    private:
+      virtual bool onMouseButton(EventDispatcher* sender, const Event& event);
+      virtual bool onMouseMove(EventDispatcher* sender, const Event& event);
+      void doRaycasting(const float& x, const float& y, unsigned int flags = 0xFFFF, bool select = false);
+
+      OgreRenderSystem* mRenderSystem;
+      Engine* mEngine;
+
+      bool mContinuousRaycast;
+      Ogre::Vector3 mMousePosition;
+
+      MOC::CollisionTools* mCollisionTools;
+
+      std::string mRolledOverObject;
+  };
+}
+
+#endif

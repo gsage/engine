@@ -31,9 +31,11 @@ THE SOFTWARE.
 #include "PtreeExtensions.h"
 
 #define BIND_PROPERTY(name, property) registerProperty(name, property)
+#define BIND_PROPERTY_WITH_PRIORITY(name, property, priority) registerProperty(name, property, 0, priority)
 #define BIND_PROPERTY_OPTIONAL(name, setter, getter) registerProperty(name, property, Optional)
 
 #define BIND_ACCESSOR(name, setter, getter) registerProperty(name, this, setter, getter)
+#define BIND_ACCESSOR_WITH_PRIORITY(name, setter, getter, priority) registerProperty(name, this, setter, getter, 0, priority)
 #define BIND_ACCESSOR_OPTIONAL(name, setter, getter) registerProperty(name, this, setter, getter, Optional)
 
 #define BIND_GETTER(name, getter) registerGetter(name, this, getter)
@@ -46,7 +48,7 @@ enum PropertyFlag
 {
   Readonly = 0x01,
   Writeonly = 0x02,
-  Optional = 0x04
+  Optional = 0x04,
 };
 
 namespace Gsage
@@ -127,13 +129,13 @@ namespace Gsage
           virtual bool dump(DataNode& node) = 0;
 
           std::string mName;
-
-        protected:
-          int mFlags;
           bool isFlagSet(const PropertyFlag& flag)
           {
             return (mFlags & flag) == flag;
           }
+
+        protected:
+          int mFlags;
       };
 
       /**
@@ -229,10 +231,13 @@ namespace Gsage
 
       virtual ~Serializable()
       {
-        for(unsigned int i = 0; i < mProperties.size(); i++)
-        {
-          AbstractProperty* p = mProperties[i];
-          delete p;
+        for(auto pair : mProperties) {
+          for(unsigned int i = 0; i < pair.second.size(); i++)
+          {
+            AbstractProperty* p = pair.second[i];
+            delete p;
+          }
+          pair.second.clear();
         }
         mProperties.clear();
       }
@@ -257,11 +262,13 @@ namespace Gsage
       virtual bool read(const DataNode& node)
       {
         bool allSucceed = true;
-        for(AbstractProperty* prop : mProperties)
-        {
-          if(!prop->read(node))
+        for(auto pair : mProperties) {
+          for(AbstractProperty* prop : pair.second)
           {
-            allSucceed = false;
+            if(!prop->read(node))
+            {
+              allSucceed = false;
+            }
           }
         }
         return allSucceed;
@@ -274,10 +281,12 @@ namespace Gsage
       virtual bool dump(DataNode& node)
       {
         bool allSucceed = true;
-        for(AbstractProperty* prop : mProperties)
-        {
-          if(!prop->dump(node))
-            allSucceed = false;
+        for(auto pair : mProperties) {
+          for(AbstractProperty* prop : pair.second)
+          {
+            if(!prop->dump(node))
+              allSucceed = false;
+          }
         }
         return allSucceed;
       }
@@ -289,9 +298,9 @@ namespace Gsage
        * @param flags property flags
        */
       template<typename TDest>
-      void registerProperty(const std::string& name, TDest* dest, int flags = 0x00)
+      void registerProperty(const std::string& name, TDest* dest, int flags = 0x00, int priority = 0)
       {
-        addProperty(new Property<TDest>(name, dest, flags));
+        addProperty(new Property<TDest>(name, dest, flags), priority);
       }
 
       /**
@@ -303,9 +312,9 @@ namespace Gsage
        * @param getter Property getter
        */
       template<typename TDest, class TInstance, class TRetVal>
-      void registerProperty(const std::string& name, TInstance* instance, TRetVal (TInstance::*setter)(const TDest& value), TDest (TInstance::*getter)(), int flags = 0x00)
+      void registerProperty(const std::string& name, TInstance* instance, TRetVal (TInstance::*setter)(const TDest& value), TDest (TInstance::*getter)(), int flags = 0x00, int priority = 0)
       {
-        addProperty(new PropertyAccessor<TDest, TRetVal (TInstance::*)(const TDest& value), TDest (TInstance::*)(), TInstance>(name, instance, getter, setter, flags));
+        addProperty(new PropertyAccessor<TDest, TRetVal (TInstance::*)(const TDest& value), TDest (TInstance::*)(), TInstance>(name, instance, getter, setter, flags), priority);
       }
       /**
        * Register property setter/getter as serializable.
@@ -316,9 +325,9 @@ namespace Gsage
        * @param getter Property getter
        */
       template<typename TDest, class TInstance, class TRetVal>
-      void registerProperty(const std::string& name, TInstance* instance, TRetVal (TInstance::*setter)(const TDest& value), const TDest& (TInstance::*getter)()const, int flags = 0x00)
+      void registerProperty(const std::string& name, TInstance* instance, TRetVal (TInstance::*setter)(const TDest& value), const TDest& (TInstance::*getter)()const, int flags = 0x00, int priority = 0)
       {
-        addProperty(new PropertyAccessor<TDest, TRetVal (TInstance::*)(const TDest& value), const TDest& (TInstance::*)()const, TInstance>(name, instance, getter, setter, flags));
+        addProperty(new PropertyAccessor<TDest, TRetVal (TInstance::*)(const TDest& value), const TDest& (TInstance::*)()const, TInstance>(name, instance, getter, setter, flags), priority);
       }
       /**
        * Register property getter as serializable.
@@ -328,9 +337,9 @@ namespace Gsage
        * @param getter Property getter
        */
       template<typename TDest, class TInstance>
-      void registerGetter(const std::string& name, TInstance* instance, TDest (TInstance::*getter)(), int flags = 0x00)
+      void registerGetter(const std::string& name, TInstance* instance, TDest (TInstance::*getter)(), int flags = 0x00, int priority = 0)
       {
-        addProperty(new PropertyAccessor<TDest, void (TInstance::*)(const TDest& value), TDest (TInstance::*)(), TInstance>(name, instance, getter, 0, flags));
+        addProperty(new PropertyAccessor<TDest, void (TInstance::*)(const TDest& value), TDest (TInstance::*)(), TInstance>(name, instance, getter, 0, flags), priority);
       }
       /**
        * Register property setter/getter as serializable
@@ -339,14 +348,16 @@ namespace Gsage
        * @param getter Property getter
        */
       template<typename TDest, typename TRetVal>
-      void registerProperty(const std::string& name, TRetVal (C::*setter)(const TDest& value), TDest (C::*getter)(), int flags = 0x00)
+      void registerProperty(const std::string& name, TRetVal (C::*setter)(const TDest& value), TDest (C::*getter)(), int flags = 0x00, int priority = 0)
       {
-        addProperty(new PropertyAccessor<TDest, TRetVal (C::*)(const TDest& value), TDest (C::*)()>(name, static_cast<C*>(this), getter, setter, flags));
+        addProperty(new PropertyAccessor<TDest, TRetVal (C::*)(const TDest& value), TDest (C::*)()>(name, static_cast<C*>(this), getter, setter, flags), priority);
       }
 
     protected:
       // vector is used to keep an order
-      typedef std::vector<AbstractProperty*> Properties;
+      typedef std::vector<AbstractProperty*> PropertyChain;
+      // several vectors are used to create property chains with different priorities
+      typedef std::map<int, PropertyChain, std::greater<int>> Properties;
       Properties mProperties;
 
       // map is used to quickly access property by key
@@ -356,10 +367,15 @@ namespace Gsage
       /**
        * Add property to the property list
        * @param property AbstractProperty accessor
+       * @param priority Priority of the property, properties with higher value are read first. Default priority is the lowest
        */
-      void addProperty(AbstractProperty* property)
+      void addProperty(AbstractProperty* property, int priority = 0)
       {
-        mProperties.push_back(property);
+        if(mProperties.count(priority) == 0) {
+          mProperties[priority] = PropertyChain();
+        }
+
+        mProperties[priority].push_back(property);
         mPropMappings[property->mName] = property;
       }
   };

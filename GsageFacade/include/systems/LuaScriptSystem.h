@@ -41,12 +41,6 @@ namespace Gsage
   class LuaScriptSystem : public ComponentStorage<ScriptComponent>
   {
     public:
-      enum RunType
-      {
-        FROM_FILE,
-        FROM_STRING
-      };
-
       LuaScriptSystem();
       virtual ~LuaScriptSystem();
 
@@ -92,10 +86,9 @@ namespace Gsage
        * Run script in the LuaScriptSystem
        *
        * @param script Script or file with it
-       * @param runType Set run behaviour (file or string)
        * @returns run result, false if error happened
        */
-      bool runScript(const std::string& script, const RunType& runType);
+      bool runScript(const std::string& script);
 
       /**
        * Add lua function which will be called on each update of the system

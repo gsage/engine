@@ -43,8 +43,9 @@ namespace Gsage {
     , mObjectManager(0)
     , mSceneManager(0)
   {
-    BIND_PROPERTY("type", &mType);
-    BIND_PROPERTY("name", &mObjectId);
+    // setting couple of these props priorities to maximum
+    BIND_PROPERTY_WITH_PRIORITY("type", &mType, 10000);
+    BIND_PROPERTY_WITH_PRIORITY("name", &mObjectId, 10000);
   }
 
   OgreObject::~OgreObject()

@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "ogre/LightWrapper.h"
 #include "ogre/BillboardWrapper.h"
 #include "ogre/ParticleSystemWrapper.h"
+#include "ogre/CameraWrapper.h"
 
 #include "PtreeExtensions.h"
 #include "RenderEvent.h"
@@ -87,13 +88,17 @@ namespace Gsage {
     mResourceManager(0),
     mCameraController(0),
     mCameraFactory(new CameraFactory()),
-    mWindow(0)
+    mWindow(0),
+    mViewport(0),
+    mOgreInteractionManager(0)
   {
     mLogManager = new Ogre::LogManager();
   }
 
   OgreRenderSystem::~OgreRenderSystem()
   {
+    if(mOgreInteractionManager)
+      delete mOgreInteractionManager;
     delete mCameraFactory;
     if(mFontManager != 0)
       delete mFontManager;
@@ -166,7 +171,8 @@ namespace Gsage {
 
     assert(mRenderSystem != 0);
 
-    createCamera();
+    // get viewport to initialize it
+    getViewport();
 
     // initialize built-in types
     mObjectManager.registerElement<SceneNodeWrapper>();
@@ -174,9 +180,12 @@ namespace Gsage {
     mObjectManager.registerElement<LightWrapper>();
     mObjectManager.registerElement<BillboardSetWrapper>();
     mObjectManager.registerElement<ParticleSystemWrapper>();
+    mObjectManager.registerElement<CameraWrapper>();
 
     mRoot->clearEventTimes();
     mRenderSystem->_initRenderTargets();
+    mOgreInteractionManager = new OgreInteractionManager();
+    mOgreInteractionManager->initialize(this, mEngine);
     EngineSystem::initialize(settings);
     return true;
   }
@@ -211,6 +220,7 @@ namespace Gsage {
     ComponentStorage<RenderComponent>::update(time);
     Ogre::WindowEventUtilities::messagePump();
 
+    mOgreInteractionManager->update(time);
     if(mCameraController != 0)
       mCameraController->update(time);
 
@@ -255,8 +265,7 @@ namespace Gsage {
     {
       mCameraController = mCameraFactory->initializeController(
           config.get_child("camera"),
-          mWindow,
-          mSceneManager,
+          this,
           mEngine);
       updateCurrentCamera(mCameraController->getCamera());
     }
@@ -349,15 +358,18 @@ namespace Gsage {
     return res;
   }
 
-  void OgreRenderSystem::createCamera()
-  {
-    updateCurrentCamera(mSceneManager->createCamera("main"));
-    mWindow->addViewport(mCurrentCamera);
-  }
-
   void OgreRenderSystem::updateCurrentCamera(Ogre::Camera* camera)
   {
     mCurrentCamera = camera;
     fireEvent(Event(OgreRenderSystem::CAMERA_CHANGED));
+  }
+
+  Ogre::Viewport* OgreRenderSystem::getViewport()
+  {
+    if(mViewport == 0) {
+      updateCurrentCamera(mSceneManager->createCamera("main"));
+      mViewport = mWindow->addViewport(mCurrentCamera);
+    }
+    return mViewport;
   }
 }

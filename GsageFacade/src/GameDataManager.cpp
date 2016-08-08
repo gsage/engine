@@ -282,7 +282,6 @@ namespace Gsage {
     catch(...)
     {
       LOG(ERROR) << "Failed to read file: " << path;
-      return "";
     }
 
     stream.close();
