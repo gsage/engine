@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
@@ -23,8 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -----------------------------------------------------------------------------
 """
-
-#!/usr/bin/python
 import argparse
 import sys
 import os

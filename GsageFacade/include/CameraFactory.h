@@ -47,6 +47,7 @@ namespace Gsage
   class MouseEvent;
   class SelectEvent;
   class RenderComponent;
+  class OgreRenderSystem;
 
   /**
    * Abstract camera controller
@@ -59,12 +60,12 @@ namespace Gsage
       /**
        * Set all ogre stuff and engine
        */
-      virtual void initialize(Ogre::RenderWindow* window, Ogre::SceneManager* sceneManager, Engine* engine);
+      virtual void initialize(OgreRenderSystem* renderSystem, Engine* engine);
       /**
        * Camera state update
        * @param time Time const
        */
-      virtual void update(const double& time);
+      virtual void update(const double& time) = 0;
       /**
        * Create Ogre::Camera instance
        * @param id Name of the camera (should be unique)
@@ -107,13 +108,11 @@ namespace Gsage
       // Functions
       // ----------------------------------------
 
-      virtual bool onMouseButton(EventDispatcher* sender, const Event& event);
+      virtual bool onMouseButton(EventDispatcher* sender, const Event& event) {return true;};
       virtual bool onMouseMove(EventDispatcher* sender, const Event& event);
       virtual bool handleKeyboardEvent(EventDispatcher* sender, const Event& event) {return true;};
-      void doRaycasting(const float& x, const float& y, unsigned int flags = 0xFFFF, bool select = false);
 
       Ogre::Viewport* mViewport;
-      Ogre::RenderWindow* mWindow;
       Ogre::SceneManager* mSceneManager;
       Ogre::Camera* mCamera;
 
@@ -126,8 +125,6 @@ namespace Gsage
 
       bool mContinuousRaycast;
       Ogre::Vector3 mMousePosition;
-
-      MOC::CollisionTools* mCollisionTools;
 
       std::string mRolledOverObject;
   };
@@ -243,6 +240,39 @@ namespace Gsage
   };
 
   /**
+   * Lua camera
+   */
+  class LuaCameraController : public CameraController
+  {
+    public:
+      LuaCameraController();
+      virtual ~LuaCameraController();
+
+      static std::string TYPE;
+      /**
+       * Create Ogre::Camera instance
+       * @param id Name of the camera (should be unique)
+       */
+      void createCamera(const std::string& id);
+      /**
+       * Update camera position, follow target
+       * @param time Elapsed time
+       */
+      virtual void update(const double& time);
+      virtual bool read(const DataNode& node);
+    protected:
+      bool onMouseButton(EventDispatcher* sender, const Event& event);
+      bool onMouseMove(EventDispatcher* sender, const Event& event);
+    private:
+      // ----------------------------------------
+      // Fields
+      // ----------------------------------------
+
+      bool handleKeyboardEvent(EventDispatcher* sender, const Event& event);
+      std::string mScript;
+  };
+
+  /**
    * Wrapper to create camera controller.
    * Abstract class to store non templated objects in container.
    */
@@ -254,11 +284,10 @@ namespace Gsage
        * Create controller.
        * Only one controller can be active at the time
        * @param settings Controller settings
-       * @param renderWindow Ogre render window to attach to
-       * @param sceneManager Ogre scene manager
+       * @param renderSystem Ogre render system to attach to
        * @param engine Gsage core
        */
-      virtual CameraController* create(const DataNode& settings, Ogre::RenderWindow* renderWindow, Ogre::SceneManager* sceneManager, Engine* engine) = 0;
+      virtual CameraController* create(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine) = 0;
   };
 
   template<typename TController>
@@ -270,11 +299,10 @@ namespace Gsage
        * Create controller.
        * Only one controller can be active at the time
        * @param settings Controller settings
-       * @param renderWindow Ogre render window to attach to
-       * @param sceneManager Ogre scene manager
+       * @param renderSystem Ogre render system to attach to
        * @param engine Gsage core
        */
-      CameraController* create(const DataNode& settings, Ogre::RenderWindow* renderWindow, Ogre::SceneManager* sceneManager, Engine* engine);
+      CameraController* create(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine);
   };
 
   /**
@@ -292,11 +320,10 @@ namespace Gsage
        * Create controller.
        * Only one controller can be active at the time
        * @param settings Controller settings
-       * @param renderWindow Ogre render window to attach to
-       * @param sceneManager Ogre scene manager
+       * @param renderSystem Ogre render system to attach to
        * @param engine Gsage core
        */
-      CameraController* initializeController(const DataNode& settings, Ogre::RenderWindow* renderWindow, Ogre::SceneManager* sceneManager, Engine* engine);
+      CameraController* initializeController(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine);
     private:
       typedef std::map<std::string, ControllerFactory*> ControllerFactories;
       ControllerFactories mControllerFactories;

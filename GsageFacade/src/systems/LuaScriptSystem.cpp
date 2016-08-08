@@ -126,7 +126,7 @@ namespace Gsage {
     if(!component->getSetupExecuted())
     {
       LOG(INFO) << entity->getId() << " executing script";
-      runScript(component->getSetupScript(), FROM_STRING);
+      runScript(component->getSetupScript());
       component->setSetupExecuted(true);
     }
 
@@ -144,7 +144,7 @@ namespace Gsage {
     if(mState && component->hasBehavior())
     {
       luabind::object stopBtree = luabind::globals(mState)["btree"]["deinitialize"];
-      if(!stopBtree.is_valid() || !runScript(component->getTearDownScript(), FROM_STRING))
+      if(!stopBtree.is_valid() || !runScript(component->getTearDownScript()))
       {
         LOG(ERROR) << "Failed to tear down script component";
         stopped = false;
@@ -157,32 +157,47 @@ namespace Gsage {
     return res && stopped;
   }
 
-  bool LuaScriptSystem::runScript(const std::string& script, const RunType& runType)
+  bool LuaScriptSystem::runScript(const std::string& script)
   {
-    if(!mState)
-      return false;
-
-    int res;
-
-    switch(runType)
+    std::vector<std::string> parts = split(script, ':');
+    std::string scriptData;
+    if (parts.size() == 2 && parts[0] == "@File")
     {
-      case FROM_FILE:
-        res = luaL_dofile(mState, script.c_str());
-        break;
-      case FROM_STRING:
-        res = luaL_dostring(mState, script.c_str());
-        break;
-      default:
-        LOG(ERROR) << "Unknown run type" << runType;
+      std::ifstream stream(parts[1]);
+      stream.seekg(0, std::ios::end);
+      long int size = stream.tellg();
+      if(size == -1)
+      {
+        LOG(ERROR) << "Failed to read script file: " << script;
         return false;
+      }
+
+      scriptData.reserve(size);
+      stream.seekg(0, std::ios::beg);
+      try
+      {
+        scriptData.assign((std::istreambuf_iterator<char>(stream)),
+            std::istreambuf_iterator<char>());
+      }
+      catch(std::ifstream::failure e)
+      {
+        LOG(ERROR) << "Failed to read script file: " << script;
+        stream.close();
+        return false;
+      }
+
+      stream.close();
+    } else {
+      scriptData = script;
     }
+
+    int res = luaL_dostring(mState, scriptData.c_str());
 
     if(res != 0)
     {
       LOG(ERROR) << "Failed to execute lua script:\n" << lua_tostring(mState, -1);
       return false;
     }
-
     return true;
   }
 

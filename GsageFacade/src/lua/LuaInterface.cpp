@@ -56,6 +56,7 @@ THE SOFTWARE.
 #include "ogre/EntityWrapper.h"
 #include "ogre/LightWrapper.h"
 #include "ogre/ParticleSystemWrapper.h"
+#include "ogre/CameraWrapper.h"
 
 using namespace luabind;
 
@@ -259,6 +260,9 @@ namespace Gsage {
         .def("createParticle", (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&)) &ParticleSystemWrapper::createParticle)
         .def("createParticle", (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&, const Ogre::Quaternion&)) &ParticleSystemWrapper::createParticle),
 
+      class_<CameraWrapper, OgreObject>("CameraWrapper")
+        .def("attach", &CameraWrapper::attach),
+
       // --------------------------------------------------------------------------------
       // Systems
 
@@ -267,6 +271,7 @@ namespace Gsage {
 
       class_<OgreRenderSystem, EngineSystem>("RenderSystem")
         .property("camera", &OgreRenderSystem::getCamera)
+        .property("viewport", &OgreRenderSystem::getViewport)
         .def("getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius),
 
       class_<RecastMovementSystem, EngineSystem>("MovementSystem")
@@ -365,7 +370,9 @@ namespace Gsage {
         .def(self * other<Ogre::Quaternion>()),
 
       class_<Ogre::Radian>("Radian")
-        .def(constructor<float>())
+        .def(constructor<float>()),
+
+      class_<Ogre::Viewport>("Viewport")
     ];
 
     mDataManagerProxy = new DataManagerProxy(mInstance->getGameDataManager());
@@ -379,7 +386,7 @@ namespace Gsage {
     globals(L)["core"] = mInstance->getEngine();
     globals(L)["data"] = mDataManagerProxy;
     globals(L)["event"] = mEventProxy;
-    LUA_CONST_START( Vector3 ) 
+    LUA_CONST_START( Vector3 )
       LUA_CONST( Ogre::Vector3, ZERO);
       LUA_CONST( Ogre::Vector3, UNIT_X);
       LUA_CONST( Ogre::Vector3, UNIT_Y);

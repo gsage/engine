@@ -34,6 +34,11 @@ function startup()
   healthbar:Show()
 end
 
+function setActiveCamera(id)
+  local camera = entity.get(id)
+  camera.render.root:getChild("camera", id):attach(core.render.viewport)
+end
+
 counter = 0
 
 function spawnMore(count)

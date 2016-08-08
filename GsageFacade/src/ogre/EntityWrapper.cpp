@@ -39,8 +39,9 @@ namespace Gsage {
     : mQuery(STATIC)
     , mAnimBlendMode(Ogre::ANIMBLEND_CUMULATIVE)
   {
+    BIND_ACCESSOR_WITH_PRIORITY("mesh", &EntityWrapper::setMesh, &EntityWrapper::getMesh, 1);
+
     BIND_ACCESSOR("query", &EntityWrapper::setQueryFlags, &EntityWrapper::getQueryFlags);
-    BIND_ACCESSOR("mesh", &EntityWrapper::setMesh, &EntityWrapper::getMesh);
     BIND_ACCESSOR("castShadows", &EntityWrapper::setCastShadows, &EntityWrapper::getCastShadows);
   }
 
@@ -61,6 +62,11 @@ namespace Gsage {
       mQuery = DYNAMIC;
     else
       mQuery = UNKNOWN;
+
+    if(mObject != 0)
+    {
+      mObject->setQueryFlags(mQuery);
+    }
   }
 
   const std::string& EntityWrapper::getQueryFlags() const

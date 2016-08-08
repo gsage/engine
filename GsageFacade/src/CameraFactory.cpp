@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <OgreRenderWindow.h>
 
 #include "components/RenderComponent.h"
+#include "systems/OgreRenderSystem.h"
 #include "ogre/SceneNodeWrapper.h"
 
 #include "Engine.h"
@@ -42,13 +43,12 @@ namespace Gsage {
 
   std::string IsometricCameraController::TYPE = "isometric";
   std::string WASDCameraController::TYPE = "wasd";
-
+  std::string LuaCameraController::TYPE = "lua";
 
   CameraController::CameraController()
     : mTarget("")
     , mCamera(0)
     , mContinuousRaycast(false)
-    , mCollisionTools(0)
   {
     BIND_PROPERTY("target", &mTarget);
     BIND_ACCESSOR("id", &CameraController::createCamera, &CameraController::getId);
@@ -59,26 +59,29 @@ namespace Gsage {
   CameraController::~CameraController()
   {
     mSceneManager->destroyCamera(mCamera);
-    mWindow->removeViewport(mViewport->getZOrder());
-
-    if(mCollisionTools != 0)
-      delete mCollisionTools;
   }
 
-  void CameraController::initialize(Ogre::RenderWindow* window, Ogre::SceneManager* sceneManager, Engine* engine)
+  void CameraController::initialize(OgreRenderSystem* renderSystem, Engine* engine)
   {
-    mWindow = window;
-    mSceneManager = sceneManager;
+    mViewport = renderSystem->getViewport();
+    mSceneManager = renderSystem->getSceneManager();
     mEngine = engine;
-    mCollisionTools = new MOC::CollisionTools(sceneManager);
 
     addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &CameraController::onMouseButton);
     addEventListener(mEngine, MouseEvent::MOUSE_UP, &CameraController::onMouseButton);
     addEventListener(mEngine, MouseEvent::MOUSE_MOVE, &CameraController::onMouseMove);
-    addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &CameraController::handleKeyboardEvent);
     addEventListener(mEngine, KeyboardEvent::KEY_UP, &CameraController::handleKeyboardEvent);
+    addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &CameraController::handleKeyboardEvent);
   }
 
+  bool CameraController::onMouseMove(EventDispatcher* sender, const Event& event)
+  {
+    const MouseEvent& e = (MouseEvent&) event;
+    Ogre::Vector3 delta;
+
+    mMousePosition = Ogre::Vector3(e.mouseX, e.mouseY, e.mouseZ);
+    return true;
+  }
 
   bool CameraController::setTarget(const std::string& id)
   {
@@ -95,78 +98,6 @@ namespace Gsage {
   Ogre::Camera* CameraController::getCamera()
   {
     return mCamera;
-  }
-
-  bool CameraController::onMouseButton(EventDispatcher* sender, const Event& event)
-  {
-    const MouseEvent& e = (MouseEvent&) event;
-    if(e.button == MouseEvent::Left)
-    {
-      if(e.getType() == MouseEvent::MOUSE_DOWN)
-      {
-        doRaycasting(e.mouseX, e.mouseY, 0xFFFF, true);
-      }
-      else
-      {
-        mContinuousRaycast = false;
-      }
-    }
-    return true;
-  }
-
-  bool CameraController::onMouseMove(EventDispatcher* sender, const Event& event)
-  {
-    const MouseEvent& e = (MouseEvent&) event;
-    Ogre::Vector3 delta;
-
-    mMousePosition = Ogre::Vector3(e.mouseX, e.mouseY, e.mouseZ);
-    return true;
-  }
-
-  void CameraController::doRaycasting(const float& offsetX, const float& offsetY, unsigned int flags, bool select)
-  {
-    Ogre::MovableObject* target;
-    Ogre::Vector3 result;
-    float closestDistance = 0.1f;
-    bool hitObject = mCollisionTools->raycastFromCamera(mWindow, mCamera, Ogre::Vector2(offsetX, offsetY), result, target, closestDistance, flags);
-
-    if(!hitObject)
-    {
-      if(!mRolledOverObject.empty())
-      {
-        mEngine->fireEvent(SelectEvent(SelectEvent::ROLL_OUT, 0x00, result, mRolledOverObject));
-        mRolledOverObject.clear();
-      }
-      return;
-    }
-
-    const Ogre::Any& entityId = target->getUserObjectBindings().getUserAny("entity");
-    if(entityId.isEmpty())
-    {
-      return;
-    }
-
-    if((target->getQueryFlags() & SceneNodeWrapper::STATIC) == SceneNodeWrapper::STATIC && select)
-       mContinuousRaycast = true;
-
-    const std::string& id = entityId.get<const std::string>();
-    if(mRolledOverObject != id)
-    {
-      mEngine->fireEvent(SelectEvent(SelectEvent::ROLL_OUT, target->getQueryFlags(), result, mRolledOverObject));
-      mRolledOverObject = id;
-      mEngine->fireEvent(SelectEvent(SelectEvent::ROLL_OVER, target->getQueryFlags(), result, id));
-    }
-
-    if(select)
-      mEngine->fireEvent(SelectEvent(SelectEvent::OBJECT_SELECTED, target->getQueryFlags(), result, id));
-  }
-
-  void CameraController::update(const double& time)
-  {
-    if(mContinuousRaycast)
-      doRaycasting(mMousePosition.x, mMousePosition.y, SceneNodeWrapper::STATIC, true);
-    else
-      doRaycasting(mMousePosition.x, mMousePosition.y);
   }
 
   const std::string& CameraController::getId() const
@@ -233,8 +164,6 @@ namespace Gsage {
     LOG(TRACE) << "Create camera with id " << id;
     mId = id;
     mCamera = mSceneManager->hasCamera(id) ? mSceneManager->getCamera(id) : mSceneManager->createCamera(id);
-    // TODO: make camera attachable
-    mViewport = mWindow->getNumViewports() > 0 ? mWindow->getViewport(0) : mWindow->addViewport(mCamera);
     mViewport->setCamera(mCamera);
     mCamera->setAspectRatio(
         float(mViewport->getActualWidth()) / float(mViewport->getActualHeight()));
@@ -242,7 +171,6 @@ namespace Gsage {
 
   void IsometricCameraController::update(const double& time)
   {
-    CameraController::update(time);
     if(mTarget.empty())
       return;
 
@@ -321,10 +249,9 @@ namespace Gsage {
     LOG(TRACE) << "Create camera with id " << id;
     mId = id;
     mCamera = mSceneManager->hasCamera(id) ? mSceneManager->getCamera(id) : mSceneManager->createCamera(id);
-    mViewport = mWindow->getNumViewports() > 0 ? mWindow->getViewport(0) : mWindow->addViewport(mCamera);
-    mViewport->setCamera(mCamera);
     mCamera->setAspectRatio(
         float(mViewport->getActualWidth()) / float(mViewport->getActualHeight()));
+    mViewport->setCamera(mCamera);
   }
 
   void WASDCameraController::update(const double& time)
@@ -402,14 +329,58 @@ namespace Gsage {
     return true;
   }
 
+  LuaCameraController::LuaCameraController()
+  {
+    BIND_PROPERTY("script", &mScript);
+  }
+
+  LuaCameraController::~LuaCameraController()
+  {
+  }
+
+  bool LuaCameraController::read(const DataNode& node)
+  {
+    // read all all parameters
+    bool res = CameraController::read(node);
+    // initialize lua script
+    return res;
+  }
+
+  void LuaCameraController::createCamera(const std::string& id)
+  {
+    LOG(TRACE) << "Create camera with id " << id;
+    mId = id;
+    mCamera = mSceneManager->hasCamera(id) ? mSceneManager->getCamera(id) : mSceneManager->createCamera(id);
+    mCamera->setAspectRatio(
+        float(mViewport->getActualWidth()) / float(mViewport->getActualHeight()));
+    mViewport->setCamera(mCamera);
+  }
+
+  void LuaCameraController::update(const double& time)
+  {
+  }
+
+  bool LuaCameraController::onMouseButton(EventDispatcher* sender, const Event& event)
+  {
+    return true;
+  }
+
+  bool LuaCameraController::onMouseMove(EventDispatcher* sender, const Event& event)
+  {
+    return true;
+  }
+
+  bool LuaCameraController::handleKeyboardEvent(EventDispatcher* sender, const Event& event) {
+    return true;
+  }
 
   // ---------------------------------------------------------------------------------------------------------------
 
   template<typename TController>
-  CameraController* ConcreteControllerFactory<TController>::create(const DataNode& settings, Ogre::RenderWindow* renderWindow, Ogre::SceneManager* sceneManager, Engine* engine)
+  CameraController* ConcreteControllerFactory<TController>::create(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine)
   {
     TController* res = new TController();
-    res->initialize(renderWindow, sceneManager, engine);
+    res->initialize(renderSystem, engine);
     res->read(settings);
     return res;
   }
@@ -439,7 +410,7 @@ namespace Gsage {
     mControllerFactories[TController::TYPE] = new ConcreteControllerFactory<TController>();
   }
 
-  CameraController* CameraFactory::initializeController(const DataNode& settings, Ogre::RenderWindow* renderWindow, Ogre::SceneManager* sceneManager, Engine* engine)
+  CameraController* CameraFactory::initializeController(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine)
   {
     auto typeOpt = settings.get_optional<std::string>("type");
     if(!typeOpt)
@@ -459,6 +430,6 @@ namespace Gsage {
       delete mCameraController;
 
     LOG(INFO) << "Initialize controller of type " << type;
-    return mCameraController = mControllerFactories[type]->create(settings, renderWindow, sceneManager, engine);
+    return mCameraController = mControllerFactories[type]->create(settings, renderSystem, engine);
   }
 }

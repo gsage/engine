@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include "components/RenderComponent.h"
 #include "ogre/OgreObjectManager.h"
 #include "EventDispatcher.h"
+#include "OgreInteractionManager.h"
 
 static const std::string OGRE_SECTION        = "OgreRenderer";
 static const std::string OGRE_PLUGINS_PATH   = "PluginsPath";
@@ -53,6 +54,9 @@ namespace Ogre
 {
   class FontManager;
   class ManualMovableTextRendererFactory;
+  class Viewport;
+  class RenderWindow;
+  class SceneManager;
 }
 
 namespace Gsage
@@ -64,6 +68,7 @@ namespace Gsage
   class Entity;
   class Engine;
   class EngineEvent;
+  class OgreInteractionManager;
 
   /**
    * Class, used to redirect all ogre output to the easylogging++
@@ -208,11 +213,12 @@ namespace Gsage
        */
       Entities getObjectsInRadius(const Ogre::Vector3& center, const float& distance, const unsigned int flags = 0xFF, const std::string& id = "");
 
-    protected:
       /**
-       * Create default camera
+       * Get main viewport
        */
-      virtual void createCamera();
+      Ogre::Viewport* getViewport();
+
+    protected:
       /**
        * Update current camera
        * @param camera New camera instance
@@ -227,12 +233,14 @@ namespace Gsage
       Ogre::LogManager* mLogManager;
       Ogre::FontManager* mFontManager;
       Ogre::ManualMovableTextRendererFactory* mManualMovableTextParticleFactory;
+      Ogre::Viewport* mViewport;
 
       CameraController* mCameraController;
 
       OgreLogRedirect mLogRedirect;
       CameraFactory* mCameraFactory;
       OgreObjectManager mObjectManager;
+      OgreInteractionManager* mOgreInteractionManager;
 
       ResourceManager* mResourceManager;
 

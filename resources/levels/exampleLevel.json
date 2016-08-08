@@ -32,6 +32,19 @@
   },
   "entities": [
   {
+    "id": "camera",
+    "render": {
+      "root": {
+        "position": "0,0,0",
+        "rotation": "1,0,-1,0",
+        "scale": "1,1,1",
+        "children": [{
+          "type": "camera",
+          "name": "camera"
+        }]
+      }
+    }
+  }, {
     "id": "castle",
     "render": {
       "root": {
@@ -101,12 +114,7 @@
       }
     },
     "script": {
-      "setupScript": "
-      local e = entity.get('GlobalParticleSystems')
-      damageHit = e.render.root: getChild('particleSystem', 'damageHit')
-      damageMiss = e.render.root: getChild('particleSystem', 'damageMiss')
-      damageEnemy = e.render.root: getChild('particleSystem', 'damageEnemy')
-      "
+      "setupScript": "@File:resources/scripts/setup/damage.lua"
     }
 
   }]
