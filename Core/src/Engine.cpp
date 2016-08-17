@@ -42,10 +42,7 @@ Engine::Engine(const unsigned int& poolSize) :
 Engine::~Engine()
 {
   // delete only systems that were created by the engine itself
-  for(auto& name : mManagedByEngine)
-  {
-    delete mEngineSystems[name];
-  }
+  removeSystems();
 }
 
 bool Engine::initialize(const DataNode& configuration)
@@ -127,6 +124,29 @@ EngineSystem* Engine::getSystem(const std::string& name)
 Engine::EngineSystems& Engine::getSystems()
 {
   return mEngineSystems;
+}
+
+bool Engine::removeSystem(const std::string& name)
+{
+  if(!hasSystem(name))
+    return false;
+
+  SystemNames::iterator it = std::find(mManagedByEngine.begin(), mManagedByEngine.end(), name);
+  if(it != mManagedByEngine.end())
+    delete mEngineSystems[name];
+
+  mEngineSystems.erase(name);
+  return true;
+}
+
+void Engine::removeSystems()
+{
+  for(auto& name : mManagedByEngine)
+  {
+    delete mEngineSystems[name];
+  }
+  mEngineSystems.clear();
+  mManagedByEngine.clear();
 }
 
 Entity* Engine::createEntity(const DataNode& data)

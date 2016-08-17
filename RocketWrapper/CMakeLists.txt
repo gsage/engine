@@ -15,7 +15,7 @@ include_directories( ${OIS_INCLUDE_DIRS}
   ${LIBROCKET_INCLUDE_DIRS}
 )
 
-link_directories(${cosmos_BINARY_DIR}/Core)
+link_directories(${cosmos_BINARY_DIR}/GsageCore)
 link_directories(${cosmos_BINARY_DIR}/Components/OgreCrowd)
 link_directories(${cosmos_BINARY_DIR}/GsageFacade)
 

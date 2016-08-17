@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include "PUSystemWrapper.h"
 #include <luabind/luabind.hpp>
 
-namespace ParticleUniverseFactory
+namespace Gsage
 {
   const std::string PLUGIN_NAME = "ParticleUniverseFactory";
 

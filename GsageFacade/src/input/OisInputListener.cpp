@@ -71,7 +71,8 @@ namespace Gsage {
     mMouse(0),
     mKeyboard(0),
     mInputManager(0),
-    mEventRedirect(eventRedirect)
+    mEventRedirect(eventRedirect),
+    mWindow(0)
   {
     LOG(INFO) << "*** Initializing OIS ***";
     OIS::ParamList pl;

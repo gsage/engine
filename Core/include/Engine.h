@@ -117,6 +117,17 @@ namespace Gsage
         return static_cast<C*>(system);
       }
       /**
+       * Remove system by name
+       * @param name System name
+       * @returns true if system was deleted, false otherwise
+       */
+      bool removeSystem(const std::string& name);
+      /**
+       * Remove all systems, that were create by the engine
+       * Remove all active systems
+       */
+      void removeSystems();
+      /**
        * Gets all engine systems
        */
       EngineSystems& getSystems();

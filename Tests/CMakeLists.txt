@@ -1,6 +1,6 @@
 set(APP_NAME "unit-tests")
 
-set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} Core
+set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} GsageCore
   GsageFacade ${OGRE_LIBRARIES} ${gtest_LIBRARY} ${LIBRARY_NAME})
 
 include_directories(${cosmos_SOURCE_DIR}/Core/include)

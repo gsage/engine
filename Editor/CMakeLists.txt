@@ -38,7 +38,7 @@ if(WIN32)
 endif(WIN32)
 
 set(LIBS
-  Core
+  GsageCore
   GsageFacade
   RocketOgre
   ${LIBROCKET_LIBRARIES}

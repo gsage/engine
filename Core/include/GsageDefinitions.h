@@ -36,6 +36,22 @@ namespace Gsage {
   typedef boost::property_tree::ptree DataNode;
 }
 
+static inline std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+
+static inline std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
 #define GSAGE_UNSUPPORTED 0
 #define GSAGE_WIN32 1
 #define GSAGE_LINUX 2

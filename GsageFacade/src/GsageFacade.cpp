@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include "GsageFacade.h"
+#include <OgreTimer.h>
 
 #include <boost/property_tree/json_parser.hpp>
 
@@ -58,7 +59,8 @@ namespace Gsage {
       mLuaInterface(0),
       mUIManager(0),
       mLuaState(0),
-      mStartupScriptRun(false)
+      mStartupScriptRun(false),
+      mTimer(0)
     {
       easyloggingpp::Configurations c;
       c.setToDefault();
@@ -70,16 +72,26 @@ namespace Gsage {
       if(!mStarted)
         return;
 
+      mStopped = true;
       for(auto& pair : mLibraries)
       {
+        UNINSTALL_PLUGIN uninstall = reinterpret_cast<UNINSTALL_PLUGIN>(pair.second->getSymbol("dllStopPlugin"));
+        uninstall(this);
         pair.second->unload();
+        delete pair.second;
       }
+
+      mEngine.removeSystems();
+      mLibraries.clear();
 
       if(mGameDataManager)
         delete mGameDataManager;
 
       if(mLuaInterface)
         delete mLuaInterface;
+
+      if(mTimer)
+        delete mTimer;
     }
 
     bool GsageFacade::initialize(const std::string& rsageConfigPath, const std::string& resourcePath, DataNode* configOverride)
@@ -139,6 +151,7 @@ namespace Gsage {
         mStartupScript = startupScript.get();
         LOG(INFO) << mStartupScript;
       }
+      mTimer = new Ogre::Timer();
       return true;
   }
 
@@ -166,9 +179,9 @@ namespace Gsage {
       mStartupScriptRun = true;
     }
 
-    mTimeSinceLastUpdate = mTimer.getMicroseconds();
+    mTimeSinceLastUpdate = mTimer->getMicroseconds();
     double frameTime = double(mTimeSinceLastUpdate) / 1000000;
-    mTimer.reset();
+    mTimer->reset();
 
     for(auto& listener : mUpdateListeners)
     {
@@ -259,7 +272,7 @@ namespace Gsage {
     bool res = uninstall(this);
     mLibraries[path]->unload();
     mLibraries.erase(path);
-    return true;
+    return res;
   }
 
   bool GsageFacade::installPlugin(IPlugin* plugin)
@@ -277,8 +290,12 @@ namespace Gsage {
 
   bool GsageFacade::uninstallPlugin(IPlugin* plugin)
   {
+    std::string name = plugin->getName();
+    if(mInstalledPlugins.count(name) == 0)
+      return false;
+
     plugin->uninstall();
-    mInstalledPlugins.erase(plugin->getName());
+    mInstalledPlugins.erase(name);
     return true;
   }
 

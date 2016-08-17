@@ -330,6 +330,7 @@ namespace Gsage {
       class_<Engine, EventDispatcher>("Engine")
         .def("removeEntity", (bool(Engine::*)(const std::string& id))&Engine::removeEntity)
         .def("getEntity", &Engine::getEntity)
+        .def("getSystem", (EngineSystem*(Engine::*)(const std::string& name))&Engine::getSystem)
         .property("render", &Engine::getSystem<OgreRenderSystem>)
         .property("movement", &Engine::getSystem<RecastMovementSystem>)
         .property("script", &Engine::getSystem<LuaScriptSystem>),

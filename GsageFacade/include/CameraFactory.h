@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _CameraFactory_H_
 
 #include "GsageDefinitions.h"
+#include "PtreeExtensions.h"
 #include "Serializable.h"
 #include "EventSubscriber.h"
 

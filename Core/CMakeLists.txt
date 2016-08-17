@@ -1,4 +1,4 @@
-set(COMMON_LIB "Core")
+set(COMMON_LIB "GsageCore")
 
 include_directories(include/)
 
@@ -17,8 +17,18 @@ include_directories( ${OIS_INCLUDE_DIRS}
   ${OGRE_SAMPLES_INCLUDEPATH}
   )
 
-add_library(${COMMON_LIB} STATIC ${headers} ${sources})
+add_library(${COMMON_LIB} ${headers} ${sources})
 
 set_target_properties(${COMMON_LIB} PROPERTIES DEBUG_POSTFIX _d)
 
 target_link_libraries(${COMMON_LIB} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${LUABIND_LIBRARIES})
+
+install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(TARGETS ${COMMON_LIB}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static)
+install(TARGETS ${COMMON_LIB} DESTINATION /usr/local/lib)

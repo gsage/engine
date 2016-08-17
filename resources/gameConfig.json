@@ -10,6 +10,8 @@
 
   "plugins":
   [
+    "/usr/local/lib/libSFMLAudioPlugin",
+    "PlugIns/Plugin_ParticleUniverseFactory"
   ],
 
   "render":

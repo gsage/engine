@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _AnimationScheduler_H_
 
 #include "Serializable.h"
+#include "PtreeExtensions.h"
 
 #define DEFAULT_FADE_SPEED 5.0f
 #define LOOP -1

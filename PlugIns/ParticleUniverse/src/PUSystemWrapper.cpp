@@ -30,78 +30,82 @@ THE SOFTWARE.
 
 #include "Logger.h"
 
-const std::string PUSystemWrapper::TYPE = "puSystem";
-
-PUSystemWrapper::PUSystemWrapper()
-  : mParticleSystem(0)
-  , mStartOnCreate(false)
+namespace Gsage
 {
-  BIND_PROPERTY("startOnCreate", &mStartOnCreate);
-  BIND_ACCESSOR("template", &PUSystemWrapper::setTemplateName, &PUSystemWrapper::getTemplateName);
-}
 
-PUSystemWrapper::~PUSystemWrapper()
-{
-}
+  const std::string PUSystemWrapper::TYPE = "puSystem";
 
-bool PUSystemWrapper::read(const DataNode& node)
-{
-  ParticleUniverse::ParticleSystemManager* psManager = ParticleUniverse::ParticleSystemManager::getSingletonPtr();
-  OgreObject::read(node, "name");
-  mParticleSystem = psManager->createParticleSystem(mObjectId, mSceneManager);
+  PUSystemWrapper::PUSystemWrapper()
+    : mParticleSystem(0)
+    , mStartOnCreate(false)
+  {
+    BIND_PROPERTY("startOnCreate", &mStartOnCreate);
+    BIND_ACCESSOR("template", &PUSystemWrapper::setTemplateName, &PUSystemWrapper::getTemplateName);
+  }
 
-  OgreObject::read(node, "startOnCreate");
-  OgreObject::read(node, "template");
-  mParticleSystem->setScale(1 / mParentNode->getScale());
-  mParentNode->attachObject(mParticleSystem);
-  if(mStartOnCreate)
+  PUSystemWrapper::~PUSystemWrapper()
+  {
+  }
+
+  bool PUSystemWrapper::read(const DataNode& node)
+  {
+    ParticleUniverse::ParticleSystemManager* psManager = ParticleUniverse::ParticleSystemManager::getSingletonPtr();
+    OgreObject::read(node, "name");
+    mParticleSystem = psManager->createParticleSystem(mObjectId, mSceneManager);
+
+    OgreObject::read(node, "startOnCreate");
+    OgreObject::read(node, "template");
+    mParticleSystem->setScale(1 / mParentNode->getScale());
+    mParentNode->attachObject(mParticleSystem);
+    if(mStartOnCreate)
+      mParticleSystem->start();
+  }
+
+  void PUSystemWrapper::setTemplateName(const std::string& templateName)
+  {
+    ParticleUniverse::ParticleSystem* pTemplate = ParticleUniverse::ParticleSystemManager::getSingletonPtr()->getParticleSystemTemplate(templateName);
+    *mParticleSystem = *pTemplate;
+    pTemplate->copyAttributesTo(mParticleSystem);
+    mParticleSystem->setTemplateName(templateName);
+  }
+
+  const std::string& PUSystemWrapper::getTemplateName() const
+  {
+    return mParticleSystem->getTemplateName();
+  }
+
+  void PUSystemWrapper::start()
+  {
     mParticleSystem->start();
-}
+  }
 
-void PUSystemWrapper::setTemplateName(const std::string& templateName)
-{
-  ParticleUniverse::ParticleSystem* pTemplate = ParticleUniverse::ParticleSystemManager::getSingletonPtr()->getParticleSystemTemplate(templateName);
-  *mParticleSystem = *pTemplate;
-  pTemplate->copyAttributesTo(mParticleSystem);
-  mParticleSystem->setTemplateName(templateName);
-}
+  void PUSystemWrapper::stop()
+  {
+    mParticleSystem->stop();
+  }
 
-const std::string& PUSystemWrapper::getTemplateName() const
-{
-  return mParticleSystem->getTemplateName();
-}
+  void PUSystemWrapper::pause()
+  {
+    mParticleSystem->pause();
+  }
 
-void PUSystemWrapper::start()
-{
-  mParticleSystem->start();
-}
+  void PUSystemWrapper::pause(const float& time)
+  {
+    mParticleSystem->pause(time);
+  }
 
-void PUSystemWrapper::stop()
-{
-  mParticleSystem->stop();
-}
+  void PUSystemWrapper::resume()
+  {
+    mParticleSystem->resume();
+  }
 
-void PUSystemWrapper::pause()
-{
-  mParticleSystem->pause();
-}
+  void PUSystemWrapper::destroy()
+  {
+    ParticleUniverse::ParticleSystemManager* psManager = ParticleUniverse::ParticleSystemManager::getSingletonPtr();
+    OgreObject::destroy();
+    if(!psManager || !mParticleSystem)
+      return;
 
-void PUSystemWrapper::pause(const float& time)
-{
-  mParticleSystem->pause(time);
-}
-
-void PUSystemWrapper::resume()
-{
-  mParticleSystem->resume();
-}
-
-void PUSystemWrapper::destroy()
-{
-  ParticleUniverse::ParticleSystemManager* psManager = ParticleUniverse::ParticleSystemManager::getSingletonPtr();
-  OgreObject::destroy();
-  if(!psManager || !mParticleSystem)
-    return;
-
-  psManager->destroyParticleSystem(mParticleSystem, mSceneManager);
+    psManager->destroyParticleSystem(mParticleSystem, mSceneManager);
+  }
 }

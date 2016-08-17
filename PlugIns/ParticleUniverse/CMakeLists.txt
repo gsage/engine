@@ -2,10 +2,9 @@ set(LIB_NAME "Plugin_ParticleUniverseFactory")
 
 include_directories(./include)
 include_directories(${cosmos_SOURCE_DIR}/Core/include)
-include_directories(${cosmos_SOURCE_DIR}/Components/HandleManager/include)
 include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
 
-set(LIBS GsageFacade ${OGRE_LIBRARIES} ${LUABIND_LIBRARIES} ${Boost_LIBRARIES} ${OGRE_Plugin_ParticleUniverse_LIBRARY})
+set(LIBS GsageCore GsageFacade ${OGRE_LIBRARIES} ${LUABIND_LIBRARIES} ${Boost_LIBRARIES} ${OGRE_Plugin_ParticleUniverse_LIBRARY})
 include_directories(
   ${OGRE_INCLUDE_DIRS}
   ${LUABIND_INCLUDE_DIRS}

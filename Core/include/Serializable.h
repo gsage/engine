@@ -28,7 +28,7 @@ THE SOFTWARE.
 #define __SERIALIZABLE_H__
 
 #include "GsageDefinitions.h"
-#include "PtreeExtensions.h"
+#include <map>
 
 #define BIND_PROPERTY(name, property) registerProperty(name, property)
 #define BIND_PROPERTY_WITH_PRIORITY(name, property, priority) registerProperty(name, property, 0, priority)

@@ -16,12 +16,7 @@
 namespace Gsage
 {
   class Engine;
-}
-
-class LuaInterface;
-
-namespace ParticleUniverseFactory
-{
+  class LuaInterface;
   class PUSystemPlugin : public IPlugin
   {
     public:
