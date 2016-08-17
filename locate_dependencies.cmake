@@ -40,7 +40,7 @@ if(APPLE)
 set(OGRE_STATIC true)
 endif(APPLE)
 find_package(OGRE REQUIRED)
-#ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
+ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
 
 find_package(OIS REQUIRED)
 find_package(Luabind REQUIRED)

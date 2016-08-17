@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _OgreObject_H_
 
 #include "Serializable.h"
+#include "PtreeExtensions.h"
 
 
 namespace Ogre

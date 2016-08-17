@@ -23,10 +23,10 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 
 set(LUABIND_ROOT_DIR
-        "${LUABIND_ROOT_DIR}"
-        CACHE
-        PATH
-        "Path to search for Luabind")
+  "${LUABIND_ROOT_DIR}"
+  CACHE
+  PATH
+  "Path to search for Luabind")
 
 ###
 # Dependencies
@@ -38,41 +38,41 @@ find_package(LuaJIT QUIET)
 # Configure Luabind
 ###
 find_path(LUABIND_INCLUDE_DIR
-        NAMES
-        luabind/luabind.hpp
-        HINTS
-        "${LUABIND_ROOT_DIR}"
-        PATH_SUFFIXES
-        include)
+  NAMES
+  luabind/luabind.hpp
+  HINTS
+  "${LUABIND_ROOT_DIR}"
+  PATH_SUFFIXES
+  include)
 mark_as_advanced(LUABIND_INCLUDE_DIR)
 
 find_library(LUABIND_LIBRARY
-        NAMES
-        luabind
-        luabindd
-        HINTS
-        "${LUABIND_ROOT_DIR}"
-        PATH_SUFFIXES
-        lib64
-        lib
-        stage)
+  NAMES
+  luabind
+  luabindd
+  HINTS
+  "${LUABIND_ROOT_DIR}"
+  PATH_SUFFIXES
+  lib64
+  lib
+  stage)
 mark_as_advanced(LUABIND_LIBRARY)
 
 # handle the QUIETLY and REQUIRED arguments and set xxx_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Luabind
-        DEFAULT_MSG
-        LUABIND_LIBRARY
-        LUABIND_INCLUDE_DIR
-        LUAJIT_LIBRARIES
-        LUAJIT_INCLUDE_DIR)
+  DEFAULT_MSG
+  LUABIND_LIBRARY
+  LUABIND_INCLUDE_DIR
+  LUAJIT_LIBRARIES
+  LUAJIT_INCLUDE_DIR)
 
 if(LUABIND_FOUND)
-        set(LUABIND_INCLUDE_DIRS "${LUABIND_INCLUDE_DIR}" "${LUAJIT_INCLUDE_DIR}")
-        set(LUABIND_LIBRARIES "${LUABIND_LIBRARY}" ${LUAJIT_LIBRARIES})
-        set(LUABIND_DEFINITIONS "-DLUABIND_DYNAMIC_LINK")
-        mark_as_advanced(LUABIND_ROOT_DIR)
+  set(LUABIND_INCLUDE_DIRS "${LUABIND_INCLUDE_DIR}" "${LUAJIT_INCLUDE_DIR}")
+  set(LUABIND_LIBRARIES "${LUABIND_LIBRARY}" ${LUAJIT_LIBRARIES})
+  set(LUABIND_DEFINITIONS "-DLUABIND_DYNAMIC_LINK")
+  mark_as_advanced(LUABIND_ROOT_DIR)
 else(LUABIND_FOUND)
-        message("Luabind not found, try to define LUABIND_ROOT_DIR")
+  message("Luabind not found, try to define LUABIND_ROOT_DIR")
 endif()

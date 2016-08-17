@@ -31,11 +31,8 @@ THE SOFTWARE.
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp> 
-#include <boost/uuid/uuid_io.hpp>
-
 namespace Gsage {
+  static long counter = 0;
 
   OgreObject::OgreObject()
     : mParentNode(0)
@@ -88,8 +85,8 @@ namespace Gsage {
 
     auto objectId = node.get_optional<std::string>("name");
     if (!objectId) {
-      std::stringstream ss;
-      ss << boost::uuids::random_generator()();
+      std::stringstream ss("");
+      ss << "object" << counter++;
       mObjectId = ss.str();
     }
 

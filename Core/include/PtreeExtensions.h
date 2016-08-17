@@ -34,10 +34,10 @@ THE SOFTWARE.
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#include <istream>
-#include <ostream>
 #include "GsageDefinitions.h"
 
+#include <istream>
+#include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <algorithm> 
@@ -48,22 +48,6 @@ THE SOFTWARE.
 #include "Logger.h"
 
 using namespace Gsage;
-
-static inline std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-
-static inline std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
-}
 
 static inline float fromHex(const unsigned int& value, const int& offset)
 {

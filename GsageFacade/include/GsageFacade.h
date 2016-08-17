@@ -27,8 +27,6 @@ THE SOFTWARE.
 #ifndef _GsageFacade_H_
 #define _GsageFacade_H_
 
-#include <OgreTimer.h>
-#include <OgreVector3.h>
 #include <atomic>
 #include "ObjectPool.h"
 #include "DynLib.h"
@@ -39,6 +37,11 @@ THE SOFTWARE.
 // forward declarations ------
 
 struct lua_State;
+
+namespace Ogre
+{
+  class Timer;
+}
 
 namespace Gsage
 {
@@ -198,7 +201,7 @@ namespace Gsage
 
       DataNode mConfig;
 
-      Ogre::Timer mTimer;
+      Ogre::Timer* mTimer;
       unsigned long mTimeSinceLastUpdate;
 
       Engine mEngine;

@@ -16,14 +16,24 @@ include_directories( ${OIS_INCLUDE_DIRS}
 link_directories(${cosmos_BINARY_DIR}/Core)
 link_directories(${cosmos_BINARY_DIR}/Components/OgreCrowd)
 
-FILE(GLOB sources src/*.cpp src/*/*.cpp )
+file(GLOB sources src/*.cpp src/*/*.cpp )
 
-ADD_LIBRARY(${LIB_NAME} ${sources})
+add_library(${LIB_NAME} ${sources})
 
-set(LIBS OgreCrowd Core ${OGRE_Terrain_LIBRARY} ${OGRE_Overlay_LIBRARY})
+set(LIBS OgreCrowd GsageCore ${OGRE_Terrain_LIBRARY} ${OGRE_Overlay_LIBRARY})
 
 if(WIN32)
   add_definitions(-DLUABIND_DYNAMIC_LINK)
 endif(WIN32)
 
 target_link_libraries(${LIB_NAME} ${LIBS})
+
+install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(TARGETS ${LIB_NAME}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static)
+install(TARGETS ${LIB_NAME} DESTINATION /usr/local/lib)

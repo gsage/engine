@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _EditorFacade_H_
 
 #include "GsageFacade.h"
+#include <queue>
 
 namespace Gsage {
   class EditorFacade : public GsageFacade
