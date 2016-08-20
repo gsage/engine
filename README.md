@@ -145,3 +145,6 @@ Note that I want you to have only one commit in your PR. So squash it if you hav
 # LICENSE
 
 This project is licensed under MIT
+
+# Plugins
+- [Audio system plugin based on SFML](https://github.com/gsage/SFMLAudioSystemPlugin)
