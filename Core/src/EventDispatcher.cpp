@@ -47,7 +47,7 @@ namespace Gsage {
     }
   }
 
-  EventDispatcher::EventConnection EventDispatcher::addEventListener(const std::string& eventType, EventCallback callback, const int priority)
+  EventConnection EventDispatcher::addEventListener(const std::string& eventType, EventCallback callback, const int priority)
   {
     if(!hasListenersForType(eventType))
       mSignals[eventType] = new EventSignal();
@@ -67,4 +67,64 @@ namespace Gsage {
 
     (*mSignals[event.getType()])(this, event);
   }
+
+  EventSignal::EventSignal()
+  {
+
+  }
+
+  EventSignal::~EventSignal()
+  {
+  }
+
+  EventConnection EventSignal::connect(const int priority, EventCallback callback)
+  {
+    if(mConnections.count(priority) == 0)
+    {
+      mConnections[priority] = CallbacksList();
+    }
+
+    int id = mConnections[priority].empty() ? 0 : mConnections[priority].end()->first + 1;
+    mConnections[priority].insert(std::make_pair(id, callback));
+    return EventConnection(this, priority, id);
+  }
+
+  void EventSignal::operator()(EventDispatcher* dispatcher, const Event& event)
+  {
+    for(auto pair : mConnections)
+    {
+      for(auto p : pair.second)
+      {
+        if(!p.second(dispatcher, event))
+        {
+          break;
+        }
+      }
+    }
+  }
+
+  void EventSignal::disconnect(int priority, int id)
+  {
+    if(mConnections.count(priority) == 0)
+      return;
+
+    mConnections[priority].erase(id);
+  }
+
+  EventConnection::EventConnection(EventSignal* signal, int priority, int id)
+    : mSignal(signal)
+    , mPriority(priority)
+    , mId(id)
+  {
+  }
+
+  EventConnection::~EventConnection()
+  {
+  }
+
+  void EventConnection::disconnect()
+  {
+    mSignal->disconnect(mPriority, mId);
+  }
 }
+

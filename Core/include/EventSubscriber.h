@@ -56,7 +56,7 @@ namespace Gsage {
       class HandlerDescriptor
       {
         public:
-          HandlerDescriptor(CallbackMemFn callback, EventDispatcher::EventConnection connection) : mCallback(callback), mConnection(connection) {};
+          HandlerDescriptor(CallbackMemFn callback, EventConnection connection) : mCallback(callback), mConnection(connection) {};
 
           void disconnect()
           {
@@ -74,7 +74,7 @@ namespace Gsage {
           }
         private:
           CallbackMemFn mCallback;
-          EventDispatcher::EventConnection mConnection;
+          EventConnection mConnection;
       };
 
       EventSubscriber() {};
@@ -116,7 +116,7 @@ namespace Gsage {
           addEventListener(dispatcher, DispatcherEvent::FORCE_UNSUBSCRIBE, &EventSubscriber<C>::onForceUnsubscribe);
         }
 
-        mConnections[subscription].push_back(HandlerDescriptor(callback, dispatcher->addEventListener(eventType, boost::bind(callback, (C*)this, _1, _2), priority)));
+        mConnections[subscription].push_back(HandlerDescriptor(callback, dispatcher->addEventListener(eventType, std::bind(callback, (C*)this, std::placeholders::_1, std::placeholders::_2), priority)));
       }
 
       /**

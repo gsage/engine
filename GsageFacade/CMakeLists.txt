@@ -29,7 +29,7 @@ endif(WIN32)
 target_link_libraries(${LIB_NAME} ${LIBS})
 
 install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
-  FILES_MATCHING PATTERN "*.h"
+  FILES_MATCHING PATTERN "*.(h|hpp)"
 )
 
 install(TARGETS ${LIB_NAME}
