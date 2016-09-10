@@ -25,8 +25,7 @@ THE SOFTWARE.
 */
 
 #include "lua/LuaInterface.h"
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
+
 #include <luabind/adopt_policy.hpp>
 #include <luabind/iterator_policy.hpp>
 #include <luabind/operator.hpp>

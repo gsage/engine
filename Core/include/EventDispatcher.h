@@ -27,30 +27,75 @@ THE SOFTWARE.
 #ifndef _EventDispatcher_H_
 #define _EventDispatcher_H_
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/signals2.hpp>
 #include <algorithm>
 #include <map>
 #include <memory>
 #include <vector>
 
 namespace Gsage {
+  class EventDispatcher;
+  class EventSignal;
+  class Event;
+
   /**
-   * Class requred to enhance boost::sinals so it can support event propagation cancelling
+   * std function that represents event callback
    */
-  struct InterruptableCombiner {
-    typedef bool result_type;
-    template <typename InputIterator> result_type operator()(InputIterator aFirstObserver, InputIterator aLastObserver) const {
-      result_type val = true;
-      for (; aFirstObserver != aLastObserver && val; ++aFirstObserver)  {
-        val = *aFirstObserver;
-      }
-      return val;
-    }
+  typedef std::function<bool (EventDispatcher*, const Event&)> EventCallback;
+
+  /**
+   * Identifies single connection to the EventSignal
+   * - signal pointer
+   * - priority int
+   * - id int
+   */
+  class EventConnection
+  {
+    public:
+      EventConnection(EventSignal* signal, int priority, int id);
+      virtual ~EventConnection();
+      /**
+       * Disconnect underlying connection
+       */
+      void disconnect();
+    private:
+      EventSignal* mSignal;
+      int mPriority;
+      int mId;
   };
 
-  class EventDispatcher;
+  /**
+   * Lightweight version of boost::signal2
+   */
+  class EventSignal
+  {
+    public:
+      EventSignal();
+      virtual ~EventSignal();
+      /**
+       * Connect to signal
+       * @param priority 0 means the biggest priority
+       * @param callback function to call
+       */
+      EventConnection connect(const int priority, EventCallback callback);
+
+      /**
+       * Call signall
+       * @param dispatcher pointer to dispatcher which calls this signal
+       * @param event to pass
+       */
+      void operator()(EventDispatcher* dispatcher, const Event& event);
+
+      /**
+       *Disconnect one callback identified by priority and id
+       */
+      void disconnect(int priority, int id);
+    private:
+      typedef std::map<int, EventCallback> CallbacksList;
+
+      typedef std::map<int, CallbacksList> Connections;
+
+      Connections mConnections;
+  };
 
   /**
    * Abstract event class
@@ -85,19 +130,6 @@ namespace Gsage {
 
       EventDispatcher();
       virtual ~EventDispatcher();
-
-      /**
-       * Boost signals connection
-       */
-      typedef boost::signals2::connection EventConnection;
-      /**
-       * Boost function that represents event callback
-       */
-      typedef boost::function<bool (EventDispatcher*, const Event&)> EventCallback;
-      /**
-       * Boost signal
-       */
-      typedef boost::signals2::signal<bool (EventDispatcher*, const Event&), InterruptableCombiner> EventSignal;
       /**
        * All event bindings
        */

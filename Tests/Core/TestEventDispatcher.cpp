@@ -64,6 +64,14 @@ class TestEventHandler : public EventSubscriber<TestEventHandler>
       return true;
     }
 
+    bool onTestEvent3(EventDispatcher* sender, const Event& event)
+    {
+      TestEvent e = (TestEvent&)event;
+      e.setHandled(mName);
+      receivedEvents.push_back(e);
+      return true;
+    }
+
     TestEvents& receivedEvents;
     std::string mName;
 
@@ -97,6 +105,12 @@ TEST_F(TestEventDispatcher, TestSimpleFlow)
 
   mInstance->fireEvent(TestEvent(TestEvent::PING, 100));
   ASSERT_EQ(receivedEvents.size(), 1);
+
+  handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+  handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent2);
+  handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent3);
+  mInstance->fireEvent(TestEvent(TestEvent::PING, 100));
+  ASSERT_EQ(receivedEvents.size(), 4);
 }
 
 /**
