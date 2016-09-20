@@ -44,7 +44,7 @@ namespace Gsage {
   /**
    * Ogre render system component
    */
-  class RenderComponent : public Component
+  class RenderComponent : public EntityComponent
   {
     public:
       static const std::string SYSTEM;
@@ -129,11 +129,11 @@ namespace Gsage {
       /**
        * Reads component root node
        */
-      DataNode getRootNode();
+      Dictionary getRootNode();
       /**
        * Reads component animations
        */
-      DataNode getAnimations();
+      Dictionary getAnimations();
 
       /**
        * Get root SceneNodeWrapper
@@ -141,15 +141,15 @@ namespace Gsage {
       SceneNodeWrapper* getRoot();
 
       /**
-       * Read additional resources paths from the DataNode
-       * @param node DataNode with all resources settings
+       * Read additional resources paths from the Dictionary
+       * @param resources Dictionary with all resources settings
        */
-      void setResources(const DataNode& node);
+      void setResources(const Dictionary& resources);
 
       /**
        * Get resources
        */
-      const DataNode& getResources() const;
+      const Dictionary& getResources() const;
     private:
       friend class OgreRenderSystem;
       bool mAddedToScene;
@@ -157,7 +157,7 @@ namespace Gsage {
       AnimationScheduler mAnimationScheduler;
       SceneNodeWrapper* mRootNode;
 
-      DataNode mResources;
+      Dictionary mResources;
   };
 }
 

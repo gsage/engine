@@ -66,11 +66,11 @@ namespace Gsage {
 
       // Overriding all functions that work with Ogre to enable context switching
 
-      bool initialize(const DataNode& settings);
+      bool initialize(const Dictionary& settings);
 
-      bool configure(const DataNode& config);
+      bool configure(const Dictionary& config);
 
-      bool fillComponentData(RenderComponent* component, const DataNode& data);
+      bool fillComponentData(RenderComponent* component, const Dictionary& data);
 
       void update(const double& time);
 

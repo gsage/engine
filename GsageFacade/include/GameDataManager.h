@@ -27,12 +27,11 @@ THE SOFTWARE.
 #ifndef _GameDataManager_H_
 #define _GameDataManager_H_
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include <istream>
 #include <ostream>
 #include <map>
 #include "GsageDefinitions.h"
+#include "Dictionary.h"
 
 namespace Gsage
 {
@@ -46,9 +45,7 @@ namespace Gsage
   class GameDataManager
   {
     public:
-      typedef std::map<std::string, std::string> TemplateParameters;
-
-      GameDataManager(Engine* engine, const DataNode& config);
+      GameDataManager(Engine* engine, const Dictionary& config);
       virtual ~GameDataManager();
 
       /**
@@ -74,7 +71,7 @@ namespace Gsage
        *
        * @param name Template file name
        */
-      Entity* createEntity(const std::string& name, const TemplateParameters& params);
+      Entity* createEntity(const std::string& name, const Dictionary& params);
       /**
        * Adds character
        *
@@ -105,7 +102,7 @@ namespace Gsage
     private:
       static const std::string CONFIG_SECTION;
 
-      DataNode* mCurrentSaveFile;
+      Dictionary* mCurrentSaveFile;
 
       Engine* mEngine;
 
@@ -117,7 +114,7 @@ namespace Gsage
 
       bool loadCharacters(const std::string& area);
 
-      DataNode& getSaveFile();
+      Dictionary& getSaveFile();
       void resetSaveFile();
 
       const std::string readFile(const std::string& path);

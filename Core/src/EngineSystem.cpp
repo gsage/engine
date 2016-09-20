@@ -39,7 +39,7 @@ EngineSystem::~EngineSystem()
 {
 }
 
-bool EngineSystem::configure(const DataNode& config)
+bool EngineSystem::configure(const Dictionary& config)
 {
   mConfig = config;
   mEnabled = mConfig.get("enabled", true);
@@ -47,12 +47,12 @@ bool EngineSystem::configure(const DataNode& config)
   return true;
 }
 
-const DataNode& EngineSystem::getConfig()
+const Dictionary& EngineSystem::getConfig()
 {
   return mConfig;
 }
 
-bool EngineSystem::initialize(const DataNode& settings)
+bool EngineSystem::initialize(const Dictionary& settings)
 {
   return mReady = true;
 }

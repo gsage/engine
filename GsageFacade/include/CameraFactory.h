@@ -28,7 +28,6 @@ THE SOFTWARE.
 #define _CameraFactory_H_
 
 #include "GsageDefinitions.h"
-#include "PtreeExtensions.h"
 #include "Serializable.h"
 #include "EventSubscriber.h"
 
@@ -40,6 +39,7 @@ namespace MOC
 namespace Ogre
 {
   class SceneManager;
+  class Camera;
 }
 
 namespace Gsage
@@ -260,7 +260,7 @@ namespace Gsage
        * @param time Elapsed time
        */
       virtual void update(const double& time);
-      virtual bool read(const DataNode& node);
+      virtual bool read(const Dictionary& dict);
     protected:
       bool onMouseButton(EventDispatcher* sender, const Event& event);
       bool onMouseMove(EventDispatcher* sender, const Event& event);
@@ -288,7 +288,7 @@ namespace Gsage
        * @param renderSystem Ogre render system to attach to
        * @param engine Gsage core
        */
-      virtual CameraController* create(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine) = 0;
+      virtual CameraController* create(const Dictionary& settings, OgreRenderSystem* renderSystem, Engine* engine) = 0;
   };
 
   template<typename TController>
@@ -303,7 +303,7 @@ namespace Gsage
        * @param renderSystem Ogre render system to attach to
        * @param engine Gsage core
        */
-      CameraController* create(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine);
+      CameraController* create(const Dictionary& settings, OgreRenderSystem* renderSystem, Engine* engine);
   };
 
   /**
@@ -324,7 +324,7 @@ namespace Gsage
        * @param renderSystem Ogre render system to attach to
        * @param engine Gsage core
        */
-      CameraController* initializeController(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine);
+      CameraController* initializeController(const Dictionary& settings, OgreRenderSystem* renderSystem, Engine* engine);
     private:
       typedef std::map<std::string, ControllerFactory*> ControllerFactories;
       ControllerFactories mControllerFactories;

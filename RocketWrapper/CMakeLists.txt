@@ -15,18 +15,62 @@ include_directories( ${OIS_INCLUDE_DIRS}
   ${LIBROCKET_INCLUDE_DIRS}
 )
 
-link_directories(${cosmos_BINARY_DIR}/GsageCore)
+link_directories(${cosmos_BINARY_DIR}/Core)
 link_directories(${cosmos_BINARY_DIR}/Components/OgreCrowd)
 link_directories(${cosmos_BINARY_DIR}/GsageFacade)
 
-add_definitions(-DRESOURCES_FOLDER="../../resources")
 
 FILE(GLOB headers include/*.h include/*/*.h)
 
 FILE(GLOB sources src/*.cpp s src/*/*.cpp )
 ADD_EXECUTABLE(${APP_NAME} ${headers} ${sources})
 ADD_LIBRARY(${LIB_NAME} ${sources})
-set(LIBS GsageFacade ${LIBROCKET_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${LUABIND_LIBRARIES} ${Boost_LIBRARIES})
+set(LIBS
+  GsageFacade
+  ${LIBROCKET_LIBRARIES}
+  ${OGRE_Overlay_LIBRARIES}
+  ${LUABIND_LIBRARIES}
+  ${Boost_LIBRARIES})
+
+if(APPLE)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/Main.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+  set(LIBS ${LIBS}
+    ${COREFOUNDATION_LIBRARY}
+    ${CARBON}
+    ${IOKIT}
+    ${COCOA_LIBRARY}
+    )
+  set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE TRUE)
+  set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.\${PRODUCT_NAME:rfc1034identifier}")
+  #set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 -image_base 7fff04c4a000" )
+  option ( LUA_USE_POSIX "Use POSIX functionality." ON )
+  option ( LUA_USE_DLOPEN "Use dynamic linker to load modules." ON )
+  set ( LJVM_MODE machasm )
+
+  set(APP_FRAMEWORKS_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Debug/${APP_NAME}.app/Contents/Frameworks")
+  set(APP_RESOURCES_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Debug/${APP_NAME}.app/Contents/Resources/")
+
+  if(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+      COMMAND mkdir -p ${APP_FRAMEWORKS_DIRECTORY}
+    )
+  endif(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
+
+  if(NOT EXISTS ${APP_RESOURCES_DIRECTORY})
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+      COMMAND mkdir -p ${APP_RESOURCES_DIRECTORY}
+    )
+  endif(NOT EXISTS ${APP_RESOURCES_DIRECTORY})
+
+  add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND cp -rf $ENV{OGRE_HOME}/lib/${CMAKE_BUILD_TYPE}/ ${APP_FRAMEWORKS_DIRECTORY}
+  )
+  add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND cp -rf ${PROJECT_SOURCE_DIR}/resources/* ${APP_RESOURCES_DIRECTORY}
+  )
+  add_definitions(-DRESOURCES_FOLDER="../Resources")
+endif(APPLE)
 
 if(WIN32)
   set(LINK_FLAGS "/SUBSYSTEM:WINDOWS")
@@ -47,9 +91,13 @@ if(WIN32 AND NOT MINGW)
     COMMAND copy \"$(TargetPath)\" .\\bin )
 endif(WIN32 AND NOT MINGW)
 
-add_custom_command(TARGET ${APP_NAME} POST_BUILD
-  COMMAND cp -rf ${PROJECT_SOURCE_DIR}/resources ${PROJECT_BINARY_DIR}/bin
-)
+if(NOT APPLE)
+  add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND cp -rf ${PROJECT_SOURCE_DIR}/resources ${PROJECT_BINARY_DIR}/bin
+  )
+
+  add_definitions(-DRESOURCES_FOLDER="../../resources")
+endif(NOT APPLE)
 
 if(MINGW OR UNIX)
   set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)

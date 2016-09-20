@@ -34,7 +34,7 @@ struct lua_State;
 
 namespace Gsage
 {
-  class Component;
+  class EntityComponent;
   class Entity;
   class ScriptComponent;
 
@@ -45,11 +45,15 @@ namespace Gsage
       virtual ~LuaScriptSystem();
 
       /**
+       * @copydoc EngineSystem::initialize()
+       */
+      virtual bool initialize(const Dictionary& settings);
+      /**
        * Registers the script in the script system
        * @param component ScriptComponent that contains all stuff
-       * @param data DataNode with the script serialized data
+       * @param data Dictionary with the script serialized data
        */
-      bool fillComponentData(ScriptComponent* component, const DataNode& data);
+      bool fillComponentData(ScriptComponent* component, const Dictionary& data);
 
       /**
        * Initialize script system with the specified lua state
@@ -108,6 +112,8 @@ namespace Gsage
 
       typedef std::vector<luabind::object> UpdateListeners;
       UpdateListeners mUpdateListeners;
+
+      std::string mWorkdir;
   };
 }
 #endif

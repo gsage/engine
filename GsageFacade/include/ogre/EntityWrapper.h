@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _EntityWrapper_H_
 
 #include "ogre/MovableObjectWrapper.h"
+#include "Dictionary.h"
 #include <OgreSkeleton.h>
 
 namespace Ogre
@@ -85,7 +86,7 @@ namespace Gsage {
        * @param entityId Id of new entity
        * @param movableObjectData MovableObject to create and attach
        */
-      void attachToBone(const std::string& boneId, const std::string& entityId, DataNode movableObjectData);
+      void attachToBone(const std::string& boneId, const std::string& entityId, Dictionary movableObjectData);
     private:
       Ogre::SkeletonAnimationBlendMode mAnimBlendMode;
 

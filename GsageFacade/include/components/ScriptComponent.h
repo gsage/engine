@@ -34,7 +34,7 @@ struct lua_State;
 
 namespace Gsage {
 
-  class ScriptComponent : public Component
+  class ScriptComponent : public EntityComponent
   {
     public:
       static const std::string SYSTEM;

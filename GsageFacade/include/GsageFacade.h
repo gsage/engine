@@ -33,6 +33,7 @@ THE SOFTWARE.
 
 #include "Engine.h"
 #include "EventSubscriber.h"
+#include "FileLoader.h"
 
 // forward declarations ------
 
@@ -89,7 +90,7 @@ namespace Gsage
        *
        * @param gsageConfigPath Path to the file with facade settings
        */
-      virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, DataNode* configOverride = 0);
+      virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, Dictionary* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
       /**
        * Register new system in the engine
        */
@@ -199,7 +200,7 @@ namespace Gsage
       std::string mStartupScript;
       std::atomic<bool> mStopped;
 
-      DataNode mConfig;
+      Dictionary mConfig;
 
       Ogre::Timer* mTimer;
       unsigned long mTimeSinceLastUpdate;

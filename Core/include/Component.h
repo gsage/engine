@@ -38,11 +38,11 @@ namespace Gsage
    * Abstract component class.
    * Every entity consists of aggregation of such components
    */
-  class Component : public Serializable<Component>
+  class EntityComponent : public Serializable<EntityComponent>
   {
     public:
-      Component();
-      virtual ~Component();
+      EntityComponent();
+      virtual ~EntityComponent();
 
       /**
        * Set pointer to the owner of the component
@@ -58,9 +58,9 @@ namespace Gsage
       /**
        * Get serialized component variables
        */
-      virtual DataNode getNode()
+      virtual Dictionary getNode()
       {
-        DataNode node;
+        Dictionary node;
         dump(node);
         return node;
       };

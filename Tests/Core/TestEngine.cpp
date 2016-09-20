@@ -7,7 +7,7 @@
 
 using namespace Gsage;
 
-class SpeedComponent : public Component
+class SpeedComponent : public EntityComponent
 {
   public:
     SpeedComponent()
@@ -21,7 +21,7 @@ class SpeedComponent : public Component
     double value;
 };
 
-class AccelerationComponent : public Component
+class AccelerationComponent : public EntityComponent
 {
   public:
     AccelerationComponent()
@@ -44,9 +44,9 @@ class AccelerationSystem : public ComponentStorage<AccelerationComponent>
 
     }
 
-    bool fillComponentData(AccelerationComponent* c, const DataNode& data)
+    bool fillComponentData(AccelerationComponent* c, const Dictionary& data)
     {
-      c->value = data.get<double>("acceleration");
+      c->value = data.get<double>("acceleration").first;
       return true;
     }
 };
@@ -63,9 +63,9 @@ class TestSystem : public ComponentStorage<SpeedComponent>
       component->value *= mEngine->getComponent<AccelerationComponent>(*entity, "accelerator")->value;
     }
 
-    bool fillComponentData(SpeedComponent* c, const DataNode& data)
+    bool fillComponentData(SpeedComponent* c, const Dictionary& data)
     {
-      c->value = data.get<double>("speed");
+      c->value = data.get<double>("speed").first;
       return true;
     }
 };
@@ -91,20 +91,20 @@ TEST_F(TestEngine, TestAddSystem)
   TestSystem system;
   mInstance->addSystem("speed", &system);
   mInstance->addSystem("accelerator", new AccelerationSystem());
-  DataNode entityData;
-  DataNode speed;
-  DataNode accelerator;
+  Dictionary entityData;
+  Dictionary speed;
+  Dictionary accelerator;
   speed.put("speed", 2.0);
   accelerator.put("acceleration", 1.5);
 
   entityData.put("id", "test");
-  entityData.put_child("speed", speed);
-  entityData.put_child("accelerator", accelerator);
+  entityData.put("speed", speed);
+  entityData.put("accelerator", accelerator);
 
-  DataNode entityData2;
+  Dictionary entityData2;
   entityData2.put("id", "test2");
-  entityData2.put_child("speed", speed);
-  entityData2.put_child("accelerator", accelerator);
+  entityData2.put("speed", speed);
+  entityData2.put("accelerator", accelerator);
 
   Entity* e = mInstance->createEntity(entityData);
   Entity* e2 = mInstance->createEntity(entityData2);
@@ -134,14 +134,14 @@ TEST_F(TestEngine, TestEntityAddFailure)
   TestSystem system;
   mInstance->addSystem("speed", &system);
   mInstance->addSystem("accelerator", new AccelerationSystem());
-  DataNode entityData;
-  DataNode speed;
-  DataNode accelerator;
+  Dictionary entityData;
+  Dictionary speed;
+  Dictionary accelerator;
   speed.put("speed", 2.0);
   accelerator.put("acceleration", 1.5);
 
-  entityData.put_child("speed", speed);
-  entityData.put_child("accelerator", accelerator);
+  entityData.put("speed", speed);
+  entityData.put("accelerator", accelerator);
 
   ASSERT_TRUE(mInstance->createEntity(entityData) == 0);
 

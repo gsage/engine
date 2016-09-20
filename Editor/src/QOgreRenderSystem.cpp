@@ -62,26 +62,25 @@ namespace Gsage {
     mOgreContext->create();
   }
 
-  bool QOgreRenderSystem::initialize(const DataNode& settings)
+  bool QOgreRenderSystem::initialize(const Dictionary& settings)
   {
     activateOgreContext();
     bool res = OgreRenderSystem::initialize(settings);
 
-    auto samples = settings.get_optional<unsigned int>("window.params.FSAA");
-    mSamples = samples ? (GLuint) samples.get() : 0;
+    mSamples = (GLuint) settings.get<unsigned int>("window.params.FSAA", 0);
 
     deactivateOgreContext();
     return res;
   }
 
-  bool QOgreRenderSystem::configure(const DataNode& config)
+  bool QOgreRenderSystem::configure(const Dictionary& config)
   {
     activateOgreContext();
     OgreRenderSystem::configure(config);
     deactivateOgreContext();
   }
 
-  bool QOgreRenderSystem::fillComponentData(RenderComponent* component, const DataNode& data)
+  bool QOgreRenderSystem::fillComponentData(RenderComponent* component, const Dictionary& data)
   {
     activateOgreContext();
     bool res = OgreRenderSystem::fillComponentData(component, data);
@@ -142,7 +141,9 @@ namespace Gsage {
 
     // unbind all possible remaining buffers; just to be on safe side
     mOgreContext->functions()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+#if GSAGE_PLATFORM != GSAGE_APPLE
     mOgreContext->functions()->glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+#endif
     mOgreContext->functions()->glBindBuffer(GL_COPY_READ_BUFFER, 0);
     mOgreContext->functions()->glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
     mOgreContext->functions()->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);

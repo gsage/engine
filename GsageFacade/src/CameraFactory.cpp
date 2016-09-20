@@ -338,10 +338,10 @@ namespace Gsage {
   {
   }
 
-  bool LuaCameraController::read(const DataNode& node)
+  bool LuaCameraController::read(const Dictionary& dict)
   {
     // read all all parameters
-    bool res = CameraController::read(node);
+    bool res = CameraController::read(dict);
     // initialize lua script
     return res;
   }
@@ -377,7 +377,7 @@ namespace Gsage {
   // ---------------------------------------------------------------------------------------------------------------
 
   template<typename TController>
-  CameraController* ConcreteControllerFactory<TController>::create(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine)
+  CameraController* ConcreteControllerFactory<TController>::create(const Dictionary& settings, OgreRenderSystem* renderSystem, Engine* engine)
   {
     TController* res = new TController();
     res->initialize(renderSystem, engine);
@@ -410,16 +410,16 @@ namespace Gsage {
     mControllerFactories[TController::TYPE] = new ConcreteControllerFactory<TController>();
   }
 
-  CameraController* CameraFactory::initializeController(const DataNode& settings, OgreRenderSystem* renderSystem, Engine* engine)
+  CameraController* CameraFactory::initializeController(const Dictionary& settings, OgreRenderSystem* renderSystem, Engine* engine)
   {
-    auto typeOpt = settings.get_optional<std::string>("type");
-    if(!typeOpt)
+    auto pair = settings.get<std::string>("type");
+    if(!pair.second)
     {
       LOG(ERROR) << "Failed to create camera controller: controller type not found in settings";
       return NULL;
     }
 
-    std::string type = typeOpt.get();
+    std::string type = pair.first;
     if(mControllerFactories.count(type) == 0)
     {
       LOG(ERROR) << "Failed to create camera controller: unknown type name: \"" << type << "\"";

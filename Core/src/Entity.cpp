@@ -37,7 +37,7 @@ Entity::~Entity()
 {
 }
 
-void Entity::addComponent(const std::string& name, Component* c)
+void Entity::addComponent(const std::string& name, EntityComponent* c)
 {
   mComponents[name] = c;
 }
@@ -50,7 +50,7 @@ bool Entity::removeComponent(const std::string& name)
   return mComponents.erase(name);
 }
 
-Component* Entity::getComponent(const std::string& name)
+EntityComponent* Entity::getComponent(const std::string& name)
 {
   return mComponents[name];
 }

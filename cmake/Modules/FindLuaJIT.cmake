@@ -44,7 +44,23 @@ FIND_PATH(LUAJIT_INCLUDE_DIR lua.h
 )
 
 FIND_LIBRARY(LUAJIT_LIBRARY 
-  NAMES luajit-51 luajit-5.1 luajit
+  NAMES luajit-51 luajit-5.1.2 luajit
+  HINTS
+  $ENV{LUAJIT_DIR}
+  PATH_SUFFIXES lib64 lib
+  PATHS
+  ~/Library/Frameworks
+  /Library/Frameworks
+  /usr/local
+  /usr
+  /sw
+  /opt/local
+  /opt/csw
+  /opt
+)
+
+FIND_LIBRARY(LUAJIT_STATIC_LIBRARY 
+  NAMES libluajit-51.a libluajit-5.1.a
   HINTS
   $ENV{LUAJIT_DIR}
   PATH_SUFFIXES lib64 lib

@@ -8,6 +8,7 @@ set(LIBS GsageCore GsageFacade ${OGRE_LIBRARIES} ${LUABIND_LIBRARIES} ${Boost_LI
 include_directories(
   ${OGRE_INCLUDE_DIRS}
   ${LUABIND_INCLUDE_DIRS}
+  ${JSONCPP_INCLUDE_DIR}
 )
 
 add_definitions(-DPLUGIN_EXPORT)

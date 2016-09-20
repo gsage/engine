@@ -56,28 +56,33 @@ THE SOFTWARE.
 #include "ogre/LightWrapper.h"
 #include "ogre/ParticleSystemWrapper.h"
 #include "ogre/CameraWrapper.h"
+#include "Dictionary.h"
 
 using namespace luabind;
 
 namespace luabind {
   template<>
-  struct default_converter<DataNode> : native_converter_base<DataNode> {
+  struct default_converter<Gsage::Dictionary> : native_converter_base<Gsage::Dictionary> {
     static int compute_score(lua_State* L, int index) {
       return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
     }
 
-    static void iterate(object lua_object, DataNode& node) {
+    static void iterate(object lua_object, Gsage::Dictionary& dict) {
       for(iterator i(lua_object), end; i != end; i++)
       {
         object val = *i;
         if (type(val) == LUA_TTABLE) 
         {
-          DataNode child;
+          Gsage::Dictionary child;
           iterate(val, child);
           if(type(i.key()) == LUA_TSTRING)
-            node.put_child(object_cast<std::string>(i.key()), child);
+          {
+            dict.put(object_cast<std::string>(i.key()), child);
+          }
           else
-            node.push_back(std::make_pair("", child));
+          {
+            dict.push(child);
+          }
         }
         else
         {
@@ -87,21 +92,24 @@ namespace luabind {
           else
             value = object_cast<std::string>(val);
 
-          if(type(i.key()) == LUA_TSTRING)
-            node.put(object_cast<std::string>(i.key()), value);
-          else
-            node.push_back(std::make_pair("", value));
+          if(type(i.key()) == LUA_TSTRING) {
+            dict.put(object_cast<std::string>(i.key()), value);
+          } else {
+            Gsage::Dictionary d;
+            d.set(value);
+            dict.push(d);
+          }
         }
       }
     }
 
-    DataNode from(lua_State* L, int index) {
-      DataNode node;
-      iterate(object(from_stack(L, index)), node);
-      return node;
+    Gsage::Dictionary from(lua_State* L, int index) {
+      Gsage::Dictionary dict;
+      iterate(object(from_stack(L, index)), dict);
+      return dict;
     }
 
-    void to(lua_State* L, const DataNode& l) {
+    void to(lua_State* L, const Gsage::Dictionary& l) {
       luabind::object table = luabind::newtable(L);
 
       // TODO: this is not that simple, implement it later
@@ -125,19 +133,9 @@ namespace Gsage {
   {
   }
 
-  Entity* DataManagerProxy::createEntity(const std::string& templateFile, const luabind::object& params)
+  Entity* DataManagerProxy::createEntity(const std::string& templateFile, Dictionary params)
   {
-    GameDataManager::TemplateParameters internalParams;
-    for(iterator i(params), end; i != end; i++)
-    {
-      std::string key = object_cast<std::string>(i.key());
-      luabind::object val = *i;
-      if (type(val) == LUA_TSTRING)
-      {
-        internalParams[key] = object_cast<std::string>(val);
-      }
-    }
-    return mInstance->createEntity(templateFile, internalParams);
+    return mInstance->createEntity(templateFile, params);
   }
 
   Entity* DataManagerProxy::createEntity(const std::string& json)
@@ -336,7 +334,7 @@ namespace Gsage {
 
       class_<DataManagerProxy>("DataManager")
         .def("createEntity", (Entity*(DataManagerProxy::*)(const std::string&))&DataManagerProxy::createEntity)
-        .def("createEntity", (Entity*(DataManagerProxy::*)(const std::string&, const object&))&DataManagerProxy::createEntity),
+        .def("createEntity", (Entity*(DataManagerProxy::*)(const std::string&, Dictionary))&DataManagerProxy::createEntity),
 
       class_<LuaEventProxy>("LuaEventProxy")
         .def("bind", &LuaEventProxy::addEventListener)

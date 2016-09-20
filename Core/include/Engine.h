@@ -37,10 +37,11 @@ THE SOFTWARE.
 #include "ObjectPool.h"
 #include <map>
 #include <vector>
+#include "Dictionary.h"
 
 namespace Gsage
 {
-  class Component;
+  class EntityComponent;
   class EngineSystem;
 
   /**
@@ -55,16 +56,17 @@ namespace Gsage
       virtual ~Engine();
       /**
        * Initializes all the systems in the order in which it were added
-       * @param configuration DataNode with engine configuration
+       * @param configuration Dictionary with engine configuration
+       * @param environment global application environment
        * @returns false if fails to set up one of them
        */
-      bool initialize(const DataNode& configuration);
+      bool initialize(const Dictionary& configuration, const Dictionary& environment);
       /**
        * Configure all systems in the engine
-       * @param configuration DataNode with system configs
+       * @param configuration Dictionary with system configs
        * @returns false if fails to configure one of the systems
        */
-      bool configureSystems(const DataNode& config);
+      bool configureSystems(const Dictionary& config);
       /**
        * Updates each system
        * @param time Delta time
@@ -135,7 +137,7 @@ namespace Gsage
        * Create entity from the entity data
        * @param data Deserialized data object
        */
-      Entity* createEntity(const DataNode& data);
+      Entity* createEntity(const Dictionary& data);
       /**
        * Remove entity by id
        *
@@ -203,25 +205,29 @@ namespace Gsage
        */
       Entity* getEntity(const std::string& id);
 
+      /**
+       * Get environment
+       */
+      const Dictionary& env() const { return mEnvironment; }
+
     private:
       /**
        * Create component for entity
        *
        * @param entity Pointer to entity object
        * @param type System type to create into
-       * @param node DataNode with configs
+       * @param node Dictionary with configs
        */
-      bool createComponent(Entity* entity, const std::string& type, const DataNode& node);
+      bool createComponent(Entity* entity, const std::string& type, const Dictionary& node);
       /**
        * Update entity with new config
        *
        * @param entity Entity to update
-       * @param node DataNode with new config
+       * @param node Dictionary with new config
        */
-      bool readEntityData(Entity* entity, const DataNode& node);
+      bool readEntityData(Entity* entity, const Dictionary& node);
 
       bool mInitialized;
-      unsigned int mPoolSize;
 
       EngineSystems mEngineSystems;
       Entities mEntities;
@@ -232,7 +238,8 @@ namespace Gsage
       SystemNames mSetUpOrder;
       SystemNames mManagedByEngine;
 
-      DataNode mConfiguration;
+      Dictionary mConfiguration;
+      Dictionary mEnvironment;
   };
 }
 

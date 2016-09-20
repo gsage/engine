@@ -1,0 +1,5 @@
+{
+  "envVariable": "{{test}}",
+  "some": "hello",
+  "fromParam": "{{param1}}"
+}

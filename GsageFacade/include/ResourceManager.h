@@ -27,20 +27,20 @@ THE SOFTWARE.
 #include <OgreRoot.h>
 #include <OgreConfigFile.h>
 
-#include "GsageDefinitions.h"
+#include "Dictionary.h"
 
 namespace Gsage {
   class ResourceManager
   {
     public:
-      ResourceManager(void);
+      ResourceManager(const std::string& workdir);
       virtual ~ResourceManager(void);
       /**
        * Loads all resource groups
        *
-       * @param resources DataNode with all required resources
+       * @param resources Dictionary with all required resources
        */
-      bool load(const DataNode& resources);
+      bool load(const Dictionary& resources);
 
       /**
        * Unload resources
@@ -56,9 +56,11 @@ namespace Gsage {
 
       /**
        * Unload resources
-       * @param resources Resource groups DataNode
+       * @param resources Resource groups Dictionary
        */
-      void unload(const DataNode& resources);
+      void unload(const Dictionary& resources);
+    private:
+      std::string mWorkdir;
   };
 }
 

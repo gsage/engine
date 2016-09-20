@@ -54,6 +54,7 @@
 
 #include "RenderInterfaceOgre3D.h"
 #include <Ogre.h>
+#include "GsageDefinitions.h"
 
 struct RocketOgre3DVertex
 {
@@ -249,25 +250,27 @@ void RenderInterfaceOgre3D::SetScissorRegion(int x, int y, int width, int height
 }
 
 // Called by Rocket when a texture is required by the library.
-bool RenderInterfaceOgre3D::LoadTexture(Rocket::Core::TextureHandle& texture_handle, Rocket::Core::Vector2i& texture_dimensions, const Rocket::Core::String& source)
+bool RenderInterfaceOgre3D::LoadTexture(Rocket::Core::TextureHandle& textureHandle, Rocket::Core::Vector2i& textureDimensions, const Rocket::Core::String& source)
 {
-  Ogre::TextureManager* texture_manager = Ogre::TextureManager::getSingletonPtr();
-  Ogre::TexturePtr ogre_texture = texture_manager->getByName(Ogre::String(source.CString()));
-  if (ogre_texture.isNull())
+  Ogre::String s = Ogre::String(source.CString());
+  std::vector<std::string> parts = split(s, GSAGE_PATH_SEPARATOR);
+  Ogre::TextureManager* textureManager = Ogre::TextureManager::getSingletonPtr();
+  Ogre::TexturePtr ogreTexture = textureManager->getByName(parts[parts.size()-1]);
+  if (ogreTexture.isNull())
   {
-    ogre_texture = texture_manager->load(Ogre::String(source.CString()),
+    ogreTexture = textureManager->load(parts[parts.size()-1],
         "Rocket",
         Ogre::TEX_TYPE_2D,
         0);
   }
 
-  if (ogre_texture.isNull())
+  if (ogreTexture.isNull())
     return false;
 
-  texture_dimensions.x = ogre_texture->getWidth();
-  texture_dimensions.y = ogre_texture->getHeight();
+  textureDimensions.x = ogreTexture->getWidth();
+  textureDimensions.y = ogreTexture->getHeight();
 
-  texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketOgre3DTexture(ogre_texture));
+  textureHandle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketOgre3DTexture(ogreTexture));
   return true;
 }
 

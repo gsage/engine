@@ -71,20 +71,20 @@ namespace Gsage {
       mRootNode->lookAt(position * Ogre::Vector3(1, 0, 1) + (mRootNode->getPositionWithoutOffset() * Ogre::Vector3::UNIT_Y), Ogre::Node::TS_WORLD);
   }
 
-  DataNode RenderComponent::getAnimations()
+  Dictionary RenderComponent::getAnimations()
   {
-    DataNode node;
-    mAnimationScheduler.dump(node);
-    return node;
+    Dictionary value;
+    mAnimationScheduler.dump(value);
+    return value;
   }
 
-  DataNode RenderComponent::getRootNode()
+  Dictionary RenderComponent::getRootNode()
   {
-    DataNode node;
+    Dictionary value;
     if(mRootNode && mRootNode->hasNode())
-      mRootNode->dump(node);
+      mRootNode->dump(value);
 
-    return node;
+    return value;
   }
 
   SceneNodeWrapper* RenderComponent::getRoot()
@@ -138,12 +138,12 @@ namespace Gsage {
   }
 
 
-  void RenderComponent::setResources(const DataNode& node)
+  void RenderComponent::setResources(const Dictionary& dict)
   {
-    mResources = node;
+    mResources = dict;
   }
 
-  const DataNode& RenderComponent::getResources() const
+  const Dictionary& RenderComponent::getResources() const
   {
     return mResources;
   }

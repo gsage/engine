@@ -31,10 +31,11 @@ THE SOFTWARE.
 #define COMPONENT_POOL_SIZE 1024
 #define NOMINMAX
 
-#include <boost/property_tree/ptree.hpp>
-namespace Gsage {
-  typedef boost::property_tree::ptree DataNode;
-}
+#include <sstream>
+#include <istream>
+#include <iterator>
+#include <ostream>
+#include <vector>
 
 static inline std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
@@ -50,6 +51,20 @@ static inline std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     split(s, delim, elems);
     return elems;
+}
+
+static inline std::string join(const std::vector<std::string>& vector, const char delim)
+{
+  std::stringstream s;
+  for(int i = 0; i < vector.size(); i++)
+  {
+    s << vector[i];
+    if(i < vector.size() - 1)
+    {
+      s << delim;
+    }
+  }
+  return s.str();
 }
 
 #define GSAGE_UNSUPPORTED 0
@@ -85,3 +100,10 @@ static inline std::vector<std::string> split(const std::string &s, char delim) {
 #endif
 
 #endif
+
+#if GSAGE_PLATFORM == GSAGE_WIN32
+#define GSAGE_PATH_SEPARATOR '\\'
+#else
+#define GSAGE_PATH_SEPARATOR '/'
+#endif
+

@@ -36,6 +36,8 @@ extern "C" {
 #include <luabind/luabind.hpp>
 #include <luabind/object.hpp>
 #include "EventSubscriber.h"
+#include "GsageDefinitions.h"
+#include "Dictionary.h"
 
 
 namespace Ogre
@@ -108,9 +110,9 @@ namespace Gsage
       DataManagerProxy(GameDataManager* instance);
       virtual ~DataManagerProxy();
       /**
-       * @see GameDataManager::createEntity(const std::string&, const GameDataManager::TemplateParameters)
+       * @see GameDataManager::createEntity(const std::string&, const Dictionary& params)
        */
-      Entity* createEntity(const std::string& templateFile, const luabind::object& params);
+      Entity* createEntity(const std::string& templateFile, Dictionary params);
       /**
        * @see GameDataManager::createEntity(const std::string&)
        */

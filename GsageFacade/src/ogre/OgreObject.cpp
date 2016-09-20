@@ -51,7 +51,7 @@ namespace Gsage {
 
   bool OgreObject::initialize(
           OgreObjectManager* objectManager,
-          const DataNode& node,
+          const Dictionary& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -60,12 +60,12 @@ namespace Gsage {
   {
     mBoneId = boneId;
     mParentEntity = parentEntity;
-    initialize(objectManager, node, ownerId, type, sceneManager, 0);
+    return initialize(objectManager, dict, ownerId, type, sceneManager, 0);
   }
 
   bool OgreObject::initialize(
           OgreObjectManager* objectManager,
-          const DataNode& node,
+          const Dictionary& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -83,14 +83,14 @@ namespace Gsage {
       return false;
     }
 
-    auto objectId = node.get_optional<std::string>("name");
-    if (!objectId) {
+    auto objectId = dict.get<std::string>("name");
+    if (!objectId.second) {
       std::stringstream ss("");
       ss << "object" << counter++;
       mObjectId = ss.str();
     }
 
-    read(node);
+    read(dict);
     return true;
   }
 

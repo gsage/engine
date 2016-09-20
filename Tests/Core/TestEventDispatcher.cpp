@@ -49,6 +49,7 @@ class TestEventHandler : public EventSubscriber<TestEventHandler>
     TestEventHandler(TestEvents& events, const std::string name = "default") : mName(name), receivedEvents(events) {};
     bool onTestEvent(EventDispatcher* sender, const Event& event)
     {
+      LOG(INFO) << "Test event listener 1";
       TestEvent e = (TestEvent&)event;
       e.setHandled(mName);
       receivedEvents.push_back(e);
@@ -58,6 +59,7 @@ class TestEventHandler : public EventSubscriber<TestEventHandler>
 
     bool onTestEvent2(EventDispatcher* sender, const Event& event)
     {
+      LOG(INFO) << "Test event listener 2";
       TestEvent e = (TestEvent&)event;
       e.setHandled(mName);
       receivedEvents.push_back(e);
@@ -66,6 +68,7 @@ class TestEventHandler : public EventSubscriber<TestEventHandler>
 
     bool onTestEvent3(EventDispatcher* sender, const Event& event)
     {
+      LOG(INFO) << "Test event listener 3";
       TestEvent e = (TestEvent&)event;
       e.setHandled(mName);
       receivedEvents.push_back(e);
@@ -101,12 +104,13 @@ TEST_F(TestEventDispatcher, TestSimpleFlow)
   ASSERT_EQ(receivedEvents[0].getType(), TestEvent::PING);
   ASSERT_EQ(receivedEvents[0].getValue(), 1);
 
-  handler.removeEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+  bool success = handler.removeEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+  ASSERT_TRUE(success);
 
   mInstance->fireEvent(TestEvent(TestEvent::PING, 100));
   ASSERT_EQ(receivedEvents.size(), 1);
 
-  handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+  ASSERT_TRUE(handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent));
   handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent2);
   handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent3);
   mInstance->fireEvent(TestEvent(TestEvent::PING, 100));

@@ -2,11 +2,11 @@
   "dataManager":
   {
     "extension": "json",
-    "charactersFolder": "resources/characters",
-    "levelsFolder": "resources/levels",
-    "savesFolder": "resources/templates"
+    "charactersFolder": "characters",
+    "levelsFolder": "levels",
+    "savesFolder": "templates"
   },
-  "startupScript": "resources/scripts/start.lua",
+  "startupScript": "scripts/start.lua",
 
   "plugins":
   [
@@ -15,21 +15,21 @@
 
   "render":
   {
-    "pluginsFile": "resources/plugins.cfg",
-    "configFile": "resources/ogreConfig.cfg",
-    "globalResources": 
+    "pluginsFile": "plugins.cfg",
+    "configFile": "ogreConfig.cfg",
+    "globalResources":
     {
       "General":
       [
-        "FileSystem:resources/materials/",
-        "FileSystem:resources/programs/",
-        "FileSystem:resources/particles/PU",
-        "FileSystem:resources/particles/Ogre"
+        "FileSystem:materials/",
+        "FileSystem:programs/",
+        "FileSystem:particles/PU",
+        "FileSystem:particles/Ogre"
       ],
       "Rocket":
       [
-        "FileSystem:resources/fonts/",
-        "FileSystem:resources/ui/"
+        "FileSystem:fonts/",
+        "FileSystem:ui/"
       ]
     },
 
@@ -46,5 +46,4 @@
       }
     }
   }
-
 }

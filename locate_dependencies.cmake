@@ -5,6 +5,10 @@ if(WIN32)
     )
 endif(WIN32)
 
+if(DEFINED ENV{OGRE_DEPENDENCIES_DIR})
+  set(ENV{ZZIP_HOME}, $ENV{OGRE_DEPENDENCIES_DIR})
+endif()
+
 if(UNIX)
   if(EXISTS "/usr/local/lib/OGRE/cmake")
 
@@ -37,15 +41,26 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 if(APPLE)
-set(OGRE_STATIC true)
+  find_library(COREFOUNDATION_LIBRARY CoreFoundation )
+  find_library(COCOA_LIBRARY Cocoa)
+  find_library(CARBON NAMES Carbon)
+  find_library(IOKIT NAMES IOKit)
+  find_library(OpenGL_LIBRARY OpenGL)
+
+  include(FindOGRE)
 endif(APPLE)
 find_package(OGRE REQUIRED)
+
+ogre_find_component(Terrain OgreTerrain.h)
 ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
 
 find_package(OIS REQUIRED)
 find_package(Luabind REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(LibRocket REQUIRED)
+find_package(Jsoncpp REQUIRED)
+find_package(Msgpack REQUIRED)
+find_package(Ctemplate REQUIRED)
 find_package(gtest)
 
 find_package(Qt5 COMPONENTS Quick Core QUIET)

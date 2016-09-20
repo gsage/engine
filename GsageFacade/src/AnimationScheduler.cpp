@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <OgreEntity.h>
 
 #include "Logger.h"
-#include "PtreeExtensions.h"
 
 namespace Gsage {
   // --------------------------------------------------------------------------------
@@ -201,11 +200,11 @@ namespace Gsage {
   {
   }
 
-  bool AnimationGroup::initialize(const DataNode& node, Ogre::SceneManager* sceneManager)
+  bool AnimationGroup::initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager)
   {
-    for(auto& pair : node)
+    for(auto& pair : dict)
     {
-      std::string fullId = pair.second.get_value<std::string>();
+      std::string fullId = pair.second.as<std::string>();
 
       std::vector<std::string> id = split(fullId, '.');
       if(id.size() > 2)
@@ -330,10 +329,10 @@ namespace Gsage {
   {
   }
 
-  bool AnimationScheduler::initialize(const DataNode& node, Ogre::SceneManager* sceneManager)
+  bool AnimationScheduler::initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager)
   {
     mSceneManager = sceneManager;
-    read(node);
+    read(dict);
     playDefaultAnimation();
     return mInitialized = mAnimationGroups.size() > 0;
   }
@@ -476,13 +475,13 @@ namespace Gsage {
     }
   }
 
-  void AnimationScheduler::setStates(const DataNode& node)
+  void AnimationScheduler::setStates(const Dictionary& dict)
   {
-    mAnimationStatesNode = node;
+    mAnimationStatesDict = dict;
     mAnimations.clear();
     mAnimationQueues.clear();
     // get all entities anim states
-    for(auto& pair : node)
+    for(auto& pair : dict)
     {
       AnimationGroup group;
       if(!group.initialize(pair.second, mSceneManager))
@@ -496,9 +495,9 @@ namespace Gsage {
     }
   }
 
-  const DataNode& AnimationScheduler::getStates() const
+  const Dictionary& AnimationScheduler::getStates() const
   {
-    return mAnimationStatesNode;
+    return mAnimationStatesDict;
   }
 
   void AnimationScheduler::playDefaultAnimation()

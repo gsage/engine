@@ -26,6 +26,9 @@ THE SOFTWARE.
 
 #include "input/OisInputListener.h"
 #include "Logger.h"
+#ifdef OIS_APPLE_PLATFORM
+#include <Carbon/Carbon.h>
+#endif
 
 namespace Gsage {
 
@@ -92,6 +95,11 @@ namespace Gsage {
     pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("true")));
     pl.insert(std::make_pair(std::string("x11_keyboard_grab"), std::string("false")));
     pl.insert(std::make_pair(std::string("XAutoRepeatOn"), std::string("true")));
+#endif
+
+#ifdef OIS_APPLE_PLATFORM
+    CGDisplayShowCursor(kCGDirectMainDisplay);
+    CGAssociateMouseAndMouseCursorPosition(TRUE);
 #endif
 
     mInputManager = OIS::InputManager::createInputSystem( pl );

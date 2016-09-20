@@ -97,18 +97,18 @@ namespace Gsage
 
       /**
        * Intializes ogre render system
-       * @param settings DataNode with initial settings for the render system
+       * @param settings Dictionary with initial settings for the render system
        */
-      virtual bool initialize(const DataNode& settings);
+      virtual bool initialize(const Dictionary& settings);
 
       /**
        * Initializes RenderComponent: creates ogre node, lights and etc.
        *
        * @param component RenderComponent component to initialize
-       * @param data DataNode with node settings
+       * @param data Dictionary with node settings
        * @returns false if failed to initialize component for some reason
        */
-      virtual bool fillComponentData(RenderComponent* component, const DataNode& data);
+      virtual bool fillComponentData(RenderComponent* component, const Dictionary& data);
 
       /**
        * Update render system
@@ -135,14 +135,14 @@ namespace Gsage
       /**
        * Reconfigure render system
        *
-       * @param config DataNode with configs
+       * @param config Dictionary with configs
        */
-      virtual bool configure(const DataNode& config);
+      virtual bool configure(const Dictionary& config);
 
       /**
        * Get current configs of the system
        */
-      DataNode& getConfig();
+      Dictionary& getConfig();
 
       /**
        * Get render window width
@@ -244,7 +244,7 @@ namespace Gsage
 
       ResourceManager* mResourceManager;
 
-      typedef std::queue<DataNode> ComponentLoadQueue;
+      typedef std::queue<Dictionary> ComponentLoadQueue;
       ComponentLoadQueue mLoadQueue;
   };
 }

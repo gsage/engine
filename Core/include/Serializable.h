@@ -28,6 +28,8 @@ THE SOFTWARE.
 #define __SERIALIZABLE_H__
 
 #include "GsageDefinitions.h"
+#include "Dictionary.h"
+#include "DictionaryConverters.h"
 #include <map>
 
 #define BIND_PROPERTY(name, property) registerProperty(name, property)
@@ -55,51 +57,51 @@ namespace Gsage
 {
 
   template<typename Type>
-  inline bool get(const DataNode& node, const std::string& id, Type& dest)
+  inline bool get(const Dictionary& dict, const std::string& id, Type& dest)
   {
-    boost::optional<Type> value = node.get_optional<Type>(id);
-    if(!value)
+    auto value = dict.get<Type>(id);
+    if(!value.second)
       return false;
 
-    dest = value.get();
+    dest = value.first;
     return true;
   }
 
-  inline bool get(const DataNode& node, std::string& id, DataNode& dest)
+  inline bool get(const Dictionary& dict, std::string& id, Dictionary& dest)
   {
-    boost::optional<const DataNode&> value = node.get_child_optional(id);
-    if(!value)
+    auto value = dict.get<Dictionary>(id);
+    if(!value.second)
       return false;
 
-    dest = value.get();
+    dest = value.first;
     return true;
   }
 
   template<typename Type>
-  inline bool put(DataNode& node, const std::string& id, const Type& value)
+  inline bool put(Dictionary& dict, const std::string& id, const Type& value)
   {
-    node.put(id, value);
+    dict.put(id, value);
     return true;
   }
 
-  inline bool put(DataNode& node, const std::string& id, const DataNode& child)
+  inline bool put(Dictionary& dict, const std::string& id, const Dictionary& child)
   {
     if(child.empty())
       return true;
-    node.put_child(id, child);
+    dict.put(id, child);
     return true;
   }
 
-  inline bool put(DataNode& node, const std::string& id, const std::string& value)
+  inline bool put(Dictionary& dict, const std::string& id, const std::string& value)
   {
     if(value.empty())
       return true;
-    node.put(id, value);
+    dict.put(id, value);
     return true;
   }
 
   /**
-   * Class that has bindings for quick reading fields from DataNode and writing it to it
+   * Class that has bindings for quick reading fields from Dictionary and writing it to it
    */
   template<typename C>
   class Serializable
@@ -118,15 +120,15 @@ namespace Gsage
           {};
           virtual ~AbstractProperty() {};
           /**
-           * Read property from DataNode
-           * @param node DataNode
+           * Read property from Dictionary
+           * @param dict Dictionary
            */
-          virtual bool read(const DataNode& node) = 0;
+          virtual bool read(const Dictionary& dict) = 0;
           /**
-           * Write property to the DataNode
-           * @param node DataNode
+           * Write property to the Dictionary
+           * @param dict Dictionary
            */
-          virtual bool dump(DataNode& node) = 0;
+          virtual bool dump(Dictionary& dict) = 0;
 
           std::string mName;
           bool isFlagSet(const PropertyFlag& flag)
@@ -152,21 +154,21 @@ namespace Gsage
           }
           /**
            * Read property value from the node
-           * @param node Should contain value with key, that is defined in constructor of object
+           * @param dict Should contain value with key, that is defined in constructor of object
            */
-          bool read(const DataNode& node)
+          bool read(const Dictionary& dict)
           {
             if(AbstractProperty::isFlagSet(Readonly) || AbstractProperty::isFlagSet(Optional))
               return true;
 
-            return get(node, AbstractProperty::mName, *mPropertyPtr);
+            return get(dict, AbstractProperty::mName, *mPropertyPtr);
           }
 
           /**
            * Write property to the data node
-           * @param node DataNode will contain value with specified key
+           * @param dict Dictionary will contain value with specified key
            */
-          bool dump(DataNode& node)
+          bool dump(Dictionary& dict)
           {
             if(AbstractProperty::isFlagSet(Writeonly))
               return true;
@@ -174,7 +176,7 @@ namespace Gsage
             if(mPropertyPtr == NULL)
               return false;
 
-            return put(node, AbstractProperty::mName, *mPropertyPtr);
+            return put(dict, AbstractProperty::mName, *mPropertyPtr);
           }
         private:
           std::string mName;
@@ -197,15 +199,15 @@ namespace Gsage
           }
           /**
            * Read property value from the node and call class setter
-           * @param node Should contain value with key, that is defined in constructor of object
+           * @param dict Should contain value with key, that is defined in constructor of object
            */
-          bool read(const DataNode& node)
+          bool read(const Dictionary& dict)
           {
             T value;
             // setter is not set, it is normal
             if(mSetter == 0)
               return true;
-            if(!get(node, AbstractProperty::mName, value))
+            if(!get(dict, AbstractProperty::mName, value))
               return AbstractProperty::isFlagSet(Optional);
 
             (mInstance->*mSetter)(value);
@@ -214,14 +216,14 @@ namespace Gsage
 
           /**
            * Call class getter and write return value to the data node
-           * @param node DataNode will contain value with specified key
+           * @param dict Dictionary will contain value with specified key
            */
-          bool dump(DataNode& node)
+          bool dump(Dictionary& dict)
           {
             if(mGetter == 0)
               return false;
 
-            return put(node, AbstractProperty::mName, (mInstance->*mGetter)());
+            return put(dict, AbstractProperty::mName, (mInstance->*mGetter)());
           }
         private:
           TInstance* mInstance;
@@ -244,28 +246,28 @@ namespace Gsage
 
       /**
        * Read a particular property
-       * @param node To read property from
+       * @param dict To read property from
        * @param id Property id
        */
-      virtual bool read(const DataNode& node, const std::string& id)
+      virtual bool read(const Dictionary& dict, const std::string& id)
       {
         if(mPropMappings.count(id) == 0)
           return false;
 
-        return mPropMappings[id]->read(node);
+        return mPropMappings[id]->read(dict);
       }
 
       /**
        * Iterates through all specified properties and reads each from the node
-       * @param node DataNode to read
+       * @param dict Dictionary to read
        */
-      virtual bool read(const DataNode& node)
+      virtual bool read(const Dictionary& dict)
       {
         bool allSucceed = true;
         for(auto pair : mProperties) {
           for(AbstractProperty* prop : pair.second)
           {
-            if(!prop->read(node))
+            if(!prop->read(dict))
             {
               allSucceed = false;
             }
@@ -276,15 +278,15 @@ namespace Gsage
 
       /**
        * Iterates through all specified properties and puts each to the node
-       * @param node DataNode to write
+       * @param dict Dictionary to write
        */
-      virtual bool dump(DataNode& node)
+      virtual bool dump(Dictionary& dict)
       {
         bool allSucceed = true;
         for(auto pair : mProperties) {
           for(AbstractProperty* prop : pair.second)
           {
-            if(!prop->dump(node))
+            if(!prop->dump(dict))
               allSucceed = false;
           }
         }
@@ -293,7 +295,7 @@ namespace Gsage
 
       /**
        * Register property as serializable
-       * @param name Key to search in DataNode
+       * @param name Key to search in Dictionary
        * @param dest Pointer to field to wrap
        * @param flags property flags
        */
@@ -306,7 +308,7 @@ namespace Gsage
       /**
        * Register property setter/getter as serializable.
        * This method can be used with any class, not self only.
-       * @param name Key to search in DataNode
+       * @param name Key to search in Dictionary
        * @param instance Instance of object, that contains getters and setters
        * @param setter Property setter
        * @param getter Property getter
@@ -319,7 +321,7 @@ namespace Gsage
       /**
        * Register property setter/getter as serializable.
        * This method can be used with any class, not self only.
-       * @param name Key to search in DataNode
+       * @param name Key to search in Dictionary
        * @param instance Instance of object, that contains getters and setters
        * @param setter Property setter
        * @param getter Property getter
@@ -332,7 +334,7 @@ namespace Gsage
       /**
        * Register property getter as serializable.
        * This method can be used with any class, not self only.
-       * @param name Key to search in DataNode
+       * @param name Key to search in Dictionary
        * @param instance Instance of object, that contains getters and setters
        * @param getter Property getter
        */
@@ -343,7 +345,7 @@ namespace Gsage
       }
       /**
        * Register property setter/getter as serializable
-       * @param name Key to search in DataNode
+       * @param name Key to search in Dictionary
        * @param setter Property setter
        * @param getter Property getter
        */

@@ -4,10 +4,10 @@ if(APPLE)
 	# This has to be before most other options so CMake properly handles the 
 	# compiler variables, it MUST bebefore the project() definition
 
-	option(BUILD_UNIVERSAL_BINARIES "Build universal binaries for all architectures supported" ON)
+  #option(BUILD_UNIVERSAL_BINARIES "Build universal binaries for all architectures supported" ON)
 	if (NOT CMAKE_OSX_ARCHITECTURES AND BUILD_UNIVERSAL_BINARIES)
 		if(IOS)
-			# set the architecture for iOS 
+			# set the architecture for iOS
 			if (${IOS_PLATFORM} STREQUAL "OS")
 				set (IOS_ARCH armv6 armv7 armv7s arm64)
 				set (CMAKE_OSX_ARCHITECTURES ${IOS_ARCH} CACHE string  "Build architecture for iOS")
@@ -31,7 +31,7 @@ if(WIN32)
 endif(WIN32)
 
 if(UNIX)
-  set(CMAKE_CXX_FLAGS "-std=c++0x -fPIC ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-std=c++11 -fPIC ${CMAKE_CXX_FLAGS}")
 endif(UNIX)
 
 include(locate_dependencies.cmake)

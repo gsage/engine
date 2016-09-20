@@ -49,7 +49,7 @@ namespace Gsage {
       std::string mStatId;
   };
 
-  class StatsComponent : public Component, public EventDispatcher
+  class StatsComponent : public EntityComponent, public EventDispatcher
   {
     public:
       static const std::string SYSTEM;
@@ -70,7 +70,7 @@ namespace Gsage {
       template<typename T>
       const T getStat(const std::string& id)
       {
-        return mStats.get<T>(id);
+        return mStats.get<T>(id).first;
       }
       /**
        * Get stat by id
@@ -92,7 +92,7 @@ namespace Gsage {
       template<typename T>
       void setStat(const std::string& id, const T& value)
       {
-        if(mStats.count(id) != 0 && mStats.get<T>(id) == value)
+        if(mStats.count(id) != 0 && mStats.get<T>(id).first == value)
           return;
 
         mStats.put(id, value);
@@ -101,16 +101,16 @@ namespace Gsage {
 
       /**
        * Overrides default behavior of the decoding
-       * @param node DataNode with all stats
+       * @param dict Dictionary with all stats
        */
-      bool read(const DataNode& node);
+      bool read(const Dictionary& dict);
 
       /**
        * Overrides default behavior of the encoding
        *
-       * @param node DataNode to write to
+       * @param dict Dictionary to write to
        */
-      bool dump(DataNode& node);
+      bool dump(Dictionary& dict);
 
       /**
        * Increase numeric types, shortcut function
@@ -122,8 +122,7 @@ namespace Gsage {
        */
       const float increase(const std::string& key, const float& n);
     private:
-      DataNode mStats;
-
+      Dictionary mStats;
   };
 }
 

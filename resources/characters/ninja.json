@@ -1,18 +1,18 @@
 {
-  "id": "%name%",
+  "id": "{{name}}",
   "flags": ["dynamic"],
   "render":
   {
     "resources":
     {
-      "%name%":
+      "Ninja":
       [
-        "Zip:resources/models/packs/ninja.zip"
+        "Zip:models/packs/ninja.zip"
       ]
     },
     "root":
     {
-      "name": "%name%",
+      "name": "{{name}}",
       "position": "-100,0,10",
       "scale":"0.03,0.03,0.03",
       "rotation":"1,0,0.5,0",
@@ -22,7 +22,7 @@
         {
           "type": "model",
           "query": "dynamic",
-          "name": "%name%",
+          "name": "{{name}}",
           "mesh": "ninja.mesh",
           "castShadows": true
         }
@@ -32,12 +32,12 @@
     {
       "states":
       {
-        "walk": {"body": "%name%.Walk"},
+        "walk": {"body": "{{name}}.Walk"},
         "astd": {"body": ""},
         "idle": {"body": ""},
-        "attack1": {"top": "%name%.Attack1"},
-        "attack2": {"top": "%name%.Attack2"},
-        "attack3": {"top": "%name%.Attack3"}
+        "attack1": {"top": "{{name}}.Attack1"},
+        "attack2": {"top": "{{name}}.Attack2"},
+        "attack3": {"top": "{{name}}.Attack3"}
       },
       "defaultState": "idle",
       "defaultSpeed": 1
@@ -61,7 +61,7 @@
   "script":
   {
     "setupScript": "
-      local self = entity.get('%name%')
+      local self = entity.get('{{name}}')
       local function checkHp(event)
         if self.stats:getNumber(event.id) <= 0 then
           core:removeEntity(self.id)

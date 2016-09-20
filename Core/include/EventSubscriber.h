@@ -98,8 +98,10 @@ namespace Gsage {
        * @param callback The function that accepts EventDispatcher pointer as the first param and const Event& as the second param.
        *   It should return bool value. Returning false, will stop event propagation.
        * @param priority Adjusts callback call order
+       *
+       * @returns true if added, false if already exists
        */
-      void addEventListener(EventDispatcher* dispatcher, const std::string& eventType, CallbackMemFn callback, const int priority = 0)
+      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, CallbackMemFn callback, const int priority = 0)
       {
         EventSubscription subscription(dispatcher, eventType);
         // if there is the same listener, there is no need to add another
@@ -108,7 +110,7 @@ namespace Gsage {
           Handlers &h = mConnections[subscription];
           HandlerIterator iterator = getDescriptor(h, callback);
           if(iterator != h.end())
-            return;
+            return false;
         }
 
         if(!hasEventListener(dispatcher, DispatcherEvent::FORCE_UNSUBSCRIBE) && eventType != DispatcherEvent::FORCE_UNSUBSCRIBE)
@@ -117,6 +119,7 @@ namespace Gsage {
         }
 
         mConnections[subscription].push_back(HandlerDescriptor(callback, dispatcher->addEventListener(eventType, std::bind(callback, (C*)this, std::placeholders::_1, std::placeholders::_2), priority)));
+        return true;
       }
 
       /**
@@ -125,19 +128,21 @@ namespace Gsage {
        * @param dispatcher EventDispatcher
        * @param eventType Unique event id
        * @param callback Pointer to the previosly defined function
+       *
+       * @returns true if successful
        */
-      void removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, CallbackMemFn callback)
+      bool removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, CallbackMemFn callback)
       {
         EventSubscription subscription(dispatcher, eventType);
         if(!hasEventListener(dispatcher, eventType))
-          return;
+          return false;
 
         Handlers &h = mConnections[subscription];
         HandlerIterator iterator = getDescriptor(h, callback);
         if(iterator == h.end())
         {
           LOG(ERROR) << "Failed to unsubscribe from event " << eventType << ": descriptor was not found";
-          return;
+          return false;
         }
 
         h.erase(iterator);
@@ -162,6 +167,7 @@ namespace Gsage {
             removeEventListener(dispatcher, DispatcherEvent::FORCE_UNSUBSCRIBE, &EventSubscriber<C>::onForceUnsubscribe);
           }
         }
+        return true;
       }
 
       bool hasEventListener(EventDispatcher* dispatcher, const std::string& eventType)

@@ -3,7 +3,7 @@
     "render": {
       "resources": {
         "exampleLevel": [
-          "Zip:resources/models/packs/exampleLevel.zip"
+          "Zip:models/packs/exampleLevel.zip"
         ]
       },
 
@@ -114,7 +114,7 @@
       }
     },
     "script": {
-      "setupScript": "@File:resources/scripts/setup/damage.lua"
+      "setupScript": "@File:scripts/setup/damage.lua"
     }
 
   }]

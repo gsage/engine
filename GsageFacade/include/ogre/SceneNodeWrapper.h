@@ -46,7 +46,7 @@ namespace Gsage {
 
       bool initialize(
           OgreObjectManager* objectManager,
-          const DataNode& node,
+          const Dictionary& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -105,9 +105,9 @@ namespace Gsage {
        */
       Ogre::Quaternion getOrientation();
 
-      void readChildren(const DataNode& node);
+      void readChildren(const Dictionary& dict);
 
-      DataNode writeChildren();
+      Dictionary writeChildren();
 
       /**
        * Set vector that defines "face" of the node

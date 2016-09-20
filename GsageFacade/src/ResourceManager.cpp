@@ -27,13 +27,12 @@ THE SOFTWARE.
 #include "ResourceManager.h"
 #include "Logger.h"
 
-#include "PtreeExtensions.h"
-#include <boost/algorithm/string/join.hpp>
-
 namespace Gsage {
 
-  ResourceManager::ResourceManager()
+  ResourceManager::ResourceManager(const std::string& workdir)
+    : mWorkdir(workdir)
   {
+
   }
 
   ResourceManager::~ResourceManager()
@@ -41,7 +40,7 @@ namespace Gsage {
     // cleanup resources here
   }
 
-  bool ResourceManager::load(const DataNode& resources)
+  bool ResourceManager::load(const Dictionary& resources)
   {
     Ogre::ResourceGroupManager& orgm = Ogre::ResourceGroupManager::getSingleton();
     std::string type;
@@ -52,18 +51,28 @@ namespace Gsage {
       section = pair.first;
       for(auto& config : pair.second)
       {
-        std::vector<std::string> list = split(config.second.get_value<std::string>(), ':');
+        std::vector<std::string> list = split(config.second.as<std::string>(), ':');
         if(list.size() < 2)
         {
-          LOG(ERROR) << "Malformed resource path: " << pair.second.get_value<std::string>();
+          LOG(ERROR) << "Malformed resource path: " << pair.second.as<std::string>();
           continue;
         }
 
-        std::vector<std::string> pathList(list.begin() + 1, list.end());
-        path = boost::join(pathList, ":");
+        std::vector<std::string> pathList;
+        if (!mWorkdir.empty())
+        {
+          pathList.push_back(mWorkdir);
+        }
+
+        for(std::vector<std::string>::iterator it = list.begin() + 1; it != list.end(); it++)
+        {
+          pathList.push_back(*it);
+        }
+
+        path = join(pathList, GSAGE_PATH_SEPARATOR);
         type = list[0];
 
-        orgm.addResourceLocation(path, type, section, false, path.find(".zip") != std::string::npos);
+        orgm.addResourceLocation(path, type, section, true, path.find(".zip") != std::string::npos);
       }
 
       orgm.initialiseResourceGroup(section);
@@ -86,7 +95,7 @@ namespace Gsage {
     }
   }
 
-  void ResourceManager::unload(const DataNode& resources)
+  void ResourceManager::unload(const Dictionary& resources)
   {
     for(auto& pair : resources)
     {

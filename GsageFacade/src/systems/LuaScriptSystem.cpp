@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "components/ScriptComponent.h"
 #include "Entity.h"
 #include "Logger.h"
+#include "Engine.h"
 
 extern "C" {
   #include "lua.h"
@@ -42,6 +43,7 @@ namespace Gsage {
 
   LuaScriptSystem::LuaScriptSystem()
     : mState(0)
+    , mWorkdir(".")
   {
   }
 
@@ -49,7 +51,13 @@ namespace Gsage {
   {
   }
 
-  bool LuaScriptSystem::fillComponentData(ScriptComponent* component, const DataNode& data)
+  bool LuaScriptSystem::initialize(const Dictionary& settings) {
+    mWorkdir = mEngine->env().get("workdir", ".");
+    EngineSystem::initialize(settings);
+    return true;
+  }
+
+  bool LuaScriptSystem::fillComponentData(ScriptComponent* component, const Dictionary& data)
   {
     bool createdComponent = ComponentStorage<ScriptComponent>::fillComponentData(component, data);
     if(!createdComponent)
@@ -163,12 +171,13 @@ namespace Gsage {
     std::string scriptData;
     if (parts.size() == 2 && parts[0] == "@File")
     {
-      std::ifstream stream(parts[1]);
+      std::string filename = mWorkdir + GSAGE_PATH_SEPARATOR + parts[1];
+      std::ifstream stream(filename);
       stream.seekg(0, std::ios::end);
       long int size = stream.tellg();
       if(size == -1)
       {
-        LOG(ERROR) << "Failed to read script file: " << script;
+        LOG(ERROR) << "Failed to read script file: " << filename;
         return false;
       }
 

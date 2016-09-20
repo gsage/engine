@@ -46,7 +46,7 @@ namespace Gsage
         virtual ~ComponentStorage() {};
 
         /**
-         * Does some manipulations before reading DataNode
+         * Does some manipulations before reading Dictionary
          * @param component Component to prepare
          * @returns true if succeed
          */
@@ -57,10 +57,10 @@ namespace Gsage
 
         /**
          * Create component in the storage
-         * @param data node to get values from
+         * @param data Dictionary to get values from
          * @param owner Entity, that owns the instance
          */
-        Component* createComponent(const DataNode& data, Entity* owner)
+        EntityComponent* createComponent(const Dictionary& data, Entity* owner)
         {
           mComponentCreationMutex.lock();
 
@@ -79,16 +79,16 @@ namespace Gsage
         /**
          * Fill component data from data node
          * @param component Component to fill
-         * @param data Data node
+         * @param data Dictionary to read
          *
          * @returns fill succeed
          */
-        virtual bool fillComponentData(T* component, const DataNode& data) { return true; };
+        virtual bool fillComponentData(T* component, const Dictionary& data) { return true; };
         /**
          * Remove component by base class
          * @param component Pointer to the component for removal
          */
-        virtual bool removeComponent(Component* component)
+        virtual bool removeComponent(EntityComponent* component)
         {
           mComponentRemovalMutex.lock();
           bool res = removeComponent((T*) component);

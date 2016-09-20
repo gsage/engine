@@ -17,7 +17,7 @@ namespace Gsage
       /**
        * Override default read behavior
        */
-      bool read(const DataNode& node);
+      bool read(const Dictionary& node);
 
       /**
        * Create particle system using previosly set name

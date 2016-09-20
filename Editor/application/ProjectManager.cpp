@@ -54,7 +54,7 @@ namespace Gsage {
     qDeleteAll(mTemplates);
   }
 
-  bool ProjectManager::initialize(const DataNode& settings)
+  bool ProjectManager::initialize(const Dictionary& settings)
   {
     const std::string defaultProjectImage = settings.get("defaultProjectImage", "");
 
@@ -67,9 +67,10 @@ namespace Gsage {
     mTemplatesFolder = templatesFolder.get();
 
     // TODO: maybe it is better to iterate all project templates in the templates directory
-    if(auto templates = settings.get_child_optional("projectTemplates"))
+    auto templates = settings.get<Dictionary>("projectTemplates");
+    if(templates.second)
     {
-      for(auto& pair : templates.get())
+      for(auto& pair : templates.first)
       {
         auto templateId = pair.first;
         const std::string image = pair.second.get<std::string>("image", defaultProjectImage);
@@ -95,7 +96,7 @@ namespace Gsage {
     QString path = QDir(mTemplatesFolder.c_str()).filePath(templateFile.append(".json"));
     CreationStatus status = UNKNOWN;
 
-    DataNode createInstructions;
+    Dictionary createInstructions;
     std::ifstream ifs(path.toStdString());
     try
     {
@@ -133,10 +134,10 @@ namespace Gsage {
       directory.mkpath(".");
     }
 
-    auto resources = createInstructions.get_child_optional("resources");
-    if (resources)
+    auto resources = createInstructions.get<Dictionary>("resources");
+    if (resources.second)
     {
-      for (auto pair : resources.get())
+      for (auto pair : resources.first)
       {
         QString resourcePath(pair.second.get_value<std::string>().c_str());
         QStringList parts = resourcePath.split(":");
@@ -170,8 +171,8 @@ namespace Gsage {
       }
     }
 
-    DataNode projectConfig;
-    if(!dumpFile(projectSettingsFile.toStdString(), projectConfig))
+    Dictionary projectConfig;
+    if(!dumpJson(projectSettingsFile.toStdString(), projectConfig))
     {
       return PROJECT_FILE_CREATION_FAILED;
     }
@@ -196,9 +197,9 @@ namespace Gsage {
     return levels;
   }
 
-  bool ProjectManager::loadProject(QString projectFilePath, DataNode& configs)
+  bool ProjectManager::loadProject(QString projectFilePath, Dictionary& configs)
   {
-    if(!parseFile(projectFilePath.toStdString(), configs))
+    if(!readJson(projectFilePath.toStdString(), configs))
     {
       return false;
     }

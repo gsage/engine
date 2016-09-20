@@ -63,12 +63,12 @@ class StubSerializable : public Serializable<StubSerializable>
       return 0;
     }
 
-    void setNode(const DataNode& node)
+    void setNode(const Dictionary& node)
     {
       this->node = node;
     }
 
-    DataNode getNode()
+    Dictionary getNode()
     {
       return node;
     }
@@ -80,7 +80,7 @@ class StubSerializable : public Serializable<StubSerializable>
     bool readByAccessor;
 
     int intValue;
-    DataNode node;
+    Dictionary node;
     NestedSerializable* nested;
 
 };
@@ -104,11 +104,10 @@ class TestSerializable : public ::testing::Test
 
 TEST_F(TestSerializable, TestSetProperty)
 {
-  DataNode node;
-  std::stringstream ss;
-  ss << "{\"boolValue\": true, \"floatValue\": 0.0001, \"intAccessor\": 1000, \"node\": {\"test\": 1}, \"forNested\":0}";
+  Dictionary node;
+  std::string ss =  "{\"boolValue\": true, \"floatValue\": 0.0001, \"intAccessor\": 1000, \"node\": {\"test\": 1}, \"forNested\":0}";
 
-  boost::property_tree::read_json(ss, node);
+  ASSERT_TRUE(parseJson(ss, node));
   ASSERT_FALSE(mInstance->read(node));
 
   ASSERT_EQ(mInstance->boolValue, true);
@@ -116,7 +115,7 @@ TEST_F(TestSerializable, TestSetProperty)
   ASSERT_EQ(mInstance->notFound, 100);
   ASSERT_EQ(mInstance->intValue, 1000);
   ASSERT_TRUE(mInstance->readByAccessor);
-  ASSERT_EQ(mInstance->node.get<int>("test"), 1);
+  ASSERT_EQ(mInstance->node.get<int>("test", -1), 1);
 
   ASSERT_EQ(mInstance->nested->value, 1);
 
@@ -126,25 +125,23 @@ TEST_F(TestSerializable, TestSetProperty)
   float newVal = 1.656;
   mInstance->floatValue = newVal;
   mInstance->dump(node);
-  ASSERT_EQ(node.get<int>("notFound"), 100);
-  ASSERT_FLOAT_EQ(node.get<float>("floatValue"), newVal);
-  ASSERT_EQ(node.get<int>("intAccessor"), 0);
+  ASSERT_EQ(node.get<int>("notFound", -1), 100);
+  ASSERT_FLOAT_EQ(node.get<float>("floatValue", -1.0), newVal);
+  ASSERT_EQ(node.get<int>("intAccessor", -1), 0);
 
-  ASSERT_EQ(node.get<std::string>("node.hello"), s);
+  ASSERT_EQ(node.get<std::string>("node.hello", "no value"), s);
 }
 
 TEST_F(TestSerializable, TestReadErrors)
 {
-  DataNode node;
-  std::stringstream ss;
-  ss << "{\"boolValue\": true, \"floatValue\": 0.0001, \"intAccessor\": 1000}";
+  Dictionary node;
+  std::string s = "{\"boolValue\": true, \"floatValue\": 0.0001, \"intAccessor\": 1000}";
 
-  boost::property_tree::read_json(ss, node);
+  ASSERT_TRUE(parseJson(s, node));
   ASSERT_FALSE(mInstance->read(node));
 
-  ss.clear();
-  ss << "{\"boolValue\": true, \"notFound\": 404, \"floatValue\": 0.0001, \"intAccessor\": 1000, \"node\": {\"test\": 1}, \"forNested\":0}";
+  s = "{\"boolValue\": true, \"notFound\": 404, \"floatValue\": 0.0001, \"intAccessor\": 1000, \"node\": {\"test\": 1}, \"forNested\":0}";
 
-  boost::property_tree::read_json(ss, node);
+  ASSERT_TRUE(parseJson(s, node));
   ASSERT_TRUE(mInstance->read(node));
 }

@@ -27,8 +27,9 @@ THE SOFTWARE.
 #ifndef _AnimationScheduler_H_
 #define _AnimationScheduler_H_
 
+#include <queue>
+
 #include "Serializable.h"
-#include "PtreeExtensions.h"
 
 #define DEFAULT_FADE_SPEED 5.0f
 #define LOOP -1
@@ -37,6 +38,7 @@ namespace Ogre
 {
   class SceneManager;
   class Entity;
+  class AnimationState;
 }
 
 namespace Gsage {
@@ -156,7 +158,7 @@ namespace Gsage {
       /**
        * Initialize animation groups
        */
-      bool initialize(const DataNode& node, Ogre::SceneManager* sceneManager);
+      bool initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager);
       /**
        * Gets animations speed
        */
@@ -222,12 +224,12 @@ namespace Gsage {
       virtual ~AnimationScheduler();
 
       /**
-       * Read node and configure groups, read anim states from entities
+       * Read dict and configure groups, read anim states from entities
        *
-       * @param node DataNode to get settings from
+       * @param dict Dictionary to get settings from
        * @param sceneManager Ogre::SceneManager to get entities from
        */
-      bool initialize(const DataNode& node, Ogre::SceneManager* sceneManager);
+      bool initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager);
 
       /**
        * Adjust animation speed
@@ -287,13 +289,13 @@ namespace Gsage {
       }
       /**
        * Set animation states
-       * @param node Node with settings
+       * @param dict Dictionary with settings
        */
-      void setStates(const DataNode& node);
+      void setStates(const Dictionary& dict);
       /**
        * Get animation states serialized
        */
-      const DataNode& getStates() const;
+      const Dictionary& getStates() const;
 
       Ogre::SceneManager* mSceneManager;
 
@@ -310,7 +312,7 @@ namespace Gsage {
       std::string mDefaultAnimation;
       std::string mCurrentAnimation;
 
-      DataNode mAnimationStatesNode;
+      Dictionary mAnimationStatesDict;
 
       bool mInitialized;
   };
