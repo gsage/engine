@@ -159,7 +159,7 @@ namespace Gsage {
 
   bool EditorApplication::loadProject(const QString& projectFilePath)
   {
-    DataNode projectConfig;
+    Dictionary projectConfig;
     if(!mProjectManager->loadProject(projectFilePath, projectConfig))
     {
       return false;

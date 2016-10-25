@@ -45,10 +45,10 @@ namespace Gsage {
     BIND_ACCESSOR_OPTIONAL("index", &BillboardWrapper::setTexcoordIndex, &BillboardWrapper::getTexcoordIndex);
   }
 
-  bool BillboardWrapper::initialize(const DataNode& node, Ogre::BillboardSet* billboardSet)
+  bool BillboardWrapper::initialize(const Dictionary& dict, Ogre::BillboardSet* billboardSet)
   {
     mBillboardSet = billboardSet;
-    return Serializable<BillboardWrapper>::read(node);
+    return Serializable<BillboardWrapper>::read(dict);
   }
 
   void BillboardWrapper::setPosition(const Ogre::Vector3& position)
@@ -181,10 +181,10 @@ namespace Gsage {
   {
   }
 
-  bool BillboardSetWrapper::read(const DataNode& node)
+  bool BillboardSetWrapper::read(const Dictionary& dict)
   {
     mObject = mSceneManager->createBillboardSet();
-    bool res = OgreObject::read(node);
+    bool res = OgreObject::read(dict);
     attachObject(mObject);
     return res;
   }
@@ -229,9 +229,9 @@ namespace Gsage {
     return mObject->getMaterialName();
   }
 
-  void BillboardSetWrapper::setBillboards(const DataNode& node)
+  void BillboardSetWrapper::setBillboards(const Dictionary& dict)
   {
-    for(auto& pair : node)
+    for(auto& pair : dict)
     {
       mBillboards.emplace_back();
       if(!mBillboards.back().initialize(pair.second, mObject))
@@ -239,14 +239,14 @@ namespace Gsage {
     }
   }
 
-  DataNode BillboardSetWrapper::getBillboards()
+  Dictionary BillboardSetWrapper::getBillboards()
   {
-    DataNode res;
+    Dictionary res;
     for(auto& bb : mBillboards)
     {
-      DataNode bbData;
+      Dictionary bbData;
       bb.dump(bbData);
-      res.push_back(std::make_pair("", bbData));
+      res.push(bbData);
     }
     return res;
   }

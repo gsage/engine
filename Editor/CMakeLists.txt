@@ -47,6 +47,11 @@ set(LIBS
   ${LUABIND_LIBRARIES}
   )
 
+if(APPLE)
+  find_package(OpenGL REQUIRED)
+  set(LIBS ${LIBS} ${OPENGL_LIBRARIES})
+endif(APPLE)
+
 target_link_libraries(${APP_NAME} ${LIBS})
 
 # post-build copy for win32

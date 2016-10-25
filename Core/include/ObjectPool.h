@@ -164,16 +164,16 @@ namespace Gsage {
         size_t capacity;
         Node *nextNode;
 
-        Node(size_t capacity)
+        Node(size_t c)
         {
-          if (capacity < 1)
+          if (c < 1)
             throw std::invalid_argument("capacity must be at least 1.");
 
-          memory = TMemoryAllocator::allocate(itemSize * capacity);
+          memory = TMemoryAllocator::allocate(itemSize * c);
           if (memory == NULL)
             throw std::bad_alloc();
 
-          capacity = capacity;
+          capacity = c;
           nextNode = NULL;
         }
         ~Node()

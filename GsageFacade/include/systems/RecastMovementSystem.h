@@ -57,15 +57,15 @@ namespace Gsage
 
       /**
        * Initialize recast movement system
-       * @param settings DataNode with recast system settings
+       * @param settings Dictionary with recast system settings
        */
-      bool initialize(const DataNode& settings);
+      bool initialize(const Dictionary& settings);
       /**
        * Builds component instance
        * @param component MovementComponent instance to build
        * @param data Object with all settings
        */
-      bool fillComponentData(MovementComponent* component, const DataNode& data);
+      bool fillComponentData(MovementComponent* component, const Dictionary& data);
       /**
        * Update movement component
        * @param component Movement component pointer

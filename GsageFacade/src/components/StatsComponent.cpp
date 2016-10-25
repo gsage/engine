@@ -57,15 +57,15 @@ namespace Gsage {
     return mStats.count(id) != 0;
   }
 
-  bool StatsComponent::read(const DataNode& node)
+  bool StatsComponent::read(const Dictionary& dict)
   {
-    mStats = node;
+    mStats = dict;
     return true;
   }
 
-  bool StatsComponent::dump(DataNode& node)
+  bool StatsComponent::dump(Dictionary& dict)
   {
-    node = mStats;
+    dict = mStats;
     return true;
   }
 

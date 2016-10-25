@@ -42,9 +42,9 @@ namespace Gsage {
   {
   }
 
-  OgreObject* OgreObjectManager::create(const DataNode& node, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity )
+  OgreObject* OgreObjectManager::create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity )
   {
-    std::string type = node.get<std::string>("type", "no_type_defined!");
+    std::string type = dict.get("type", "no_type_defined!");
     if(mObjects.count(type) == 0)
     {
       LOG(ERROR) << "Failed to create element of type \"" << type << "\": no factory of such type exists";
@@ -54,7 +54,7 @@ namespace Gsage {
     OgreObject* object = mObjects[type]->allocate();
     if(!object->initialize(
         this,
-        node,
+        dict,
         owner,
         type,
         sceneManager,
@@ -68,7 +68,7 @@ namespace Gsage {
     return object;
   }
 
-  OgreObject* OgreObjectManager::create(const DataNode& node, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent)
+  OgreObject* OgreObjectManager::create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent)
   {
     if(mObjects.count(type) == 0)
     {
@@ -79,7 +79,7 @@ namespace Gsage {
     OgreObject* object = mObjects[type]->allocate();
     if(!object->initialize(
         this,
-        node,
+        dict,
         owner,
         type,
         sceneManager,
@@ -87,20 +87,20 @@ namespace Gsage {
     {
       LOG(ERROR) << "Failed to create object of type \"" << type << "\": failed to build object";
       object->destroy();
-      return false;
+      return 0;
     }
     return object;
   }
 
-  OgreObject* OgreObjectManager::create(const DataNode& node, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent)
+  OgreObject* OgreObjectManager::create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent)
   {
-    if(node.count("type") == 0)
+    if(dict.count("type") == 0)
     {
-      LOG(ERROR) << "Failed to create element, data node is in incorrect format: type field missing";
+      LOG(ERROR) << "Failed to create element, dict is in incorrect format: type field missing";
       return 0;
     }
 
-    return create(node, owner, sceneManager, node.get<std::string>("type"), parent);
+    return create(dict, owner, sceneManager, dict.get("type", "no type defined!"), parent);
   }
 
   void OgreObjectManager::destroy(OgreObject* object)

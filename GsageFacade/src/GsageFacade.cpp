@@ -27,8 +27,6 @@ THE SOFTWARE.
 #include "GsageFacade.h"
 #include <OgreTimer.h>
 
-#include <boost/property_tree/json_parser.hpp>
-
 #include "UIManager.h"
 #include "Logger.h"
 #include "GameDataManager.h"
@@ -94,35 +92,35 @@ namespace Gsage {
         delete mTimer;
     }
 
-    bool GsageFacade::initialize(const std::string& rsageConfigPath, const std::string& resourcePath, DataNode* configOverride)
+    bool GsageFacade::initialize(const std::string& rsageConfigPath,
+        const std::string& resourcePath,
+        Dictionary* configOverride,
+        FileLoader::Encoding configEncoding)
     {
       assert(mStarted == false);
       mStarted = true;
 
       std::string configPath = resourcePath + "/" + rsageConfigPath;
 
+      Dictionary environment;
+      environment.put("workdir", resourcePath);
+      FileLoader::init(configEncoding, environment);
+
       LOG(INFO) << "Starting game, config:\n\t" << configPath;
-      std::ifstream stream(configPath);
-      try
+      if(!FileLoader::getSingletonPtr()->load(configPath, Dictionary(), mConfig))
       {
-        boost::property_tree::read_json(stream, mConfig);
-      }
-      catch(boost::property_tree::json_parser_error& ex)
-      {
-        LOG(ERROR) << "Failed to read game config file: \"" << configPath << "\" reason: " << ex.message();
         return false;
       }
 
-      mConfig.put("workdir", resourcePath);
-      if (configOverride != 0) 
+      if (configOverride != 0)
       {
-        mergeNodes(mConfig, *configOverride);
+        unionDict(mConfig, *configOverride);
       }
 
       // create rsage core engine
       addEventListener(&mEngine, EngineEvent::HALT, &GsageFacade::onEngineHalt);
 
-      if(!mEngine.initialize(mConfig))
+      if(!mEngine.initialize(mConfig, environment))
         return false;
 
       mLuaInterface = new LuaInterface(this, resourcePath);
@@ -140,16 +138,15 @@ namespace Gsage {
 
       if(mConfig.count(PLUGINS_SECTION) != 0)
       {
-        for(auto& pair : mConfig.get_child(PLUGINS_SECTION))
+        for(auto& pair : mConfig.get<Dictionary>(PLUGINS_SECTION).first)
         {
-          loadPlugin(pair.second.get_value<std::string>());
+          loadPlugin(pair.second.as<std::string>());
         }
       }
 
-      auto startupScript = mConfig.get_optional<std::string>("startupScript");
-      if(startupScript) {
-        mStartupScript = startupScript.get();
-        LOG(INFO) << mStartupScript;
+      auto startupScript = mConfig.get<std::string>("startupScript");
+      if(startupScript.second) {
+        mStartupScript = resourcePath + GSAGE_PATH_SEPARATOR + startupScript.first;
       }
       mTimer = new Ogre::Timer();
       return true;

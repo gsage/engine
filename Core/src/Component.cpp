@@ -28,20 +28,20 @@ THE SOFTWARE.
 
 using namespace Gsage;
 
-Component::Component()
+EntityComponent::EntityComponent()
 {
 }
 
-Component::~Component()
+EntityComponent::~EntityComponent()
 {
 }
 
-void Component::setOwner(Entity* value)
+void EntityComponent::setOwner(Entity* value)
 {
   mOwner = value;
 }
 
-Entity* Component::getOwner()
+Entity* EntityComponent::getOwner()
 {
   return mOwner;
 }

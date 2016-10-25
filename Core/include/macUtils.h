@@ -28,14 +28,16 @@ THE SOFTWARE.
 #include <CoreFoundation/CoreFoundation.h>
 #include <string>
 
-    CFBundleRef mac_loadExeBundle(const char *path);
-    void * mac_getBundleSym(CFBundleRef bundle, const char *name);
-    bool mac_unloadExeBundle(CFBundleRef bundle);
-    void* mac_loadDylib(const char* name);
-    void* mac_loadFramework(std::string name);
-    std::string macPluginPath();
-    std::string macBundlePath();
-    std::string macFrameworksPath();
-    std::string macCachePath();
-    std::string macTempFileName(void);
+extern "C" {
+CFBundleRef mac_loadExeBundle(const char *path);
+void * mac_getBundleSym(CFBundleRef bundle, const char *name);
+bool mac_unloadExeBundle(CFBundleRef bundle);
+void* mac_loadDylib(const char* name);
+void* mac_loadFramework(std::string name);
+}
+static std::string macPluginPath();
+static std::string macBundlePath();
+static std::string macFrameworksPath();
+static std::string macCachePath();
+static std::string macTempFileName(void);
 

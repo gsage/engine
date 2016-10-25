@@ -39,7 +39,7 @@ namespace Gsage {
    * Recast movement component
    */
 
-  class MovementComponent : public Component
+  class MovementComponent : public EntityComponent
   {
     public:
       static const std::string SYSTEM;

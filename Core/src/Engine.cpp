@@ -45,9 +45,10 @@ Engine::~Engine()
   removeSystems();
 }
 
-bool Engine::initialize(const DataNode& configuration)
+bool Engine::initialize(const Dictionary& configuration, const Dictionary& environment)
 {
   mConfiguration = configuration;
+  mEnvironment = environment;
 
   bool succeed = true;
   for(auto& systemName : mSetUpOrder)
@@ -58,9 +59,9 @@ bool Engine::initialize(const DataNode& configuration)
       continue;
     }
 
-    auto config = mConfiguration.get_child_optional(systemName);
+    auto config = mConfiguration.get<Dictionary>(systemName);
 
-    if(!mEngineSystems[systemName]->initialize(config ? config.get() : DataNode()))
+    if(!mEngineSystems[systemName]->initialize(config.second ? config.first : Dictionary()))
     {
       LOG(ERROR) << "Failed to initialize system \"" << systemName << "\"";
       succeed = false;
@@ -75,14 +76,16 @@ bool Engine::initialize(const DataNode& configuration)
   return succeed;
 }
 
-bool Engine::configureSystems(const DataNode& config)
+bool Engine::configureSystems(const Dictionary& config)
 {
   for(std::string& systemName : mSetUpOrder)
   {
     LOG(INFO) << "Configuring system " << systemName;
-    auto systemConfig = config.get_child_optional(systemName);
-    mEngineSystems[systemName]->configure(systemConfig ? systemConfig.get() : DataNode());
+    auto systemConfig = config.get<Dictionary>(systemName);
+    mEngineSystems[systemName]->configure(systemConfig.second ? systemConfig.first : Dictionary());
   }
+
+  return true;
 }
 
 void Engine::update(const double& time)
@@ -107,8 +110,8 @@ bool Engine::addSystem(const std::string& name, EngineSystem* system)
   system->setEngineInstance(this);
   if(mInitialized)
   {
-    auto config = mConfiguration.get_child_optional(name);
-    system->initialize(config ? config.get() : DataNode());
+    auto config = mConfiguration.get<Dictionary>(name);
+    system->initialize(config.second ? config.first : Dictionary());
   }
   return true;
 }
@@ -149,7 +152,7 @@ void Engine::removeSystems()
   mManagedByEngine.clear();
 }
 
-Entity* Engine::createEntity(const DataNode& data)
+Entity* Engine::createEntity(const Dictionary& data)
 {
   // can't create entity with no id
   if(data.count(KEY_ID) == 0)
@@ -157,7 +160,7 @@ Entity* Engine::createEntity(const DataNode& data)
     LOG(ERROR) << "Failed to create entity, id not present";
     return 0;
   }
-  std::string id = data.get<std::string>(KEY_ID);
+  std::string id = data.get<std::string>(KEY_ID).first;
 
   Entity* entity = getEntity(id);
   if(!entity)
@@ -211,7 +214,7 @@ Entity* Engine::getEntity(const std::string& id)
   return mEntityMap[id];
 }
 
-bool Engine::createComponent(Entity* entity, const std::string& type, const DataNode& node)
+bool Engine::createComponent(Entity* entity, const std::string& type, const Dictionary& dict)
 {
   if(!hasSystem(type))
   {
@@ -219,7 +222,7 @@ bool Engine::createComponent(Entity* entity, const std::string& type, const Data
     return false;
   }
 
-  Component* component = getSystem(type)->createComponent(node, entity);
+  EntityComponent* component = getSystem(type)->createComponent(dict, entity);
   if(component == 0)
   {
     LOG(ERROR) << "Component for system \"" << type << "\" was not created: read error";
@@ -227,20 +230,21 @@ bool Engine::createComponent(Entity* entity, const std::string& type, const Data
   }
 
   entity->addComponent(type, component);
+  return true;
 }
 
-bool Engine::readEntityData(Entity* entity, const DataNode& node)
+bool Engine::readEntityData(Entity* entity, const Dictionary& dict)
 {
-  auto flags = node.get_child_optional("flags");
-  if(flags)
+  auto flags = dict.get<Dictionary>("flags");
+  if(flags.second)
   {
-    for(auto& pair : flags.get())
+    for(auto& pair : flags.first)
     {
-      entity->setFlag(pair.second.get_value<std::string>());
+      entity->setFlag(pair.second.as<std::string>());
     }
   }
 
-  for(auto& pair : node)
+  for(auto& pair : dict)
   {
     if(pair.first == KEY_ID || pair.first == KEY_FLAGS)
       continue;
@@ -251,7 +255,7 @@ bool Engine::readEntityData(Entity* entity, const DataNode& node)
     }
     else
     {
-      Component* c = getComponent<Component>(entity, pair.first);
+      EntityComponent* c = getComponent<EntityComponent>(entity, pair.first);
       if(!c)
       {
         LOG(ERROR) << "Failed to update component of system \"" << pair.first << "\". It exists in entity, but can not be resolved in any system";

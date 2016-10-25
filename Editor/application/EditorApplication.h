@@ -32,6 +32,7 @@ THE SOFTWARE.
 
 #include "RocketUIManager.h"
 #include "EditorFacade.h"
+#include "Dictionary.h"
 
 
 namespace Gsage {
@@ -105,8 +106,8 @@ namespace Gsage {
       std::string mViewItemId;
       std::string mCurrentArea;
 
-      DataNode mConfig;
-      DataNode mConfigOverride;
+      Dictionary mConfig;
+      Dictionary mConfigOverride;
 
       bool mSystemsInitialized;
       bool mPaused;

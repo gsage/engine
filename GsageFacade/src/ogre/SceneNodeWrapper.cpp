@@ -54,19 +54,19 @@ namespace Gsage {
 
   bool SceneNodeWrapper::initialize(
           OgreObjectManager* objectManager,
-          const DataNode& node,
+          const Dictionary& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
           Ogre::SceneNode* parent)
   {
-    if(node.count("name") == 0)
+    if(dict.count("name") == 0)
     {
       mObjectId = ownerId;
       mNode = parent->createChildSceneNode(mObjectId);
     }
     addEventListener(objectManager, OgreObjectManagerEvent::FACTORY_UNREGISTERED, &SceneNodeWrapper::onFactoryUnregister);
-    return OgreObject::initialize(objectManager, node, ownerId, type, sceneManager, parent);
+    return OgreObject::initialize(objectManager, dict, ownerId, type, sceneManager, parent);
   }
 
   bool SceneNodeWrapper::hasNode()
@@ -124,9 +124,9 @@ namespace Gsage {
     return mNode != 0 ? mNode->getOrientation() : Ogre::Quaternion();
   }
 
-  void SceneNodeWrapper::readChildren(const DataNode& node)
+  void SceneNodeWrapper::readChildren(const Dictionary& dict)
   {
-    for(auto& pair : node)
+    for(auto& pair : dict)
     {
       LOG(INFO) << "Creating child " << pair.second.get("type", "unknown");
       OgreObject* child = mObjectManager->create(pair.second, mOwnerId, mSceneManager, mNode);
@@ -149,16 +149,16 @@ namespace Gsage {
     }
   }
 
-  DataNode SceneNodeWrapper::writeChildren()
+  Dictionary SceneNodeWrapper::writeChildren()
   {
-    DataNode values;
+    Dictionary values;
     for(auto& pair : mChildren)
     {
       for(auto& childPair : pair.second)
       {
-        DataNode item;
+        Dictionary item;
         childPair.second->dump(item);
-        values.push_back(std::make_pair("", item));
+        values.push(item);
       }
     }
     return values;

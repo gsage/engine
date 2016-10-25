@@ -28,8 +28,6 @@ THE SOFTWARE.
 #define _OgreObject_H_
 
 #include "Serializable.h"
-#include "PtreeExtensions.h"
-
 
 namespace Ogre
 {
@@ -51,7 +49,7 @@ namespace Gsage {
 
       virtual bool initialize(
           OgreObjectManager* objectManager,
-          const DataNode& node,
+          const Dictionary& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -60,7 +58,7 @@ namespace Gsage {
       /**
        * Initialize element from the node with values
        * @param factory OgreObjectManager to enable child class creation
-       * @param node DataNode with values
+       * @param dict Dictionary with values
        * @param type String type of the object
        * @param parent Parent SceneNode
        * @param sceneManager SceneManager to use
@@ -68,7 +66,7 @@ namespace Gsage {
        */
       virtual bool initialize(
           OgreObjectManager* objectManager,
-          const DataNode& node,
+          const Dictionary& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,

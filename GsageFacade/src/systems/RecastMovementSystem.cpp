@@ -53,7 +53,7 @@ namespace Gsage {
       delete mRecast;
   }
 
-  bool RecastMovementSystem::initialize(const DataNode& settings)
+  bool RecastMovementSystem::initialize(const Dictionary& settings)
   {
     OgreRenderSystem* renderSystem = mEngine->getSystem<OgreRenderSystem>();
     if(renderSystem == 0)
@@ -71,13 +71,13 @@ namespace Gsage {
   void RecastMovementSystem::configUpdated()
   {
     if(mConfig.count("cache") != 0)
-      mCache->loadAll(mConfig.get<std::string>("cache"));
+      mCache->loadAll(mConfig.get<std::string>("cache").first);
     else
       rebuild();
     EngineSystem::configUpdated();
   }
 
-  bool RecastMovementSystem::fillComponentData(MovementComponent* c, const DataNode& data)
+  bool RecastMovementSystem::fillComponentData(MovementComponent* c, const Dictionary& data)
   {
     c->mAgentId = mAgentCounter++;
     return true;

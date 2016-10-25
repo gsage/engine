@@ -47,7 +47,7 @@ namespace Gsage
   {
   }
 
-  bool PUSystemWrapper::read(const DataNode& node)
+  bool PUSystemWrapper::read(const Dictionary& node)
   {
     ParticleUniverse::ParticleSystemManager* psManager = ParticleUniverse::ParticleSystemManager::getSingletonPtr();
     OgreObject::read(node, "name");

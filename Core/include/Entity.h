@@ -36,7 +36,7 @@ THE SOFTWARE.
 namespace Gsage
 {
   class Engine;
-  class Component;
+  class EntityComponent;
 
   class Entity
   {
@@ -49,7 +49,7 @@ namespace Gsage
        * @param name Name of the system component belongs to
        * @param c Component
        */
-      void addComponent(const std::string& name, Component* c);
+      void addComponent(const std::string& name, EntityComponent* c);
       /**
        * Remove component
        *
@@ -61,7 +61,7 @@ namespace Gsage
        *
        * @param name Name of the system component belongs to
        */
-      Component* getComponent(const std::string& name);
+      EntityComponent* getComponent(const std::string& name);
       /**
        * Check that entity has all specified components
        *
@@ -90,7 +90,7 @@ namespace Gsage
        *
        * @param name Name of the system component belongs to
        */
-      Component* operator[](const std::string& name) { return getComponent(name); };
+      EntityComponent* operator[](const std::string& name) { return getComponent(name); };
       /**
        * Get entity id
        */
@@ -108,7 +108,7 @@ namespace Gsage
        */
       bool hasFlag(const std::string& flag);
 
-      typedef std::map<const std::string, Component*> Components;
+      typedef std::map<const std::string, EntityComponent*> Components;
       typedef Components::const_iterator ComponentsIterator;
 
       // TODO: expose iterator only

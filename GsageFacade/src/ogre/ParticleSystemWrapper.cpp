@@ -47,9 +47,9 @@ namespace Gsage {
   {
   }
 
-  bool ParticleSystemWrapper::read(const DataNode& node)
+  bool ParticleSystemWrapper::read(const Dictionary& dict)
   {
-    bool res = OgreObject::read(node);
+    bool res = OgreObject::read(dict);
     if(!mParticleSystem)
       mParticleSystem = mSceneManager->createParticleSystem(mObjectId);
     return res;

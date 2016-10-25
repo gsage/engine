@@ -48,11 +48,11 @@ namespace Gsage {
         
         /**
          * Initialize billboard
-         * @param node DataNode with values
+         * @param dict Dictionary with values
          * @param billboardSet Ogre::BillboardSet to create billboard into
          * @returns false if fails
          */
-        bool initialize(const DataNode& node, Ogre::BillboardSet* billboardSet);
+        bool initialize(const Dictionary& dict, Ogre::BillboardSet* billboardSet);
 
         /**
          * Set billboard position
@@ -147,7 +147,7 @@ namespace Gsage {
         /**
          * Override default logic values reading
          */
-        bool read(const DataNode& node);
+        bool read(const Dictionary& dict);
 
         /**
          * Set common up vector of the billboard
@@ -197,12 +197,12 @@ namespace Gsage {
         /**
          * Add billboards to the billboard set
          */
-        void setBillboards(const DataNode& node);
+        void setBillboards(const Dictionary& dict);
 
         /**
          * Get billboards to the billboard set
          */
-        DataNode getBillboards();
+        Dictionary getBillboards();
 
       private:
         /**

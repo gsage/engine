@@ -32,11 +32,12 @@ THE SOFTWARE.
 
 #include "Component.h"
 #include "GsageDefinitions.h"
+#include "Dictionary.h"
 
 namespace Gsage
 {
   class Engine;
-  class Component;
+  class EntityComponent;
 
   /**
    * Abstract system class.
@@ -49,20 +50,20 @@ namespace Gsage
       /**
        * Configure the system. This method can be called several times
        *
-       * @param config DataNode system configuration.
+       * @param config Dictionary system configuration.
        */
-      virtual bool configure(const DataNode& config);
+      virtual bool configure(const Dictionary& config);
       /**
        * Get configuration of the system.
        */
-      virtual const DataNode& getConfig();
+      virtual const Dictionary& getConfig();
       /**
        * Initialization of the system should be done here
        * This method is called only once by the Engine itself.
        *
        * @param settings Initial settings of the system
        */
-      virtual bool initialize(const DataNode& settings);
+      virtual bool initialize(const Dictionary& settings);
 
       /**
        * Updates system
@@ -73,12 +74,12 @@ namespace Gsage
        * Create component from the data object
        * @param data Component data description
        */
-      virtual Component* createComponent(const DataNode& data, Entity* owner) = 0;
+      virtual EntityComponent* createComponent(const Dictionary& data, Entity* owner) = 0;
       /**
        * Remove component from engine system
        * @param component Pointer to the component for removal
        */
-      virtual bool removeComponent(Component* component) = 0;
+      virtual bool removeComponent(EntityComponent* component) = 0;
       /**
        * Virtual method, that should remove all components, related to the system
        */
@@ -115,7 +116,7 @@ namespace Gsage
 
       Engine* mEngine;
       bool mReady;
-      DataNode mConfig;
+      Dictionary mConfig;
       bool mConfigDirty;
 
       bool mEnabled;

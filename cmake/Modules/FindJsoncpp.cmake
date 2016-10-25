@@ -9,9 +9,13 @@
 #  also defined, but not for general use are
 #  JSONCPP_LIBRARY, where to find the jsoncpp library.
 
-FIND_PATH(JSONCPP_INCLUDE_DIR jsoncpp/json/json.h
-/usr/local/include
-/usr/include
+FIND_PATH(JSONCPP_INCLUDE_DIR json/json.h
+  HINTS
+  $ENV{JSONCPP_DIR}
+  PATH_SUFFIXES include/jsoncpp include
+  PATHS
+  /usr/local
+  /usr
 )
 
 # Get the GCC compiler version

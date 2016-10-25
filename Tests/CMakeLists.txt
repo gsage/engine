@@ -1,7 +1,10 @@
 set(APP_NAME "unit-tests")
 
-set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} GsageCore
-  GsageFacade ${OGRE_LIBRARIES} ${gtest_LIBRARY} ${LIBRARY_NAME})
+set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} 
+  GsageCore
+  GsageFacade
+  ${CTEMPLATE_LIBRARIES}
+  ${OGRE_LIBRARIES} ${gtest_LIBRARY} ${LIBRARY_NAME} ${JSONCPP_LIBRARIES})
 
 include_directories(${cosmos_SOURCE_DIR}/Core/include)
 include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
@@ -9,13 +12,15 @@ include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
 include_directories(
   ${OGRE_INCLUDE_DIRS}
   ${gtest_INCLUDE_DIR}
+  ${JSONCPP_INCLUDE_DIR}
 )
 
 set(TEST_FILES
   Core/TestEngine.cpp
   Core/TestEventDispatcher.cpp
   Core/TestSerializable.cpp
-  Core/TestPtreeExtensions.cpp)
+  Core/TestDictionary.cpp
+  Core/TestFileLoader.cpp)
 
 ADD_EXECUTABLE(${APP_NAME} main.cpp ${TEST_FILES})
 

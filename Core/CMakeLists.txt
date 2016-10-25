@@ -15,13 +15,21 @@ include_directories( ${OIS_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${LUABIND_INCLUDE_DIRS}
   ${OGRE_SAMPLES_INCLUDEPATH}
+  ${JSONCPP_INCLUDE_DIR}
+  ${MSGPACK_INCLUDE_DIRS}
   )
 
 add_library(${COMMON_LIB} ${headers} ${sources})
 
 set_target_properties(${COMMON_LIB} PROPERTIES DEBUG_POSTFIX _d)
 
-target_link_libraries(${COMMON_LIB} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${LUABIND_LIBRARIES})
+target_link_libraries(${COMMON_LIB}
+  ${OGRE_LIBRARIES}
+  ${OIS_LIBRARIES}
+  ${LUABIND_LIBRARIES}
+  ${JSONCPP_LIBRARIES}
+  ${MSGPACK_LIBRARIES}
+)
 
 install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
   FILES_MATCHING PATTERN "*.h"

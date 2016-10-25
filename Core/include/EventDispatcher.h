@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include <map>
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace Gsage {
   class EventDispatcher;

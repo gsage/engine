@@ -29,8 +29,6 @@ THE SOFTWARE.
 #include "GsageFacade.h"
 #include "RocketUIManager.h"
 #include "lua/LuaInterface.h"
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
 
 #include "components/ScriptComponent.h"
 #include "systems/OgreRenderSystem.h"
@@ -42,12 +40,17 @@ THE SOFTWARE.
 
 #include <Rocket/Core/Lua/Interpreter.h>
 #include <stdio.h>
+#include <thread>
 
 #include "Logger.h"
 
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
+#endif
+
+#if GSAGE_PLATFORM == GSAGE_APPLE
+#include "OSX/MainWrapperOSX.h"
 #endif
 
 #ifndef RESOURCES_FOLDER
@@ -66,6 +69,18 @@ extern "C" {
     int main(int argc, char *argv[])
 #endif
     {
+#if GSAGE_PLATFORM == GSAGE_APPLE
+      CFBundleRef mainBundle = CFBundleGetMainBundle();
+      CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+      char path[PATH_MAX];
+      if (!CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX)) // Error: expected unqualified-id before 'if'
+      {
+        return 1;
+      }
+      CFRelease(resourcesURL); // error: expected constructor, destructor or type conversion before '(' token
+      chdir(path); // error: expected constructor, destructor or type conversion before '(' token
+#endif
+      int retVal = 0;
       Gsage::GsageFacade facade;
       std::string coreConfig = "gameConfig.json";
 
@@ -87,10 +102,19 @@ extern "C" {
       facade.addUpdateListener(&inputListener);
       facade.addSystem<Gsage::LuaScriptSystem>()->setLuaState(Rocket::Core::Lua::Interpreter::GetLuaState());
 
+#if GSAGE_PLATFORM == GSAGE_APPLE
+      NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+      id mAppDelegate = [[AppDelegate alloc] initWithClass:&facade];
+      [[NSApplication sharedApplication] setDelegate:mAppDelegate];
+      retVal = NSApplicationMain(argc, (const char **) argv);
+      [pool release];
+#else
       while(facade.update())
       {
       }
-      return 0;
+#endif
+
+      return retVal;
     }
 #ifdef __cplusplus
 }
