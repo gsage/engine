@@ -179,12 +179,12 @@ namespace Gsage {
       virtual bool onForceUnsubscribe(EventDispatcher* sender, const Event& event)
       {
         typename EventConnections::iterator iter = mConnections.begin();
-        LOG(TRACE) << "Removing all connections from deleted dispatcher";
+        LOG(INFO) << "Removing all connections from deleted dispatcher";
         while(iter != mConnections.end())
         {
           if((*iter).first.first == sender)
           {
-            LOG(TRACE) << "Unsubscribing from event on deletion of dispatcher, event type: " << (*iter).first.second;
+            LOG(INFO) << "Unsubscribing from event on deletion of dispatcher, event type: " << (*iter).first.second;
             typename EventConnections::iterator tmp = iter++;
             mConnections.erase(tmp);
           }

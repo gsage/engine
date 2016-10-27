@@ -28,12 +28,6 @@ THE SOFTWARE.
 #include "Logger.h"
 
 namespace Gsage {
-  template <typename T>
-  inline const typename T::key_type& lastKey(const T& pMap)
-  {
-    return pMap.rbegin()->first;
-  }
-
   const std::string DispatcherEvent::FORCE_UNSUBSCRIBE = "forceUnsubscribe";
 
   EventDispatcher::EventDispatcher()
@@ -89,7 +83,7 @@ namespace Gsage {
       mConnections[priority] = CallbacksList();
     }
 
-    int id = mConnections[priority].empty() ? 0 : lastKey(mConnections[priority]) + 1;
+    int id = mConnections[priority].empty() ? 0 : mConnections[priority].size();
     mConnections[priority].insert(std::make_pair(id, callback));
     return EventConnection(this, priority, id);
   }
@@ -102,7 +96,7 @@ namespace Gsage {
       {
         if(!p.second(dispatcher, event))
         {
-          break;
+          return;
         }
       }
     }

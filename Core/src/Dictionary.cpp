@@ -128,8 +128,24 @@ namespace Gsage
   template<>
   void Dictionary::put<Dictionary>(const std::string& key, const Dictionary& child)
   {
-    DictionaryKey k = createKey(key);
-    mChildren[k] = child;
+    std::vector<std::string> parts = split(key, '.');
+    Dictionary* dict = this;
+    DictionaryKey k;
+
+    for(int i = 0; i < parts.size(); i++) {
+      k = createKey(parts[i]);
+      if(i == parts.size()-1) {
+        break;
+      }
+
+      if(dict->mChildren.count(k) == 0) {
+        dict->mChildren[k] = Dictionary();
+      }
+
+      dict = &mChildren[k];
+    }
+
+    dict->mChildren[k] = child;
   }
 
   std::string Dictionary::get(const std::string& key, const char* def) const

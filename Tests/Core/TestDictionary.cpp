@@ -134,6 +134,10 @@ TEST(TestDictionary, TestDictionaryOperations)
   nested.put("c", "d");
   d.put("nested", nested);
 
+  d.put("nested.dictionary", nested);
+  d.put("nested.value", 120);
+
+
   auto pair = d.get<std::string>("a");
   // checking success
   ASSERT_TRUE(pair.second);
@@ -154,6 +158,25 @@ TEST(TestDictionary, TestDictionaryOperations)
   auto pair5 = d.get<TestStruct>("a");
   ASSERT_TRUE(pair5.second);
   ASSERT_EQ(pair5.first.variable, "b");
+
+  auto pair6 = d.get<std::string>("nested.dictionary.c");
+  ASSERT_TRUE(pair6.second);
+  ASSERT_EQ(pair6.first, "d");
+
+  pair2 = d.get<int>("nested.value");
+  ASSERT_TRUE(pair2.second);
+  ASSERT_EQ(pair2.first, 120);
+
+  d.put("_nested.dictionary", nested);
+  d.put("_nested.value", 120);
+
+  pair6 = d.get<std::string>("_nested.dictionary.c");
+  ASSERT_TRUE(pair6.second);
+  ASSERT_EQ(pair6.first, "d");
+
+  pair2 = d.get<int>("_nested.value");
+  ASSERT_TRUE(pair2.second);
+  ASSERT_EQ(pair2.first, 120);
 }
 
 TEST_F(TestJsonSerialization, TestIteration)

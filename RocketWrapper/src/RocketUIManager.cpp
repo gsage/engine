@@ -72,12 +72,12 @@ namespace Gsage {
     // add render handler
     addEventListener(mEngine, RenderEvent::UPDATE_UI, &RocketUIManager::render);
     // mouse events
-    addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &RocketUIManager::handleMouseEvent);
-    addEventListener(mEngine, MouseEvent::MOUSE_UP, &RocketUIManager::handleMouseEvent);
-    addEventListener(mEngine, MouseEvent::MOUSE_MOVE, &RocketUIManager::handleMouseEvent);
+    addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &RocketUIManager::handleMouseEvent, -100);
+    addEventListener(mEngine, MouseEvent::MOUSE_UP, &RocketUIManager::handleMouseEvent, -100);
+    addEventListener(mEngine, MouseEvent::MOUSE_MOVE, &RocketUIManager::handleMouseEvent, -100);
     // keyboard events
-    addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &RocketUIManager::handleKeyboardEvent);
-    addEventListener(mEngine, KeyboardEvent::KEY_UP, &RocketUIManager::handleKeyboardEvent);
+    addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &RocketUIManager::handleKeyboardEvent, -100);
+    addEventListener(mEngine, KeyboardEvent::KEY_UP, &RocketUIManager::handleKeyboardEvent, -100);
   }
 
   lua_State* RocketUIManager::getLuaState()

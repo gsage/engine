@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "Component.h"
 #include "components/RenderComponent.h"
 #include "FileLoader.h"
+#include "DictionaryConverters.h"
 
 #include "Logger.h"
 

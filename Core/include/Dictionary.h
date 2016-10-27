@@ -70,20 +70,22 @@ namespace Gsage {
   class DictionaryKey
   {
     public:
+      DictionaryKey() {}
+
       DictionaryKey(int index, const std::string& id)
         : mIndex(index)
           , mId(id)
-    {}
+      {}
 
       DictionaryKey(const std::string& id)
         : mIndex(-1)
           , mId(id)
-    {}
+      {}
 
       DictionaryKey(const char* id)
         : mIndex(-1)
           , mId(id)
-    {}
+      {}
 
       virtual ~DictionaryKey() {};
 
@@ -368,16 +370,28 @@ namespace Gsage {
 
       /**
        * Put value to key.
+       * Thread unsafe
        *
        * @param key to put to
        * @param value to put
+       *
        */
       template<typename T>
       void put(const std::string& key, const T& value)
       {
-        DictionaryKey k = createKey(key);
-        mChildren[k] = Dictionary();
-        mChildren[k].set(value);
+        std::vector<std::string> parts = split(key, '.');
+        Dictionary* dict = this;
+
+        for(int i = 0; i < parts.size(); i++) {
+          DictionaryKey k = createKey(parts[i]);
+          if(dict->mChildren.count(k) == 0) {
+            dict->mChildren[k] = Dictionary();
+          }
+
+          dict = &dict->mChildren[k];
+        }
+
+        dict->set(value);
       }
 
       /**
