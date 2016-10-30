@@ -78,25 +78,20 @@ namespace Gsage {
   void EditorApplication::initialize(const std::string& configPath)
   {
     mEditorConfigPath = configPath;
-    std::ifstream stream(configPath);
-    try
+    if(!readJson(configPath, mConfig))
     {
-      boost::property_tree::read_json(stream, mConfig);
-    }
-    catch(boost::property_tree::json_parser_error& ex)
-    {
-      LOG(ERROR) << "Failed to read editor config file: \"" << configPath << "\" reason: " << ex.message();
+      LOG(ERROR) << "Failed to read editor config file: \"" << configPath;
       QCoreApplication::exit();
     }
 
-    auto projectManagerConfig = mConfig.get_child_optional("projectManager");
-    if(!projectManagerConfig)
+    auto projectManagerConfig = mConfig.get<Dictionary>("projectManager");
+    if(!projectManagerConfig.second)
     {
       LOG(ERROR) << "No projectManager configs found in config file";
       QCoreApplication::exit();
     }
 
-    if(!mProjectManager->initialize(projectManagerConfig.get()))
+    if(!mProjectManager->initialize(projectManagerConfig.first))
     {
       LOG(ERROR) << "Failed to initialize project manager";
       QCoreApplication::exit();
@@ -168,7 +163,7 @@ namespace Gsage {
     QFileInfo projectFileInfo(projectFilePath);
     QString gameConfig(projectConfig.get("configPath", "gameConfig.json").c_str());
     QString resourcePath(projectFileInfo.absolutePath().append(QDir::separator()).append("resources"));
-    mConfigOverride.put_child("render", mConfig.get_child("render"));
+    mConfigOverride.put("render", mConfig.get<Dictionary>("render", Dictionary()));
     initEngine("renderWindow", gameConfig, resourcePath);
     return true;
   }
@@ -186,7 +181,7 @@ namespace Gsage {
   void EditorApplication::setUpUI()
   {
     setResizeMode(QQuickView::SizeRootObjectToView);
-    setSource(QUrl::fromLocalFile(QString(mResourcePath.c_str()).append("../../resources/editor/qml/main.qml")));
+    setSource(QUrl::fromLocalFile(QString(mResourcePath.c_str()).append(RESOURCES_FOLDER).append(GSAGE_PATH_SEPARATOR).append("editor/qml/main.qml")));
   }
 
   void EditorApplication::update()

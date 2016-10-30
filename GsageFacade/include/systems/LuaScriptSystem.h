@@ -28,7 +28,7 @@ THE SOFTWARE.
 #define _LuaScriptSystem_H_
 
 #include "ComponentStorage.h"
-#include <luabind/luabind.hpp>
+#include <sol.hpp>
 
 struct lua_State;
 
@@ -89,28 +89,29 @@ namespace Gsage
       /**
        * Run script in the LuaScriptSystem
        *
+       * @param component Target component
        * @param script Script or file with it
        * @returns run result, false if error happened
        */
-      bool runScript(const std::string& script);
+      bool runScript(ScriptComponent* component, const std::string& script);
 
       /**
        * Add lua function which will be called on each update of the system
-       * @param function Luabind function object, only LUA_TFUNCTION will be added as listener
+       * @param function Sol function object, only LUA_TFUNCTION will be added as listener
        */
-      bool addUpdateListener(const luabind::object& function);
+      bool addUpdateListener(const sol::object& function);
 
       /**
        * Remove lua function from update listeners list
-       * @param function Luabind function object
+       * @param function Sol function object
        */
-      bool removeUpdateListener(const luabind::object& function);
+      bool removeUpdateListener(const sol::object& function);
 
     private:
 
-      lua_State* mState;
+      sol::state_view* mState;
 
-      typedef std::vector<luabind::object> UpdateListeners;
+      typedef std::vector<sol::protected_function> UpdateListeners;
       UpdateListeners mUpdateListeners;
 
       std::string mWorkdir;

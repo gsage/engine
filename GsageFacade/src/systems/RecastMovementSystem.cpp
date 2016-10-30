@@ -119,6 +119,12 @@ namespace Gsage {
     {
       renderComponent->resetAnimationState();
       return;
+    } else {
+      if(!component->mMoveAnimationState.empty())
+      {
+        renderComponent->setAnimationState(component->mMoveAnimationState);
+        renderComponent->adjustAnimationStateSpeed(component->mMoveAnimationState, component->mSpeed * component->mAnimSpeedRatio);
+      }
     }
 
     if(!component->hasPath())

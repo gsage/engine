@@ -26,9 +26,7 @@ THE SOFTWARE.
 
 #include "ProjectManager.h"
 #include "Logger.h"
-#include "PtreeExtensions.h"
 
-#include <boost/property_tree/json_parser.hpp>
 #include <istream>
 #include <QDir>
 #include <QFile>
@@ -58,13 +56,13 @@ namespace Gsage {
   {
     const std::string defaultProjectImage = settings.get("defaultProjectImage", "");
 
-    auto templatesFolder = settings.get_optional<std::string>("templatesFolder");
-    if(!templatesFolder)
+    auto templatesFolder = settings.get<std::string>("templatesFolder");
+    if(!templatesFolder.second)
     {
       LOG(ERROR) << "Failed to setup project manager: no \"templatesFolder\" field, was found in the config";
       return false;
     }
-    mTemplatesFolder = templatesFolder.get();
+    mTemplatesFolder = templatesFolder.first;
 
     // TODO: maybe it is better to iterate all project templates in the templates directory
     auto templates = settings.get<Dictionary>("projectTemplates");
@@ -79,7 +77,7 @@ namespace Gsage {
 
         mTemplates.append(
           new ProjectTemplate(
-            QString::fromUtf8(templateId.c_str()),
+            QString::fromUtf8(templateId.str().c_str()),
             QString::fromUtf8(name.data(), name.size()),
             QString::fromUtf8(image.data(), image.size()),
             QString::fromUtf8(description.data(), description.size())
@@ -97,17 +95,11 @@ namespace Gsage {
     CreationStatus status = UNKNOWN;
 
     Dictionary createInstructions;
-    std::ifstream ifs(path.toStdString());
-    try
-    {
-      boost::property_tree::read_json(ifs, createInstructions);
-    }
-    catch(boost::property_tree::json_parser_error& ex)
-    {
-      LOG(ERROR) << "Failed to parse template file: " << path.toStdString() << ", reason: " << ex.message();
+
+    if(!readJson(path.toStdString(), createInstructions)) {
+      LOG(ERROR) << "Failed to parse template file: " << path.toStdString();
       status = NO_SUCH_TEMPLATE;
     }
-    ifs.close();
     if (status != UNKNOWN)
     {
       return status;
@@ -139,7 +131,7 @@ namespace Gsage {
     {
       for (auto pair : resources.first)
       {
-        QString resourcePath(pair.second.get_value<std::string>().c_str());
+        QString resourcePath(pair.second.getValue<std::string>().first.c_str());
         QStringList parts = resourcePath.split(":");
         QString resourceType("local");
         QString resourceProjectMountpoint = resourcePath;
@@ -149,7 +141,7 @@ namespace Gsage {
           resourcePath = parts[1];
           resourceProjectMountpoint = resourcePath;
         }
-        if (parts.size() == 3) 
+        if (parts.size() == 3)
         {
           resourceProjectMountpoint = parts[2];
         }
@@ -172,7 +164,7 @@ namespace Gsage {
     }
 
     Dictionary projectConfig;
-    if(!dumpJson(projectSettingsFile.toStdString(), projectConfig))
+    if(!writeJson(projectSettingsFile.toStdString(), projectConfig))
     {
       return PROJECT_FILE_CREATION_FAILED;
     }

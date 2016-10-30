@@ -4,6 +4,7 @@ local function isDead(self, context)
 end
 
 local function die(self, context)
+  async.waitSeconds(0.5)
   core:removeEntity(self.id)
   game:reset()
   game:loadSave("gameStart")
@@ -26,13 +27,14 @@ local function attack(self, context)
   if context.target == nil then
     return false
   end
+  local aspd = self.stats:getNumber('aspd', 1)
 
   self.render:lookAt(context.target.render.position)
   local anims = {"attack1", "attack2"}
-  self.render:playAnimation(anims[math.random(2)], 1, 1, 0, false)
-  async.waitSeconds(0.43)
+  self.render:playAnimation(anims[math.random(2)], 1, 1*aspd, 0, false)
+  async.waitSeconds(0.43/aspd)
   actions.inflictDamage(self, context.target)
-  async.waitSeconds(0.2)
+  async.waitSeconds(0.2/aspd)
   return true
 end
 

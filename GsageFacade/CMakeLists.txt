@@ -3,16 +3,16 @@ set(LIB_NAME "GsageFacade")
 include_directories(./include)
 include_directories(${cosmos_SOURCE_DIR}/Core/include)
 include_directories(${cosmos_SOURCE_DIR}/Components/OgreCrowd/include)
+include_directories(${cosmos_SOURCE_DIR}/Components/Sol2/include)
 include_directories(${cosmos_SOURCE_DIR}/PlugIns/ParticleUniverse/include)
 
 include_directories( ${OIS_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Overlay_INCLUDE_DIR}
   ${OGRE_Terrain_INCLUDE_DIR}
-  ${LUABIND_INCLUDE_DIRS}
+  ${LUAJIT_INCLUDE_DIR}
   ${OGRE_SAMPLES_INCLUDEPATH}
   ${JSONCPP_INCLUDE_DIR}
-  ${CTEMPLATE_INCLUDE_DIR}
 )
 
 link_directories(${cosmos_BINARY_DIR}/Core)
@@ -22,11 +22,7 @@ file(GLOB sources src/*.cpp src/*/*.cpp )
 
 add_library(${LIB_NAME} ${sources})
 
-set(LIBS OgreCrowd GsageCore ${CTEMPLATE_LIBRARIES} ${OGRE_Terrain_LIBRARY} ${OGRE_Overlay_LIBRARY})
-
-if(WIN32)
-  add_definitions(-DLUABIND_DYNAMIC_LINK)
-endif(WIN32)
+set(LIBS OgreCrowd GsageCore ${OGRE_Terrain_LIBRARY} ${OGRE_Overlay_LIBRARY})
 
 target_link_libraries(${LIB_NAME} ${LIBS})
 

@@ -1,7 +1,7 @@
 require 'actions'
 
 local function moveRandomly(self, context)
-  local position = Vector3(
+  local position = Vector3:new(
     self.render.position.x + math.random(30) - 15,
     0,
     self.render.position.z + math.random(30) - 15
@@ -10,7 +10,7 @@ local function moveRandomly(self, context)
 end
 
 local function findEnemy(self, context, distance)
-  local objects = view.getObjectsAround(self.id, distance, SceneNode.DYNAMIC, self.stats:getString("enemy", "none"))
+  local objects = view.getObjectsAround(self.id, distance, OgreSceneNode.DYNAMIC, self.stats:getString("enemy", "none"))
   context.target = nil
   for _, object in pairs(objects) do
     if actions.attackable(self, object) then
@@ -77,3 +77,4 @@ local function createTree()
 end
 
 btree.register("dumbMonster", createTree)
+

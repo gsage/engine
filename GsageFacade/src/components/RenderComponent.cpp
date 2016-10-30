@@ -49,17 +49,17 @@ namespace Gsage {
 
   void RenderComponent::setPosition(const Ogre::Vector3& position)
   {
-    if(mRootNode) 
+    if(mRootNode)
       mRootNode->setPosition(position);
   }
 
-  void RenderComponent::setOrientation(const Ogre::Quaternion& orientation) 
+  void RenderComponent::setOrientation(const Ogre::Quaternion& orientation)
   {
     if(mRootNode)
-      mRootNode->setOrientation(orientation); 
+      mRootNode->setOrientation(orientation);
   }
 
-  void RenderComponent::rotate(const Ogre::Quaternion& rotation) 
+  void RenderComponent::rotate(const Ogre::Quaternion& rotation)
   {
     if(mRootNode)
       mRootNode->rotate(rotation, Ogre::Node::TransformSpace::TS_LOCAL);
@@ -67,7 +67,7 @@ namespace Gsage {
 
   void RenderComponent::lookAt(const Ogre::Vector3& position)
   {
-    if(mRootNode) 
+    if(mRootNode)
       mRootNode->lookAt(position * Ogre::Vector3(1, 0, 1) + (mRootNode->getPositionWithoutOffset() * Ogre::Vector3::UNIT_Y), Ogre::Node::TS_WORLD);
   }
 

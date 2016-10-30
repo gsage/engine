@@ -15,21 +15,20 @@ FILE(GLOB sources src/*.cpp src/*/*.cpp src/*.c src/*/*.c src/*/*/*.c applicatio
 
 set(sources ${sources} "main.cpp")
 
-add_definitions(-DRESOURCES_FOLDER="../../resources")
-
 #qtquick_compiler_add_resources(RESOURCES example.qrc)
 add_executable(${APP_NAME} ${sources})
 qt5_use_modules(${APP_NAME} Qml Quick Core Network OpenGL)
 
 include_directories(${cosmos_SOURCE_DIR}/Core/include)
 include_directories(${cosmos_SOURCE_DIR}/Components/OgreCrowd/include)
+include_directories(${cosmos_SOURCE_DIR}/Components/Sol2/include)
 include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
 include_directories(${cosmos_SOURCE_DIR}/RocketWrapper/include)
 
 include_directories(${OIS_INCLUDE_DIRS}
   ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
-  ${LUABIND_INCLUDE_DIRS}
+  ${LUAJIT_INCLUDE_DIR}
   ${LIBROCKET_INCLUDE_DIRS}
 )
 
@@ -44,12 +43,44 @@ set(LIBS
   ${LIBROCKET_LIBRARIES}
   ${OGRE_LIBRARIES}
   ${OIS_LIBRARIES}
-  ${LUABIND_LIBRARIES}
+  ${LUAJIT_LIBRARIES}
   )
 
 if(APPLE)
+  set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE TRUE)
+  set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.Editor")
+  set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 -image_base 7fff04c4a000" )
+  option ( LUA_USE_POSIX "Use POSIX functionality." ON )
+  option ( LUA_USE_DLOPEN "Use dynamic linker to load modules." ON )
+  set ( LJVM_MODE machasm )
+
+  set(APP_FRAMEWORKS_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${APP_NAME}.app/Contents/Frameworks")
+  set(APP_RESOURCES_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${APP_NAME}.app/Contents/Resources/")
+
+  if(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+      COMMAND mkdir -p ${APP_FRAMEWORKS_DIRECTORY}
+    )
+  endif(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
+
+  if(NOT EXISTS ${APP_RESOURCES_DIRECTORY})
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+      COMMAND mkdir -p ${APP_RESOURCES_DIRECTORY}
+    )
+  endif(NOT EXISTS ${APP_RESOURCES_DIRECTORY})
+
+  add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND cp -rf $ENV{OGRE_HOME}/lib/${CMAKE_BUILD_TYPE}/ ${APP_FRAMEWORKS_DIRECTORY}
+  )
+  add_custom_command(TARGET ${APP_NAME} POST_BUILD
+    COMMAND cp -rf ${PROJECT_SOURCE_DIR}/resources/* ${APP_RESOURCES_DIRECTORY}
+  )
+  add_definitions(-DRESOURCES_FOLDER="../Resources")
   find_package(OpenGL REQUIRED)
   set(LIBS ${LIBS} ${OPENGL_LIBRARIES})
+else(APPLE)
+  add_definitions(-DRESOURCES_FOLDER="../../resources")
 endif(APPLE)
 
 target_link_libraries(${APP_NAME} ${LIBS})

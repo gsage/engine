@@ -105,12 +105,12 @@ namespace Gsage {
     return mTearDownScript;
   }
 
-  void ScriptComponent::setData(luabind::object& data)
+  void ScriptComponent::setData(sol::table& data)
   {
     mData = data;
   }
 
-  luabind::object& ScriptComponent::getData()
+  sol::table& ScriptComponent::getData()
   {
     return mData;
   }
@@ -135,13 +135,13 @@ namespace Gsage {
     return mTearDownExecuted;
   }
 
-  void ScriptComponent::setBtree(const luabind::object& object)
+  void ScriptComponent::setBtree(const sol::table& object)
   {
     mBtree = object;
     mHasBehavior = true;
   }
 
-  luabind::object& ScriptComponent::getBtree()
+  sol::table& ScriptComponent::getBtree()
   {
     return mBtree;
   }

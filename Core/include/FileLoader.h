@@ -92,7 +92,7 @@ namespace Gsage {
       void dump(const std::string& path, const Dictionary& value) const;
 
     private:
-      std::pair<std::string, bool> loadFile(const std::string& path, const Dictionary& params) const;
+      std::pair<std::string, bool> loadFile(const std::string& path) const;
       bool parse(const std::string& data, Dictionary& dest) const;
 
       Encoding mFormat;

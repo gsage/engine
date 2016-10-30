@@ -7,7 +7,7 @@
       "blank": {"image": "../../images/blank.png", "name": "Blank project", "description": "Blank project. It won't create any project settings, won't load any default models"},
       "actionRpg": {"image": "../../images/rpg.png", "name": "Action RPG", "description": "Default settings for action RPG project with isometric view. Will set up isometric camera controller, add default models." }
     },
-    "templatesFolder": "../../resources/editor/projectTemplates"
+    "templatesFolder": "../Resources/editor/projectTemplates"
   },
 
   "render":

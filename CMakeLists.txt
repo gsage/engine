@@ -31,7 +31,7 @@ if(WIN32)
 endif(WIN32)
 
 if(UNIX)
-  set(CMAKE_CXX_FLAGS "-std=c++11 -fPIC ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-std=c++14 -fPIC ${CMAKE_CXX_FLAGS}")
 endif(UNIX)
 
 include(locate_dependencies.cmake)

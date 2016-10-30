@@ -1,3 +1,5 @@
+require 'class'
+
 btree = btree or {}
 
 btree.factories = {}
@@ -51,14 +53,11 @@ end
 -- BehaviorTree class
 --------------------------------------------------------------------------------
 
-class 'BehaviorTree'
-
-function BehaviorTree:__init(context)
+BehaviorTree = class(function(self, context)
   self.currentBehavior = nil
   self.context = context
-
   self.mainCoroutine = nil
-end
+end)
 
 function BehaviorTree:start(rootNode)
   self.mainCoroutine = coroutine.create(
@@ -85,11 +84,9 @@ end
 -- Timer class
 --------------------------------------------------------------------------------
 
-class 'Timer'
-
-function Timer:__init()
+Timer = class(function(self)
   self.running = false
-end
+end)
 
 function Timer:run(delay, callback)
   self.delay = delay
@@ -111,15 +108,13 @@ end
 -- RunContext class
 --------------------------------------------------------------------------------
 
-class 'RunContext'
-
-function RunContext:__init(id)
+RunContext = class(function(self, id)
   self.id = id
   self.entity = engine:get(id)
   self.valid = true
 
   self.stacks = {}
-end
+end)
 
 function RunContext:pushToStack(stack, item)
   if self.stacks[stack] == nil then
@@ -146,15 +141,13 @@ end
 -- BaseBehavior class
 --------------------------------------------------------------------------------
 
-class 'BaseBehavior'
-
-function BaseBehavior:__init(children)
+BaseBehavior = class(function(self, children)
   self.children = {}
 
   for _, child in pairs(children) do
     table.insert(self.children, child)
   end
-end
+end)
 
 function BaseBehavior:run(context)
   error({message='trying to use abstract class BaseBehavior'})
@@ -166,9 +159,10 @@ end
 
 class 'Repeat' (BaseBehavior)
 
-function Repeat:__init(...) BaseBehavior.__init(self, ({...}))
+Repeat = class(BaseBehavior, function(self, ...)
+  BaseBehavior.init(self, ({...}))
   self.running = true
-end
+end)
 
 function Repeat:run(context)
   self.running = true
@@ -186,10 +180,9 @@ end
 -- RepeatUntil behavior class
 --------------------------------------------------------------------------------
 
-class 'RepeatUntil' (Repeat)
-
-function RepeatUntil:__init(...) BaseBehavior.__init(self, ({...}))
-end
+RepeatUntil = class(BaseBehavior, function(self, ...)
+  BaseBehavior.init(self, ({...}))
+end)
 
 function RepeatUntil:run(context)
   self.running = true
@@ -210,10 +203,10 @@ end
 -- Sequence behavior class
 --------------------------------------------------------------------------------
 
-class 'Sequence' (BaseBehavior)
 
-function Sequence:__init(...) BaseBehavior.__init(self, ({...}))
-end
+Sequence = class(BaseBehavior, function(self, ...)
+  BaseBehavior.init(self, ({...}))
+end)
 
 function Sequence:run(context)
   local success = true
@@ -230,10 +223,9 @@ end
 -- Selector behavior class
 --------------------------------------------------------------------------------
 
-class 'Selector' (BaseBehavior)
-
-function Selector:__init(...) BaseBehavior.__init(self, ({...}))
-end
+Selector = class(BaseBehavior, function(self, ...)
+  BaseBehavior.init(self, ({...}))
+end)
 
 function Selector:run(context)
   local success = false
@@ -250,7 +242,9 @@ end
 -- Invertor behavior class
 --------------------------------------------------------------------------------
 
-class 'Invertor' (BaseBehavior)
+Invertor = class(BaseBehavior, function(self, child)
+  self.child = child
+end)
 
 function Invertor:__init(child)
   self.child = child
@@ -264,11 +258,9 @@ end
 -- Successor behavior class
 --------------------------------------------------------------------------------
 
-class 'Successor' (BaseBehavior)
-
-function Successor:__init(child)
+Successor = class(BaseBehavior, function(self, child)
   self.child = child
-end
+end)
 
 function Successor:run(context)
   if self.child then
@@ -281,11 +273,9 @@ end
 -- Leaf behavior class
 --------------------------------------------------------------------------------
 
-class 'Leaf' (BaseBehavior)
-
-function Leaf:__init(callback)
+Leaf = class(BaseBehavior, function(self, callback)
   self.callback = callback
-end
+end)
 
 function Leaf:run(context)
   if not context.valid then
@@ -308,13 +298,11 @@ end
 -- Delay behavior class
 --------------------------------------------------------------------------------
 
-class 'Delay' (BaseBehavior)
-
-function Delay:__init(child, delayClosure)
+Delay = class(BaseBehavior, function(self, child, delayClosure)
   self.child = child
   self.timer = Timer()
   self.delayClosure = delayClosure
-end
+end)
 
 function Delay:run(context)
   if not self.timer.running then

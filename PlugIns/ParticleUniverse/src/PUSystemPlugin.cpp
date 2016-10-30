@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include "systems/OgreRenderSystem.h"
 #include "lua/LuaInterface.h"
 #include "PUSystemWrapper.h"
-#include <luabind/luabind.hpp>
+#include "ogre/SceneNodeWrapper.h"
 
 namespace Gsage
 {
@@ -61,15 +61,17 @@ namespace Gsage
     render->registerElement<PUSystemWrapper>();
     if(mLuaInterface && mLuaInterface->getState())
     {
-      luabind::module(mLuaInterface->getState())
-      [
-        luabind::class_<PUSystemWrapper, OgreObject>("OgrePUParticleSystem")
-          .property("template", &PUSystemWrapper::getTemplateName)
-          .def("start", &PUSystemWrapper::start)
-          .def("pause", (void (PUSystemWrapper::*)())&PUSystemWrapper::pause)
-          .def("resume", &PUSystemWrapper::resume)
-          .def("stop", &PUSystemWrapper::stop)
-      ];
+      lua = sol::state_view(mLuaInterface->getState());
+      lua.new_usertype<PUSystemWrapper>("PUParticleSystemWrapper",
+        sol::base_classes, sol::bases<OgreObject>(),
+        "template", sol::property(&PUSystemWrapper::getTemplateName),
+        "start", &PUSystemWrapper::start,
+        "pause", (void (PUSystemWrapper::*)())&PUSystemWrapper::pause,
+        "resume", &PUSystemWrapper::resume,
+        "stop", &PUSystemWrapper::stop
+      );
+
+      lua["OgreSceneNode"]["getPUSystem"] = &SceneNodeWrapper::getChildOfType<PUSystemWrapper>;
     }
     return true;
   }

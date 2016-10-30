@@ -4,10 +4,10 @@ include_directories(./include)
 include_directories(${cosmos_SOURCE_DIR}/Core/include)
 include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
 
-set(LIBS GsageCore GsageFacade ${OGRE_LIBRARIES} ${LUABIND_LIBRARIES} ${Boost_LIBRARIES} ${OGRE_Plugin_ParticleUniverse_LIBRARY})
+set(LIBS GsageCore GsageFacade ${OGRE_LIBRARIES} ${LUAJIT_LIBRARIES} ${Boost_LIBRARIES} ${OGRE_Plugin_ParticleUniverse_LIBRARY})
 include_directories(
   ${OGRE_INCLUDE_DIRS}
-  ${LUABIND_INCLUDE_DIRS}
+  ${LUAJIT_INCLUDE_DIR}
   ${JSONCPP_INCLUDE_DIR}
 )
 

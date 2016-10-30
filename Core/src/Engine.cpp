@@ -35,7 +35,8 @@ using namespace Gsage;
 
 Engine::Engine(const unsigned int& poolSize) :
   mEntities(poolSize),
-  mInitialized(false)
+  mInitialized(false),
+  mEntityCounter(0)
 {
 }
 
@@ -152,13 +153,13 @@ void Engine::removeSystems()
   mManagedByEngine.clear();
 }
 
-Entity* Engine::createEntity(const Dictionary& data)
+Entity* Engine::createEntity(Dictionary& data)
 {
   // can't create entity with no id
   if(data.count(KEY_ID) == 0)
   {
-    LOG(ERROR) << "Failed to create entity, id not present";
-    return 0;
+    // autogenerate id
+    data.put(KEY_ID, std::string("entity") + std::to_string(mEntityCounter++));
   }
   std::string id = data.get<std::string>(KEY_ID).first;
 

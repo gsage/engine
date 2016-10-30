@@ -39,29 +39,32 @@ namespace Gsage  {
 
   }
 
-  bool LuaEventProxy::addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const luabind::object& callback)
+  bool LuaEventProxy::addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
   {
-    if(luabind::type(callback) != LUA_TFUNCTION)
+    if(callback.get_type() != sol::type::function)
       return false;
 
-    boost::optional<Callbacks&> callbacksOptional = getCallbacks(dispatcher, eventType);
-    Callbacks& callbacks = callbacksOptional ? callbacksOptional.get() : subscribe(dispatcher, eventType);
-    callbacks.push_back(callback);
+    Callbacks* cb = getCallbacks(dispatcher, eventType);
+    Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);
+    callbacks.push_back(callback.as<sol::protected_function>());
     return true;
   }
 
-  bool LuaEventProxy::removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, const luabind::object& callback)
+  bool LuaEventProxy::removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
   {
+    if(callback.get_type() != sol::type::function)
+      return false;
+
     auto callbacks = getCallbacks(dispatcher, eventType);
     if(!callbacks)
       return false;
 
-    Callbacks::iterator iter = std::find(callbacks.get().begin(), callbacks.get().end(), callback);
-    if(iter == callbacks.get().end())
+    Callbacks::iterator iter = std::find(callbacks->begin(), callbacks->end(), callback.as<sol::protected_function>());
+    if(iter == callbacks->end())
       return false;
 
-    callbacks.get().erase(iter);
-    if(callbacks.get().size() == 0)
+    callbacks->erase(iter);
+    if(callbacks->size() == 0)
     {
       EventSubscriber<LuaEventProxy>::removeEventListener(dispatcher, eventType, &LuaEventProxy::handleEvent);
       mCallbackBindings.erase(CallbackBinding(dispatcher, eventType));
@@ -73,33 +76,28 @@ namespace Gsage  {
 
   bool LuaEventProxy::handleEvent(EventDispatcher* sender, const Event& event)
   {
-    auto callbacks = getCallbacks(sender, event.getType());
-    if(callbacks)
+    Callbacks* callbacks = getCallbacks(sender, event.getType());
+    if(callbacks != 0)
     {
-      for(luabind::object& callback : callbacks.get())
+      for(sol::protected_function& callback : (*callbacks))
       {
-        if(callback.is_valid())
+        if(!callback.valid())
         {
-          std::string error;
-          try
-          {
-            callback(boost::ref(event));
-          }
-          catch(std::runtime_error e)
-          {
-            error = e.what();
-          }
-          catch(luabind::error e)
-          {
-            error = e.what();
-          }
+          removeEventListener(sender, event.getType(), callback);
+          LOG(ERROR) << "Failed to call " << event.getType() << " listener invalid, removed from subscribers";
+          continue;
+        }
+        std::string error;
+        auto res = callback(std::ref(event));
+        if(!res.valid()) {
+          sol::error err = res;
+          error = err.what();
+        }
 
-          if(!error.empty())
-          {
-            removeEventListener(sender, event.getType(), callback);
-            LOG(ERROR) << "Failed to call " << event.getType() << " listener: " << error  << ", removed from subscribers";
-          }
-
+        if(!error.empty())
+        {
+          removeEventListener(sender, event.getType(), callback);
+          LOG(ERROR) << "Failed to call " << event.getType() << " listener: " << error  << ", removed from subscribers";
         }
       }
     }
@@ -127,13 +125,13 @@ namespace Gsage  {
     return true;
   }
 
-  boost::optional<LuaEventProxy::Callbacks&> LuaEventProxy::getCallbacks(EventDispatcher* dispatcher, const std::string& eventType)
+  LuaEventProxy::Callbacks* LuaEventProxy::getCallbacks(EventDispatcher* dispatcher, const std::string& eventType)
   {
     CallbackBinding binding(dispatcher, eventType);
     if(mCallbackBindings.count(binding) == 0)
-      return boost::optional<Callbacks&>(boost::none);
+      return 0;
 
-    return boost::optional<Callbacks&>(mCallbackBindings[binding]);
+    return &mCallbackBindings[binding];
   }
 
   LuaEventProxy::Callbacks& LuaEventProxy::subscribe(EventDispatcher* dispatcher, const std::string& eventType)

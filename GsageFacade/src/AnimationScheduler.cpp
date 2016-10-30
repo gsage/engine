@@ -25,6 +25,9 @@ THE SOFTWARE.
 */
 
 #include "AnimationScheduler.h"
+#include "components/RenderComponent.h"
+#include "ogre/SceneNodeWrapper.h"
+#include "ogre/EntityWrapper.h"
 
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
@@ -190,8 +193,9 @@ namespace Gsage {
   // AnimationGroup
   // --------------------------------------------------------------------------------
 
-  AnimationGroup::AnimationGroup()
+  AnimationGroup::AnimationGroup(RenderComponent* c)
     : mSpeed(1)
+    , mRenderComponent(c)
   {
 
   }
@@ -207,21 +211,32 @@ namespace Gsage {
       std::string fullId = pair.second.as<std::string>();
 
       std::vector<std::string> id = split(fullId, '.');
-      if(id.size() > 2)
-      {
-        LOG(ERROR) << "Failed to add animation: format mailformed \"" << fullId << "\"";
-        return false;
-      }
 
+      std::string entityID;
       mAnimations[pair.first] = Animation();
-
-      if(id.size() < 2)
-      {
+      if(id.size() < 2) {
         LOG(TRACE) << "Added empty animation to group " << pair.first;
         continue;
       }
 
-      Ogre::Entity* e = sceneManager->getEntity(id[0]);
+      SceneNodeWrapper* containerNode = mRenderComponent->getRoot();
+      int i;
+      for(i = 0; i < id.size() - 2; i++) {
+        containerNode = containerNode->getChildOfType<SceneNodeWrapper>(id[i]);
+        if(containerNode == 0) {
+          break;
+        }
+      }
+
+      if(containerNode == 0) {
+        LOG(TRACE) << "Failed to find node with name " << id[i];
+        continue;
+      }
+
+      EntityWrapper* w = containerNode->getChildOfType<EntityWrapper>(id[i]);
+
+      Ogre::Entity* e = w->getEntity();
+
       // no entity was found with such id
       if(e == 0)
       {
@@ -319,6 +334,7 @@ namespace Gsage {
     : mInitialized(false)
     , mDefaultAnimationSpeed(1)
     , mSceneManager(0)
+    , mRenderComponent(0)
   {
     BIND_PROPERTY("defaultState", &mDefaultAnimation);
     BIND_PROPERTY("defaultSpeed", &mDefaultAnimationSpeed);
@@ -327,10 +343,17 @@ namespace Gsage {
 
   AnimationScheduler::~AnimationScheduler()
   {
+    mRenderComponent = 0;
   }
 
-  bool AnimationScheduler::initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager)
+  void AnimationScheduler::setRenderComponent(RenderComponent* c)
   {
+    mRenderComponent = c;
+  }
+
+  bool AnimationScheduler::initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager, RenderComponent* c)
+  {
+    mRenderComponent = c;
     mSceneManager = sceneManager;
     read(dict);
     playDefaultAnimation();
@@ -483,7 +506,7 @@ namespace Gsage {
     // get all entities anim states
     for(auto& pair : dict)
     {
-      AnimationGroup group;
+      AnimationGroup group(mRenderComponent);
       if(!group.initialize(pair.second, mSceneManager))
       {
         LOG(ERROR) << "Failed to initialize animation group \"" << pair.first << "\", skipped";

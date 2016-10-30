@@ -151,6 +151,17 @@ namespace Gsage {
        */
       OgreObject* getChild(const std::string& type, const std::string& name);
 
+      /**
+       * Get child of specific type
+       * @param type Type of the child
+       * @param name Name, that was defined in the "name" field
+       */
+      template<class T>
+      T* getChildOfType(const std::string& name)
+      {
+        return static_cast<T*>(getChild(T::TYPE, name));
+      }
+
     private:
       /**
        * Handle factory removal event

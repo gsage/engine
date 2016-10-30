@@ -137,7 +137,7 @@ namespace Gsage
        * Create entity from the entity data
        * @param data Deserialized data object
        */
-      Entity* createEntity(const Dictionary& data);
+      Entity* createEntity(Dictionary& data);
       /**
        * Remove entity by id
        *
@@ -231,6 +231,7 @@ namespace Gsage
 
       EngineSystems mEngineSystems;
       Entities mEntities;
+      unsigned long mEntityCounter;
       typedef std::map<const std::string, Entity*> EntityMap;
       EntityMap mEntityMap;
 

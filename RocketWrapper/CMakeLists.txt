@@ -5,12 +5,13 @@ include_directories(./include)
 include_directories(./resources)
 include_directories(${cosmos_SOURCE_DIR}/Core/include)
 include_directories(${cosmos_SOURCE_DIR}/Components/OgreCrowd/include)
+include_directories(${cosmos_SOURCE_DIR}/Components/Sol2/include)
 include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
 
 include_directories( ${OIS_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Terrain_INCLUDE_DIR}
-  ${LUABIND_INCLUDE_DIRS}
+  ${LUAJIT_INCLUDE_DIR}
   ${OGRE_SAMPLES_INCLUDEPATH}
   ${LIBROCKET_INCLUDE_DIRS}
 )
@@ -29,7 +30,7 @@ set(LIBS
   GsageFacade
   ${LIBROCKET_LIBRARIES}
   ${OGRE_Overlay_LIBRARIES}
-  ${LUABIND_LIBRARIES}
+  ${LUAJIT_LIBRARIES}
   ${Boost_LIBRARIES})
 
 if(APPLE)
@@ -43,13 +44,13 @@ if(APPLE)
   set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE TRUE)
   set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
   set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.\${PRODUCT_NAME:rfc1034identifier}")
-  #set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 -image_base 7fff04c4a000" )
+  set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 -image_base 7fff04c4a000" )
   option ( LUA_USE_POSIX "Use POSIX functionality." ON )
   option ( LUA_USE_DLOPEN "Use dynamic linker to load modules." ON )
   set ( LJVM_MODE machasm )
 
-  set(APP_FRAMEWORKS_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Debug/${APP_NAME}.app/Contents/Frameworks")
-  set(APP_RESOURCES_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Debug/${APP_NAME}.app/Contents/Resources/")
+  set(APP_FRAMEWORKS_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${APP_NAME}.app/Contents/Frameworks")
+  set(APP_RESOURCES_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${APP_NAME}.app/Contents/Resources/")
 
   if(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
