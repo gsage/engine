@@ -169,7 +169,6 @@ Rectangle
             id: project
             text: "Configure new " + wizard.projectType + " project"
             font.family: "Helvetica"
-            font.pointSize: 11
           }
 
           Row {
@@ -180,7 +179,6 @@ Rectangle
             Text {
               id: projectNameLabel
               font.family: "Helvetica"
-              font.pointSize: 9
               text: "Project name:"
               verticalAlignment: Text.AlignVCenter
               height: parent.height
@@ -190,7 +188,6 @@ Rectangle
               id: projectName
               text: "default"
               font.family: "Helvetica"
-              font.pointSize: 10
               width: parent.width - projectNameLabel.width - parent.spacing
               height: parent.height
             }
@@ -216,7 +213,6 @@ Rectangle
               width: parent.width - (back.width + create.width + browse.width + inputs.spacing * 3)
               text: wizard.projectPath
               font.family: "Helvetica"
-              font.pointSize: 10
             }
 
             DefaultButton {
@@ -253,7 +249,6 @@ Rectangle
             id: projectDescription
             text: wizard.projectDescription
             font.family: "Helvetica"
-            font.pointSize: 8
             color: "#666"
           }
 
@@ -272,7 +267,6 @@ Rectangle
                 id: alertMessage
                 text: "Specified folder exists and is not empty, continue?"
                 font.family: "Helvetica"
-                font.pointSize: 10
                 anchors.topMargin: 10
                 anchors.leftMargin: 10
                 anchors.fill: parent
