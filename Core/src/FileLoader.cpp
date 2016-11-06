@@ -25,7 +25,7 @@ THE SOFTWARE.
 */
 
 #include "FileLoader.h"
-#include <ctemplate/template.h>
+#include <assert.h>
 
 namespace Gsage {
   FileLoader* FileLoader::mInstance = 0;
@@ -60,12 +60,16 @@ namespace Gsage {
   bool FileLoader::load(const std::string& path, const Dictionary& params, Dictionary& dest) const
   {
     Dictionary p = getUnionDict(mEnvironment, params);
-    auto pair = loadFile(path, p);
+    auto pair = loadFile(path);
     if (!pair.second) {
       return false;
     }
 
-    return parse(pair.first, dest);
+    if(!parse(pair.first, dest))
+      return false;
+
+    unionDict(dest, p);
+    return true;
   }
 
   std::pair<Dictionary, bool> FileLoader::load(const std::string& path, const Dictionary& params) const
@@ -94,19 +98,28 @@ namespace Gsage {
     stream.close();
   }
 
-  std::pair<std::string, bool> FileLoader::loadFile(const std::string& path, const Dictionary& params) const
+  std::pair<std::string, bool> FileLoader::loadFile(const std::string& path) const
   {
-    ctemplate::TemplateDictionary dict(path);
-    std::string output;
+    std::ifstream stream(path);
+    std::string res;
     bool success = true;
-    for(auto pair : params) {
-      dict.SetValue(pair.first.str(), pair.second.getValueOptional<std::string>(""));
+    try
+    {
+      stream.seekg(0, std::ios::end);
+      res.reserve(stream.tellg());
+      stream.seekg(0, std::ios::beg);
+      res.assign((std::istreambuf_iterator<char>(stream)),
+                  std::istreambuf_iterator<char>());
     }
-    if(!ctemplate::ExpandTemplate(path, ctemplate::DO_NOT_STRIP, &dict, &output))
+    catch(...)
     {
       success = false;
+      LOG(ERROR) << "Failed to read file: " << path;
     }
-    return std::make_pair(output, success);
+
+    stream.close();
+
+    return std::make_pair(res, success);
   }
 
   bool FileLoader::parse(const std::string& data, Dictionary& dest) const

@@ -59,7 +59,7 @@ namespace Gsage {
     resetSaveFile();
     Dictionary& root = getSaveFile();
 
-    if(!FileLoader::getSingletonPtr()->load(mSavesFolder + "/" + templateFile + "." + mFileExtension, Dictionary(), root))
+    if(!FileLoader::getSingletonPtr()->load(mSavesFolder + GSAGE_PATH_SEPARATOR + templateFile + "." + mFileExtension, Dictionary(), root))
       return false;
 
     const std::string& area = root.get("area", "none");

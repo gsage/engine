@@ -1,0 +1,29 @@
+language: cpp
+gcc:
+  - "4.9"
+cache:
+  directories:
+  - libRocket
+  - ogreSrc
+compiler:
+  - gcc
+install:
+  - sudo apt-get update -qq
+  - |
+    sudo apt-get install libfreetype6-dev libboost-date-time-dev libois-dev libluajit-5.1-dev libboost-thread-dev nvidia-cg-toolkit libfreeimage-dev zlib1g-dev libzzip-dev libcppunit-dev doxygen libxt-dev libxaw7-dev libxxf86vm-dev libxrandr-dev libglu-dev libboost-dev cmake libx11-dev g++
+  - |
+    if [ ! -d libRocket ]; then
+    git clone https://github.com/libRocket/libRocket.git
+    fi
+  - cd libRocket/Build && cmake . -DBUILD_LUA_BINDINGS=1 && cmake --build . && sudo make install && cd ../../
+  - |
+    if [ ! -d ogreSrc ]; then
+    hg clone https://bitbucket.org/sinbad/ogre ogreSrc
+    cd ogreSrc
+    hg update v1-9
+    mkdir build
+    cd ..
+    fi
+  - cd ogreSrc/build/ && cmake ../ && cmake --build . && sudo make install && cd ../../
+script:
+  - mkdir build && cd build && cmake .. && cmake --build .

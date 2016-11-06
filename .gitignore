@@ -1,3 +1,15 @@
 *.pyc
+.DS_Store
 build/
 Scraps/
+docs/_build
+docs/class/*
+docs/classlist.rst
+docs/file/*
+docs/filelist.rst
+docs/namespace/*
+docs/namespacelist.rst
+docs/struct/*
+docs/structlist.rst
+docs/latex
+docs/xml

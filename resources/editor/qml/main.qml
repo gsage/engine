@@ -6,7 +6,6 @@ import QtQuick.Controls.Styles 1.1
 import "views"
 
 Rectangle {
-
   id: ogre
   color: "black"
   property var levels:[]

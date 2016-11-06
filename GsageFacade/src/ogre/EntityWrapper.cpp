@@ -77,7 +77,21 @@ namespace Gsage {
   void EntityWrapper::setMesh(const std::string& model)
   {
     mMeshName = model;
-    mObject = mSceneManager->createEntity(mObjectId, model);
+    Ogre::SceneNode* root = mSceneManager->getRootSceneNode();
+    Ogre::SceneNode* parent = mParentNode;
+    std::vector<std::string> name;
+    if(mParentEntity) {
+      name.push_back(mParentEntity->getName());
+      parent = mParentEntity->getParentSceneNode();
+    }
+
+    while(parent != root) {
+      name.push_back(parent->getName());
+      parent = parent->getParentSceneNode();
+    }
+
+    name.push_back(mObjectId);
+    mObject = mSceneManager->createEntity(join(name, '.'), model);
     mObject->setQueryFlags(mQuery);
     mObject->getUserObjectBindings().setUserAny("entity", Ogre::Any(mOwnerId));
     Ogre::Skeleton* skeleton = mObject->getSkeleton();

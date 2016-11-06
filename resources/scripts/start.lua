@@ -9,7 +9,6 @@ require 'async'
 require 'behaviors'
 require 'actions'
 
-
 function startup()
   local fonts = 
   {
@@ -50,7 +49,7 @@ end
 function spawn()
   local id = "ninja" .. counter
   counter = counter + 1
-  entity.create("ninja", {name = id, speed = "10" })
+  entity.create("ninja", Dictionary.new({name = id, speed = "10" }))
 end
 
 function onKeyEvent(event)
@@ -66,24 +65,26 @@ function onKeyEvent(event)
 end
 
 function onSelect(event)
-  if event:hasFlags(SceneNode.DYNAMIC) then
-    local target = entity.get(event.entity)
+  e = SelectEvent.cast(event)
+  if e:hasFlags(OgreSceneNode.DYNAMIC) then
+    local target = entity.get(e.entity)
     if actions.attackable(player, target) then
       player.script.state.target = target
     end
-  elseif event:hasFlags(SceneNode.STATIC) then
+  elseif e:hasFlags(OgreSceneNode.STATIC) then
     player.script.state.target = nil
     if player.movement == nil or player.render == nil then
       return
     end
-    player.movement:go(event.intersection)
+    player.movement:go(e.intersection)
   end
 end
 
 function onRoll(event)
-  if event.type == "rollOver" then
-    local target = entity.get(event.entity)
-    if event:hasFlags(SceneNode.DYNAMIC) then
+  e = SelectEvent.cast(event)
+  if e.type == "rollOver" then
+    local target = entity.get(e.entity)
+    if e:hasFlags(OgreSceneNode.DYNAMIC) then
       cursor:GetElementById("cursorIcon"):SetClass("attack", actions.attackable(player, target))
     end
   else
@@ -119,3 +120,4 @@ startup()
 game:loadSave('gameStart')
 main:AddEventListener('keydown', onKeyEvent, true)
 console:AddEventListener('keydown', onKeyEvent, true)
+

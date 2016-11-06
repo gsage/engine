@@ -157,6 +157,10 @@ namespace Gsage {
         mCountInNode = 0;
         mElements.clear();
       }
+
+      int size() {
+        return mElements.size();
+      }
     private:
       struct Node
       {

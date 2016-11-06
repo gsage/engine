@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtGraphicalEffects 1.0
 
 Rectangle {
   id: menu
@@ -29,11 +30,13 @@ Rectangle {
 
       ListElement {
         menuName: "Game"
+        image: "../../images/game.png"
         selection: "game"
       }
 
       ListElement {
         menuName: "Script"
+        image: "../../images/script.png"
         selection: "script"
       }
     }
@@ -99,18 +102,34 @@ Rectangle {
           id: element
 
           Column {
-            Image {
-              id: icon
+            spacing: 5
+
+            Item {
               anchors {
                 horizontalCenter: parent.horizontalCenter
               }
-              source: image
+
+              width: 30
+              height: 30
+
+              Image {
+                anchors {
+                  fill: parent
+                }
+                id: icon
+                source: image
+              }
+
+              ColorOverlay {
+                anchors.fill: icon
+                source: icon
+                color: "#FFFFFFFF"
+              }
             }
-            Text { 
+            Text {
               id: caption
               text: menuName
               font.family: "Helvetica"
-              font.pointSize: 12
               color: "#FFFFFF"
               anchors {
                 horizontalCenter: parent.horizontalCenter

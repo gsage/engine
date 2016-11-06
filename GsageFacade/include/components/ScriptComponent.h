@@ -27,7 +27,7 @@ THE SOFTWARE.
 #ifndef _ScriptComponent_H_
 #define _ScriptComponent_H_
 
-#include <luabind/object.hpp>
+#include <sol.hpp>
 #include "Component.h"
 
 struct lua_State;
@@ -84,14 +84,14 @@ namespace Gsage {
       /**
        * Set context data
        *
-       * @param data Lua object
+       * @param data Lua table
        */
-      void setData(luabind::object& data);
+      void setData(sol::table& data);
 
       /**
        * Get data from the context
        */
-      luabind::object& getData();
+      sol::table& getData();
 
       /**
        * Set setup script execution state
@@ -121,15 +121,15 @@ namespace Gsage {
       bool hasBehavior() const;
 
       /**
-       * Set script behavior lua object
-       * @param value luabind::object
+       * Set script behavior lua table
+       * @param value sol::table
        */
-      void setBtree(const luabind::object& object);
+      void setBtree(const sol::table& object);
 
       /**
        * Get script behavior lua object
        */
-      luabind::object& getBtree();
+      sol::table& getBtree();
     private:
 
       std::string mSetupScript;
@@ -137,8 +137,8 @@ namespace Gsage {
 
       std::string mBehavior;
 
-      luabind::object mData;
-      luabind::object mBtree;
+      sol::table mData;
+      sol::table mBtree;
 
       bool mSetupExecuted;
       bool mTearDownExecuted;

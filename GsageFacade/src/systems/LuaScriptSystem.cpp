@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "Entity.h"
 #include "Logger.h"
 #include "Engine.h"
+#include "lua/LuaInterface.h"
 
 extern "C" {
   #include "lua.h"
@@ -36,8 +37,6 @@ extern "C" {
   #include "lualib.h"
 }
 
-#include <luabind/adopt_policy.hpp>
-#include <luabind/object.hpp>
 
 namespace Gsage {
 
@@ -49,6 +48,10 @@ namespace Gsage {
 
   LuaScriptSystem::~LuaScriptSystem()
   {
+    if(mState != 0)
+    {
+      delete mState;
+    }
   }
 
   bool LuaScriptSystem::initialize(const Dictionary& settings) {
@@ -68,19 +71,12 @@ namespace Gsage {
 
     if(mState)
     {
-      luabind::object initializeBtree = luabind::globals(mState)["btree"]["initialize"];
-      if(initializeBtree.is_valid())
-      {
-        luabind::object btree = initializeBtree(component->getOwner()->getId(), component->getBehavior());
-        component->setBtree(btree);
-        luabind::object context = btree["context"];
-        component->setData(context);
-      }
-      else
-      {
-        LOG(ERROR) << "Failed to initialize behavior tree, check that resources/scripts/behaviors.lua was loaded";
-        return false;
-      }
+      sol::function initializeBtree = (*mState)["btree"]["initialize"].get<sol::function>();
+      sol::table btree = initializeBtree(component->getOwner()->getId(), component->getBehavior());
+      component->setBtree(btree);
+      sol::table context = btree["context"];
+      component->setData(context);
+
       LOG(INFO) << "Successfuly registered script component for entity " << component->getOwner()->getId();
     }
     else
@@ -93,10 +89,10 @@ namespace Gsage {
 
   bool LuaScriptSystem::setLuaState(lua_State* L)
   {
-    if(mState == L)
+    if(mState && mState->lua_state() == L)
       return true;
 
-    mState = L;
+    mState = new sol::state_view(L);
     return true;
   }
 
@@ -105,24 +101,13 @@ namespace Gsage {
     if(!mState)
       return;
 
-    for(luabind::object& function : mUpdateListeners)
+    for(sol::protected_function& function : mUpdateListeners)
     {
-      try
-      {
-        if(!function.is_valid())
-        {
-          LOG(WARNING) << "Attempt to call invalid function, function removed from listeners";
-          removeUpdateListener(function);
-        }
-        else
-        {
-          function(time);
-        }
-      }
-      catch(luabind::error e)
-      {
+      auto res = function(time);
+      if(!res.valid()) {
+        sol::error err = res;
         removeUpdateListener(function);
-        LOG(ERROR) << "Failed to call update listener: " << e.what() << "\n\t" << lua_tostring(mState, -1) << ", force unsubscribe";
+        LOG(ERROR) << "Failed to call update listener: " << err.what() << "\n\t" << lua_tostring(mState->lua_state(), -1) << ", force unsubscribe";
       }
     }
 
@@ -134,13 +119,13 @@ namespace Gsage {
     if(!component->getSetupExecuted())
     {
       LOG(INFO) << entity->getId() << " executing script";
-      runScript(component->getSetupScript());
+      runScript(component, component->getSetupScript());
       component->setSetupExecuted(true);
     }
 
     if(component->hasBehavior())
     {
-      luabind::object& btree = component->getBtree();
+      sol::table& btree = component->getBtree();
       btree["update"](btree, time);
     }
   }
@@ -151,21 +136,27 @@ namespace Gsage {
     bool stopped = true;
     if(mState && component->hasBehavior())
     {
-      luabind::object stopBtree = luabind::globals(mState)["btree"]["deinitialize"];
-      if(!stopBtree.is_valid() || !runScript(component->getTearDownScript()))
+      sol::function stopBtree = (*mState)["btree"]["deinitialize"].get<sol::protected_function>();
+      if(!runScript(component, component->getTearDownScript()))
       {
         LOG(ERROR) << "Failed to tear down script component";
         stopped = false;
       }
       else
-        stopBtree(id);
+      {
+        auto res = stopBtree(id);
+        if(!res.valid()) {
+          sol::error err = res;
+          LOG(ERROR) << "Failed to stop btree " << err.what();
+        }
+      }
     }
 
     bool res = ComponentStorage<ScriptComponent>::removeComponent(component);
     return res && stopped;
   }
 
-  bool LuaScriptSystem::runScript(const std::string& script)
+  bool LuaScriptSystem::runScript(ScriptComponent* component, const std::string& script)
   {
     std::vector<std::string> parts = split(script, ':');
     std::string scriptData;
@@ -200,27 +191,45 @@ namespace Gsage {
       scriptData = script;
     }
 
-    int res = luaL_dostring(mState, scriptData.c_str());
+    try {
+      auto res = mState->script(scriptData.c_str());
+      if(!res.valid())
+      {
+        sol::error err = res;
+        LOG(ERROR) << "Failed to execute lua script " << err.what();
+        return false;
+      }
 
-    if(res != 0)
-    {
-      LOG(ERROR) << "Failed to execute lua script:\n" << lua_tostring(mState, -1);
+      sol::object r = res.get<sol::object>();
+      if(r.get_type() != sol::type::function) {
+        return true;
+      }
+
+      // If script returns a function, it means that it want's to have a sandbox
+
+      sol::protected_function callback = r;
+      auto callResult = callback(EntityProxy(component->getOwner()->getId(), mEngine));
+      if(!callResult.valid()) {
+        sol::error err = callResult;
+        LOG(ERROR) << "Failed to execute lua script " << err.what();
+        return false;
+      }
+    } catch(sol::error e) {
+      LOG(ERROR) << "Failed to execute lua script " << e.what();
       return false;
     }
+
     return true;
   }
 
-  bool LuaScriptSystem::addUpdateListener(const luabind::object& function)
+  bool LuaScriptSystem::addUpdateListener(const sol::object& function)
   {
     if(std::find(mUpdateListeners.begin(), mUpdateListeners.end(), function) != mUpdateListeners.end())
       return true;
 
-    if(luabind::type(function) == LUA_TFUNCTION)
-    {
-      mUpdateListeners.push_back(function);
-    }
-    else
-    {
+    if(function.get_type() == sol::type::function) {
+      mUpdateListeners.push_back(function.as<sol::protected_function>());
+    } else {
       LOG(WARNING) << "Tried to add update listener object of unsupported type";
       return false;
     }
@@ -228,8 +237,9 @@ namespace Gsage {
     return true;
   }
 
-  bool LuaScriptSystem::removeUpdateListener(const luabind::object& function)
+  bool LuaScriptSystem::removeUpdateListener(const sol::object& object)
   {
+    sol::protected_function function = object.as<sol::protected_function>();
     UpdateListeners::iterator element = std::find(mUpdateListeners.begin(), mUpdateListeners.end(), function);
     if(element == mUpdateListeners.end())
       return false;

@@ -22,7 +22,7 @@ entity = entity or {}
 
 function entity.get(id)
   if entity[id] == nil then
-    local e = EntityProxy(id, core)
+    local e = EntityProxy.new(id, core)
     if e.valid then
       entity[id] = e
     end
@@ -46,8 +46,8 @@ function view.getObjectsAround(id, distance, flags, targetId)
 
   local entities = {}
   local objects = core.render:getObjectsInRadius(target.render.position, distance, flags, targetId)
-  for _, object in pairs(objects) do
-    table.insert(entities, entity.get(object.id))
+  for i = 1, #objects do
+    table.insert(entities, entity.get(objects[i].id))
   end
   return entities
 end

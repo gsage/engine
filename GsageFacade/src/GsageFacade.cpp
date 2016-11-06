@@ -42,7 +42,7 @@ THE SOFTWARE.
 #include "EngineEvent.h"
 #include "OgreDynLibManager.h"
 
-_INITIALIZE_EASYLOGGINGPP
+INITIALIZE_EASYLOGGINGPP
 
 namespace Gsage {
 
@@ -60,9 +60,19 @@ namespace Gsage {
       mStartupScriptRun(false),
       mTimer(0)
     {
-      easyloggingpp::Configurations c;
-      c.setToDefault();
-      c.parseFromText("*TRACE:\n FORMAT = %level %msg");
+      el::Configurations defaultConf;
+      el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
+      defaultConf.setToDefault();
+      // Values are always std::string
+      defaultConf.set(el::Level::Info, 
+          el::ConfigurationType::Format, "%datetime %level %msg");
+      // default logger uses default configurations
+      el::Loggers::reconfigureLogger("default", defaultConf);
+      LOG(INFO) << "Log using default file";
+      // To set GLOBAL configurations you may use
+      defaultConf.setGlobally(
+          el::ConfigurationType::Format, "%datetime %level %msg [%fbase:%line]");
+      el::Loggers::reconfigureLogger("default", defaultConf);
     }
 
     GsageFacade::~GsageFacade()
@@ -104,7 +114,7 @@ namespace Gsage {
 
       Dictionary environment;
       environment.put("workdir", resourcePath);
-      FileLoader::init(configEncoding, environment);
+      FileLoader::init(configEncoding, Dictionary());
 
       LOG(INFO) << "Starting game, config:\n\t" << configPath;
       if(!FileLoader::getSingletonPtr()->load(configPath, Dictionary(), mConfig))

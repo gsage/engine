@@ -220,6 +220,7 @@ namespace Gsage {
       typedef Children::const_iterator constIterator;
 
       Dictionary(bool isArray = false) : mIsArray(isArray) {}
+      Dictionary(const std::string& data, bool isArray = false) : mValue(data), mIsArray(isArray) {}
       virtual ~Dictionary() {}
 
       DictionaryKey createKey(const std::string& key) const

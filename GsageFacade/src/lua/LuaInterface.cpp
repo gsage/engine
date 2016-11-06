@@ -26,10 +26,6 @@ THE SOFTWARE.
 
 #include "lua/LuaInterface.h"
 
-#include <luabind/adopt_policy.hpp>
-#include <luabind/iterator_policy.hpp>
-#include <luabind/operator.hpp>
-
 #include "GsageFacade.h"
 
 #include "GameDataManager.h"
@@ -48,7 +44,6 @@ THE SOFTWARE.
 
 #include "input/OisInputListener.h"
 
-#include "lua/LuaConverters.h"
 #include "lua/LuaEventProxy.h"
 
 #include "ogre/SceneNodeWrapper.h"
@@ -58,71 +53,39 @@ THE SOFTWARE.
 #include "ogre/CameraWrapper.h"
 #include "Dictionary.h"
 
-using namespace luabind;
+#include "sol.hpp"
 
-namespace luabind {
-  template<>
-  struct default_converter<Gsage::Dictionary> : native_converter_base<Gsage::Dictionary> {
-    static int compute_score(lua_State* L, int index) {
-      return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
-    }
-
-    static void iterate(object lua_object, Gsage::Dictionary& dict) {
-      for(iterator i(lua_object), end; i != end; i++)
-      {
-        object val = *i;
-        if (type(val) == LUA_TTABLE) 
-        {
-          Gsage::Dictionary child;
-          iterate(val, child);
-          if(type(i.key()) == LUA_TSTRING)
-          {
-            dict.put(object_cast<std::string>(i.key()), child);
-          }
-          else
-          {
-            dict.push(child);
-          }
-        }
-        else
-        {
-          std::string value;
-          if(type(val) == LUA_TNUMBER)
-            value = std::to_string(object_cast<float>(val));
-          else
-            value = object_cast<std::string>(val);
-
-          if(type(i.key()) == LUA_TSTRING) {
-            dict.put(object_cast<std::string>(i.key()), value);
-          } else {
-            Gsage::Dictionary d;
-            d.set(value);
-            dict.push(d);
-          }
-        }
-      }
-    }
-
-    Gsage::Dictionary from(lua_State* L, int index) {
-      Gsage::Dictionary dict;
-      iterate(object(from_stack(L, index)), dict);
-      return dict;
-    }
-
-    void to(lua_State* L, const Gsage::Dictionary& l) {
-      luabind::object table = luabind::newtable(L);
-
-      // TODO: this is not that simple, implement it later
-      /*for (auto pair& : node) {
-        table[pair.first] = pair.second.get();
-        }*/
-
-      table.push(L);
-    }
-  };
-}
 
 namespace Gsage {
+
+  void fillRecoursively(const sol::object& t, Dictionary& dest) {
+    if(t.get_type() == sol::type::table) {
+      for(auto pair : t.as<sol::table>()) {
+        Dictionary d;
+        fillRecoursively(pair.second, d);
+
+        if(pair.first.get_type() == sol::type::number) {
+          dest.push(d);
+        } else {
+          dest.put(pair.first.as<std::string>(), d);
+        }
+      }
+    } else {
+      dest.set(t.as<std::string>());
+    }
+  }
+
+  std::shared_ptr<Dictionary> wrapObject(const sol::object& t)
+  {
+    Dictionary* d = new Dictionary();
+    fillRecoursively(t, *d);
+    return std::shared_ptr<Dictionary>(d);
+  }
+
+  template<class From, class To>
+  To cast(From f) {
+    return static_cast<To>(f);
+  }
 
   DataManagerProxy::DataManagerProxy(GameDataManager* instance)
     : mInstance(instance)
@@ -183,6 +146,7 @@ namespace Gsage {
     , mEventProxy(new LuaEventProxy())
     , mResourceDir(resourceDir)
     , mState(0)
+    , mStateView(0)
   {
   }
 
@@ -196,204 +160,259 @@ namespace Gsage {
 
     if(mEngineProxy)
       delete mEngineProxy;
+
+    if(mStateView)
+      delete mStateView;
   }
 
   bool LuaInterface::attachToState(lua_State* L)
   {
     mState = L;
-
-    #define LUA_CONST_START( class ) { object g = globals(L); object table = g[#class]; 
-    #define LUA_CONST( class, name ) table[#name] = class::name 
-    #define LUA_CONST_END } 
-
     luaL_openlibs(L);
-    open(L);
-    module(L)
-    [
-      class_<EventDispatcher>("EventDispatcher"),
+    if(mStateView)
+      delete mStateView;
+    mStateView = new sol::state_view(L);
+    sol::state_view lua = *mStateView;
 
-      class_<EngineProxy>("EngineProxy")
-        .def("get", &EngineProxy::getEntity, adopt(result)),
+    lua.new_usertype<GsageFacade>("Facade",
+        "new", sol::no_constructor,
+        "halt", &GsageFacade::halt,
+        "reset", &GsageFacade::reset,
+        "loadSave", &GsageFacade::loadSave,
+        "dumpSave", &GsageFacade::dumpSave,
+        "loadPlugin", &GsageFacade::loadPlugin,
+        "unloadPlugin", &GsageFacade::unloadPlugin
+    );
 
-      class_<EntityProxy>("EntityProxy")
-        .def(constructor<const std::string&, Engine*>())
-        .property("render", &EntityProxy::getComponent<RenderComponent>)
-        .property("movement", &EntityProxy::getComponent<MovementComponent>)
-        .property("stats", &EntityProxy::getComponent<StatsComponent>)
-        .property("script", &EntityProxy::getComponent<ScriptComponent>)
-        .property("id", &EntityProxy::getId)
-        .property("valid", &EntityProxy::isValid),
+    lua.new_usertype<EngineProxy>("EngineProxy",
+        "get", &EngineProxy::getEntity
+    );
 
-      class_<CameraController>("CameraController")
-        .def("setTarget", &CameraController::setTarget),
+    lua.new_usertype<EntityProxy>("EntityProxy",
+        sol::constructors<sol::types<const std::string&, Engine*>>(),
+        "render", sol::property(&EntityProxy::getComponent<RenderComponent>),
+        "movement", sol::property(&EntityProxy::getComponent<MovementComponent>),
+        "stats", sol::property(&EntityProxy::getComponent<StatsComponent>),
+        "script", sol::property(&EntityProxy::getComponent<ScriptComponent>),
+        "id", sol::property(&EntityProxy::getId),
+        "valid", sol::property(&EntityProxy::isValid)
+    );
 
-      class_<GsageFacade>("Facade")
-        .def("reset", &GsageFacade::reset)
-        .def("halt", &GsageFacade::halt)
-        .def("loadSave", &GsageFacade::loadSave)
-        .def("dumpSave", &GsageFacade::dumpSave)
-        .def("loadPlugin", &GsageFacade::loadPlugin)
-        .def("unloadPlugin", &GsageFacade::unloadPlugin),
+    lua.new_usertype<CameraController>("CameraController",
+        "setTarget", &CameraController::setTarget
+    );
 
-      // --------------------------------------------------------------------------------
-      // Ogre objects
+    // --------------------------------------------------------------------------------
+    // Ogre objects
+    lua.new_usertype<OgreObject>("OgreObject",
+        "type", sol::property(&OgreObject::getType)
+    );
 
-      class_<OgreObject>("Object")
-        .property("type", &OgreObject::getType),
+    lua.new_simple_usertype<SceneNodeWrapper>(
+        "OgreSceneNode",
+        sol::base_classes, sol::bases<OgreObject>(),
+        "getChild", &SceneNodeWrapper::getChild,
+        "getSceneNode", &SceneNodeWrapper::getChildOfType<SceneNodeWrapper>,
+        "getEntity", &SceneNodeWrapper::getChildOfType<EntityWrapper>,
+        "getParticleSystem", &SceneNodeWrapper::getChildOfType<ParticleSystemWrapper>,
+        "getCamera", &SceneNodeWrapper::getChildOfType<CameraWrapper>,
+        "STATIC", sol::var(SceneNodeWrapper::STATIC),
+        "DYNAMIC", sol::var(SceneNodeWrapper::DYNAMIC)
+    );
 
-      class_<SceneNodeWrapper, OgreObject>("SceneNode")
-        .def("getChild", &SceneNodeWrapper::getChild)
-        .enum_("flags")
-        [
-          value("STATIC", SceneNodeWrapper::STATIC),
-          value("DYNAMIC", SceneNodeWrapper::DYNAMIC)
-        ],
+    lua.new_usertype<EntityWrapper>("OgreEntity",
+        sol::base_classes, sol::bases<OgreObject>(),
+        "attachToBone", &EntityWrapper::attachToBone
+    );
 
-      class_<EntityWrapper, OgreObject>("Entity")
-        .def("attachToBone", &EntityWrapper::attachToBone),
-      class_<LightWrapper, OgreObject>("Light"),
-      class_<ParticleSystemWrapper, OgreObject>("OgreParticleSystem")
-        .def("createParticle", (void(ParticleSystemWrapper::*)(unsigned short, const std::string&)) &ParticleSystemWrapper::createParticle)
-        .def("createParticle", (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&)) &ParticleSystemWrapper::createParticle)
-        .def("createParticle", (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&, const Ogre::Quaternion&)) &ParticleSystemWrapper::createParticle),
+    lua.new_usertype<ParticleSystemWrapper>("OgreParticleSystem",
+        sol::base_classes, sol::bases<OgreObject>(),
+        "createParticle", sol::overload(
+          (void(ParticleSystemWrapper::*)(unsigned short, const std::string&)) &ParticleSystemWrapper::createParticle,
+          (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&)) &ParticleSystemWrapper::createParticle,
+          (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&, const Ogre::Quaternion&)) &ParticleSystemWrapper::createParticle
+        )
+    );
 
-      class_<CameraWrapper, OgreObject>("CameraWrapper")
-        .def("attach", &CameraWrapper::attach),
+    lua.new_usertype<CameraWrapper>("CameraWrapper",
+        sol::base_classes, sol::bases<OgreObject>(),
+        "attach", &CameraWrapper::attach
+    );
 
-      // --------------------------------------------------------------------------------
-      // Systems
+    // --------------------------------------------------------------------------------
+    // Systems
 
-      class_<EngineSystem>("EngineSystem")
-        .property("enabled", &EngineSystem::isEnabled, &EngineSystem::setEnabled),
+    lua.new_usertype<EngineSystem>("EngineSystem",
+        "enabled", sol::property(&EngineSystem::isEnabled, &EngineSystem::setEnabled)
+    );
 
-      class_<OgreRenderSystem, EngineSystem>("RenderSystem")
-        .property("camera", &OgreRenderSystem::getCamera)
-        .property("viewport", &OgreRenderSystem::getViewport)
-        .def("getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius),
+    lua.new_usertype<OgreRenderSystem>("RenderSystem",
+        sol::base_classes, sol::bases<EngineSystem>(),
+        "camera", sol::property(&OgreRenderSystem::getCamera),
+        "viewport", sol::property(&OgreRenderSystem::getViewport),
+        "getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius
+    );
 
-      class_<RecastMovementSystem, EngineSystem>("MovementSystem")
-        .def("showNavMesh", &RecastMovementSystem::showNavMesh)
-        .def("setControlledEntity", &RecastMovementSystem::setControlledEntity)
-        .def("resetControlledEntity", &RecastMovementSystem::resetControlledEntity),
+    lua.new_usertype<RecastMovementSystem>("MovementSystem",
+        sol::base_classes, sol::bases<EngineSystem>(),
+        "showNavMesh", &RecastMovementSystem::showNavMesh,
+        "setControlledEntity", &RecastMovementSystem::setControlledEntity,
+        "resetControlledEntity", &RecastMovementSystem::resetControlledEntity
+    );
 
-      class_<LuaScriptSystem, EngineSystem>("ScriptSystem")
-        .def("addUpdateListener", &LuaScriptSystem::addUpdateListener)
-        .def("removeUpdateListener", &LuaScriptSystem::removeUpdateListener),
+    lua.new_usertype<LuaScriptSystem>("ScriptSystem",
+        sol::base_classes, sol::bases<EngineSystem>(),
+        "addUpdateListener", &LuaScriptSystem::addUpdateListener,
+        "removeUpdateListener", &LuaScriptSystem::removeUpdateListener
+    );
 
-      // --------------------------------------------------------------------------------
-      // Components
+    // --------------------------------------------------------------------------------
+    // Components
 
-      class_<RenderComponent>("RenderComponent")
-        .property("position", &RenderComponent::getPosition)
-        .property("root", &RenderComponent::getRoot)
-        .property("direction", &RenderComponent::getDirection)
-        .property("orientation", &RenderComponent::getOrientation)
-        .property("facingOrientation", &RenderComponent::getFaceOrientation)
-        .def("lookAt", &RenderComponent::lookAt)
-        .def("rotate", &RenderComponent::rotate)
-        .def("playAnimation", &RenderComponent::playAnimation)
-        .def("resetAnimation", &RenderComponent::resetAnimationState)
-        .def("setAnimationState", &RenderComponent::setAnimationState)
-        .def("adjustAnimationSpeed", &RenderComponent::adjustAnimationStateSpeed),
+    lua.new_usertype<RenderComponent>("RenderComponent",
+        "position", sol::property(&RenderComponent::getPosition),
+        "root", sol::property(&RenderComponent::getRoot),
+        "direction", sol::property(&RenderComponent::getDirection),
+        "orientation", sol::property(&RenderComponent::getOrientation),
+        "facingOrientation", sol::property(&RenderComponent::getFaceOrientation),
+        "lookAt", &RenderComponent::lookAt,
+        "rotate", &RenderComponent::rotate,
+        "playAnimation", &RenderComponent::playAnimation,
+        "resetAnimation", &RenderComponent::resetAnimationState,
+        "setAnimationState", &RenderComponent::setAnimationState,
+        "adjustAnimationSpeed", &RenderComponent::adjustAnimationStateSpeed
+    );
 
-      class_<MovementComponent>("MovementComponent")
-        .def("go", (void(MovementComponent::*)(const Ogre::Vector3&))&MovementComponent::setTarget)
-        .def("go", (void(MovementComponent::*)(const float&, const float&, const float&))&MovementComponent::setTarget)
-        .def("stop", &MovementComponent::resetTarget)
-        .property("speed", &MovementComponent::getSpeed, &MovementComponent::setSpeed)
-        .property("currentTarget", &MovementComponent::getCurrentTarget)
-        .property("target", &MovementComponent::getFinalTarget)
-        .property("hasTarget", &MovementComponent::hasTarget),
+    lua.new_usertype<MovementComponent>("MovementComponent",
+        "go", sol::overload(
+          (void(MovementComponent::*)(const Ogre::Vector3&))&MovementComponent::setTarget,
+          (void(MovementComponent::*)(const float&, const float&, const float&))&MovementComponent::setTarget
+        ),
+        "stop", &MovementComponent::resetTarget,
+        "speed", sol::property(&MovementComponent::getSpeed, &MovementComponent::setSpeed),
+        "currentTarget", sol::property(&MovementComponent::getCurrentTarget),
+        "target", sol::property(&MovementComponent::getFinalTarget),
+        "hasTarget", sol::property(&MovementComponent::hasTarget)
+    );
 
-      class_<StatsComponent, EventDispatcher>("StatsComponent")
-        .def("hasStat", &StatsComponent::hasStat)
-        .def("getBool", (const bool(StatsComponent::*)(const std::string&))&StatsComponent::getStat<bool>)
-        .def("getBool", (const bool(StatsComponent::*)(const std::string&, const bool&))&StatsComponent::getStat<bool>)
-        .def("getString", (const std::string(StatsComponent::*)(const std::string&))&StatsComponent::getStat<std::string>)
-        .def("getString", (const std::string(StatsComponent::*)(const std::string&, const std::string&))&StatsComponent::getStat<std::string>)
-        .def("getNumber", (const float(StatsComponent::*)(const std::string&)) &StatsComponent::getStat<float>)
-        .def("getNumber", (const float(StatsComponent::*)(const std::string&, const float&)) &StatsComponent::getStat<float>)
-        .def("set", &StatsComponent::setStat<bool>)
-        .def("set", &StatsComponent::setStat<std::string>)
-        .def("set", &StatsComponent::setStat<float>)
-        .def("increase", &StatsComponent::increase),
+    lua.new_usertype<StatsComponent>("StatsComponent",
+        sol::base_classes, sol::bases<EventDispatcher>(),
+        "hasStat", &StatsComponent::hasStat,
+        "getBool", sol::overload(
+          (const bool(StatsComponent::*)(const std::string&))&StatsComponent::getStat<bool>,
+          (const bool(StatsComponent::*)(const std::string&, const bool&))&StatsComponent::getStat<bool>
+        ),
+        "getString", sol::overload(
+          (const std::string(StatsComponent::*)(const std::string&))&StatsComponent::getStat<std::string>,
+          (const std::string(StatsComponent::*)(const std::string&, const std::string&))&StatsComponent::getStat<std::string>
+        ),
+        "getNumber", sol::overload(
+          (const float(StatsComponent::*)(const std::string&)) &StatsComponent::getStat<float>,
+          (const float(StatsComponent::*)(const std::string&, const float&)) &StatsComponent::getStat<float>
+        ),
+        "set", sol::overload(
+          &StatsComponent::setStat<bool>,
+          &StatsComponent::setStat<std::string>,
+          &StatsComponent::setStat<float>
+        ),
+        "increase", &StatsComponent::increase
+    );
 
-      class_<ScriptComponent>("ScriptComponent")
-        .property("state", &ScriptComponent::getData),
+    lua.new_usertype<ScriptComponent>("ScriptComponent",
+        "state", sol::property(&ScriptComponent::getData)
+    );
 
-      class_<Entity>("Entity")
-        .property("id", &Entity::getId),
+    lua.new_usertype<Entity>("Entity",
+        "id", sol::property(&Entity::getId)
+    );
 
-      class_<Engine, EventDispatcher>("Engine")
-        .def("removeEntity", (bool(Engine::*)(const std::string& id))&Engine::removeEntity)
-        .def("getEntity", &Engine::getEntity)
-        .def("getSystem", (EngineSystem*(Engine::*)(const std::string& name))&Engine::getSystem)
-        .property("render", &Engine::getSystem<OgreRenderSystem>)
-        .property("movement", &Engine::getSystem<RecastMovementSystem>)
-        .property("script", &Engine::getSystem<LuaScriptSystem>),
+    lua.new_usertype<Engine>("Engine",
+        sol::base_classes, sol::bases<EventDispatcher>(),
+        "removeEntity", (bool(Engine::*)(const std::string& id))&Engine::removeEntity,
+        "getEntity", &Engine::getEntity,
+        "getSystem", (EngineSystem*(Engine::*)(const std::string& name))&Engine::getSystem,
+        "render", sol::property(&Engine::getSystem<OgreRenderSystem>),
+        "movement", sol::property(&Engine::getSystem<RecastMovementSystem>),
+        "script", sol::property(&Engine::getSystem<LuaScriptSystem>)
+    );
 
-      class_<DataManagerProxy>("DataManager")
-        .def("createEntity", (Entity*(DataManagerProxy::*)(const std::string&))&DataManagerProxy::createEntity)
-        .def("createEntity", (Entity*(DataManagerProxy::*)(const std::string&, Dictionary))&DataManagerProxy::createEntity),
+    lua.new_usertype<DataManagerProxy>("DataManager",
+        "createEntity", sol::overload(
+          (Entity*(DataManagerProxy::*)(const std::string&))&DataManagerProxy::createEntity,
+          (Entity*(DataManagerProxy::*)(const std::string&, Dictionary))&DataManagerProxy::createEntity
+        )
+    );
 
-      class_<LuaEventProxy>("LuaEventProxy")
-        .def("bind", &LuaEventProxy::addEventListener)
-        .def("unbind", &LuaEventProxy::removeEventListener),
+    lua.new_usertype<LuaEventProxy>("LuaEventProxy",
+        "bind", &LuaEventProxy::addEventListener,
+        "unbind", &LuaEventProxy::removeEventListener
+    );
 
-      class_<Event>("BaseEvent")
-        .property("type", &Event::getType),
+    // events
 
-      class_<SelectEvent, Event>("SelectEvent")
-        .def("hasFlags", &SelectEvent::hasFlags)
-        .def_readonly("intersection", &SelectEvent::mIntersection)
-        .property("entity", &SelectEvent::getEntityId),
+    lua.new_usertype<Event>("BaseEvent",
+        "type", sol::property(&Event::getType)
+    );
 
-      class_<StatEvent, Event>("StatEvent")
-        .property("id", &StatEvent::getId),
+    lua.new_usertype<SelectEvent>("SelectEvent",
+        sol::base_classes, sol::bases<Event>(),
+        "hasFlags", &SelectEvent::hasFlags,
+        "intersection", sol::readonly(&SelectEvent::mIntersection),
+        "entity", sol::property(&SelectEvent::getEntityId),
+        "cast", cast<const Event&, const SelectEvent&>
+    );
 
-      class_<Ogre::Vector3>("Vector3")
-        .def(constructor<const Ogre::Real&, const Ogre::Real&, const Ogre::Real&>())
-        .def_readwrite("x", &Ogre::Vector3::x)
-        .def_readwrite("y", &Ogre::Vector3::y)
-        .def_readwrite("z", &Ogre::Vector3::z)
-        .def("squaredDistance", &Ogre::Vector3::squaredDistance),
+    lua.new_usertype<StatEvent>("StatEvent",
+        sol::base_classes, sol::bases<Event>(),
+        "id", sol::property(&StatEvent::getId),
+        "cast", cast<const Event&, const StatEvent&>
+    );
 
-      class_<Ogre::Quaternion>("Quaternion")
-        .def(constructor<const Ogre::Real&, const Ogre::Real&, const Ogre::Real&, const Ogre::Real&>())
-        .def(constructor<const Ogre::Radian&, const Ogre::Vector3&>())
-        .def_readwrite("w", &Ogre::Quaternion::w)
-        .def_readwrite("x", &Ogre::Quaternion::x)
-        .def_readwrite("y", &Ogre::Quaternion::y)
-        .def_readwrite("z", &Ogre::Quaternion::z)
-        .def(self * other<Ogre::Quaternion>()),
+    // Ogre classes
 
-      class_<Ogre::Radian>("Radian")
-        .def(constructor<float>()),
+    lua.new_usertype<Ogre::Vector3>("Vector3",
+        sol::constructors<sol::types<const Ogre::Real&, const Ogre::Real&, const Ogre::Real&>>(),
+        "x", &Ogre::Vector3::x,
+        "y", &Ogre::Vector3::y,
+        "z", &Ogre::Vector3::z,
+        "squaredDistance", &Ogre::Vector3::squaredDistance,
+        "ZERO", sol::var(Ogre::Vector3::ZERO),
+        "UNIT_X", sol::var(Ogre::Vector3::UNIT_X),
+        "UNIT_Y", sol::var(Ogre::Vector3::UNIT_Y),
+        "UNIT_Z", sol::var(Ogre::Vector3::UNIT_Z),
+        "NEGATIVE_UNIT_X", sol::var(Ogre::Vector3::NEGATIVE_UNIT_X),
+        "NEGATIVE_UNIT_Y", sol::var(Ogre::Vector3::NEGATIVE_UNIT_Y),
+        "NEGATIVE_UNIT_Z", sol::var(Ogre::Vector3::NEGATIVE_UNIT_Z),
+        "UNIT_SCALE", sol::var(Ogre::Vector3::UNIT_SCALE)
+    );
 
-      class_<Ogre::Viewport>("Viewport")
-    ];
+    lua.new_usertype<Ogre::Quaternion>("Quaternion",
+        sol::constructors<sol::types<const Ogre::Real&, const Ogre::Real&, const Ogre::Real&, const Ogre::Real&>, sol::types<const Ogre::Radian&, const Ogre::Vector3&>>(),
+        "w", &Ogre::Quaternion::w,
+        "x", &Ogre::Quaternion::x,
+        "y", &Ogre::Quaternion::y,
+        "z", &Ogre::Quaternion::z,
+        sol::meta_function::multiplication, (Ogre::Quaternion(Ogre::Quaternion::*)(const Ogre::Quaternion&)const)  &Ogre::Quaternion::operator*
+    );
+
+    lua.new_usertype<Ogre::Radian>("Radian",
+        sol::constructors<sol::types<float>>()
+    );
+
+    lua.new_usertype<Dictionary>("Dictionary",
+        sol::meta_function::construct, sol::factories(wrapObject)
+    );
 
     mDataManagerProxy = new DataManagerProxy(mInstance->getGameDataManager());
     mEngineProxy = new EngineProxy(mInstance->getEngine());
 
-    globals(L)["resourceDir"] = mResourceDir;
-    luaL_dostring(L, "function getResourcePath(path) return resourceDir .. '/' .. path; end");
-
-    globals(L)["game"] = mInstance;
-    globals(L)["engine"] = mEngineProxy;
-    globals(L)["core"] = mInstance->getEngine();
-    globals(L)["data"] = mDataManagerProxy;
-    globals(L)["event"] = mEventProxy;
-    LUA_CONST_START( Vector3 )
-      LUA_CONST( Ogre::Vector3, ZERO);
-      LUA_CONST( Ogre::Vector3, UNIT_X);
-      LUA_CONST( Ogre::Vector3, UNIT_Y);
-      LUA_CONST( Ogre::Vector3, UNIT_Z);
-      LUA_CONST( Ogre::Vector3, NEGATIVE_UNIT_X);
-      LUA_CONST( Ogre::Vector3, NEGATIVE_UNIT_Y);
-      LUA_CONST( Ogre::Vector3, NEGATIVE_UNIT_Z);
-      LUA_CONST( Ogre::Vector3, UNIT_SCALE);
-    LUA_CONST_END;
+    lua["resourceDir"] = mResourceDir;
+    lua.script("function getResourcePath(path) return resourceDir .. '/' .. path; end");
+    lua["game"] = mInstance;
+    lua["engine"] = mEngineProxy;
+    lua["core"] = mInstance->getEngine();
+    lua["data"] = mDataManagerProxy;
+    lua["event"] = mEventProxy;
 
     return true;
   }
@@ -405,13 +424,21 @@ namespace Gsage {
 
   bool LuaInterface::runScript(const std::string& script)
   {
-    if(!mState)
+    if(!mStateView)
       return false;
 
-    int res = luaL_dofile(mState, script.c_str());
-    if(res != 0)
-    {
-      LOG(ERROR) << "Failed to execute lua script:\n" << lua_tostring(mState, -1);
+    try {
+      LOG(INFO) << "Executing script " << script;
+      auto res = mStateView->script_file(script);
+      if(!res.valid()) {
+        sol::error err = res;
+        throw err;
+      }
+    } catch(sol::error& err) {
+      LOG(ERROR) << "Failed to execute lua script: " << err.what();
+      return false;
+    } catch(...) {
+      LOG(ERROR) << "Unknown script execution error";
       return false;
     }
 

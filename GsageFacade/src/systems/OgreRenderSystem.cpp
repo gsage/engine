@@ -213,7 +213,7 @@ namespace Gsage {
     if(element.second)
     {
       LOG(INFO) << "Read animations for component of entity " << c->getOwner()->getId();
-      c->mAnimationScheduler.initialize(element.first, mSceneManager);
+      c->mAnimationScheduler.initialize(element.first, mSceneManager, c);
     }
     c->mAddedToScene = true;
 

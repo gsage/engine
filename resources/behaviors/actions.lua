@@ -40,7 +40,7 @@ function actions.calculateDamage(self, target)
     ps = damageEnemy
   end
   if damage > 0.5 then
-    ps:createParticle(0, target.id, tostring(math.floor(damage)), self.render.facingOrientation * Quaternion(Radian(3.14159265), Vector3(0,1,0)))
+    ps:createParticle(0, target.id, tostring(math.floor(damage)), self.render.facingOrientation * Quaternion.new(Radian.new(3.14159265), Vector3.new(0,1,0)))
   else
     damageMiss:createParticle(0, self.id, "Missed")
   end

@@ -33,12 +33,14 @@ extern "C" {
   #include "lualib.h"
 }
 
-#include <luabind/luabind.hpp>
-#include <luabind/object.hpp>
 #include "EventSubscriber.h"
 #include "GsageDefinitions.h"
 #include "Dictionary.h"
 
+namespace sol
+{
+  class state_view;
+}
 
 namespace Ogre
 {
@@ -155,6 +157,7 @@ namespace Gsage
       LuaEventProxy* mEventProxy;
 
       lua_State* mState;
+      sol::state_view* mStateView;
   };
 }
 

@@ -55,12 +55,11 @@ ogre_find_component(Terrain OgreTerrain.h)
 ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
 
 find_package(OIS REQUIRED)
-find_package(Luabind REQUIRED)
+find_package(LuaJIT REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(LibRocket REQUIRED)
 find_package(Jsoncpp REQUIRED)
 find_package(Msgpack REQUIRED)
-find_package(Ctemplate REQUIRED)
 find_package(gtest)
 
 find_package(Qt5 COMPONENTS Quick Core QUIET)

@@ -27,8 +27,8 @@ THE SOFTWARE.
 #ifndef _LuaEventProxy_H_
 #define _LuaEventProxy_H_
 
-#include <luabind/luabind.hpp>
 #include "EventSubscriber.h"
+#include "sol.hpp"
 
 namespace Gsage {
   /**
@@ -39,7 +39,7 @@ namespace Gsage {
     public:
 
       typedef std::pair<EventDispatcher*, const std::string> CallbackBinding;
-      typedef std::vector<luabind::object> Callbacks;
+      typedef std::vector<sol::protected_function> Callbacks;
       typedef std::map<CallbackBinding, Callbacks> CallbackBindings;
 
       LuaEventProxy();
@@ -52,7 +52,7 @@ namespace Gsage {
        * @param callback Lua object that is called on event dispatch
        * @returns true if the callback was added successfully
        */
-      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const luabind::object& callback);
+      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback);
 
       /**
        * Removes event listener
@@ -62,14 +62,14 @@ namespace Gsage {
        * @param callback Lua object that is called on event dispatch
        * @returns true if the callback was removed successfully
        */
-      bool removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, const luabind::object& callback);
+      bool removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback);
 
       /**
        * Get callbacks for binding
        * @param dispatcher Object that dispatches the event
        * @param eventType Event id
        */
-      boost::optional<Callbacks&> getCallbacks(EventDispatcher* dispatcher, const std::string& eventType);
+      Callbacks* getCallbacks(EventDispatcher* dispatcher, const std::string& eventType);
 
       /**
        * Overriding standard callback which is called on dispatcher deletion

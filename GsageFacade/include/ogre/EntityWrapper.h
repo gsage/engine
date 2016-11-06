@@ -87,6 +87,13 @@ namespace Gsage {
        * @param movableObjectData MovableObject to create and attach
        */
       void attachToBone(const std::string& boneId, const std::string& entityId, Dictionary movableObjectData);
+
+      /**
+       * Get underlying entity
+       */
+      Ogre::Entity* getEntity() {
+        return mObject;
+      }
     private:
       Ogre::SkeletonAnimationBlendMode mAnimBlendMode;
 

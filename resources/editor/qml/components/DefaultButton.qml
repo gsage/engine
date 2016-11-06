@@ -8,7 +8,6 @@ Button {
       verticalAlignment: Text.AlignVCenter
       horizontalAlignment: Text.AlignHCenter
       font.family: "Helvetica"
-      font.pointSize: 10
       text: control.text
     }
   }

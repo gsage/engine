@@ -143,7 +143,7 @@ TEST_F(TestEngine, TestEntityAddFailure)
   entityData.put("speed", speed);
   entityData.put("accelerator", accelerator);
 
-  ASSERT_TRUE(mInstance->createEntity(entityData) == 0);
+  ASSERT_FALSE(mInstance->createEntity(entityData) == 0);
 
   entityData.put("id", "test");
 
