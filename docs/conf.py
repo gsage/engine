@@ -33,10 +33,10 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 breathe_projects = {"gsage": "xml/"}
 breathe_default_project = "gsage"
 
-subprocess.call("breathe-apidoc %s -o ./" % breathe_projects["gsage"], shell=True)
-
 if read_the_docs_build:
     subprocess.call('cd ../; doxygen', shell=True)
+
+subprocess.call("breathe-apidoc %s -o ./" % breathe_projects["gsage"], shell=True)
 
 
 # Add any Sphinx extension module names here, as strings. They can be

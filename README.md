@@ -1,4 +1,7 @@
-# Graphics system agnostic game engine
+Graphics system agnostic game engine
+====================================
+
+|docs|
 
 The main idea of this engine is to be a core for a game, which brings together render, sound, physics engines and allows to script everything in lua.
 This engine is based on [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture. 
@@ -148,3 +151,8 @@ This project is licensed under MIT
 
 # Plugins
 - [Audio system plugin based on SFML](https://github.com/gsage/SFMLAudioSystemPlugin)
+
+.. |docs| https://readthedocs.org/projects/engine/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://engine.readthedocs.io/en/latest/?badge=latest
