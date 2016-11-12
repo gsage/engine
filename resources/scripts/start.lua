@@ -49,7 +49,12 @@ end
 function spawn()
   local id = "ninja" .. counter
   counter = counter + 1
-  entity.create("ninja", Dictionary.new({name = id, speed = "10" }))
+  entity.create("ninja",
+  Dictionary.new({
+    movement = {
+      speed = 10
+    }
+  }))
 end
 
 function onKeyEvent(event)

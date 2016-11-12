@@ -19,6 +19,8 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import subprocess
+import os
 
 # -- General configuration ------------------------------------------------
 
@@ -26,28 +28,28 @@
 #
 # needs_sphinx = '1.0'
 
-import subprocess
-import os
-
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+
+breathe_projects = {"gsage": "xml/"}
+breathe_default_project = "gsage"
+
+subprocess.call("breathe-apidoc %s -o ./" % breathe_projects["gsage"], shell=True)
 
 if read_the_docs_build:
     subprocess.call('cd ../; doxygen', shell=True)
+
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.todo',
-    'breathe',
-    'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
+    'breathe',
 ]
-
-breathe_projects = {u'gsage': './xml/'}
-breathe_default_project = u'gsage'
-
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -137,7 +139,7 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'classic'
+html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
