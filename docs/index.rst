@@ -20,6 +20,36 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+Tutorials
+==================
+
+Build Instructions
+------------------
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   tutorials/build/*
+
+Basic
+------------------
+
+.. toctree::
+   :glob:
+   :maxdepth: 2
+
+   tutorials/basic/*
+
+Advanced
+------------------
+
+.. toctree::
+   :glob:
+   :maxdepth: 2
+
+   tutorials/advanced/*
+
+
 API Reference
 ==================
 

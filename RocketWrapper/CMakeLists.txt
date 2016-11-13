@@ -11,6 +11,7 @@ include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
 include_directories( ${OIS_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Terrain_INCLUDE_DIR}
+  ${JSONCPP_INCLUDE_DIR}
   ${LUAJIT_INCLUDE_DIR}
   ${OGRE_SAMPLES_INCLUDEPATH}
   ${LIBROCKET_INCLUDE_DIRS}
@@ -28,6 +29,7 @@ ADD_EXECUTABLE(${APP_NAME} ${headers} ${sources})
 ADD_LIBRARY(${LIB_NAME} ${sources})
 set(LIBS
   GsageFacade
+  OgreCrowd
   ${LIBROCKET_LIBRARIES}
   ${OGRE_Overlay_LIBRARIES}
   ${LUAJIT_LIBRARIES}
