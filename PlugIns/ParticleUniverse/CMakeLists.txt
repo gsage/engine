@@ -1,10 +1,19 @@
 set(LIB_NAME "Plugin_ParticleUniverseFactory")
 
-include_directories(./include)
-include_directories(${cosmos_SOURCE_DIR}/Core/include)
-include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
+include_directories(
+  include
+  ${gsage_SOURCE_DIR}/GsageCore/include
+  ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
+)
 
-set(LIBS GsageCore GsageFacade ${OGRE_LIBRARIES} ${LUAJIT_LIBRARIES} ${Boost_LIBRARIES} ${OGRE_Plugin_ParticleUniverse_LIBRARY})
+set(LIBS
+  GsageCore
+  OgrePlugin1.9
+  ${OGRE_LIBRARIES}
+  ${LUAJIT_LIBRARIES}
+  ${OGRE_Plugin_ParticleUniverse_LIBRARY}
+)
+
 include_directories(
   ${OGRE_INCLUDE_DIRS}
   ${LUAJIT_INCLUDE_DIR}

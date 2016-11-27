@@ -43,7 +43,7 @@ It has :code:`"position"`, :code:`"rotation"` and other props, typical for rende
 There are different kinds of systems.
 Script component data can look like this:
 
-.. code-block::
+.. code-block:: javascript
 
   "script":
   {
@@ -80,7 +80,30 @@ Each component can be altered during engine operation.
 For example, render component can update it's position or change model.
 Movement can change speed.
 
-Entity add Flow
+.. image:: ../../images/update_flow.svg
+
+Entity Add Flow
 ---------------
+
+1. :cpp:class:`Gsage::Engine` creates :cpp:class:`Gsage::Entity` in the pool of entities.
+   All entities are stored in the :cpp:class:`Gsage::Engine`.
+2. Engine iterates through the list of keys of :cpp:class:`Gsage::Entity`,
+   finds appropriate system by string :code:`id` and allocates a component there.
+3. Each system allocates the component in the pool and configures created component
+   with :cpp:class:`Gsage::Dictionary` that came from :cpp:class:`Gsage::Engine`.
+
+.. image:: ../../images/add_flow.svg
+
+Entity Remove Flow
+------------------
+
+1. :cpp:class:`Gsage::Engine` finds :cpp:class:`Gsage::Entity` by id and 
+   iterates through all it's components.
+2. :cpp:class:`Gsage::Engine` removes each component by pointer it got from 
+   :cpp:class:`Gsage::Entity`.
+3. :cpp:class:`Gsage::ComponentStorage` deallocates component.
+4. :cpp:class:`Gsage::Engine` removes entity from pool when all components are deleted.
+
+.. image:: ../../images/remove_flow.svg
 
 

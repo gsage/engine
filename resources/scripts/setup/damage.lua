@@ -1,5 +1,5 @@
-local e = entity.get('GlobalParticleSystems')
-damageHit = e.render.root:getParticleSystem('damageHit')
-damageMiss = e.render.root:getParticleSystem('damageMiss')
-damageEnemy = e.render.root:getParticleSystem('damageEnemy')
-
+return function(self)
+  damageHit = self:render().root:getParticleSystem('damageHit')
+  damageMiss = self:render().root:getParticleSystem('damageMiss')
+  damageEnemy = self:render().root:getParticleSystem('damageEnemy')
+end

@@ -1,14 +1,14 @@
 set(APP_NAME "game")
 set(LIB_NAME "RocketOgre")
 
-include_directories(./include)
-include_directories(./resources)
-include_directories(${cosmos_SOURCE_DIR}/Core/include)
-include_directories(${cosmos_SOURCE_DIR}/Components/OgreCrowd/include)
-include_directories(${cosmos_SOURCE_DIR}/Components/Sol2/include)
-include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
+include_directories(
+  include
+  ${gsage_SOURCE_DIR}/GsageCore/include
+  ${gsage_SOURCE_DIR}/Components/OgreCrowd/include
+  ${gsage_SOURCE_DIR}/Components/Sol2/include
+  ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
 
-include_directories( ${OIS_INCLUDE_DIRS}
+  ${OIS_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Terrain_INCLUDE_DIR}
   ${JSONCPP_INCLUDE_DIR}
@@ -17,19 +17,14 @@ include_directories( ${OIS_INCLUDE_DIRS}
   ${LIBROCKET_INCLUDE_DIRS}
 )
 
-link_directories(${cosmos_BINARY_DIR}/Core)
-link_directories(${cosmos_BINARY_DIR}/Components/OgreCrowd)
-link_directories(${cosmos_BINARY_DIR}/GsageFacade)
-
-
 FILE(GLOB headers include/*.h include/*/*.h)
 
 FILE(GLOB sources src/*.cpp s src/*/*.cpp )
 ADD_EXECUTABLE(${APP_NAME} ${headers} ${sources})
 ADD_LIBRARY(${LIB_NAME} ${sources})
 set(LIBS
-  GsageFacade
   OgreCrowd
+  OgrePluginStatic1.9
   ${LIBROCKET_LIBRARIES}
   ${OGRE_Overlay_LIBRARIES}
   ${LUAJIT_LIBRARIES}
@@ -42,11 +37,10 @@ if(APPLE)
     ${CARBON}
     ${IOKIT}
     ${COCOA_LIBRARY}
-    )
+  )
   set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE TRUE)
   set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
-  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.\${PRODUCT_NAME:rfc1034identifier}")
-  set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 -image_base 7fff04c4a000" )
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.Demo")
   option ( LUA_USE_POSIX "Use POSIX functionality." ON )
   option ( LUA_USE_DLOPEN "Use dynamic linker to load modules." ON )
   set ( LJVM_MODE machasm )

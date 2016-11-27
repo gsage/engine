@@ -19,6 +19,7 @@ It can be encoded in json and msgpack and can look like this:
       "savesFolder": "templates"
     },
     "startupScript": "scripts/start.lua",
+    "inputHandler": "ois",
 
     "plugins":
     [
@@ -87,4 +88,37 @@ Each defined plugin will be installed in the order defined in the list.
 Systems Configs
 ---------------
 
-Each system has it's own configs.
+Each system has it's own unique id (:code:`render`, :code:`movement`, etc...).
+It is possible to configure the system in the global config and in the level config.
+
+System config should be placed under it's id in the root of the configuration object.
+For example:
+
+.. code-block:: javascript
+
+  {
+  ...
+    "movement": {
+      "cacheFolder": "./"
+    }
+    "coolSystem": {
+      "setMeUP": 1
+    }
+  ...
+  }
+
+When the engine starts or if the system with id :code:`coolSystem` is added to the already running engine
+it will be configured. It will get all configs as a :cpp:class:`Gsage::Dictionary` object, then it will be it's
+responsibility to read all configs from that object.
+
+See :ref:`custom-systems-label` for more information how to add new types of systems into Gsage engine.
+
+Input
+-----
+
+Input is configured by :code:`inputHandler` field.
+It should have string identifier of input factory, which is installed into the Gsage Facade.
+
+Currently the only supported input handler type is :code:`ois`.
+You can implement your own input handler and install it into the Gsage Facade.
+See :ref:`custom-input-handler-label` to get more info how to implement your own input handler.

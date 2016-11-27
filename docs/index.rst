@@ -23,38 +23,30 @@ Indices and tables
 Tutorials
 ==================
 
-Build Instructions
-------------------
 .. toctree::
    :glob:
+   :caption: Build Instructions
    :maxdepth: 1
 
    tutorials/build/*
 
-Basic
-------------------
-
 .. toctree::
    :glob:
+   :caption: The Basics
    :maxdepth: 2
 
    tutorials/basic/*
 
-Advanced
-------------------
-
 .. toctree::
    :glob:
+   :caption: Advanced Topics
    :maxdepth: 2
 
    tutorials/advanced/*
 
-
-API Reference
-==================
-
 .. toctree::
    :maxdepth: 1
+   :caption: Api Reference
    :titlesonly:
 
    classlist.rst
@@ -62,4 +54,8 @@ API Reference
    namespacelist.rst
    filelist.rst
 
+Links
+===================
+
+`Project Tracker <https://www.pivotaltracker.com/n/projects/963480>`_
 

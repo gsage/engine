@@ -1,5 +1,5 @@
 local function isDead(self, context)
-  local dead = self.stats:getNumber("hp", 0) <= 0
+  local dead = self:stats():getNumber("hp", 0) <= 0
   return dead
 end
 
@@ -15,7 +15,7 @@ local function inRange(self, context)
     return false
   end
 
-  return self.render.position:squaredDistance(context.target.render.position) < self.stats:getNumber("attackDistance", 5) * 2
+  return self:render().position:squaredDistance(context.target:render().position) < self:stats():getNumber("attackDistance", 5) * 2
 end
 
 local function attack(self, context)
@@ -27,11 +27,11 @@ local function attack(self, context)
   if context.target == nil then
     return false
   end
-  local aspd = self.stats:getNumber('aspd', 1)
+  local aspd = self:stats():getNumber('aspd', 1)
 
-  self.render:lookAt(context.target.render.position)
+  self:render():lookAt(context.target:render().position)
   local anims = {"attack1", "attack2"}
-  self.render:playAnimation(anims[math.random(2)], 1, 1*aspd, 0, false)
+  self:render():playAnimation(anims[math.random(2)], 1, 1*aspd, 0, false)
   async.waitSeconds(0.43/aspd)
   actions.inflictDamage(self, context.target)
   async.waitSeconds(0.2/aspd)
@@ -42,7 +42,7 @@ local function follow(self, context)
   if context.target == nil then
     return false
   end
-  return self.movement:go(context.target.render.position)
+  return self:movement():go(context.target:render().position)
 end
 
 local function createTree()
@@ -57,7 +57,7 @@ local function createTree()
             ),
             Sequence(
               Leaf(inRange),
-              Leaf(function(self) self.movement:stop() end),
+              Leaf(function(self) self:movement():stop() end),
               Leaf(attack)
             )
           )

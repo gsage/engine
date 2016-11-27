@@ -58,8 +58,8 @@ try:
     # template files
     include_template = open(args.include_template, "r").read()
     src_template = open(args.src_template, "r").read()
-except Exception, e:
-    print "WARN: failed to read templates \n %s.\n No auto-generation will be used" % e
+except Exception as e:
+    print("WARN: failed to read templates \n %s.\n No auto-generation will be used" % e)
 
 def create_if_not_exists(path, force=False):
     if os.path.exists(path):
@@ -70,22 +70,22 @@ def create_if_not_exists(path, force=False):
 
 def create_file(path, template, **fields):
     if os.path.exists(path):
-        print "File %s already exists, skipping" % path
+        print("File %s already exists, skipping" % path)
         return
 
     if template is not None:
         content = template
-        for key, value in fields.iteritems():
+        for key, value in fields.items():
             content = re.sub("%%%s%%" % key, value, content)
     else:
         content = ""
 
     open(path, "w").write(content)
-    print "Created %s file" % path
+    print("Created %s file" % path)
 
 for path in [include_path, src_path]:
     if not create_if_not_exists(path, args.create_folders):
-        print "Failed to create folder %s, you can try with -cf option" % path
+        print("Failed to create folder %s, you can try with -cf option" % path)
         exit(1)
 
 h_file = os.path.join(folder_path, "%s.h" % args.class_name)
