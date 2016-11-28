@@ -63,8 +63,6 @@ namespace Gsage {
     qmlRegisterType<Gsage::OgreItem>("Ogre.Viewer", 1, 0, "OgreItem");
     qmlRegisterType<Gsage::ProjectTemplate>("Editor.Models", 1, 0, "ProjectTemplate");
     qmlRegisterType<Gsage::ProjectManager>("Editor.Utils", 1, 0, "ProjectManager");
-
-    LOG(INFO) << winId();
   }
 
   EditorApplication::~EditorApplication()
@@ -166,7 +164,6 @@ namespace Gsage {
     QString gameConfig(projectConfig.get("configPath", "gameConfig.json").c_str());
     QString resourcePath(projectFileInfo.absolutePath().append(QDir::separator()).append("resources"));
     mConfigOverride.put("render", mConfig.get<Dictionary>("render", Dictionary()));
-    mConfigOverride.put("render.window.params.externalWindowHandle", std::to_string((unsigned long)winId()));
 
     initEngine("renderWindow", gameConfig, resourcePath);
     return true;

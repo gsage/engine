@@ -146,7 +146,6 @@ namespace Gsage {
     mOgreContext->functions()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 #if GSAGE_PLATFORM != GSAGE_APPLE
     mOgreContext->functions()->glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
-    mOgreContext->functions()->glFlushRenderAPPLE();
 #endif
     mOgreContext->functions()->glBindBuffer(GL_COPY_READ_BUFFER, 0);
     mOgreContext->functions()->glBindBuffer(GL_COPY_WRITE_BUFFER, 0);

@@ -66,8 +66,6 @@ namespace Gsage {
       mNode = parent->createChildSceneNode(mObjectId);
     }
 
-    LOG(INFO) << mObjectId;
-
     addEventListener(objectManager, OgreObjectManagerEvent::FACTORY_UNREGISTERED, &SceneNodeWrapper::onFactoryUnregister);
     return OgreObject::initialize(objectManager, dict, ownerId, type, sceneManager, parent);
   }
