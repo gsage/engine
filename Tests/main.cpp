@@ -1,10 +1,10 @@
-#include <OgrePlatform.h>
+#include "GsageDefinitions.h"
 #include <gtest/gtest.h>
 #include "Logger.h"
 
 INITIALIZE_EASYLOGGINGPP
 
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )

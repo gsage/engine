@@ -1,17 +1,16 @@
 set(APP_NAME "unit-tests")
 
-set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} 
+set(TEST_DEPENDENCIES
+  ${TEST_DEPENDENCIES}
   GsageCore
-  GsageFacade
-  ${CTEMPLATE_LIBRARIES}
-  ${OGRE_LIBRARIES} ${gtest_LIBRARY} ${LIBRARY_NAME} ${JSONCPP_LIBRARIES})
-
-include_directories(${cosmos_SOURCE_DIR}/Core/include)
-include_directories(${cosmos_SOURCE_DIR}/GsageFacade/include)
+  gtest
+  ${JSONCPP_LIBRARIES}
+)
 
 include_directories(
-  ${OGRE_INCLUDE_DIRS}
-  ${gtest_INCLUDE_DIR}
+  ${gsage_SOURCE_DIR}/GsageCore/include
+  ${gsage_SOURCE_DIR}/googletest/googletest/include
+
   ${JSONCPP_INCLUDE_DIR}
 )
 
@@ -21,6 +20,20 @@ set(TEST_FILES
   Core/TestSerializable.cpp
   Core/TestDictionary.cpp
   Core/TestFileLoader.cpp)
+
+if(${OGRE_FOUND})
+  include_directories(
+    ${OGRE_INCLUDE_DIRS}
+    ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
+  )
+  set(TEST_DEPENDENCIES
+    OgrePlugin1.9
+    ${TEST_DEPENDENCIES}
+    ${OGRE_LIBRARIES}
+  )
+  file(GLOB ogreTests PlugIns/OgrePlugin/*.cpp)
+  set(TEST_FILES ${ogreTests} ${TEST_FILES})
+endif(${OGRE_FOUND})
 
 ADD_EXECUTABLE(${APP_NAME} main.cpp ${TEST_FILES})
 

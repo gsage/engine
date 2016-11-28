@@ -40,12 +40,12 @@ view = view or {}
 
 function view.getObjectsAround(id, distance, flags, targetId)
   local target = entity.get(id)
-  if target == nil or target.render == nil then
+  if target == nil or target:render() == nil then
     return {}
   end
 
   local entities = {}
-  local objects = core.render:getObjectsInRadius(target.render.position, distance, flags, targetId)
+  local objects = core:render():getObjectsInRadius(target:render().position, distance, flags, targetId)
   for i = 1, #objects do
     table.insert(entities, entity.get(objects[i].id))
   end

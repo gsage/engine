@@ -54,12 +54,19 @@ namespace Gsage {
        * Initialize ui manager
        *
        * @param called by gsage facade on setup
+       * @param L init with lua state
        */
-      virtual void initialize(Engine* engine);
+      virtual void initialize(Engine* engine, lua_State* L = 0);
       /**
        * Gets Rocket lua state
        */
       lua_State* getLuaState();
+
+      /**
+       * Update load state
+       * @param L lua_State
+       */
+      void setLuaState(lua_State* L);
     private:
       /**
        * Update ui callback

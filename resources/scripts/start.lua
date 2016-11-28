@@ -10,7 +10,7 @@ require 'behaviors'
 require 'actions'
 
 function startup()
-  local fonts = 
+  local fonts =
   {
     "Delicious-Roman.otf",
     "Delicious-BoldItalic.otf",
@@ -35,7 +35,7 @@ end
 
 function setActiveCamera(id)
   local camera = entity.get(id)
-  camera.render.root:getChild("camera", id):attach(core.render.viewport)
+  camera:render().root:getChild("camera", id):attach(core:render().viewport)
 end
 
 counter = 0
@@ -70,23 +70,23 @@ function onKeyEvent(event)
 end
 
 function onSelect(event)
-  e = SelectEvent.cast(event)
+  e = OgreSelectEvent.cast(event)
   if e:hasFlags(OgreSceneNode.DYNAMIC) then
     local target = entity.get(e.entity)
     if actions.attackable(player, target) then
-      player.script.state.target = target
+      player:script().state.target = target
     end
   elseif e:hasFlags(OgreSceneNode.STATIC) then
-    player.script.state.target = nil
-    if player.movement == nil or player.render == nil then
+    player:script().state.target = nil
+    if player:movement() == nil or player:render() == nil then
       return
     end
-    player.movement:go(e.intersection)
+    player:movement():go(e.intersection)
   end
 end
 
 function onRoll(event)
-  e = SelectEvent.cast(event)
+  e = OgreSelectEvent.cast(event)
   if e.type == "rollOver" then
     local target = entity.get(e.entity)
     if e:hasFlags(OgreSceneNode.DYNAMIC) then
@@ -106,13 +106,13 @@ function onReady(e)
 
   initialized = true
   player = entity.get("sinbad")
-  core.movement:setControlledEntity(player.id)
+  core:movement():setControlledEntity(player.id)
 
   event:bind(core, "objectSelected", onSelect)
   event:bind(core, "rollOver", onRoll)
   event:bind(core, "rollOut", onRoll)
 
-  core.script:addUpdateListener(async.addTime)
+  core:script():addUpdateListener(async.addTime)
 
   spawn()
   spawnMore(10)

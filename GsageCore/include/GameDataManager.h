@@ -1,0 +1,125 @@
+/*
+-----------------------------------------------------------------------------
+This file is a part of Gsage engine
+
+Copyright (c) 2014-2016 Artem Chernyshev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-----------------------------------------------------------------------------
+*/
+
+#ifndef _GameDataManager_H_
+#define _GameDataManager_H_
+
+#include <istream>
+#include <ostream>
+#include <map>
+#include "GsageDefinitions.h"
+#include "Dictionary.h"
+
+namespace Gsage
+{
+  class Engine;
+  class Entity;
+  class EngineSystem;
+
+  /**
+   * Class responsible for level loading
+   */
+  class GameDataManager
+  {
+    public:
+      GameDataManager(Engine* engine, const Dictionary& config);
+      virtual ~GameDataManager();
+
+      /**
+       * Create initial save file
+       */
+      bool initGame(const std::string& templateFile);
+      /**
+       * Load save
+       */
+      bool loadSave(const std::string& saveFile);
+      /**
+       * Dump engine state to save
+       */
+      bool dumpSave(const std::string& saveFile);
+      /**
+       * Create entity from string
+       *
+       * @param json Json string to create entity from
+       */
+      Entity* createEntity(const std::string& json);
+      /**
+       * Create entity from template
+       *
+       * @param name Template file name
+       */
+      Entity* createEntity(const std::string& name, const Dictionary& params);
+      /**
+       * Adds character
+       *
+       * @param name Entity id
+       * @param params Override default parameters of the character
+       */
+      Entity* addCharacter(const std::string& name, Dictionary* params = 0);
+      /**
+       * Get file extension
+       */
+      const std::string& getFileExtension() { return mFileExtension; }
+      /**
+       * Get characters folder path
+       */
+      const std::string& getCharactersFolder() { return mCharactersFolder; }
+      /**
+       * Get locations folder
+       */
+      const std::string& getLevelsFolder() { return mLevelsFolder; }
+      /**
+       * Get save data folder
+       */
+      const std::string& getSavesFolder() { return mSavesFolder; }
+
+      /**
+       * Load area, without loading characters
+       */
+      bool loadArea(const std::string& area);
+    private:
+      static const std::string CONFIG_SECTION;
+
+      Dictionary* mCurrentSaveFile;
+
+      Engine* mEngine;
+
+      // settings
+      std::string mFileExtension;
+      std::string mCharactersFolder;
+      std::string mLevelsFolder;
+      std::string mSavesFolder;
+
+      bool loadCharacters(const std::string& area);
+
+      Dictionary& getSaveFile();
+      void resetSaveFile();
+
+      const std::string readFile(const std::string& path);
+  };
+}
+
+#endif

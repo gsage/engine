@@ -61,7 +61,7 @@
     "sp": 100,
     "atk": 3000,
     "attackDistance": 5,
-    "aspd": 0.4
+    "aspd": 2
   },
   "script":
   {

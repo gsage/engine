@@ -7,10 +7,10 @@
     "savesFolder": "templates"
   },
   "startupScript": "scripts/start.lua",
+  "inputHandler": "ois",
 
   "plugins":
   [
-    "PlugIns/Plugin_ParticleUniverseFactory"
   ],
 
   "render":
@@ -40,7 +40,7 @@
       "height": 800,
       "params":
       {
-        "FSAA": 4,
+        "FSAA": 0,
         "displayFrequency": 50,
         "vsync": false
       }

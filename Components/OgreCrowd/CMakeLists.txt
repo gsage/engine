@@ -15,4 +15,4 @@ add_library(${OGRE_CROWD} STATIC ${headers} ${sources})
 
 set_target_properties(${OGRE_CROWD} PROPERTIES DEBUG_POSTFIX _d)
 
-target_link_libraries(${OGRE_CROWD} ${OGRE_LIBRARIES} ${OGRE_Terrain_LIBRARY})
+target_link_libraries(${OGRE_CROWD} ${OIS_LIBRARIES} ${OGRE_LIBRARIES} ${OGRE_Terrain_LIBRARY})

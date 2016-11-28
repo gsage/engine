@@ -60,13 +60,13 @@ namespace Gsage {
       delete mSystemInterface;
   }
 
-  void RocketUIManager::initialize(Engine* engine)
+  void RocketUIManager::initialize(Engine* engine, lua_State* luaState)
   {
-    UIManager::initialize(engine);
+    UIManager::initialize(engine, luaState);
     if(engine->hasSystem("render"))
     {
       OgreRenderSystem* renderer = static_cast<OgreRenderSystem*>(engine->getSystem("render"));
-      setUp(renderer->getWindowWidth(), renderer->getWindowHeight());
+      setUp(renderer->getWidth(), renderer->getHeight());
     }
 
     // add render handler
@@ -85,12 +85,20 @@ namespace Gsage {
     return Rocket::Core::Lua::Interpreter::GetLuaState();
   }
 
+  void RocketUIManager::setLuaState(lua_State* L)
+  {
+    mLuaState = L;
+    // Initialise the Lua interface
+    Rocket::Core::Lua::Interpreter::Initialise(mLuaState);
+    Rocket::Controls::Lua::RegisterTypes(Rocket::Core::Lua::Interpreter::GetLuaState());
+  }
+
   bool RocketUIManager::render(EventDispatcher* sender, const Event& event)
   {
     RenderEvent e = static_cast<const RenderEvent&>(event);
     if(!mRenderInterface || !mSystemInterface)
-      setUp(e.getRenderWindow()->getWidth(),
-            e.getRenderWindow()->getHeight());
+      setUp(e.getRenderSystem()->getWidth(),
+            e.getRenderSystem()->getHeight());
 
     mContext->Update();
     configureRenderSystem(e);
@@ -100,8 +108,8 @@ namespace Gsage {
 
   void RocketUIManager::configureRenderSystem(RenderEvent& event)
   {
-    Ogre::RenderSystem* renderSystem = event.getRenderSystem();
-    Ogre::RenderWindow* renderWindow = event.getRenderWindow();
+    OgreRenderSystem* gsageRendering = event.getRenderSystem();
+    Ogre::RenderSystem* renderSystem = gsageRendering->getRenderSystem();
 
     // Set up the projection and view matrices.
     Ogre::Matrix4 projectionMatrix;
@@ -111,9 +119,9 @@ namespace Gsage {
     projectionMatrix = Ogre::Matrix4::ZERO;
 
     // Set up matrices.
-    projectionMatrix[0][0] = 2.0f / renderWindow->getWidth();
+    projectionMatrix[0][0] = 2.0f / gsageRendering->getWidth();
     projectionMatrix[0][3]= -1.0000000f;
-    projectionMatrix[1][1]= -2.0f / renderWindow->getHeight();
+    projectionMatrix[1][1]= -2.0f / gsageRendering->getHeight();
     projectionMatrix[1][3]= 1.0000000f;
     projectionMatrix[2][2]= -2.0f / (zFar - zNear);
     projectionMatrix[3][3]= 1.0000000f;
@@ -172,11 +180,7 @@ namespace Gsage {
 
     Rocket::Core::Initialise();
     Rocket::Controls::Initialise();
-
-    // Initialise the Lua interface
-    Rocket::Core::Lua::Interpreter::Initialise();
-    Rocket::Controls::Lua::RegisterTypes(Rocket::Core::Lua::Interpreter::GetLuaState());
-
+    setLuaState(mLuaState);
     mContext = Rocket::Core::CreateContext("main", Rocket::Core::Vector2i(width, height));
   }
 

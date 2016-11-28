@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include <Ogre.h>
+#include "OgrePlugin.h"
 
 #include "GsageFacade.h"
 #include "RocketUIManager.h"
@@ -32,7 +33,6 @@ THE SOFTWARE.
 
 #include "components/ScriptComponent.h"
 #include "systems/OgreRenderSystem.h"
-#include "systems/RecastMovementSystem.h"
 #include "systems/CombatSystem.h"
 #include "systems/LuaScriptSystem.h"
 
@@ -82,13 +82,22 @@ extern "C" {
 #endif
       int retVal = 0;
       Gsage::GsageFacade facade;
+      facade.registerInputFactory<Gsage::OisInputFactory>("ois");
       std::string coreConfig = "gameConfig.json";
 
+      Gsage::OgrePlugin ogrePlugin;
+
+      if(!facade.installPlugin(&ogrePlugin))
+      {
+        LOG(ERROR) << "Failed to install ogre plugin";
+        return 1;
+      }
+
       Gsage::RocketUIManager uiManager;
-      facade.setUIManager(&uiManager);
+      Gsage::OgreRenderSystem* render = facade.getEngine()->getSystem<Gsage::OgreRenderSystem>();
+
+      facade.addUIManager(&uiManager);
       // add systems to the engine
-      Gsage::OgreRenderSystem* render = facade.addSystem<Gsage::OgreRenderSystem>();
-      facade.addSystem<Gsage::RecastMovementSystem>();
       facade.addSystem<Gsage::CombatSystem>();
 
       if(!facade.initialize(coreConfig, RESOURCES_FOLDER))
@@ -98,8 +107,6 @@ extern "C" {
       }
 
       // initialize input listener
-      Gsage::OisInputListener inputListener(render->getRenderWindow(), facade.getEngine());
-      facade.addUpdateListener(&inputListener);
       facade.addSystem<Gsage::LuaScriptSystem>()->setLuaState(Rocket::Core::Lua::Interpreter::GetLuaState());
 
 #if GSAGE_PLATFORM == GSAGE_APPLE

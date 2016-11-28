@@ -1,9 +1,12 @@
-if(WIN32)
+set(OGRE_CMAKE_MODULE_PATH_ADDED FALSE)
+
+if(WIN32 AND DEFINED ENV{OGRE_HOME})
   set(CMAKE_MODULE_PATH "$ENV{OGRE_HOME}/CMake/;${CMAKE_MODULE_PATH}")
   set(OGRE_SAMPLES_INCLUDEPATH
     $ENV{OGRE_HOME}/Samples/include
-    )
-endif(WIN32)
+  )
+  set(OGRE_CMAKE_MODULE_PATH_ADDED TRUE)
+endif(WIN32 AND DEFINED ENV{OGRE_HOME})
 
 if(DEFINED ENV{OGRE_DEPENDENCIES_DIR})
   set(ENV{ZZIP_HOME}, $ENV{OGRE_DEPENDENCIES_DIR})
@@ -14,18 +17,22 @@ if(UNIX)
 
     set(CMAKE_MODULE_PATH "/usr/local/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
     set(OGRE_SAMPLES_INCLUDEPATH "/usr/local/share/OGRE/samples/Common/include/") # We could just *assume* that developers uses this basepath : /usr/local
+    set(OGRE_CMAKE_MODULE_PATH_ADDED TRUE)
 
   elseif(EXISTS "/usr/lib/OGRE/cmake")
 
     set(CMAKE_MODULE_PATH "/usr/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
     set(OGRE_SAMPLES_INCLUDEPATH "/usr/share/OGRE/samples/Common/include/") # Otherwise, this one
+    set(OGRE_CMAKE_MODULE_PATH_ADDED TRUE)
+
   elseif(DEFINED ENV{OGRE_HOME})
     set(CMAKE_MODULE_PATH "$ENV{OGRE_HOME}/CMake/;${CMAKE_MODULE_PATH}")
     set(OGRE_SAMPLES_INCLUDEPATH
       $ENV{OGRE_HOME}/Samples/include
-      )
-  else ()
-    message(SEND_ERROR "Failed to find module path.")
+    )
+    set(OGRE_CMAKE_MODULE_PATH_ADDED TRUE)
+  else()
+    set(OGRE_FOUND FALSE)
   endif(EXISTS "/usr/local/lib/OGRE/cmake")
 endif(UNIX)
 
@@ -40,6 +47,10 @@ set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+if(OGRE_CMAKE_MODULE_PATH_ADDED)
+  find_package(OGRE)
+endif(OGRE_CMAKE_MODULE_PATH_ADDED)
+
 if(APPLE)
   find_library(COREFOUNDATION_LIBRARY CoreFoundation )
   find_library(COCOA_LIBRARY Cocoa)
@@ -47,22 +58,26 @@ if(APPLE)
   find_library(IOKIT NAMES IOKit)
   find_library(OpenGL_LIBRARY OpenGL)
 
-  include(FindOGRE)
+  if(OGRE_CMAKE_MODULE_PATH_ADDED)
+    include(FindOGRE)
+  endif(OGRE_CMAKE_MODULE_PATH_ADDED)
 endif(APPLE)
-find_package(OGRE REQUIRED)
 
-ogre_find_component(Terrain OgreTerrain.h)
-ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
+if(OGRE_FOUND)
+  ogre_find_component(Terrain OgreTerrain.h)
+  ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
+endif(OGRE_FOUND)
 
 find_package(OIS REQUIRED)
 find_package(LuaJIT REQUIRED)
-find_package(PythonLibs REQUIRED)
 find_package(LibRocket REQUIRED)
 find_package(Jsoncpp REQUIRED)
 find_package(Msgpack REQUIRED)
-find_package(gtest)
 
 find_package(Qt5 COMPONENTS Quick Core QUIET)
+
+find_package(PythonLibs QUIET)
+find_package(PYBIND11 QUIET)
 
 if(NOT OIS_FOUND)
   message(SEND_ERROR "Failed to find OIS.")
@@ -82,9 +97,9 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
     # search names with "lib". This is the workaround.
     set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
   endif ()
-  set(Boost_ADDITIONAL_VERSIONS "1.55" "1.44.0" "1.42" "1.42.0" "1.41.0" "1.41" "1.40.0" "1.40" "1.39.0" "1.39" "1.38.0" "1.38" "1.37.0" "1.37" )
+  set(Boost_ADDITIONAL_VERSIONS "1.54" )
   # Components that need linking (NB does not include header-only components like bind)
-  set(OGRE_BOOST_COMPONENTS system filesystem thread date_time python signals regex)
+  set(OGRE_BOOST_COMPONENTS system filesystem thread date_time)
   find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
 
   if (NOT Boost_FOUND)
