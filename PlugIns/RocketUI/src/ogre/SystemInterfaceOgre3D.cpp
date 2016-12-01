@@ -25,7 +25,7 @@
  *
  */
 
-#include "SystemInterfaceOgre3D.h"
+#include "ogre/SystemInterfaceOgre3D.h"
 
 SystemInterfaceOgre3D::SystemInterfaceOgre3D()
 {

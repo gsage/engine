@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "Engine.h"
 #include "EngineSystem.h"
+#include "EngineEvent.h"
 
 #include "Component.h"
 
@@ -114,6 +115,8 @@ bool Engine::addSystem(const std::string& name, EngineSystem* system)
     auto config = mConfiguration.get<Dictionary>(name);
     system->initialize(config.second ? config.first : Dictionary());
   }
+
+  fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, system));
   return true;
 }
 
@@ -136,6 +139,7 @@ bool Engine::removeSystem(const std::string& name)
     return false;
 
   SystemNames::iterator it = std::find(mManagedByEngine.begin(), mManagedByEngine.end(), name);
+  fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, name));
   if(it != mManagedByEngine.end())
     delete mEngineSystems[name];
 
@@ -145,10 +149,14 @@ bool Engine::removeSystem(const std::string& name)
 
 void Engine::removeSystems()
 {
-  for(auto& name : mManagedByEngine)
-  {
+  for(auto& pair : mEngineSystems) {
+    fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, pair.first));
+  }
+
+  for(auto& name : mManagedByEngine) {
     delete mEngineSystems[name];
   }
+
   mEngineSystems.clear();
   mManagedByEngine.clear();
 }

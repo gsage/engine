@@ -12,15 +12,15 @@ If you haven't built engine yet, check out these build tutorials:
 
 If you've managed to get engine built, then you should have the following:
 
-* :code:`game`/:code:`game.app`/:code:`game.exe` executable file should be
+* :code:`GsageExe`/:code:`GsageExe.app`/:code:`GsageExe.exe` executable file should be
   in the **<your-cmake-build-folder>/bin** folder. This file is the main game executable.
 
-* All resources should be copied to the **/bin** folder on Windows and Linux or to **game.app/Contents/Resources**
+* All resources are located in **./resources** folder. They are symlinked to **GsageExe.app/Contents/Resources**
   on the Mac OS X systems.
 
 * :code:`editor`/:code:`editor.app`/:code:`editor.exe` should also be in the game folder.
 
-By running :code:`game` executable, you can start the engine, which is configured in isometric rpg mode by default.
+By running :code:`GsageExe` executable, you can start the engine, which is configured in isometric rpg mode by default.
 
 .. image:: ../../images/game.png
 
@@ -62,7 +62,7 @@ For example:
   }
   ...
 
-When you run the **game** again, you should see the model on the scene.
+When you run the **GsageExe** again, you should see the model on the scene.
 Also if it's placed close enough to the existing walkable area, you will be able to walk on it.
 
 For more information about entities format see :ref:`entity-format-label`.
@@ -215,7 +215,7 @@ You can create another one.
       entity.create("mob")
 
    This will create NPC.
-   Or you can use lua console in game.
+   Or you can use lua console in GsageExe.
 
    Console can be invoked by :code:`F9` key.
    Type the same line there, and NPC will appear.

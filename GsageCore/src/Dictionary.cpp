@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "Dictionary.h"
 #include "msgpack.hpp"
+#include <json/json.h>
 
 #define _LOAD_PATH_WRAP(wrapper, func) \
   bool wrapper(const std::string& path, Dictionary& value)\

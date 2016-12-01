@@ -86,6 +86,25 @@ Example:
   facade.addSystem<Gsage::LuaScriptSystem>();
 
 
+There is also another way to register new type of the system by using `Gsage::GsageFacade::registerSystemFactory`.
+
+.. code-block:: cpp
+
+  facade.registerSystemFactory<Gsage::LuaScriptSystem>("luaSystem");
+
+After registering system this way, it will be possible to tell engine to create it using game config :code:`systems` field:
+
+.. code-block:: javascript
+
+  ...
+  "systems": ["luaSystem"]
+  ...
+
+.. important::
+
+  This solution is more flexible as it allows engine to create such systems at the runtime.
+
+
 Further steps
 -------------
 

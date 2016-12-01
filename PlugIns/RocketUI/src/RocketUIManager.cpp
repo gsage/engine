@@ -28,49 +28,87 @@ THE SOFTWARE.
 
 #include <Rocket/Core/Lua/Interpreter.h>
 #include <Rocket/Controls/Lua/Controls.h>
-#include "RenderInterfaceOgre3D.h"
-#include "SystemInterfaceOgre3D.h"
+
+#ifdef OGRE_INTERFACE
+#include "ogre/RocketOgreWrapper.h"
+#endif
 
 #include "MouseEvent.h"
-#include "RenderEvent.h"
 #include "Engine.h"
-
-#include "systems/OgreRenderSystem.h"
+#include "EngineSystem.h"
+#include "EngineEvent.h"
 
 namespace Gsage {
 
   RocketUIManager::RocketUIManager()
-    : mRenderInterface(0)
-    , mSystemInterface(0)
-    , mContext(0)
+    : mRenderSystemWrapper(0)
+    , mIsSetUp(false)
   {
     buildKeyMap();
   }
 
   RocketUIManager::~RocketUIManager()
   {
-    if(mContext)
-      mContext->RemoveReference();
-    Rocket::Core::Shutdown();
-
-    if(mRenderInterface)
-      delete mRenderInterface;
-
-    if(mSystemInterface)
-      delete mSystemInterface;
+    if(mRenderSystemWrapper)
+      delete mRenderSystemWrapper;
   }
 
   void RocketUIManager::initialize(Engine* engine, lua_State* luaState)
   {
     UIManager::initialize(engine, luaState);
-    if(engine->hasSystem("render"))
-    {
-      OgreRenderSystem* renderer = static_cast<OgreRenderSystem*>(engine->getSystem("render"));
-      setUp(renderer->getWidth(), renderer->getHeight());
+    setUp();
+    addEventListener(engine, SystemChangeEvent::SYSTEM_ADDED, &RocketUIManager::handleSystemChange);
+    addEventListener(engine, SystemChangeEvent::SYSTEM_REMOVED, &RocketUIManager::handleSystemChange);
+  }
+
+  bool RocketUIManager::handleSystemChange(EventDispatcher* sender, const Event& event)
+  {
+    const SystemChangeEvent& e = static_cast<const SystemChangeEvent&>(event);
+    if(e.mSystemId != "render") {
+      return true;
     }
 
-    // add render handler
-    addEventListener(mEngine, RenderEvent::UPDATE_UI, &RocketUIManager::render);
+    if(e.getType() == SystemChangeEvent::SYSTEM_ADDED)
+    {
+      setUp();
+    }
+
+    if(e.getType() == SystemChangeEvent::SYSTEM_REMOVED)
+    {
+      mIsSetUp = false;
+      delete mRenderSystemWrapper;
+      LOG(INFO) << "Render system was removed, system wrapper was destroyed";
+      mRenderSystemWrapper = 0;
+    }
+    return true;
+  }
+
+  void RocketUIManager::setUp()
+  {
+    if(mIsSetUp)
+      return;
+
+    EngineSystem* render = mEngine->getSystem("render");
+    if(render == 0) {
+      return;
+    }
+
+    const std::string type = render->getSystemInfo().get("type", "unknown");
+    bool initialized = false;
+#ifdef OGRE_INTERFACE
+    if(type == "ogre") {
+      LOG(INFO) << "Initialize for render system ogre3d";
+      mRenderSystemWrapper = new RocketOgreWrapper(mEngine);
+      initialized = true;
+    }
+
+    setLuaState(mLuaState);
+#endif
+
+    if(!initialized) {
+      LOG(ERROR) << "Failed to initialize rocket ui manager with the render system of type \"" << type << "\"";
+      return;
+    }
     // mouse events
     addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &RocketUIManager::handleMouseEvent, -100);
     addEventListener(mEngine, MouseEvent::MOUSE_UP, &RocketUIManager::handleMouseEvent, -100);
@@ -78,6 +116,7 @@ namespace Gsage {
     // keyboard events
     addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &RocketUIManager::handleKeyboardEvent, -100);
     addEventListener(mEngine, KeyboardEvent::KEY_UP, &RocketUIManager::handleKeyboardEvent, -100);
+    mIsSetUp = true;
   }
 
   lua_State* RocketUIManager::getLuaState()
@@ -93,100 +132,9 @@ namespace Gsage {
     Rocket::Controls::Lua::RegisterTypes(Rocket::Core::Lua::Interpreter::GetLuaState());
   }
 
-  bool RocketUIManager::render(EventDispatcher* sender, const Event& event)
-  {
-    RenderEvent e = static_cast<const RenderEvent&>(event);
-    if(!mRenderInterface || !mSystemInterface)
-      setUp(e.getRenderSystem()->getWidth(),
-            e.getRenderSystem()->getHeight());
-
-    mContext->Update();
-    configureRenderSystem(e);
-    mContext->Render();
-    return true;
-  }
-
-  void RocketUIManager::configureRenderSystem(RenderEvent& event)
-  {
-    OgreRenderSystem* gsageRendering = event.getRenderSystem();
-    Ogre::RenderSystem* renderSystem = gsageRendering->getRenderSystem();
-
-    // Set up the projection and view matrices.
-    Ogre::Matrix4 projectionMatrix;
-    float zNear = -1;
-    float zFar = 1;
-
-    projectionMatrix = Ogre::Matrix4::ZERO;
-
-    // Set up matrices.
-    projectionMatrix[0][0] = 2.0f / gsageRendering->getWidth();
-    projectionMatrix[0][3]= -1.0000000f;
-    projectionMatrix[1][1]= -2.0f / gsageRendering->getHeight();
-    projectionMatrix[1][3]= 1.0000000f;
-    projectionMatrix[2][2]= -2.0f / (zFar - zNear);
-    projectionMatrix[3][3]= 1.0000000f;
-    renderSystem->_setProjectionMatrix(projectionMatrix);
-    renderSystem->_setViewMatrix(Ogre::Matrix4::IDENTITY);
-
-    // Disable lighting, as all of Rocket's geometry is unlit.
-    renderSystem->setLightingEnabled(false);
-    // Disable depth-buffering; all of the geometry is already depth-sorted.
-    renderSystem->_setDepthBufferParams(false, false);
-    // Rocket generates anti-clockwise geometry, so enable clockwise-culling.
-    renderSystem->_setCullingMode(Ogre::CULL_CLOCKWISE);
-    // Disable fogging.
-    renderSystem->_setFog(Ogre::FOG_NONE);
-    // Enable writing to all four channels.
-    renderSystem->_setColourBufferWriteEnabled(true, true, true, true);
-    // Unbind any vertex or fragment programs bound previously by the application.
-    renderSystem->unbindGpuProgram(Ogre::GPT_FRAGMENT_PROGRAM);
-    renderSystem->unbindGpuProgram(Ogre::GPT_VERTEX_PROGRAM);
-
-    // Set texture settings to clamp along both axes.
-    Ogre::TextureUnitState::UVWAddressingMode addressingMode;
-    addressingMode.u = Ogre::TextureUnitState::TAM_CLAMP;
-    addressingMode.v = Ogre::TextureUnitState::TAM_CLAMP;
-    addressingMode.w = Ogre::TextureUnitState::TAM_CLAMP;
-    renderSystem->_setTextureAddressingMode(0, addressingMode);
-
-    // Set the texture coordinates for unit 0 to be read from unit 0.
-    renderSystem->_setTextureCoordSet(0, 0);
-    // Disable texture coordinate calculation.
-    renderSystem->_setTextureCoordCalculation(0, Ogre::TEXCALC_NONE);
-    // Enable linear filtering; images should be rendering 1 texel == 1 pixel, so point filtering could be used
-    // except in the case of scaling tiled decorators.
-    renderSystem->_setTextureUnitFiltering(0, Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_POINT);
-    // Disable texture coordinate transforms.
-    renderSystem->_setTextureMatrix(0, Ogre::Matrix4::IDENTITY);
-    // Reject pixels with an alpha of 0.
-    renderSystem->_setAlphaRejectSettings(Ogre::CMPF_GREATER, 0, false);
-    // Disable all texture units but the first.
-    renderSystem->_disableTextureUnitsFrom(1);
-
-    // Enable simple alpha blending.
-    renderSystem->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-
-    // Disable depth bias.
-    renderSystem->_setDepthBias(0, 0);
-  }
-
-  void RocketUIManager::setUp(unsigned int width, unsigned int height)
-  {
-    mRenderInterface = new RenderInterfaceOgre3D(width, height);
-    mSystemInterface = new SystemInterfaceOgre3D();
-
-    Rocket::Core::SetRenderInterface(mRenderInterface);
-    Rocket::Core::SetSystemInterface(mSystemInterface);
-
-    Rocket::Core::Initialise();
-    Rocket::Controls::Initialise();
-    setLuaState(mLuaState);
-    mContext = Rocket::Core::CreateContext("main", Rocket::Core::Vector2i(width, height));
-  }
-
   bool RocketUIManager::handleMouseEvent(EventDispatcher* sender, const Event& event)
   {
-    if(!mContext)
+    if(!mRenderSystemWrapper || !mRenderSystemWrapper->getContext())
       return true;
 
     const MouseEvent& e = static_cast<const MouseEvent&>(event);
@@ -195,27 +143,29 @@ namespace Gsage {
     {
       int keyModifierState = getKeyModifierState();
 
-      mContext->ProcessMouseMove(e.mouseX, e.mouseY, keyModifierState);
+      mRenderSystemWrapper->getContext()->ProcessMouseMove(e.mouseX, e.mouseY, keyModifierState);
       if (e.relativeZ != 0)
       {
-        mContext->ProcessMouseWheel(e.relativeZ / -120, keyModifierState);
+        mRenderSystemWrapper->getContext()->ProcessMouseWheel(e.relativeZ / -120, keyModifierState);
         return !doCapture();
       }
     }
     else if(e.getType() == MouseEvent::MOUSE_DOWN)
     {
-      mContext->ProcessMouseButtonDown((int) e.button, getKeyModifierState());
+      mRenderSystemWrapper->getContext()->ProcessMouseButtonDown((int) e.button, getKeyModifierState());
       return !doCapture();
     }
     else if(e.getType() == MouseEvent::MOUSE_UP)
     {
-      mContext->ProcessMouseButtonUp((int) e.button, getKeyModifierState());
+      mRenderSystemWrapper->getContext()->ProcessMouseButtonUp((int) e.button, getKeyModifierState());
     }
     return true;
   }
 
   bool RocketUIManager::handleKeyboardEvent(EventDispatcher* sender, const Event& event)
   {
+    if(!mRenderSystemWrapper)
+      return true;
     const KeyboardEvent& e = static_cast<const KeyboardEvent&>(event);
     Rocket::Core::Input::KeyIdentifier key = mKeyMap[e.key];
     mModifiersState = e.getModifiersState();
@@ -223,18 +173,18 @@ namespace Gsage {
     if(e.getType() == KeyboardEvent::KEY_UP)
     {
       if(key != Rocket::Core::Input::KI_UNKNOWN)
-        mContext->ProcessKeyUp(key, getKeyModifierState());
+        mRenderSystemWrapper->getContext()->ProcessKeyUp(key, getKeyModifierState());
     }
     else if(e.getType() == KeyboardEvent::KEY_DOWN)
     {
       if (key != Rocket::Core::Input::KI_UNKNOWN)
-        mContext->ProcessKeyDown(key, getKeyModifierState());
+        mRenderSystemWrapper->getContext()->ProcessKeyDown(key, getKeyModifierState());
 
       // Send through the ASCII value as text input if it is printable.
       if (e.text >= 32)
-        mContext->ProcessTextInput((Rocket::Core::word) e.text);
+        mRenderSystemWrapper->getContext()->ProcessTextInput((Rocket::Core::word) e.text);
       else if (key == Rocket::Core::Input::KI_RETURN)
-        mContext->ProcessTextInput((Rocket::Core::word) '\n');
+        mRenderSystemWrapper->getContext()->ProcessTextInput((Rocket::Core::word) '\n');
     }
     return true;
   }
@@ -434,9 +384,9 @@ namespace Gsage {
 
   bool RocketUIManager::doCapture()
   {
-    Rocket::Core::Element* e = mContext->GetHoverElement();
+    Rocket::Core::Element* e = mRenderSystemWrapper->getContext()->GetHoverElement();
 
-    if(e && e != mContext->GetRootElement())
+    if(e && e != mRenderSystemWrapper->getContext()->GetRootElement())
     {
       if(e->GetTagName() == "body")
         return false;

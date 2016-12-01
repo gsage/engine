@@ -16,9 +16,8 @@ FILE(GLOB sources src/*.cpp src/*/*.cpp src/*.c src/*/*.c src/*/*/*.c applicatio
 set(sources ${sources} "main.cpp")
 
 #qtquick_compiler_add_resources(RESOURCES example.qrc)
-add_executable(${APP_NAME} ${sources})
+gsage_executable(${APP_NAME} ${sources})
 qt5_use_modules(${APP_NAME} Qml Quick Core Network OpenGL)
-
 
 include_directories(
   ${gsage_SOURCE_DIR}/GsageCore/include
@@ -41,8 +40,7 @@ endif(WIN32)
 
 set(LIBS
   GsageCore
-  OgrePluginStatic1.9
-  RocketOgre
+  OgrePluginStatic
   ${LIBROCKET_LIBRARIES}
   ${OGRE_LIBRARIES}
   ${OIS_LIBRARIES}
@@ -50,30 +48,6 @@ set(LIBS
   )
 
 if(APPLE)
-  set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE TRUE)
-  set_property(TARGET ${APP_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
-  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.Editor")
-  set(APP_FRAMEWORKS_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${APP_NAME}.app/Contents/Frameworks")
-  set(APP_RESOURCES_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${APP_NAME}.app/Contents/Resources/")
-
-  if(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
-    add_custom_command(TARGET ${APP_NAME} POST_BUILD
-      COMMAND mkdir -p ${APP_FRAMEWORKS_DIRECTORY}
-    )
-  endif(NOT EXISTS ${APP_FRAMEWORKS_DIRECTORY})
-
-  if(NOT EXISTS ${APP_RESOURCES_DIRECTORY})
-    add_custom_command(TARGET ${APP_NAME} POST_BUILD
-      COMMAND mkdir -p ${APP_RESOURCES_DIRECTORY}
-    )
-  endif(NOT EXISTS ${APP_RESOURCES_DIRECTORY})
-
-  add_custom_command(TARGET ${APP_NAME} POST_BUILD
-    COMMAND cp -rf $ENV{OGRE_HOME}/lib/${CMAKE_BUILD_TYPE}/ ${APP_FRAMEWORKS_DIRECTORY}
-  )
-  add_custom_command(TARGET ${APP_NAME} POST_BUILD
-    COMMAND cp -rf ${PROJECT_SOURCE_DIR}/resources/* ${APP_RESOURCES_DIRECTORY}
-  )
   add_definitions(-DRESOURCES_FOLDER="../Resources")
   find_package(OpenGL REQUIRED)
   set(LIBS ${LIBS} ${OPENGL_LIBRARIES})

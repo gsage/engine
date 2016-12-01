@@ -25,6 +25,11 @@ THE SOFTWARE.
 */
 
 #include "lua/LuaInterface.h"
+extern "C" {
+  #include "lua.h"
+  #include "lauxlib.h"
+  #include "lualib.h"
+}
 
 #include "GsageFacade.h"
 
@@ -36,8 +41,6 @@ THE SOFTWARE.
 
 #include "systems/CombatSystem.h"
 #include "systems/LuaScriptSystem.h"
-
-#include "input/OisInputListener.h"
 
 #include "lua/LuaEventProxy.h"
 

@@ -3,16 +3,6 @@
 
 #include "IPlugin.h"
 
-#if GSAGE_PLATFORM == GSAGE_WIN32
-#ifdef PLUGIN_EXPORT
-#define PluginExport __declspec (dllexport)
-#else
-#define PluginExport __declspec (dllimport)
-#endif
-#else
-#define PluginExport
-#endif
-
 namespace Gsage
 {
   class Engine;
@@ -27,12 +17,17 @@ namespace Gsage
       /**
        * Registers new factory for type puSystem
        */
-      bool install();
+      bool installImpl();
 
       /**
        * Unregisters factory for type puSystem and removes all elements
        */
-      void uninstall();
+      void uninstallImpl();
+
+      /**
+       * Set up lua bindings for a new particle emitter
+       */
+      void setupLuaBindings();
   };
 }
 

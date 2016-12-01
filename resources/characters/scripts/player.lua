@@ -9,22 +9,24 @@ return function(self)
   model:attachToBone('Handle.R', 's1', sword)
   model:attachToBone('Handle.L', 's2', sword)
   self:render():playAnimation('closeHands', 1, 0, 0, false)
-  function initStatusBar()
-    statusBar.setMaximumHP(self:stats():getNumber('maxHP', 1))
-    statusBar.setCurrentHP(self:stats():getNumber('hp', 1))
-  end
-
-  function updateHp(e)
-    local event = StatEvent.cast(e)
-    if event.id == 'maxHP' then
+  if rocket ~= nil then
+    function initStatusBar()
       statusBar.setMaximumHP(self:stats():getNumber('maxHP', 1))
-    end
-
-    if event.id == 'hp' then
       statusBar.setCurrentHP(self:stats():getNumber('hp', 1))
     end
-  end
 
-  initStatusBar()
-  event:bind(self:stats(), 'statChange', updateHp)
+    function updateHp(e)
+      local event = StatEvent.cast(e)
+      if event.id == 'maxHP' then
+        statusBar.setMaximumHP(self:stats():getNumber('maxHP', 1))
+      end
+
+      if event.id == 'hp' then
+        statusBar.setCurrentHP(self:stats():getNumber('hp', 1))
+      end
+    end
+
+    initStatusBar()
+    event:bind(self:stats(), 'statChange', updateHp)
+  end
 end

@@ -49,9 +49,9 @@ namespace Gsage
     return PLUGIN_NAME;
   }
 
-  bool PUSystemPlugin::install()
+  bool PUSystemPlugin::installImpl()
   {
-    OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
+    OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
     if(!render)
     {
       LOG(ERROR) << "Failed to install " << PLUGIN_NAME << " plugin: OgreRenderSystem not initialized";
@@ -59,6 +59,20 @@ namespace Gsage
     }
 
     render->registerElement<PUSystemWrapper>();
+    return true;
+  }
+
+  void PUSystemPlugin::uninstallImpl()
+  {
+    OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
+    if(!render)
+      return;
+
+    render->unregisterElement<PUSystemWrapper>();
+  }
+
+  void PUSystemPlugin::setupLuaBindings()
+  {
     if(mLuaInterface && mLuaInterface->getState())
     {
       lua = sol::state_view(mLuaInterface->getState());
@@ -73,16 +87,6 @@ namespace Gsage
 
       lua["OgreSceneNode"]["getPUSystem"] = &SceneNodeWrapper::getChildOfType<PUSystemWrapper>;
     }
-    return true;
-  }
-
-  void PUSystemPlugin::uninstall()
-  {
-    OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
-    if(!render)
-      return;
-
-    render->unregisterElement<PUSystemWrapper>();
   }
 
   PUSystemPlugin* puSystemPlugin = NULL;

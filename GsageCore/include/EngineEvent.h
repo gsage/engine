@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "EventDispatcher.h"
 
 namespace Gsage {
+  class EngineSystem;
   /**
    * Engine related event
    */
@@ -46,6 +47,28 @@ namespace Gsage {
       static const std::string HALT;
       EngineEvent(const std::string& type);
       virtual ~EngineEvent();
+  };
+
+  /**
+   * Event which is triggered when system added or removed in the engine
+   */
+  class SystemChangeEvent : public Event
+  {
+    public:
+      /**
+       * System was added
+       */
+      static const std::string SYSTEM_ADDED;
+      /**
+       * System was removed
+       */
+      static const std::string SYSTEM_REMOVED;
+
+      SystemChangeEvent(const std::string& type, const std::string& systemId, EngineSystem* system = 0);
+      virtual ~SystemChangeEvent();
+
+      const std::string mSystemId;
+      EngineSystem* mSystem;
   };
 
   class WindowEvent : public Event

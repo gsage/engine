@@ -29,6 +29,9 @@ THE SOFTWARE.
 
 #include "ComponentStorage.h"
 #include <sol.hpp>
+#include "systems/SystemFactory.h"
+#include "lua/LuaInterface.h"
+#include "Engine.h"
 
 struct lua_State;
 
@@ -115,6 +118,35 @@ namespace Gsage
       UpdateListeners mUpdateListeners;
 
       std::string mWorkdir;
+  };
+
+  class LuaScriptSystemFactory : public SystemFactory
+  {
+    public:
+      LuaScriptSystemFactory(LuaInterface* luaInterface)
+        : mLuaInterface(luaInterface)
+      {}
+
+      /**
+       * @copydoc Gsage::SystemFactory::create
+       */
+      EngineSystem* create(Engine* engine)
+      {
+        lua_State* s = mLuaInterface->getState();
+        if(s == 0) {
+          return 0;
+        }
+
+        LuaScriptSystem* script = engine->addSystem<LuaScriptSystem>();
+        if(!script){
+          return 0;
+        }
+
+        script->setLuaState(s);
+        return script;
+      }
+    private:
+      LuaInterface* mLuaInterface;
   };
 }
 #endif

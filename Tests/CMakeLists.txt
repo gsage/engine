@@ -14,11 +14,14 @@ include_directories(
   ${JSONCPP_INCLUDE_DIR}
 )
 
+add_subdirectory(TestPlugins)
+
 set(TEST_FILES
   Core/TestEngine.cpp
   Core/TestEventDispatcher.cpp
   Core/TestSerializable.cpp
   Core/TestDictionary.cpp
+  Core/TestGsageFacade.cpp
   Core/TestFileLoader.cpp)
 
 if(${OGRE_FOUND})
@@ -27,7 +30,7 @@ if(${OGRE_FOUND})
     ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
   )
   set(TEST_DEPENDENCIES
-    OgrePlugin1.9
+    OgrePlugin
     ${TEST_DEPENDENCIES}
     ${OGRE_LIBRARIES}
   )
@@ -35,7 +38,7 @@ if(${OGRE_FOUND})
   set(TEST_FILES ${ogreTests} ${TEST_FILES})
 endif(${OGRE_FOUND})
 
-ADD_EXECUTABLE(${APP_NAME} main.cpp ${TEST_FILES})
+gsage_executable(${APP_NAME} main.cpp ${TEST_FILES})
 
 set_target_properties(${APP_NAME} PROPERTIES DEBUG_POSTFIX _d)
 
@@ -47,15 +50,19 @@ if(WIN32 AND NOT MINGW)
     COMMAND if not exist .\\bin mkdir .\\bin )
   add_custom_command( TARGET ${APP_NAME} POST_BUILD
     COMMAND copy \"$(TargetPath)\" .\\bin )
+  add_custom_command( TARGET ${APP_NAME} POST_BUILD
+    COMMAND copy \"${gsage_SOURCE_DIR}\\Tests\\resources\" .\\bin )
 endif(WIN32 AND NOT MINGW)
 
+# symlink resources for mac and linux
 if(MINGW OR UNIX)
-  set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-
-  # TODO: fix it later, directory path is hardcoded D:
-  # plus we have a shell script there, what is not a cross platform solution
+  if(APPLE)
+    set(TEST_RESOURCES ${APP_CONTENTS}/MacOS/resources)
+  else(APPLE)
+    set(TEST_RESOURCES ${BINARY_OUTPUT_DIR}/resources)
+  endif(APPLE)
 
   add_custom_command(TARGET ${APP_NAME} POST_BUILD
-    COMMAND cp -rf ${PROJECT_SOURCE_DIR}/Tests/resources ${PROJECT_BINARY_DIR}
+    COMMAND [ -L ${TEST_RESOURCES} ] || ln -s ${gsage_SOURCE_DIR}/Tests/resources ${TEST_RESOURCES}
   )
 endif(MINGW OR UNIX)

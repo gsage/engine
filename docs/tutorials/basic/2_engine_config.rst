@@ -20,6 +20,7 @@ It can be encoded in json and msgpack and can look like this:
     },
     "startupScript": "scripts/start.lua",
     "inputHandler": "ois",
+    "systems": ["ogre"],
 
     "plugins":
     [
@@ -87,6 +88,20 @@ Each defined plugin will be installed in the order defined in the list.
 
 Systems Configs
 ---------------
+
+Systems can be either registered statically, by calling :cpp:func:`Gsage::GsageFacade::addSystem` or
+they can be constructed by :code:`GsageFacade` during :code:`initialize`, if the factory was registered for the system.
+
+To construct systems using factory :code:`systems` field is used. For example:
+
+.. code-block:: javascript
+
+  ...
+  "systems": ["ogre", "lua", "dynamicStats"]
+  ...
+
+* :code:`lua` and :code:`dynamicStats` are preinstalled systems.
+* :code:`ogre` and :code:`recast` are registered by the OgrePlugin.
 
 Each system has it's own unique id (:code:`render`, :code:`movement`, etc...).
 It is possible to configure the system in the global config and in the level config.

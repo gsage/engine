@@ -107,6 +107,12 @@ namespace Gsage
        * @param value
        */
       void setEnabled(bool value);
+
+      /**
+       * Get detailed type of the system.
+       * For example to detect if the render system is ogre.
+       */
+      const Dictionary& getSystemInfo() const;
     protected:
 
       /**
@@ -120,6 +126,7 @@ namespace Gsage
       bool mConfigDirty;
 
       bool mEnabled;
+      Dictionary mSystemInfo;
   };
 }
 

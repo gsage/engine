@@ -9,7 +9,15 @@ require 'async'
 require 'behaviors'
 require 'actions'
 
+function context()
+  return rocket.contexts["main"]
+end
+
 function startup()
+  if rocket == nil then
+    return
+  end
+
   local fonts =
   {
     "Delicious-Roman.otf",
@@ -22,23 +30,23 @@ function startup()
     resource.loadFont(font)
   end
 
-  maincontext = rocket.contexts["main"]
-  main = resource.loadDocument(maincontext, "minimal.rml")
-  console = resource.loadDocument(maincontext, "console_document.rml")
-  healthbar = resource.loadDocument(maincontext, "healthbar.rml")
+  main = resource.loadDocument(context(), "minimal.rml")
+  console = resource.loadDocument(context(), "console_document.rml")
+  healthbar = resource.loadDocument(context(), "healthbar.rml")
 
-  cursor = resource.loadCursor(maincontext, "cursor.rml")
+  cursor = resource.loadCursor(context(), "cursor.rml")
 
   main:Show()
   healthbar:Show()
+  main:AddEventListener('keydown', onKeyEvent, true)
+
+  console:AddEventListener('keydown', onKeyEvent, true)
 end
 
 function setActiveCamera(id)
   local camera = entity.get(id)
   camera:render().root:getChild("camera", id):attach(core:render().viewport)
 end
-
-counter = 0
 
 function spawnMore(count)
   for i=1, count do
@@ -47,8 +55,6 @@ function spawnMore(count)
 end
 
 function spawn()
-  local id = "ninja" .. counter
-  counter = counter + 1
   entity.create("ninja",
   Dictionary.new({
     movement = {
@@ -58,6 +64,10 @@ function spawn()
 end
 
 function onKeyEvent(event)
+  if context() == nil then
+    return
+  end
+
   if event.parameters['key_identifier'] == rocket.key_identifier.F9 then
     if console_visible then
       console:Hide()
@@ -109,8 +119,10 @@ function onReady(e)
   core:movement():setControlledEntity(player.id)
 
   event:bind(core, "objectSelected", onSelect)
-  event:bind(core, "rollOver", onRoll)
-  event:bind(core, "rollOut", onRoll)
+  if rocket ~= nil then
+    event:bind(core, "rollOver", onRoll)
+    event:bind(core, "rollOut", onRoll)
+  end
 
   core:script():addUpdateListener(async.addTime)
 
@@ -119,10 +131,7 @@ function onReady(e)
 end
 
 event:bind(core, "load", onReady)
-
 console_visible = false
 startup()
 game:loadSave('gameStart')
-main:AddEventListener('keydown', onKeyEvent, true)
-console:AddEventListener('keydown', onKeyEvent, true)
 

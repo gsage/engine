@@ -107,7 +107,6 @@ namespace Gsage {
   {
     mViewItemId = viewId.toStdString();
     if(mFacade != 0) {
-      mUIManager = RocketUIManager();
       disconnect(this, &EditorApplication::beforeRendering, this, &EditorApplication::update);
       OgreItem* view = rootObject()->findChild<OgreItem*>(viewId);
       if(view)
@@ -126,7 +125,6 @@ namespace Gsage {
   {
     disconnect(this, &EditorApplication::beforeRendering, this, (void (EditorApplication::*)(void))&EditorApplication::loadSystems);
     mFacade = new EditorFacade();
-    mFacade->addUIManager(&mUIManager);
     if(!mFacade->initialize(mGameConfigPath, mResourcePath, &mConfigOverride))
     {
       LOG(ERROR) << "Failed to initialize game engine";
@@ -134,13 +132,6 @@ namespace Gsage {
       return;
     }
 
-    // configure systems set
-    mFacade->addSystem<QOgreRenderSystem>()->setQtWindow(this);
-    mUIManager.initialize(mFacade->getEngine());
-    mFacade->addSystem<RecastMovementSystem>();
-    mFacade->addSystem<CombatSystem>();
-    mFacade->addSystem<LuaScriptSystem>()->setLuaState(mUIManager.getLuaState());
-    mFacade->setLuaState(mUIManager.getLuaState());
     // get all ogre view objects from the view and inject engine instance to all of them
     OgreItem* view = rootObject()->findChild<OgreItem*>(mViewItemId.c_str());
     if(view)
