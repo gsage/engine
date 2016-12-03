@@ -17,19 +17,23 @@ include_directories(
   ${MSGPACK_INCLUDE_DIRS}
 )
 
-if(UNIX AND NOT APPLE)
-  set(props SHARED)
-endif(UNIX AND NOT APPLE)
-
-add_library(${LIB_NAME} ${props} ${headers} ${sources})
+add_library(${LIB_NAME} SHARED ${headers} ${sources})
 
 set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d)
 
-target_link_libraries(
-  ${LIB_NAME}
+set(LIBS
   ${LUAJIT_LIBRARIES}
   ${JSONCPP_LIBRARIES}
-  ${MSGPACK_LIBRARIES}
+  ${MSGPACK_LIBRARIES})
+
+if(APPLE)
+  set(LIBS ${LIBS}
+    ${COREFOUNDATION_LIBRARY})
+endif(APPLE)
+
+target_link_libraries(
+  ${LIB_NAME}
+  ${LIBS}
 )
 
 install(DIRECTORY include/ DESTINATION /usr/local/include/gsage

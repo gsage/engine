@@ -56,6 +56,16 @@ namespace Gsage {
         return registerFactory<ConcreteSystemFactory<S>>(id);
       }
 
+      bool removeSystem(const std::string& id)
+      {
+        if(mFactories.count(id) == 0)
+          return false;
+
+        delete mFactories[id];
+        mFactories.erase(id);
+        return true;
+      }
+
       /*
        * Register factory
        *

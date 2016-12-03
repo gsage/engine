@@ -40,7 +40,7 @@ endif(WIN32)
 
 set(LIBS
   GsageCore
-  OgrePluginStatic
+  OgrePlugin
   ${LIBROCKET_LIBRARIES}
   ${OGRE_LIBRARIES}
   ${OIS_LIBRARIES}

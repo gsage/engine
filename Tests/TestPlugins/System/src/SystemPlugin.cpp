@@ -54,6 +54,7 @@ namespace Gsage {
   void SystemPlugin::uninstallImpl()
   {
     mFacade->getEngine()->removeSystem("test");
+    mFacade->removeSystemFactory("testSystem");
   }
 
   void SystemPlugin::setupLuaBindings()

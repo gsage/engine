@@ -93,12 +93,20 @@ namespace Gsage
       void addSystem(const std::string& id, EngineSystem* system);
 
       /**
-       * @copydoc Gsage::System::registerSystem
+       * @copydoc Gsage::SystemManager::registerSystem
        */
       template<typename T>
       bool registerSystemFactory(const std::string& id)
       {
         return mSystemManager.registerSystem<T>(id);
+      }
+
+      /**
+       * @copydoc Gsage::SystemManager::removeSystem
+       */
+      bool removeSystemFactory(const std::string& id)
+      {
+        return mSystemManager.removeSystem(id);
       }
 
       /**
