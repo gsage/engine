@@ -4,20 +4,22 @@
 -- Resource loading helpers
 resource = resource or {}
 
-function resource.loadFont(fileName)
-  rocket:LoadFontFace(getResourcePath('fonts/' .. fileName))
-end
+if rocket ~= nil then
+  function resource.loadFont(fileName)
+    rocket:LoadFontFace(getResourcePath('fonts/' .. fileName))
+  end
 
-function resource.loadDocument(context, documentName)
-  return context:LoadDocument(getResourcePath('ui/' .. documentName))
-end
+  function resource.loadDocument(context, documentName)
+    return context:LoadDocument(getResourcePath('ui/' .. documentName))
+  end
 
-function resource.loadCursor(context, cursor)
-  return context:LoadMouseCursor(getResourcePath('ui/' .. cursor))
+  function resource.loadCursor(context, cursor)
+    return context:LoadMouseCursor(getResourcePath('ui/' .. cursor))
+  end
 end
 
 -- Entity management helpers
-
+--
 entity = entity or {}
 
 function entity.get(id)
@@ -54,29 +56,31 @@ end
 
 -- Logging
 
-log = log or {}
+if rocket ~= nil then
+  log = log or {}
 
-log.ERROR = Log.logtype.error
-log.WARNING = Log.logtype.warning
-log.INFO = Log.logtype.info
-log.DEBUG = Log.logtype.debug
+  log.ERROR = Log.logtype.error
+  log.WARNING = Log.logtype.warning
+  log.INFO = Log.logtype.info
+  log.DEBUG = Log.logtype.debug
 
-function log.error(message)
-  log.msg(log.ERROR, message)
-end
+  function log.error(message)
+    log.msg(log.ERROR, message)
+  end
 
-function log.warn(message)
-  log.msg(log.WARNING, message)
-end
+  function log.warn(message)
+    log.msg(log.WARNING, message)
+  end
 
-function log.info(message)
-  log.msg(log.INFO, message)
-end
+  function log.info(message)
+    log.msg(log.INFO, message)
+  end
 
-function log.debug(message)
-  log.msg(log.DEBUG, message)
-end
+  function log.debug(message)
+    log.msg(log.DEBUG, message)
+  end
 
-function log.msg(level, message)
-  Log.Message(level, message)
+  function log.msg(level, message)
+    Log.Message(level, message)
+  end
 end

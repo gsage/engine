@@ -32,8 +32,6 @@ THE SOFTWARE.
 #include <Rocket/Core/RenderInterface.h>
 #include <Rocket/Core/SystemInterface.h>
 
-#include <OISKeyboard.h>
-
 #include "UIManager.h"
 #include "EventSubscriber.h"
 #include "KeyboardEvent.h"
@@ -44,6 +42,20 @@ namespace Gsage {
   class LuaInterface;
   class RenderEvent;
   class Engine;
+
+  class RenderSystemWrapper {
+    public:
+      virtual ~RenderSystemWrapper() {};
+      /**
+       * Get context
+       *
+       * @returns rocket context
+       */
+      virtual Rocket::Core::Context* getContext() {return mContext;}
+
+    protected:
+      Rocket::Core::Context* mContext;
+  };
 
   class RocketUIManager : public UIManager, public EventSubscriber<RocketUIManager>
   {
@@ -67,27 +79,17 @@ namespace Gsage {
        * @param L lua_State
        */
       void setLuaState(lua_State* L);
+
+      /**
+       * Configures rendering
+       */
+      void setUp();
+
+      /**
+       * SystemChangeEvent::SYSTEM_ADDED and SystemChangeEvent::SYSTEM_REMOVED handler
+       */
+      bool handleSystemChange(EventDispatcher* sender, const Event& event);
     private:
-      /**
-       * Update ui callback
-       *
-       * @param event RenderEvent
-       */
-      bool render(EventDispatcher* sender, const Event& event);
-      /**
-       * Configure projection matrix
-       *
-       * @param width Window width
-       * @param height Window height
-       */
-      void configureRenderSystem(RenderEvent& event);
-      /**
-       * Set up system/render interfaces
-       *
-       * @param width Initial window width
-       * @param height Initial window height
-       */
-      void setUp(unsigned int width, unsigned int height);
       /**
        * Handle mouse event from engine
        *
@@ -103,7 +105,7 @@ namespace Gsage {
        */
       int getKeyModifierState();
       /**
-       * Build OIS <-> Rocket key map
+       * Build Engine <-> Rocket key map
        */
       void buildKeyMap();
       /**
@@ -111,15 +113,14 @@ namespace Gsage {
        */
       bool doCapture();
 
-      Rocket::Core::Context* mContext;
-
-      Rocket::Core::RenderInterface* mRenderInterface;
-      Rocket::Core::SystemInterface* mSystemInterface;
+      RenderSystemWrapper* mRenderSystemWrapper;
 
       // TODO move to some other class
       typedef std::map< KeyboardEvent::Key, Rocket::Core::Input::KeyIdentifier > KeyIdentifierMap;
       KeyIdentifierMap mKeyMap;
       unsigned int mModifiersState;
+
+      bool mIsSetUp;
 
   };
 }

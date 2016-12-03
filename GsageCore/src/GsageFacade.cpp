@@ -30,6 +30,10 @@ THE SOFTWARE.
 #include "GameDataManager.h"
 #include "IPlugin.h"
 #include "lua/LuaInterface.h"
+
+#include "components/ScriptComponent.h"
+#include "systems/LuaScriptSystem.h"
+#include "systems/CombatSystem.h"
 #include "EngineEvent.h"
 
 
@@ -49,23 +53,23 @@ namespace Gsage {
       mLuaState(0),
       mStartupScriptRun(false),
       mInputManager(&mEngine),
+      mSystemManager(&mEngine),
       mPreviousUpdateTime(std::chrono::high_resolution_clock::now())
   {
     el::Configurations defaultConf;
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
     defaultConf.setToDefault();
-    // Values are always std::string
-    defaultConf.set(el::Level::Info,
-        el::ConfigurationType::Format, "%datetime %level %msg");
-    // default logger uses default configurations
-    el::Loggers::reconfigureLogger("default", defaultConf);
-    LOG(INFO) << "Log using default file";
     // To set GLOBAL configurations you may use
     defaultConf.setGlobally(
         el::ConfigurationType::Format, "%datetime %level %msg [%fbase:%line]");
     el::Loggers::reconfigureLogger("default", defaultConf);
     mLuaInterface = new LuaInterface(this);
+
+    // Register core system factories
+    registerSystemFactory<CombatSystem>("dynamicStats");
+    mSystemManager.registerFactory("lua", new LuaScriptSystemFactory(mLuaInterface));
   }
+
 
   GsageFacade::~GsageFacade()
   {
@@ -73,15 +77,18 @@ namespace Gsage {
       return;
 
     mStopped = true;
-    for(auto& pair : mLibraries)
+    mEngine.removeSystems();
+
+    for (PluginOrder::reverse_iterator rit = mPluginOrder.rbegin(); rit != mPluginOrder.rend(); ++rit)
     {
-      UNINSTALL_PLUGIN uninstall = reinterpret_cast<UNINSTALL_PLUGIN>(pair.second->getSymbol("dllStopPlugin"));
+      DynLib* l = mLibraries[*rit];
+
+      UNINSTALL_PLUGIN uninstall = reinterpret_cast<UNINSTALL_PLUGIN>(l->getSymbol("dllStopPlugin"));
       uninstall(this);
-      pair.second->unload();
-      delete pair.second;
+      l->unload();
+      delete l;
     }
 
-    mEngine.removeSystems();
     mLibraries.clear();
 
     if(mGameDataManager)
@@ -99,17 +106,25 @@ namespace Gsage {
     assert(mStarted == false);
     mStarted = true;
 
-    std::string configPath = resourcePath + "/" + rsageConfigPath;
+    std::string configPath = resourcePath + GSAGE_PATH_SEPARATOR + rsageConfigPath;
 
     Dictionary environment;
     environment.put("workdir", resourcePath);
     FileLoader::init(configEncoding, Dictionary());
 
-    LOG(INFO) << "Starting game, config:\n\t" << configPath;
     if(!FileLoader::getSingletonPtr()->load(configPath, Dictionary(), mConfig))
     {
       return false;
     }
+
+    auto logConfig = mConfig.get<std::string>("logConfig");
+    if (logConfig.second) {
+      el::Configurations conf(resourcePath + GSAGE_PATH_SEPARATOR + logConfig.first);
+      conf.setToDefault();
+      el::Loggers::reconfigureLogger("default", conf);
+    }
+
+    LOG(INFO) << "Starting game, config:\n\t" << configPath;
 
     if (configOverride != 0)
     {
@@ -128,11 +143,8 @@ namespace Gsage {
 
     mGameDataManager = new GameDataManager(&mEngine, mConfig);
     mLuaInterface->setResourcePath(resourcePath);
-    mLuaInterface->initialize();
-
-    for(auto pair : mUIManagers) {
-      pair.second->initialize(&mEngine, mLuaInterface->getState());
-    }
+    if(mConfig.get<bool>("startLuaInterface", true))
+      mLuaInterface->initialize();
 
     if(mConfig.count(PLUGINS_SECTION) != 0)
     {
@@ -140,6 +152,26 @@ namespace Gsage {
       {
         loadPlugin(pair.second.as<std::string>());
       }
+    }
+
+    auto systems = mConfig.get<Dictionary>("systems");
+    if(systems.second) {
+      for(auto pair : systems.first) {
+        auto id = pair.second.getValue<std::string>();
+        if(!id.second) {
+          LOG(WARNING) << "Empty system factory id";
+          continue;
+        }
+
+        if(!mSystemManager.create(id.first)) {
+          LOG(ERROR) << "Failed to create system of type \"" << id.first << "\"";
+          continue;
+        }
+      }
+    }
+
+    for(auto pair : mUIManagers) {
+      pair.second->initialize(&mEngine, mLuaInterface->getState());
     }
 
     auto startupScript = mConfig.get<std::string>("startupScript");
@@ -172,8 +204,6 @@ namespace Gsage {
 
   bool GsageFacade::update()
   {
-    if(mStopped)
-      return false;
 
     if(!mStartupScriptRun)
     {
@@ -277,6 +307,7 @@ namespace Gsage {
     {
       lib = mLibraries[path];
     }
+    mPluginOrder.push_back(path);
     INSTALL_PLUGIN install = reinterpret_cast<INSTALL_PLUGIN>(lib->getSymbol("dllStartPlugin"));
     return install(this);
   }
@@ -288,20 +319,24 @@ namespace Gsage {
       LOG(ERROR) << "Failed to unload plugin \"" << path << "\": no such plugin installed";
       return false;
     }
+
     UNINSTALL_PLUGIN uninstall = reinterpret_cast<UNINSTALL_PLUGIN>(mLibraries[path]->getSymbol("dllStopPlugin"));
     bool res = uninstall(this);
-    mLibraries[path]->unload();
+
+    mPluginOrder.remove(path);
     mLibraries.erase(path);
     return res;
   }
 
   bool GsageFacade::installPlugin(IPlugin* plugin)
   {
-    plugin->initialize(&mEngine, mLuaInterface);
+    plugin->initialize(this, mLuaInterface);
     if(!plugin->install())
     {
       LOG(ERROR) << "Failed to install plugin " << plugin->getName();
       return false;
+    } else {
+      LOG(INFO) << "Installed plugin " << plugin->getName();
     }
 
     mInstalledPlugins[plugin->getName()] = plugin;
@@ -310,6 +345,7 @@ namespace Gsage {
 
   bool GsageFacade::uninstallPlugin(IPlugin* plugin)
   {
+    LOG(INFO) << "Uninstalled plugin " << plugin->getName();
     std::string name = plugin->getName();
     if(mInstalledPlugins.count(name) == 0)
       return false;
@@ -322,5 +358,10 @@ namespace Gsage {
   void GsageFacade::addUpdateListener(UpdateListener* listener)
   {
     mUpdateListeners.push_back(listener);
+  }
+
+  void GsageFacade::removeInputFactory(const std::string& id)
+  {
+    mInputManager.removeFactory(id);
   }
 }

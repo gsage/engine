@@ -1,0 +1,35 @@
+# Operating system (build VM template)
+os: Visual Studio 2015
+
+# clone directory
+clone_folder: c:\projects\gsage
+
+platform: x64
+configuration: RelWithDebInfo
+
+install:
+  # by default, all script lines are interpreted as batch
+
+build:
+  project: INSTALL.vcxproj      # path to Visual Studio solution or project
+
+# scripts to run before build
+before_build:
+  - echo Running cmake...
+  - mkdir c:\projects\gsage\build
+  - cd c:\projects\gsage\build
+  - cmake .. -G "Visual Studio 14 2015 Win64" -DCMAKE_INSTALL_PREFIX=%P%
+
+# scripts to run after build
+test_script:
+  - c:\projects\gsage\build\bin\unit-tests.exe
+
+# scripts to run after build
+after_build:
+  - cd c:\projects\gsage\build
+  - 7z a c:\projects\gsage.zip * -tzip
+  - cd c:\projects\gsage
+
+artifacts:
+  - path: gsage.zip
+    name: gsage.zip

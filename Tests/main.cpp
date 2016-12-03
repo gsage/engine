@@ -2,8 +2,6 @@
 #include <gtest/gtest.h>
 #include "Logger.h"
 
-INITIALIZE_EASYLOGGINGPP
-
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"

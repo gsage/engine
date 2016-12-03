@@ -28,18 +28,9 @@ THE SOFTWARE.
 */
 
 #include "IPlugin.h"
-#if GSAGE_PLATFORM == GSAGE_WIN32
-#ifdef PLUGIN_EXPORT
-#define PluginExport __declspec (dllexport)
-#else
-#define PluginExport __declspec (dllimport)
-#endif
-#else
-#define PluginExport
-#endif
-
 
 namespace Gsage {
+  class GsageFacade;
   class OgrePlugin : public IPlugin
   {
     public:

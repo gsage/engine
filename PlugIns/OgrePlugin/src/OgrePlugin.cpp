@@ -49,7 +49,7 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const std::string PLUGIN_NAME = "OgreBundle1.9";
+  const std::string PLUGIN_NAME = "OgreBundle";
 
   OgrePlugin::OgrePlugin()
   {
@@ -202,15 +202,27 @@ namespace Gsage {
 
   bool OgrePlugin::installImpl()
   {
-    mEngine->addSystem<OgreRenderSystem>();
-    mEngine->addSystem<RecastMovementSystem>();
+    mFacade->registerSystemFactory<OgreRenderSystem>("ogre");
+    mFacade->registerSystemFactory<RecastMovementSystem>("recast");
     return true;
   }
 
   void OgrePlugin::uninstallImpl()
   {
-    mEngine->removeSystem("render");
-    mEngine->removeSystem("movement");
+    if (mLuaInterface && mLuaInterface->getState())
+    {
+      sol::state_view lua = *mLuaInterface->getSolState();
+
+      lua["Engine"]["render"] = sol::nil;
+      lua["Engine"]["movement"] = sol::nil;
+
+      lua["EntityProxy"]["render"] = sol::nil;
+      lua["EntityProxy"]["movement"] = sol::nil;
+    }
+
+    mFacade->getEngine()->removeSystem("render");
+    mFacade->getEngine()->removeSystem("movement");
+
   }
 
   OgrePlugin* ogrePlugin = NULL;

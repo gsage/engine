@@ -24,7 +24,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "input/OisInputListener.h"
+#include "OisInputListener.h"
 #include "Logger.h"
 #ifdef OIS_APPLE_PLATFORM
 #include <Carbon/Carbon.h>

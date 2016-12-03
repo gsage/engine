@@ -65,6 +65,17 @@ namespace Gsage {
     mFactories.clear();
   }
 
+  void InputManager::removeFactory(const std::string& id)
+  {
+    if(mFactories.count(id) == 0)
+      return;
+
+    mInputHandlers.clear();
+
+    delete mFactories[id];
+    mFactories.erase(id);
+  }
+
   void InputManager::useFactory(const std::string& id)
   {
     mCurrentFactoryId = id;

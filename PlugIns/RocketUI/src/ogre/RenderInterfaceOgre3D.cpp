@@ -52,7 +52,7 @@
  *
  */
 
-#include "RenderInterfaceOgre3D.h"
+#include "ogre/RenderInterfaceOgre3D.h"
 #include <Ogre.h>
 #include "GsageDefinitions.h"
 

@@ -192,6 +192,8 @@ namespace Gsage {
 
   void QOgreRenderSystem::flush()
   {
+#if GSAGE_PLATFORM == GSAGE_APPLE
     glFlushRenderAPPLE();
+#endif
   }
 }

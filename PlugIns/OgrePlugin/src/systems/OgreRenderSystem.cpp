@@ -98,6 +98,7 @@ namespace Gsage {
     mOgreInteractionManager(0),
     mWindowEventListener(0)
   {
+    mSystemInfo.put("type", "ogre");
     mLogManager = new Ogre::LogManager();
   }
 
@@ -108,6 +109,11 @@ namespace Gsage {
     delete mCameraFactory;
     if(mFontManager != 0)
       delete mFontManager;
+
+    // TODO: this probably can lead to some unexpected behavior in the future
+    // if the system will be rendered into an external window
+    if(mWindow != 0)
+      mWindowEventListener->windowClosed(mWindow);
     if(mRoot != 0)
       delete mRoot;
     if(mManualMovableTextParticleFactory != 0)

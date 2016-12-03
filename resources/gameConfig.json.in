@@ -6,11 +6,19 @@
     "levelsFolder": "levels",
     "savesFolder": "templates"
   },
+
+  "logConfig": "log.cfg",
   "startupScript": "scripts/start.lua",
   "inputHandler": "ois",
+  "systems": [
+    "ogre", "recast", "dynamicStats", "lua"
+  ],
 
   "plugins":
   [
+    "@PLUGINS_DIRECTORY@/OisInput",
+    "@PLUGINS_DIRECTORY@/RocketUI",
+    "@PLUGINS_DIRECTORY@/OgrePlugin"
   ],
 
   "render":

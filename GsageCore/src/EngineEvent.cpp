@@ -25,12 +25,17 @@ THE SOFTWARE.
 */
 
 #include "EngineEvent.h"
+#include "EngineSystem.h"
 
 namespace Gsage {
 
   const std::string EngineEvent::LUA_STATE_CHANGE = "luaStateChange";
 
   const std::string EngineEvent::HALT = "halt";
+
+  const std::string SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
+
+  const std::string SystemChangeEvent::SYSTEM_REMOVED = "systemRemoved";
 
   const std::string SelectEvent::OBJECT_SELECTED = "objectSelected";
 
@@ -51,7 +56,18 @@ namespace Gsage {
   EngineEvent::~EngineEvent()
   {
   }
-  
+
+  SystemChangeEvent::SystemChangeEvent(const std::string& type, const std::string& systemId, EngineSystem* system)
+    : Event(type)
+    , mSystemId(systemId)
+    , mSystem(system)
+  {
+  }
+
+  SystemChangeEvent::~SystemChangeEvent()
+  {
+  }
+
   WindowEvent::WindowEvent(const std::string& type, size_t pHandle, unsigned int pWidth, unsigned int pHeight)
     : Event(type)
     , handle(pHandle)

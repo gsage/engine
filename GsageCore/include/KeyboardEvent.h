@@ -27,7 +27,6 @@ THE SOFTWARE.
 #ifndef _KeyboardEvent_H_
 #define _KeyboardEvent_H_
 
-#include <OISKeyboard.h>
 #include "EventDispatcher.h"
 
 namespace Gsage {

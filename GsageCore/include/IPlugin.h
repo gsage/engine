@@ -27,13 +27,26 @@ THE SOFTWARE.
 #ifndef _I_PLUGIN_
 #define _I_PLUGIN_
 
-#include "Engine.h"
 #include "EngineEvent.h"
 #include "lua/LuaInterface.h"
+#include "Logger.h"
+#include "GsageFacade.h"
+
+#if GSAGE_PLATFORM == GSAGE_WIN32
+#ifdef PLUGIN_EXPORT
+#define PluginExport __declspec (dllexport)
+#else
+#define PluginExport __declspec (dllimport)
+#endif
+#else
+#define PluginExport
+#endif
+
 
 namespace Gsage {
 
   class LuaInterface;
+  class GsageFacade;
 
   /**
    * Engine plugin interface
@@ -42,7 +55,7 @@ namespace Gsage {
   {
 
     public:
-      IPlugin() : mEngine(0), mLuaInterface(0) {};
+      IPlugin() : mFacade(0), mLuaInterface(0) {};
       virtual ~IPlugin() {};
 
       /**
@@ -53,13 +66,26 @@ namespace Gsage {
        * Install plugin into the engine
        * @param engine Engine instance
        */
-      virtual void initialize(Engine* engine, LuaInterface* luaInterface = 0) { mEngine = engine; mLuaInterface = luaInterface; }
+      virtual void initialize(GsageFacade* facade, LuaInterface* luaInterface = 0) { mFacade = facade; mLuaInterface = luaInterface; }
 
       /**
        * Initialize plugin
        */
       virtual bool install()
       {
+        el::Configurations defaultConf;
+        el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
+        defaultConf.setToDefault();
+        std::stringstream ss;
+#if GSAGE_PLATFORM == GSAGE_APPLE
+        ss << "%datetime %level [" << getName() << "] %msg [%fbase:%line]";
+#else
+        ss << "%datetime %level %msg [%fbase:%line]";
+#endif
+        // To set GLOBAL configurations you may use
+        defaultConf.setGlobally(
+            el::ConfigurationType::Format, ss.str());
+        el::Loggers::reconfigureLogger("default", defaultConf);
         if(!installImpl()) {
           return false;
         }
@@ -68,7 +94,7 @@ namespace Gsage {
           setupLuaBindings();
         }
 
-        addEventListener(mEngine, EngineEvent::LUA_STATE_CHANGE, &IPlugin::handleLuaStateUpdate);
+        addEventListener(mFacade->getEngine(), EngineEvent::LUA_STATE_CHANGE, &IPlugin::handleLuaStateUpdate);
         return true;
       }
 
@@ -82,7 +108,7 @@ namespace Gsage {
        */
       virtual void uninstall()
       {
-        removeEventListener(mEngine, EngineEvent::LUA_STATE_CHANGE, &IPlugin::handleLuaStateUpdate);
+        removeEventListener(mFacade->getEngine(), EngineEvent::LUA_STATE_CHANGE, &IPlugin::handleLuaStateUpdate);
         uninstallImpl();
       }
 
@@ -100,7 +126,7 @@ namespace Gsage {
         setupLuaBindings();
         return true;
       }
-      Engine* mEngine;
+      GsageFacade* mFacade;
       LuaInterface* mLuaInterface;
   };
 }

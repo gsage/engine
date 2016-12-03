@@ -78,3 +78,8 @@ void EngineSystem::setEnabled(bool value)
   mEnabled = value;
   mConfig.put("enabled", value);
 }
+
+const Dictionary& EngineSystem::getSystemInfo() const
+{
+  return mSystemInfo;
+}

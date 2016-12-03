@@ -1,141 +1,58 @@
-Graphics system agnostic game engine
+Graphics System Agnostic Game Engine
 ====================================
 
 [![Documentation Status](https://readthedocs.org/projects/engine/badge/?version=latest)](https://engine.readthedocs.io/en/latest/?badge=latest)
 
-The main idea of this engine is to be a core for a game, which brings together render, sound, physics engines and allows to script everything in lua.
-This engine is based on [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture. 
+# The Purpose
 
-Each entity defined in the engine is combined from 1 to N components, for example:
-```
-{
-  "id": "%name%",
-  "flags": ["dynamic"],
-  "render":
-  {
-    "root":
-    {
-      "name": "%name%",
-      "position": "-100,0,10",
-      "scale":"0.07,0.07,0.07",
-      "rotation":"1,0,0.5,0",
-      "orientationVector": "0,0,-1",
-      "children":
-      [
-        {
-          "type": "model",
-          "query": "dynamic",
-          "name": "%name%",
-          "mesh": "model.mesh",
-          "castShadows": true
-        }
-      ]
-    }
-  },
-  "movement":
-  {
-    "speed": 4,
-    "moveAnimation": "walk",
-    "animSpeedRatio": 0.3
-  },
-}
-```
-It means that entity has movement component, which is managed by installed movement system and also has render component which means that it is displayed on the scene.
+This project provides a flexible game engine core, which can be easily
+extended by any plugins.
 
-During the game loop, engine iterates all installed systems and calls update for each.
-Each systems updates all it's component on each game loop.
+For example:
 
-# Linux build instructions
+* use any UI library you like by writing a plugin, based
+  on UIManager interface.
+* [add any type of system](http://engine.readthedocs.io/en/latest/tutorials/advanced/2_custom_systems.html)
+  to the engine, customize rendering, add physics.
 
-#### Getting ogre package
+Along with plugin architecture, this engine provides a set of convenient
+cpp classes, which can simplify new plugins creation.
 
-##### install mercurial:
-```bash
-  sudo apt-get install mercurial
-```
-##### download ogre sources:
-```bash
-  hg clone https://bitbucket.org/sinbad/ogre
-  cd ogre
-  hg update v1-9
-```
-##### install ogre dependencies:
-```bash
-  sudo apt-get install libfreetype6-dev libboost-date-time-dev \
-  libboost-thread-dev nvidia-cg-toolkit libfreeimage-dev \
-  zlib1g-dev libzzip-dev libois-dev libcppunit-dev doxygen \
-  libxt-dev libxaw7-dev libxxf86vm-dev libxrandr-dev libglu-dev \
-  libboost-dev cmake libx11-dev g++
-```
+For example for [serialization](http://engine.readthedocs.io/en/latest/tutorials/advanced/6_serializable.html).
 
-##### Building ogre
+This engine is based on [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture.
+It operates [entities](http://engine.readthedocs.io/en/latest/tutorials/basic/5_entities_format.html) which can consist of any amount of components.
 
-```bash
-  mkdir build
-  cd build
-  cmake ../
-  make -j4
-  sudo make install
-```
+You can read more documentation on [http://engine.readthedocs.io/](http://engine.readthedocs.io/).
 
-#### Getting libRocket package
+This engine supports three OS systems at the moment:
 
-##### Downloading sources:
-```bash
-  git clone https://github.com/libRocket/libRocket.git
-  cd libRocket
-```
+* [Linux Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/linux.html)
+* [OSX Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/mac.html)
+* [Windows Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/windows.html)
 
-##### Building:
-```bash
-  cd Build
-  cmake . -DBUILD_LUA_BINDINGS=1
-  make -j4
-  sudo make install
-```
+# Minimal Build Requirements
 
-#### Building engine
+* GCC 4.9 + on linux
+* Clang 3.5+
+* Visual Studio 2015 Community (Visual C++ 14.0)+
+* Cmake 3.1+
 
-##### Dependencies:
-```bash
-  sudo apt-get install libluabind-dev libois-dev libluajit-5.1-dev
-```
-##### Building:
-```bash
-  mkdir build
-  cd build
-  cmake ../
-  make -j4
-```
+# Dependencies
 
-If you want to build editor, you should install Qt5 and define
-`CMAKE_PREFIX_PATH`
-variable in the PATH to the Qt cmake modules
+### Required
 
-##### It should look like this
+* [luajit](http://luajit.org/)
+* [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
+* [msgpackc](https://github.com/msgpack/msgpack-c)
 
-```bash
-  /home/<user>/Qt/<version>/gcc_64/lib/cmake
-  # for example
-  /home/artem/Qt/5.2.0/gcc_64/lib/cmake
-```
+### Optional
 
-##### Running an example
-
-```bash
-cd build/bin
-./game
-```
-
-#### Notes:
-
-- plugins.cfg has a ParticleUniverse plugin defined, you can remove it,
-  if you don't have one.
-
-#### Instructions TODO:
-- write Windows step by step instructions.
-- describe how to build and install ParticleUniverse plugin (it doesn't
-  have install step, so maybe I'll fork it and add this functional).
+* [libRocket](https://github.com/libRocket/libRocket) -- RocketUI.
+* [ogre 1.9](http://www.ogre3d.org/) -- OgreBundle1.9 plugin.
+* [Particle Universe](https://github.com/scrawl/particleuniverse) --
+  ParticleUniverse plugin.
+* OIS -- from ogre dependencies.
 
 # Contributing
 
@@ -143,7 +60,7 @@ cd build/bin
 2. Create feature branch and push it to your fork
 3. Create PR basing on your branch
 
-Note that I want you to have only one commit in your PR. So squash it if you have several commits there.
+Please make your PR have only one commit, so squash them.
 
 # LICENSE
 
@@ -151,3 +68,6 @@ This project is licensed under MIT
 
 # Plugins
 - [Audio system plugin based on SFML](https://github.com/gsage/SFMLAudioSystemPlugin)
+
+# Issue Tracker
+- [Pivotal Tracker](https://www.pivotaltracker.com/n/projects/963480)

@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <QtQuick/QQuickView>
 #include <QMutex>
 
-#include "RocketUIManager.h"
 #include "EditorFacade.h"
 #include "Dictionary.h"
 
@@ -114,7 +113,6 @@ namespace Gsage {
       bool mFacadeInitialized;
       bool mAreaChanged;
 
-      RocketUIManager mUIManager;
       ProjectManager* mProjectManager;
       EditorFacade* mFacade;
 

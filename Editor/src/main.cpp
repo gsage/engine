@@ -26,21 +26,9 @@ THE SOFTWARE.
 
 
 #include "GsageFacade.h"
-#include "RocketUIManager.h"
-#include "lua/LuaInterface.h"
 
-#include "components/ScriptComponent.h"
-#include "systems/CombatSystem.h"
-#include "systems/LuaScriptSystem.h"
-
-#include "input/OisInputListener.h"
-
-#include <Rocket/Core/Lua/Interpreter.h>
 #include <stdio.h>
 #include <thread>
-
-#include "ImguiManager.h"
-#include "imgui.h"
 
 #include "Logger.h"
 
@@ -82,22 +70,13 @@ extern "C" {
 #endif
       int retVal = 0;
       Gsage::GsageFacade facade;
-      facade.registerInputFactory<Gsage::OisInputFactory>("ois");
-
       std::string coreConfig = "gameConfig.json";
-
-      Gsage::RocketUIManager uiManager;
-      facade.addUIManager(&uiManager);
-      // add systems to the engine
-      facade.addSystem<Gsage::CombatSystem>();
 
       if(!facade.initialize(coreConfig, RESOURCES_FOLDER))
       {
         LOG(ERROR) << "Failed to initialize game engine";
         return 1;
       }
-
-      facade.addSystem<Gsage::LuaScriptSystem>()->setLuaState(facade.getLuaState());
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
       NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];

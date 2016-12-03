@@ -27,16 +27,12 @@ THE SOFTWARE.
 #ifndef _LuaInterface_H_
 #define _LuaInterface_H_
 
-extern "C" {
-  #include "lua.h"
-  #include "lauxlib.h"
-  #include "lualib.h"
-}
-
 #include "EventSubscriber.h"
 #include "GsageDefinitions.h"
 #include "Dictionary.h"
 #include "Engine.h"
+
+struct lua_State;
 
 namespace sol
 {

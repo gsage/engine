@@ -1,3 +1,6 @@
+#ifndef _RocketOgreWrapper_H_
+#define _RocketOgreWrapper_H_
+
 /*
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
@@ -24,32 +27,40 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "input/OisKeyboardEvent.h"
+#include <Rocket/Core/Core.h>
+#include <Rocket/Controls.h>
+#include <Rocket/Core/RenderInterface.h>
+#include <Rocket/Core/SystemInterface.h>
+
+#include "EventSubscriber.h"
+#include "RenderEvent.h"
+#include "RocketUIManager.h"
 
 namespace Gsage {
-
-  const std::string OisKeyboardEvent::KEY_DOWN = "keyDown";
-  const std::string OisKeyboardEvent::KEY_UP = "keyUp";
-
-  OisKeyboardEvent::OisKeyboardEvent(const std::string& type, const OIS::KeyCode& code, const unsigned int t, const unsigned int modState)
-    : Event(type)
-    , key(code)
-    , text(t)
-    , modifierState(modState)
+  class Engine;
+  class RocketOgreWrapper : public EventSubscriber<RocketOgreWrapper>, public RenderSystemWrapper
   {
-  }
+    public:
+      RocketOgreWrapper(Engine* engine);
+      virtual ~RocketOgreWrapper();
 
-  OisKeyboardEvent::~OisKeyboardEvent()
-  {
-  }
+      /**
+       * Set up rocket ogre wrapper
+       *
+       * @param width window width
+       * @param height window height
+       */
+       void setUp(unsigned int width, unsigned int height);
 
-  bool OisKeyboardEvent::isModifierDown(const OIS::Keyboard::Modifier& modifier)
-  {
-    return (modifierState & modifier) == modifier;
-  }
+    private:
+      bool render(EventDispatcher* sender, const Event& event);
+      void configureRenderSystem(RenderEvent& event);
 
-  unsigned int OisKeyboardEvent::getModifiersState() const
-  {
-    return modifierState;
-  }
+      Rocket::Core::RenderInterface* mRenderInterface;
+      Rocket::Core::SystemInterface* mSystemInterface;
+
+      Engine* mEngine;
+  };
 }
+
+#endif

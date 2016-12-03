@@ -68,14 +68,14 @@ if(OGRE_FOUND)
   ogre_find_plugin(Plugin_ParticleUniverse ParticleUniverseSystemManager.h)
 endif(OGRE_FOUND)
 
-find_package(OIS REQUIRED)
 find_package(LuaJIT REQUIRED)
-find_package(LibRocket REQUIRED)
 find_package(Jsoncpp REQUIRED)
 find_package(Msgpack REQUIRED)
 
 find_package(Qt5 COMPONENTS Quick Core QUIET)
 
+find_package(LibRocket QUIET)
+find_package(OIS QUIET)
 find_package(PythonLibs QUIET)
 find_package(PYBIND11 QUIET)
 

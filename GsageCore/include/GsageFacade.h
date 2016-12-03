@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <atomic>
 #include <chrono>
+#include <list>
 #include "ObjectPool.h"
 #include "DynLib.h"
 
@@ -37,6 +38,7 @@ THE SOFTWARE.
 #include "EventSubscriber.h"
 #include "FileLoader.h"
 #include "input/InputFactory.h"
+#include "systems/SystemManager.h"
 
 // forward declarations ------
 
@@ -75,7 +77,7 @@ namespace Gsage
        */
       virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, Dictionary* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
       /**
-       * Register new system in the engine
+       * Add new system in the engine
        */
       template<typename T>
       T* addSystem()
@@ -83,12 +85,22 @@ namespace Gsage
         return mEngine.addSystem<T>();
       }
       /**
-       * Register new system in the engine
+       * Add new system in the engine
        *
        * @param id System id
        * @param system System pointer
        */
       void addSystem(const std::string& id, EngineSystem* system);
+
+      /**
+       * @copydoc Gsage::System::registerSystem
+       */
+      template<typename T>
+      bool registerSystemFactory(const std::string& id)
+      {
+        return mSystemManager.registerSystem<T>(id);
+      }
+
       /**
        * Updates engine and all it's systems
        */
@@ -201,6 +213,12 @@ namespace Gsage
         mInputManager.registerFactory<T>(id);
       }
 
+      /**
+       * Remove input factory
+       *
+       * @param id Unique id of the factory
+       */
+      void removeInputFactory(const std::string& id);
     protected:
       bool onEngineHalt(EventDispatcher* sender, const Event& event);
 
@@ -215,12 +233,17 @@ namespace Gsage
 
       Engine mEngine;
       InputManager mInputManager;
+      SystemManager mSystemManager;
       GameDataManager* mGameDataManager;
+
       LuaInterface* mLuaInterface;
       lua_State* mLuaState;
 
       typedef std::map<std::string, DynLib*> Libraries;
       Libraries mLibraries;
+
+      typedef std::list<std::string> PluginOrder;
+      PluginOrder mPluginOrder;
 
       typedef std::map<std::string, IPlugin*> Plugins;
       Plugins mInstalledPlugins;

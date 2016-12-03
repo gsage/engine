@@ -119,6 +119,14 @@ namespace Gsage {
         }
         mFactories[id] = new T();
       }
+
+      /**
+       * Remove factory by id. It will also remove all input listeners
+       *
+       * @param id String id of factory
+       */
+      void removeFactory(const std::string& id);
+
       /**
        * Update all handlers
        *
