@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "FileLoader.h"
+#include "TestDefinitions.h"
 
 using namespace Gsage;
 
@@ -9,8 +10,8 @@ TEST(FileLoader, FileLoaderLoadAndDump)
   environment.put("envVariable", 123);
 
   std::map<FileLoader::Encoding, std::string> cases;
-  cases[FileLoader::Json] = "resources/templated.json";
-  cases[FileLoader::Msgpack] = "resources/templated.msgpack";
+  cases[FileLoader::Json] = std::string(TEST_RESOURCES) + GSAGE_PATH_SEPARATOR + "templated.json";
+  cases[FileLoader::Msgpack] = std::string(TEST_RESOURCES) + GSAGE_PATH_SEPARATOR + "templated.msgpack";
 
   for(auto p : cases)
   {

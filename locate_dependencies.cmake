@@ -79,10 +79,6 @@ find_package(OIS QUIET)
 find_package(PythonLibs QUIET)
 find_package(PYBIND11 QUIET)
 
-if(NOT OIS_FOUND)
-  message(SEND_ERROR "Failed to find OIS.")
-endif()
-
 # Find Boost
 if (NOT OGRE_BUILD_PLATFORM_IPHONE)
   if (WIN32 OR APPLE)

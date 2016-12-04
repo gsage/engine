@@ -1,28 +1,56 @@
 language: cpp
-dist: trusty
-sudo: required
-cache:
-env: COMPILER=g++-5
-compiler:
-  - gcc
-addons:
-  apt:
-    sources:
-    # add PPAs with more up-to-date toolchains
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.6
-    packages:
-        # install toolchains
-        - gcc-5
-        - g++-5
-        - clang-3.6
-install:
+matrix:
+  include:
+    - compiler: gcc
+      dist: trusty
+      sudo: required
+      env:
+        - UNIT_TESTS="cd ./bin && ./unit-tests"
+      addons:
+        apt:
+          sources:
+            # add PPAs with more up-to-date toolchains
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.6
+          packages:
+            # install toolchains
+            - gcc-5
+            - g++-5
+            - cmake
+            - clang-3.6
+            # gsage deps
+            - libfreetype6-dev
+            - libluajit-5.1-dev
+            - libois-dev
+            - libjsoncpp-dev
+            # vendor deps
+            - libfreetype6-dev
+            - libboost-date-time-dev
+            - libboost-thread-dev
+            - nvidia-cg-toolkit
+            - libfreeimage-dev
+            - zlib1g-dev
+            - libzzip-dev
+            - libcppunit-dev
+            - libxt-dev
+            - libxaw7-dev
+            - libxxf86vm-dev
+            - libxrandr-dev
+            - libglu-dev
+            - libois-dev
+    - compiler: clang
+      os: osx
+      osx_image: xcode7.3
+      env:
+        - UNIT_TESTS="./bin/unit-tests.app/Contents/MacOS/unit-tests"
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install jsoncpp luajit --universal ; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
-  - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.6" CC="clang-3.6"; fi
-  - sudo apt-get update -qq
-  - |
-    sudo apt-get install libfreetype6-dev libboost-date-time-dev libois-dev libluajit-5.1-dev libboost-thread-dev nvidia-cg-toolkit libfreeimage-dev zlib1g-dev libzzip-dev libcppunit-dev doxygen libxt-dev libxaw7-dev libxxf86vm-dev libxrandr-dev libglu-dev libboost-dev cmake libx11-dev g++ libjsoncpp-dev
+
+install:
   - git clone https://github.com/msgpack/msgpack-c.git
   - cd msgpack-c && cmake . && make && sudo make install && cd ..
 script:
-  - mkdir build && cd build && cmake .. && cmake --build . && cd bin && ./unit-tests --gtest_output=xml:TestResults.xml
+  - mkdir build && cd build && cmake .. && cmake --build . && $UNIT_TESTS --gtest_output=xml:TestResults.xml
