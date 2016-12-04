@@ -1,7 +1,7 @@
 Graphics System Agnostic Game Engine
 ====================================
 
-[![Documentation Status](https://readthedocs.org/projects/engine/badge/?version=latest)](https://engine.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/engine/badge/?version=latest)](https://engine.readthedocs.io/en/latest/?badge=latest) ![Build](https://travis-ci.org/gsage/engine.svg?branch=master)
 
 # The Purpose
 
