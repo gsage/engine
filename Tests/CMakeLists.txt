@@ -8,6 +8,7 @@ set(TEST_DEPENDENCIES
 )
 
 include_directories(
+  include
   ${gsage_SOURCE_DIR}/GsageCore/include
   ${gsage_SOURCE_DIR}/googletest/googletest/include
 
@@ -57,10 +58,11 @@ endif(WIN32 AND NOT MINGW)
 # symlink resources for mac and linux
 if(MINGW OR UNIX)
   if(APPLE)
-    set(TEST_RESOURCES ${APP_CONTENTS}/MacOS/resources)
+    set(TEST_RESOURCES ${APP_CONTENTS}/testResources)
   else(APPLE)
     set(TEST_RESOURCES ${BINARY_OUTPUT_DIR}/resources)
   endif(APPLE)
+
 
   add_custom_command(TARGET ${APP_NAME} POST_BUILD
     COMMAND [ -L ${TEST_RESOURCES} ] || ln -s ${gsage_SOURCE_DIR}/Tests/resources ${TEST_RESOURCES}

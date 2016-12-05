@@ -4,6 +4,7 @@
 #include "Component.h"
 #include "ComponentStorage.h"
 #include "Entity.h"
+#include "TestDefinitions.h"
 
 using namespace Gsage;
 
