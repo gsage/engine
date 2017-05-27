@@ -53,6 +53,7 @@ macro(configure)
   if(UNIX)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_FLAGS "-fPIC -O0 ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
   endif(UNIX)
 endmacro()
 
