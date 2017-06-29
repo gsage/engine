@@ -40,7 +40,7 @@ namespace Gsage {
     // cleanup resources here
   }
 
-  bool ResourceManager::load(const Dictionary& resources)
+  bool ResourceManager::load(const DataProxy& resources)
   {
     Ogre::ResourceGroupManager& orgm = Ogre::ResourceGroupManager::getSingleton();
     std::string type;
@@ -95,11 +95,15 @@ namespace Gsage {
     }
   }
 
-  void ResourceManager::unload(const Dictionary& resources)
+  void ResourceManager::unload(const DataProxy& resources)
   {
     for(auto& pair : resources)
     {
-      unload(pair.first);
+      try {
+        unload(pair.first);
+      } catch(Ogre::Exception& e) {
+        LOG(WARNING) << "Failed to unload resource " << pair.first << ", reason: " << e.what();
+      }
     }
   }
 }

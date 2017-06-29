@@ -1,10 +1,5 @@
 macro(test_plugin plugin_name)
 
-include_directories(
-  include
-  ${gsage_SOURCE_DIR}/GsageCore/include
-)
-
 set(LIBS
   GsageCore)
 

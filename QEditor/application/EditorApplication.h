@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <QMutex>
 
 #include "EditorFacade.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 
 
 namespace Gsage {
@@ -105,8 +105,8 @@ namespace Gsage {
       std::string mViewItemId;
       std::string mCurrentArea;
 
-      Dictionary mConfig;
-      Dictionary mConfigOverride;
+      DataProxy mConfig;
+      DataProxy mConfigOverride;
 
       bool mSystemsInitialized;
       bool mPaused;

@@ -32,7 +32,7 @@ THE SOFTWARE.
 
 #include "Component.h"
 #include "GsageDefinitions.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 
 namespace Gsage
 {
@@ -50,20 +50,20 @@ namespace Gsage
       /**
        * Configure the system. This method can be called several times
        *
-       * @param config Dictionary system configuration.
+       * @param config DataProxy system configuration.
        */
-      virtual bool configure(const Dictionary& config);
+      virtual bool configure(const DataProxy& config);
       /**
        * Get configuration of the system.
        */
-      virtual const Dictionary& getConfig();
+      virtual const DataProxy& getConfig();
       /**
        * Initialization of the system should be done here
        * This method is called only once by the Engine itself.
        *
        * @param settings Initial settings of the system
        */
-      virtual bool initialize(const Dictionary& settings);
+      virtual bool initialize(const DataProxy& settings);
 
       /**
        * Updates system
@@ -74,7 +74,7 @@ namespace Gsage
        * Create component from the data object
        * @param data Component data description
        */
-      virtual EntityComponent* createComponent(const Dictionary& data, Entity* owner) = 0;
+      virtual EntityComponent* createComponent(const DataProxy& data, Entity* owner) = 0;
       /**
        * Remove component from engine system
        * @param component Pointer to the component for removal
@@ -112,7 +112,7 @@ namespace Gsage
        * Get detailed type of the system.
        * For example to detect if the render system is ogre.
        */
-      const Dictionary& getSystemInfo() const;
+      const DataProxy& getSystemInfo() const;
     protected:
 
       /**
@@ -122,11 +122,11 @@ namespace Gsage
 
       Engine* mEngine;
       bool mReady;
-      Dictionary mConfig;
+      DataProxy mConfig;
       bool mConfigDirty;
 
       bool mEnabled;
-      Dictionary mSystemInfo;
+      DataProxy mSystemInfo;
   };
 }
 

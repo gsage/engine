@@ -33,11 +33,12 @@ THE SOFTWARE.
 #include "EventDispatcher.h"
 #include "GsageDefinitions.h"
 #include "Entity.h"
+#include "EngineSystem.h"
 
 #include "ObjectPool.h"
 #include <map>
 #include <vector>
-#include "Dictionary.h"
+#include "DataProxy.h"
 
 namespace Gsage
 {
@@ -56,17 +57,17 @@ namespace Gsage
       virtual ~Engine();
       /**
        * Initializes all the systems in the order in which it were added
-       * @param configuration Dictionary with engine configuration
+       * @param configuration DataProxy with engine configuration
        * @param environment global application environment
        * @returns false if fails to set up one of them
        */
-      bool initialize(const Dictionary& configuration, const Dictionary& environment);
+      bool initialize(const DataProxy& configuration, const DataProxy& environment);
       /**
        * Configure all systems in the engine
-       * @param configuration Dictionary with system configs
+       * @param configuration DataProxy with system configs
        * @returns false if fails to configure one of the systems
        */
-      bool configureSystems(const Dictionary& config);
+      bool configureSystems(const DataProxy& config);
       /**
        * Updates each system
        * @param time Delta time
@@ -116,6 +117,11 @@ namespace Gsage
         if(!system)
           return 0;
 
+        std::string type = system->getSystemInfo().get("type", "");
+        if(!type.empty() && type != C::ID) {
+          return 0;
+        }
+
         return static_cast<C*>(system);
       }
       /**
@@ -137,7 +143,7 @@ namespace Gsage
        * Create entity from the entity data
        * @param data Deserialized data object
        */
-      Entity* createEntity(Dictionary& data);
+      Entity* createEntity(DataProxy& data);
       /**
        * Remove entity by id
        *
@@ -217,24 +223,28 @@ namespace Gsage
       /**
        * Get environment
        */
-      const Dictionary& env() const { return mEnvironment; }
+      const DataProxy& env() const { return mEnvironment; }
 
+      /**
+       * Get settings
+       */
+      const DataProxy& settings() const { return mConfiguration; }
     private:
       /**
        * Create component for entity
        *
        * @param entity Pointer to entity object
        * @param type System type to create into
-       * @param node Dictionary with configs
+       * @param node DataProxy with configs
        */
-      bool createComponent(Entity* entity, const std::string& type, const Dictionary& node);
+      bool createComponent(Entity* entity, const std::string& type, const DataProxy& node);
       /**
        * Update entity with new config
        *
        * @param entity Entity to update
-       * @param node Dictionary with new config
+       * @param node DataProxy with new config
        */
-      bool readEntityData(Entity* entity, const Dictionary& node);
+      bool readEntityData(Entity* entity, const DataProxy& node);
 
       bool mInitialized;
 
@@ -248,8 +258,8 @@ namespace Gsage
       SystemNames mSetUpOrder;
       SystemNames mManagedByEngine;
 
-      Dictionary mConfiguration;
-      Dictionary mEnvironment;
+      DataProxy mConfiguration;
+      DataProxy mEnvironment;
   };
 }
 

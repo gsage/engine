@@ -42,7 +42,7 @@ namespace Gsage {
   {
   }
 
-  OgreObject* OgreObjectManager::create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity )
+  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity )
   {
     std::string type = dict.get("type", "no_type_defined!");
     if(mObjects.count(type) == 0)
@@ -68,7 +68,7 @@ namespace Gsage {
     return object;
   }
 
-  OgreObject* OgreObjectManager::create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent)
+  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent)
   {
     if(mObjects.count(type) == 0)
     {
@@ -92,7 +92,7 @@ namespace Gsage {
     return object;
   }
 
-  OgreObject* OgreObjectManager::create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent)
+  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent)
   {
     if(dict.count("type") == 0)
     {

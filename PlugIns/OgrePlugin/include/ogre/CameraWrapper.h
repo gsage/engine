@@ -44,6 +44,18 @@ namespace Gsage {
       virtual ~CameraWrapper();
 
       /**
+       * Sets camera orientation
+       *
+       * @param orientation Ogre::Quaternion
+       */
+      void setOrientation(const Ogre::Quaternion& orientation);
+
+      /**
+       * Gets camera orientation
+       */
+      const Ogre::Quaternion& getOrientation() const;
+
+      /**
        * Activate this camera
        */
       void attach(Ogre::Viewport* viewport);
@@ -82,12 +94,19 @@ namespace Gsage {
        * Get viewport background colour
        */
       const Ogre::ColourValue& getBgColour() const;
+
+      /**
+       * Check if camera is active
+       */
+      bool isActive() const;
     private:
       std::string mTarget;
 
       Ogre::ColourValue mBgColour;
       Ogre::Viewport* mViewport;
       Ogre::RenderWindow* mWindow;
+
+      bool mIsActive;
   };
 }
 

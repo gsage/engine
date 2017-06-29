@@ -31,6 +31,7 @@ namespace Gsage {
 
   const std::string TestComponent::SYSTEM = "test";
   const std::string PLUGIN_NAME = "SystemPlugin";
+  const std::string TestSystem::ID = "testSystem";
 
   SystemPlugin::SystemPlugin()
   {
@@ -47,14 +48,14 @@ namespace Gsage {
 
   bool SystemPlugin::installImpl()
   {
-    mFacade->registerSystemFactory<TestSystem>("testSystem");
+    mFacade->registerSystemFactory<TestSystem>();
     return true;
   }
 
   void SystemPlugin::uninstallImpl()
   {
     mFacade->getEngine()->removeSystem("test");
-    mFacade->removeSystemFactory("testSystem");
+    mFacade->removeSystemFactory<TestSystem>();
   }
 
   void SystemPlugin::setupLuaBindings()

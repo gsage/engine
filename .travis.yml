@@ -6,6 +6,7 @@ matrix:
       sudo: required
       env:
         - UNIT_TESTS="cd ./bin && ./unit-tests"
+        - NCORES=$(nproc --all)
       addons:
         apt:
           sources:
@@ -43,6 +44,7 @@ matrix:
       osx_image: xcode7.3
       env:
         - UNIT_TESTS="./bin/unit-tests.app/Contents/MacOS/unit-tests"
+        - NCORES=$(sysctl -n hw.ncpu)
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
@@ -53,4 +55,4 @@ install:
   - git clone https://github.com/msgpack/msgpack-c.git
   - cd msgpack-c && cmake . && make && sudo make install && cd ..
 script:
-  - mkdir build && cd build && cmake .. && cmake --build . && $UNIT_TESTS --gtest_output=xml:TestResults.xml
+  - mkdir build && cd build && cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 && make -j $NCORES && $UNIT_TESTS --gtest_output=xml:TestResults.xml

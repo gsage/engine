@@ -48,7 +48,7 @@
       "height": 800,
       "params":
       {
-        "FSAA": 0,
+        "FSAA": 16,
         "displayFrequency": 50,
         "vsync": false
       }

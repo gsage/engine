@@ -37,12 +37,15 @@ THE SOFTWARE.
 
 namespace Gsage {
 
+  const std::string RecastMovementSystem::ID = "recast";
+
   RecastMovementSystem::RecastMovementSystem() :
     mRecast(0),
     mCache(0),
     mPosition(0,0,0),
     mAgentCounter(0)
   {
+    mSystemInfo.put("type", RecastMovementSystem::ID);
   }
 
   RecastMovementSystem::~RecastMovementSystem()
@@ -53,7 +56,7 @@ namespace Gsage {
       delete mRecast;
   }
 
-  bool RecastMovementSystem::initialize(const Dictionary& settings)
+  bool RecastMovementSystem::initialize(const DataProxy& settings)
   {
     OgreRenderSystem* renderSystem = mEngine->getSystem<OgreRenderSystem>();
     if(renderSystem == 0)
@@ -77,7 +80,7 @@ namespace Gsage {
     EngineSystem::configUpdated();
   }
 
-  bool RecastMovementSystem::fillComponentData(MovementComponent* c, const Dictionary& data)
+  bool RecastMovementSystem::fillComponentData(MovementComponent* c, const DataProxy& data)
   {
     c->mAgentId = mAgentCounter++;
     return true;

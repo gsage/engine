@@ -13,3 +13,4 @@ docs/struct/*
 docs/structlist.rst
 docs/latex
 docs/xml
+*.dumped

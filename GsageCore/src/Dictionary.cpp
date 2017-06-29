@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "Dictionary.h"
 #include "msgpack.hpp"
 #include <json/json.h>
+#include <queue>
 
 #define _LOAD_PATH_WRAP(wrapper, func) \
   bool wrapper(const std::string& path, Dictionary& value)\
@@ -126,6 +127,16 @@ namespace msgpack {
 namespace Gsage
 {
 
+  DictionaryKey Dictionary::createKey(const std::string& key) const
+  {
+    DictionaryKey k(key);
+    if(mIsArray)
+    {
+      k = DictionaryKey(std::stoi(key), key);
+    }
+    return k;
+  }
+
   template<>
   void Dictionary::put<Dictionary>(const std::string& key, const Dictionary& child)
   {
@@ -138,15 +149,16 @@ namespace Gsage
       if(i == parts.size()-1) {
         break;
       }
+      Children& c = dict->getChildren();
 
-      if(dict->mChildren.count(k) == 0) {
-        dict->mChildren[k] = Dictionary();
+      if(c.count(k) == 0) {
+        c[k] = Dictionary();
       }
 
-      dict = &mChildren[k];
+      dict = &c[k];
     }
 
-    dict->mChildren[k] = child;
+    dict->getChildren()[k] = child;
   }
 
   std::string Dictionary::get(const std::string& key, const char* def) const
@@ -181,8 +193,9 @@ namespace Gsage
     if(!mIsArray) {
       setArray(true);
     }
-    DictionaryKey k(mChildren.size(), "");
-    mChildren[k] = value;
+    Children& c = getChildren();
+    DictionaryKey k(c.size(), "");
+    c[k] = value;
   }
 
   bool Dictionary::walkPath(const std::string& key, Dictionary& dest) const
@@ -195,12 +208,12 @@ namespace Gsage
     for(i = 0; i < parts.size(); i++)
     {
       k = node.createKey(parts[i]);
-      if(node.mChildren.count(k) == 0)
+      if(node.mChildren->count(k) == 0)
       {
         return false;
       }
 
-      dest = node.mChildren.at(k);
+      dest = node.mChildren->at(k);
       node = dest;
     }
 
@@ -217,113 +230,41 @@ namespace Gsage
   template<>
   bool Dictionary::getValue<std::string>(std::string& dest) const
   {
+    // try to convert any value to string
+    /*if(!mValue.contains_type<std::string>()) {
+      return false;
+    }
+
+    try {
+      dest = static_cast<Any>(mValue).cast<std::string>();
+    } catch(anyimpl::bad_any_cast) {
+      return false;
+    }
+    return true;*/
     dest = mValue;
     return true;
   }
 
-  bool DoubleCaster::to(const std::string& src, DoubleCaster::Type& dst) const
+  std::pair<Dictionary::iterator, bool> Dictionary::insert(const Dictionary::value_type& val)
+  {
+    return getChildren().insert(val);
+  }
+
+  Dictionary::iterator Dictionary::insert(Dictionary::iterator position, const Dictionary::value_type& val)
+  {
+    return getChildren().insert(position, val);
+  }
+
+  bool DoubleCaster::to(const DoubleCaster::FromType& src, DoubleCaster::Type& dst) const
   {
     dst = std::stod(src);
     return true;
   }
 
-  const std::string DoubleCaster::from(const DoubleCaster::Type& value) const
+  const DoubleCaster::FromType DoubleCaster::from(const DoubleCaster::Type& value) const
   {
     return std::to_string(value);
   }
-
-  // -----------------------------------------------------------------------------
-
-  bool FloatCaster::to(const std::string& src, FloatCaster::Type& dst) const
-  {
-    dst = std::stof(src);
-    return true;
-  }
-
-  const std::string FloatCaster::from(const FloatCaster::Type& value) const
-  {
-    return std::to_string(value);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  bool IntCaster::to(const std::string& src, IntCaster::Type& dst) const
-  {
-    dst = std::stoi(src);
-    return true;
-  }
-
-  const std::string IntCaster::from(const IntCaster::Type& value) const
-  {
-    return std::to_string(value);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  bool UIntCaster::to(const std::string& src, UIntCaster::Type& dst) const
-  {
-    dst = static_cast<unsigned int>(std::stoul(src));
-    return true;
-  }
-
-  const std::string UIntCaster::from(const UIntCaster::Type& value) const
-  {
-    return std::to_string(value);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  bool UlongCaster::to(const std::string& src, UlongCaster::Type& dst) const
-  {
-    dst = std::stoul(src);
-    return true;
-  }
-
-  const std::string UlongCaster::from(const UlongCaster::Type& value) const
-  {
-    return std::to_string(value);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  bool BoolCaster::to(const std::string& src, BoolCaster::Type& dst) const
-  {
-    dst = src == "true";
-    return true;
-  }
-
-  const std::string BoolCaster::from(const BoolCaster::Type& value) const
-  {
-    return value ? "true" : "false";
-  }
-
-  // -----------------------------------------------------------------------------
-
-  bool StringCaster::to(const std::string& src, StringCaster::Type& dst) const
-  {
-    dst = src;
-    return true;
-  }
-
-  const std::string StringCaster::from(const StringCaster::Type& value) const
-  {
-    return value;
-  }
-
-  // -----------------------------------------------------------------------------
-
-  bool CStrCaster::to(const std::string& src, CStrCaster::Type& dst) const
-  {
-    dst = src.c_str();
-    return true;
-  }
-
-  const std::string CStrCaster::from(const CStrCaster::Type& value) const
-  {
-    return value;
-  }
-
-  // -----------------------------------------------------------------------------
 
   void fillDictionary(Json::Value value, Dictionary& dst);
   void convertType(Json::Value value, Dictionary& dst, const std::string& key = "");

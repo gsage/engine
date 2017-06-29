@@ -43,7 +43,7 @@ namespace Gsage {
       /**
        * Override default behavior for read
        */
-      bool read(const Dictionary& dict);
+      bool read(const DataProxy& dict);
 
       /**
        * Set particle system template. Note that it requires particle system recreation

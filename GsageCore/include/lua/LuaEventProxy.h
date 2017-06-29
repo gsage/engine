@@ -37,9 +37,73 @@ namespace Gsage {
   class LuaEventProxy : public EventSubscriber<LuaEventProxy>
   {
     public:
+      /**
+       * sol::protected_function wrapper
+       */
+      class GenericCallback
+      {
+        public:
+          GenericCallback(sol::protected_function func) : mFunc(func) {};
+          virtual ~GenericCallback() {};
+          /**
+           * Checks if wrapped function is valid
+           * @returns sol::protected_function valid result
+           */
+          bool valid() const{
+            return mFunc.valid();
+          }
+
+          /**
+           * Calls underlying lua callback
+           *
+           * @param event Event to process
+           * @returnds sol::protected_function_result
+           */
+          virtual sol::protected_function_result operator()(const Event& event)
+          {
+            return mFunc(std::ref(event));
+          }
+
+          operator const sol::protected_function&() const {
+            return mFunc;
+          }
+
+          friend bool operator==(GenericCallback* cb, const sol::protected_function& func) {
+            return cb->mFunc == func;
+          }
+
+          sol::protected_function& func()
+          {
+            return mFunc;
+          }
+
+        protected:
+          sol::protected_function mFunc;
+      };
+
+      /**
+       * Templated version of callback. Casts event to any specific type before calling the function.
+       */
+      template<class T>
+      class Callback : public GenericCallback
+      {
+        public:
+          Callback(sol::protected_function func) : GenericCallback(func) {}
+          virtual ~Callback() {}
+          /**
+           * Calls underlying lua callback
+           *
+           * @param event Event to process (will be cast to the particular templated event).
+           * @returnds sol::protected_function_result
+           */
+          virtual sol::protected_function_result operator()(const Event& event)
+          {
+            return mFunc(std::ref(static_cast<const T&>(event)));
+          }
+      };
 
       typedef std::pair<EventDispatcher*, const std::string> CallbackBinding;
-      typedef std::vector<sol::protected_function> Callbacks;
+      typedef std::vector<GenericCallback*> Callbacks;
       typedef std::map<CallbackBinding, Callbacks> CallbackBindings;
 
       LuaEventProxy();
@@ -53,6 +117,21 @@ namespace Gsage {
        * @returns true if the callback was added successfully
        */
       bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback);
+
+      /**
+       * @copydoc LuaEventProxy::addEventListener
+       */
+      template<class T>
+      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
+      {
+        if(callback.get_type() != sol::type::function)
+          return false;
+
+        Callbacks* cb = getCallbacks(dispatcher, eventType);
+        Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);
+        callbacks.push_back(new Callback<T>(callback.as<sol::protected_function>()));
+        return true;
+      }
 
       /**
        * Removes event listener

@@ -42,12 +42,12 @@ namespace Gsage {
     return mInstance;
   }
 
-  void FileLoader::init(FileLoader::Encoding format, const Dictionary& environment)
+  void FileLoader::init(FileLoader::Encoding format, const DataProxy& environment)
   {
     FileLoader::mInstance = new FileLoader(format, environment);
   }
 
-  FileLoader::FileLoader(FileLoader::Encoding format, const Dictionary& environment)
+  FileLoader::FileLoader(FileLoader::Encoding format, const DataProxy& environment)
     : mFormat(format)
     , mEnvironment(environment)
   {
@@ -57,9 +57,9 @@ namespace Gsage {
   {
   }
 
-  bool FileLoader::load(const std::string& path, const Dictionary& params, Dictionary& dest) const
+  bool FileLoader::load(const std::string& path, const DataProxy& params, DataProxy& dest) const
   {
-    Dictionary p = getUnionDict(mEnvironment, params);
+    DataProxy p = merge(mEnvironment, params);
     auto pair = loadFile(path);
     if (!pair.second) {
       return false;
@@ -68,34 +68,34 @@ namespace Gsage {
     if(!parse(pair.first, dest))
       return false;
 
-    unionDict(dest, p);
+    mergeInto(dest, p);
     return true;
   }
 
-  std::pair<Dictionary, bool> FileLoader::load(const std::string& path, const Dictionary& params) const
+  std::pair<DataProxy, bool> FileLoader::load(const std::string& path, const DataProxy& params) const
   {
-    Dictionary res;
+    DataProxy res;
     bool success = load(path, params, res);
     return std::make_pair(res, success);
   }
 
-  std::pair<Dictionary, bool> FileLoader::load(const std::string& path) const
+  std::pair<DataProxy, bool> FileLoader::load(const std::string& path) const
   {
-    return load(path, Dictionary());
+    return load(path, DataProxy());
   }
 
-  void FileLoader::dump(const std::string& path, const Dictionary& value) const
+  void FileLoader::dump(const std::string& path, const DataProxy& value) const
   {
-    std::ofstream stream(path);
+    DataWrapper::WrappedType type;
     switch(mFormat) {
       case Json:
-        dumpJson(stream, value);
+        type = DataWrapper::JSON_OBJECT;
         break;
       case Msgpack:
-        dumpMsgPack(stream, value);
+        type = DataWrapper::MSGPACK_OBJECT;
         break;
     }
-    stream.close();
+    Gsage::dump(value, path, type);
   }
 
   std::pair<std::string, bool> FileLoader::loadFile(const std::string& path) const
@@ -103,6 +103,9 @@ namespace Gsage {
     std::ifstream stream(path);
     std::string res;
     bool success = true;
+    if(!stream) {
+      return std::make_pair("", false);
+    }
     try
     {
       stream.seekg(0, std::ios::end);
@@ -111,10 +114,10 @@ namespace Gsage {
       res.assign((std::istreambuf_iterator<char>(stream)),
                   std::istreambuf_iterator<char>());
     }
-    catch(...)
+    catch(std::exception& e)
     {
       success = false;
-      LOG(ERROR) << "Failed to read file: " << path;
+      LOG(ERROR) << "Failed to read file: " << path << ", reason: " << e.what();
     }
 
     stream.close();
@@ -122,15 +125,20 @@ namespace Gsage {
     return std::make_pair(res, success);
   }
 
-  bool FileLoader::parse(const std::string& data, Dictionary& dest) const
+  bool FileLoader::parse(const std::string& data, DataProxy& dest) const
   {
+    bool success = false;
+    DataWrapper::WrappedType type;
+
     switch(mFormat) {
       case Json:
-        return parseJson(data, dest);
+        type = DataWrapper::JSON_OBJECT;
+        break;
       case Msgpack:
-        return parseMsgPack(data, dest);
+        type = DataWrapper::MSGPACK_OBJECT;
+        break;
     }
-    return false;
+    return loads(dest, data, type);
   }
 
 }

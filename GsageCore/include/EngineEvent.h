@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _EngineEvent_H_
 
 #include "EventDispatcher.h"
+#include "DataProxy.h"
 
 namespace Gsage {
   class EngineSystem;
@@ -47,6 +48,22 @@ namespace Gsage {
       static const std::string HALT;
       EngineEvent(const std::string& type);
       virtual ~EngineEvent();
+  };
+
+  /**
+   * Triggered when settings are changed
+   */
+  class SettingsEvent : public Event
+  {
+    public:
+      /**
+       * Settings updated
+       */
+      static const std::string UPDATE;
+
+      SettingsEvent(const std::string& type, const DataProxy& settings);
+      virtual ~SettingsEvent();
+      DataProxy settings;
   };
 
   /**

@@ -1,11 +1,7 @@
 set(LIB_NAME "RocketUI")
 
 include_directories(
-  include
-  ${gsage_SOURCE_DIR}/GsageCore/include
-
-  ${LUAJIT_INCLUDE_DIR}
-  ${LIBROCKET_INCLUDE_DIRS}
+    ${LIBROCKET_INCLUDE_DIRS}
 )
 
 set(LIBS

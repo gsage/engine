@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <OgreRoot.h>
 #include <OgreConfigFile.h>
 
-#include "Dictionary.h"
+#include "DataProxy.h"
 
 namespace Gsage {
   class ResourceManager
@@ -38,9 +38,9 @@ namespace Gsage {
       /**
        * Loads all resource groups
        *
-       * @param resources Dictionary with all required resources
+       * @param resources DataProxy with all required resources
        */
-      bool load(const Dictionary& resources);
+      bool load(const DataProxy& resources);
 
       /**
        * Unload resources
@@ -56,9 +56,9 @@ namespace Gsage {
 
       /**
        * Unload resources
-       * @param resources Resource groups Dictionary
+       * @param resources Resource groups DataProxy
        */
-      void unload(const Dictionary& resources);
+      void unload(const DataProxy& resources);
     private:
       std::string mWorkdir;
   };

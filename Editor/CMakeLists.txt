@@ -7,6 +7,8 @@ include_directories(${gsage_SOURCE_DIR}/Components/Sol2/include)
 
 include_directories(
   ${LUAJIT_INCLUDE_DIR}
+  ${JSONCPP_INCLUDE_DIR}
+  ${MSGPACK_INCLUDE_DIR}
   ${PYBIND11_INCLUDE_DIRS})
 
 FILE(GLOB sources src/*.cpp)

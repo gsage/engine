@@ -51,6 +51,8 @@ namespace Gsage
 
   bool PUSystemPlugin::installImpl()
   {
+    addEventListener(mFacade->getEngine(), SystemChangeEvent::SYSTEM_ADDED, &PUSystemPlugin::handleSystemAdded);
+
     OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
     if(!render)
     {
@@ -64,6 +66,7 @@ namespace Gsage
 
   void PUSystemPlugin::uninstallImpl()
   {
+    removeEventListener(mFacade->getEngine(), SystemChangeEvent::SYSTEM_ADDED, &PUSystemPlugin::handleSystemAdded);
     OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
     if(!render)
       return;
@@ -89,23 +92,34 @@ namespace Gsage
     }
   }
 
-  PUSystemPlugin* puSystemPlugin = NULL;
-
-  extern "C" bool PluginExport dllStartPlugin(GsageFacade* facade)
+  bool PUSystemPlugin::handleSystemAdded(const Event& event)
   {
-    if(puSystemPlugin != NULL)
+    const SystemChangeEvent& e = static_cast<const SystemChangeEvent&>(event);
+    OgreRenderSystem* renderSystem = 0;
+    if(e.mSystemId == "render" && renderSystem = mFacade->getEngine()->getSystem<OgreRenderSystem>())
     {
-      LOG(WARNING) << "Particle system factory plugin is already installed";
-      return false;
+      renderSystem->registerElement<PUSystemWrapper>();
     }
-    puSystemPlugin = new PUSystemPlugin();
-    return facade->installPlugin(puSystemPlugin);
   }
 
-  extern "C" bool PluginExport dllStopPlugin(GsageFacade* facade)
+}
+
+PUSystemPlugin* puSystemPlugin = NULL;
+
+extern "C" bool PluginExport dllStartPlugin(GsageFacade* facade)
+{
+  if(puSystemPlugin != NULL)
   {
-    bool res = facade->uninstallPlugin(puSystemPlugin);
-    delete puSystemPlugin;
-    return res;
+    LOG(WARNING) << "Particle system factory plugin is already installed";
+    return false;
   }
+  puSystemPlugin = new PUSystemPlugin();
+  return facade->installPlugin(puSystemPlugin);
+}
+
+extern "C" bool PluginExport dllStopPlugin(GsageFacade* facade)
+{
+  bool res = facade->uninstallPlugin(puSystemPlugin);
+  delete puSystemPlugin;
+  return res;
 }

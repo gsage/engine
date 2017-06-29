@@ -42,6 +42,8 @@ implementation for the :cpp:func:`Gsage::EngineSystem::update` method.
 
 It would be nice to have a separate interface & pool for such systems so there is `a task <https://www.pivotaltracker.com/story/show/135001339>`_ for that.
 
+Also, each system must have static field :code:`ID`, which defines it's string identifier for the :cpp:class:`Gsage::SystemManager`.
+
 Optional Methods
 ^^^^^^^^^^^^^^^^
   * :cpp:func:`Gsage::EngineSystem::initialize` - handle initial configs in this method.

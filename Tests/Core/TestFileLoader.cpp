@@ -6,7 +6,7 @@ using namespace Gsage;
 
 TEST(FileLoader, FileLoaderLoadAndDump)
 {
-  Dictionary environment;
+  DataProxy environment;
   environment.put("envVariable", 123);
 
   std::map<FileLoader::Encoding, std::string> cases;
@@ -16,7 +16,7 @@ TEST(FileLoader, FileLoaderLoadAndDump)
   for(auto p : cases)
   {
     FileLoader instance(p.first, environment);
-    Dictionary params;
+    DataProxy params;
     params.put("fromParam", "works");
     auto pair = instance.load(p.second, params);
     EXPECT_TRUE(pair.second);

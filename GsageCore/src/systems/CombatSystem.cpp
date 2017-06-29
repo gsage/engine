@@ -29,9 +29,11 @@ THE SOFTWARE.
 #include "Engine.h"
 
 namespace Gsage {
+  const std::string CombatSystem::ID = "dynamicStats";
 
   CombatSystem::CombatSystem()
   {
+    mSystemInfo.put("type", CombatSystem::ID);
   }
 
   CombatSystem::~CombatSystem()

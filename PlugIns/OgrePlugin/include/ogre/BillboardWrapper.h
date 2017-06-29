@@ -45,14 +45,14 @@ namespace Gsage {
       public:
         BillboardWrapper();
         virtual ~BillboardWrapper() {};
-        
+
         /**
          * Initialize billboard
-         * @param dict Dictionary with values
+         * @param dict DataProxy with values
          * @param billboardSet Ogre::BillboardSet to create billboard into
          * @returns false if fails
          */
-        bool initialize(const Dictionary& dict, Ogre::BillboardSet* billboardSet);
+        bool initialize(const DataProxy& dict, Ogre::BillboardSet* billboardSet);
 
         /**
          * Set billboard position
@@ -147,7 +147,7 @@ namespace Gsage {
         /**
          * Override default logic values reading
          */
-        bool read(const Dictionary& dict);
+        bool read(const DataProxy& dict);
 
         /**
          * Set common up vector of the billboard
@@ -197,12 +197,12 @@ namespace Gsage {
         /**
          * Add billboards to the billboard set
          */
-        void setBillboards(const Dictionary& dict);
+        void setBillboards(const DataProxy& dict);
 
         /**
          * Get billboards to the billboard set
          */
-        Dictionary getBillboards();
+        DataProxy getBillboards();
 
       private:
         /**

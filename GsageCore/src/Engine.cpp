@@ -25,7 +25,6 @@ THE SOFTWARE.
 */
 
 #include "Engine.h"
-#include "EngineSystem.h"
 #include "EngineEvent.h"
 
 #include "Component.h"
@@ -47,7 +46,7 @@ Engine::~Engine()
   removeSystems();
 }
 
-bool Engine::initialize(const Dictionary& configuration, const Dictionary& environment)
+bool Engine::initialize(const DataProxy& configuration, const DataProxy& environment)
 {
   mConfiguration = configuration;
   mEnvironment = environment;
@@ -61,9 +60,9 @@ bool Engine::initialize(const Dictionary& configuration, const Dictionary& envir
       continue;
     }
 
-    auto config = mConfiguration.get<Dictionary>(systemName);
+    auto config = mConfiguration.get<DataProxy>(systemName);
 
-    if(!mEngineSystems[systemName]->initialize(config.second ? config.first : Dictionary()))
+    if(!mEngineSystems[systemName]->initialize(config.second ? config.first : DataProxy()))
     {
       LOG(ERROR) << "Failed to initialize system \"" << systemName << "\"";
       succeed = false;
@@ -78,15 +77,17 @@ bool Engine::initialize(const Dictionary& configuration, const Dictionary& envir
   return succeed;
 }
 
-bool Engine::configureSystems(const Dictionary& config)
+bool Engine::configureSystems(const DataProxy& config)
 {
+  mergeInto(mConfiguration, config);
   for(std::string& systemName : mSetUpOrder)
   {
     LOG(INFO) << "Configuring system " << systemName;
-    auto systemConfig = config.get<Dictionary>(systemName);
-    mEngineSystems[systemName]->configure(systemConfig.second ? systemConfig.first : Dictionary());
+    auto systemConfig = mConfiguration.get<DataProxy>(systemName);
+    mEngineSystems[systemName]->configure(systemConfig.second ? systemConfig.first : DataProxy());
   }
 
+  fireEvent(SettingsEvent(SettingsEvent::UPDATE, mConfiguration));
   return true;
 }
 
@@ -112,8 +113,8 @@ bool Engine::addSystem(const std::string& name, EngineSystem* system)
   system->setEngineInstance(this);
   if(mInitialized)
   {
-    auto config = mConfiguration.get<Dictionary>(name);
-    system->initialize(config.second ? config.first : Dictionary());
+    auto config = mConfiguration.get<DataProxy>(name);
+    system->initialize(config.second ? config.first : DataProxy());
   }
 
   fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, system));
@@ -161,7 +162,7 @@ void Engine::removeSystems()
   mManagedByEngine.clear();
 }
 
-Entity* Engine::createEntity(Dictionary& data)
+Entity* Engine::createEntity(DataProxy& data)
 {
   // can't create entity with no id
   if(data.count(KEY_ID) == 0)
@@ -223,7 +224,7 @@ Entity* Engine::getEntity(const std::string& id)
   return mEntityMap[id];
 }
 
-bool Engine::createComponent(Entity* entity, const std::string& type, const Dictionary& dict)
+bool Engine::createComponent(Entity* entity, const std::string& type, const DataProxy& dict)
 {
   if(!hasSystem(type))
   {
@@ -242,9 +243,9 @@ bool Engine::createComponent(Entity* entity, const std::string& type, const Dict
   return true;
 }
 
-bool Engine::readEntityData(Entity* entity, const Dictionary& dict)
+bool Engine::readEntityData(Entity* entity, const DataProxy& dict)
 {
-  auto flags = dict.get<Dictionary>("flags");
+  auto flags = dict.get<DataProxy>("flags");
   if(flags.second)
   {
     for(auto& pair : flags.first)

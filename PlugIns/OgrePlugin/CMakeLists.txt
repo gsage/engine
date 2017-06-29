@@ -1,17 +1,12 @@
 set(PLUGIN_NAME "OgrePlugin")
 
 include_directories(
-  include
-  ${gsage_SOURCE_DIR}/GsageCore/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${gsage_SOURCE_DIR}/Components/OgreCrowd/include
-  ${gsage_SOURCE_DIR}/Components/Sol2/include
-
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Overlay_INCLUDE_DIR}
   ${OGRE_Terrain_INCLUDE_DIR}
-  ${LUAJIT_INCLUDE_DIR}
   ${OGRE_SAMPLES_INCLUDEPATH}
-  ${JSONCPP_INCLUDE_DIR}
 )
 
 file(GLOB sources src/*.cpp src/*/*.cpp )

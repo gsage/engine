@@ -23,4 +23,4 @@ if(OGRE_FOUND)
   endif(Qt5_FOUND)
 endif(OGRE_FOUND)
 
-
+install(DIRECTORY cmake DESTINATION /usr/local/share/gsage)

@@ -75,7 +75,7 @@ namespace Gsage
        *
        * @param gsageConfigPath Path to the file with facade settings
        */
-      virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, Dictionary* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
+      virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, DataProxy* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
       /**
        * Add new system in the engine
        */
@@ -102,11 +102,29 @@ namespace Gsage
       }
 
       /**
+       * @copydoc Gsage::SystemManager::registerSystem
+       */
+      template<typename T>
+      bool registerSystemFactory()
+      {
+        return mSystemManager.registerSystem<T>();
+      }
+
+      /**
        * @copydoc Gsage::SystemManager::removeSystem
        */
       bool removeSystemFactory(const std::string& id)
       {
         return mSystemManager.removeSystem(id);
+      }
+
+      /**
+       * @copydoc Gsage::SystemManager::removeSystem
+       */
+      template<class S>
+      bool removeSystemFactory()
+      {
+        return mSystemManager.removeSystem<S>();
       }
 
       /**
@@ -235,7 +253,7 @@ namespace Gsage
       std::string mStartupScript;
       std::atomic<bool> mStopped;
 
-      Dictionary mConfig;
+      DataProxy mConfig;
 
       std::chrono::high_resolution_clock::time_point mPreviousUpdateTime;
 

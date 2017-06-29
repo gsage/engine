@@ -4,7 +4,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2017 Artem Chernyshev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,26 +29,16 @@ THE SOFTWARE.
 #include <GsageDefinitions.h>
 #include <string>
 #include <type_traits>
-#include <typeinfo>
+#include <iterator>
+#include <algorithm>
+#include "DataProxy.h"
+
 namespace Gsage {
   class DictionaryKey;
   class Dictionary;
 }
 std::ostream & operator<<(std::ostream & os, Gsage::DictionaryKey const & key);
 std::ostream & operator<<(std::ostream & os, Gsage::Dictionary const & dict);
-
-#include "Logger.h"
-#include <tuple>
-#include <stdexcept>
-
-#define TYPE_CASTER(name, t) \
-struct name {\
-  typedef t Type;\
-  bool to(const std::string& src, Type& dst) const;\
-  const std::string from(const Type& value) const;\
-};\
-template<>\
-struct TranslatorBetween<std::string, t> { typedef name type; };
 
 #define _OVERRIDE_KEY_OPERATOR(op) \
   friend bool operator op(const DictionaryKey& k1, const DictionaryKey& k2) { \
@@ -58,8 +48,132 @@ struct TranslatorBetween<std::string, t> { typedef name type; };
     return k1.mIndex op k2.mIndex;\
   }\
 
+#include "Logger.h"
+#include <tuple>
+#include <stdexcept>
 
 namespace Gsage {
+  namespace detail {
+    struct AccessPolicy {
+        AccessPolicy(const std::type_info& ti) : mTypeInfo(ti) {}
+        virtual void staticDelete(void** value) = 0;
+        virtual void copyFromValue(void const* src, void** dest) = 0;
+        virtual void clone(void* const* src, void** dest) = 0;
+        virtual void move(void* const* src, void** dest) = 0;
+        virtual void* getValue(void** src) = 0;
+        virtual const void* getValue(void* const* src) const = 0;
+        virtual size_t getSize() = 0;
+
+        template<typename T>
+        bool containsType() {
+          return typeid(T) == mTypeInfo;
+        }
+      private:
+        const std::type_info& mTypeInfo;
+    };
+
+    template<typename T>
+    struct TypedAccessPolicy : public AccessPolicy
+    {
+      TypedAccessPolicy() : AccessPolicy(typeid(T)) {}
+
+      virtual size_t getSize()
+      {
+        return sizeof(T);
+      }
+    };
+
+    template<typename T>
+    struct SmallAccessPolicy : public TypedAccessPolicy<T>
+    {
+      virtual void staticDelete(void** x) { }
+      virtual void copyFromValue(void const* src, void** dest)
+      { new(dest) T(*reinterpret_cast<T const*>(src)); }
+      virtual void clone(void* const* src, void** dest) { *dest = *src; }
+      virtual void move(void* const* src, void** dest) { *dest = *src; }
+      virtual void* getValue(void** src) { return reinterpret_cast<void*>(src); }
+      virtual const void* getValue(void* const* src) const { return reinterpret_cast<const void*>(src); }
+    };
+
+    template<typename T, size_t N>
+    struct ArrayAccessPolicy : public SmallAccessPolicy<T>
+    {
+      virtual void copyFromValue(void const* src, void** dest)
+      {
+        T* dstArray = new T[N]();
+        const T* arr = reinterpret_cast<const T*>(src);
+
+        for(int i = 0; i < N; i++) {
+          dstArray[i] = arr[i];
+        }
+
+        *dest = dstArray;
+      }
+    };
+
+    template<typename T>
+    struct BigAccessPolicy : public TypedAccessPolicy<T>
+    {
+      virtual void staticDelete(void** x) { if (*x != NULL)
+        delete(*reinterpret_cast<T**>(x)); *x = NULL; }
+      virtual void copyFromValue(void const* src, void** dest) {
+        *dest = new T(*reinterpret_cast<T const*>(src)); }
+      virtual void clone(void* const* src, void** dest) {
+        if(*src != NULL) *dest = new T(**reinterpret_cast<T* const*>(src)); }
+      virtual void move(void* const* src, void** dest) {
+        (*reinterpret_cast<T**>(dest))->~T();
+        **reinterpret_cast<T**>(dest) = **reinterpret_cast<T* const*>(src); }
+      virtual void* getValue(void** src) { return *src; }
+      virtual const void* getValue(void* const* src) const { return *src; }
+    };
+
+    template<typename T>
+    struct AccessPolicyFactory {
+      static AccessPolicy* getPolicy() {
+        static BigAccessPolicy<T> policy;
+        return &policy;
+      }
+    };
+
+    template<typename T>
+    struct AccessPolicyFactory<T*> {
+      static AccessPolicy* getPolicy() {
+        static SmallAccessPolicy<T*> policy;
+        return &policy;
+      }
+    };
+
+    template<typename T, size_t N>
+    struct AccessPolicyFactory<T[N]> {
+      static AccessPolicy* getPolicy() {
+        static ArrayAccessPolicy<T, N> policy;
+        return &policy;
+      }
+    };
+
+    /// Specializations for small types.
+#define SMALL_POLICY(TYPE) template<> struct \
+    AccessPolicyFactory<TYPE> { \
+      static AccessPolicy* getPolicy() {\
+        static SmallAccessPolicy<TYPE> policy;\
+        return &policy;\
+      }\
+    };\
+
+    SMALL_POLICY(signed char);
+    SMALL_POLICY(unsigned char);
+    SMALL_POLICY(signed short);
+    SMALL_POLICY(unsigned short);
+    SMALL_POLICY(signed int);
+    SMALL_POLICY(unsigned int);
+    SMALL_POLICY(signed long);
+    SMALL_POLICY(unsigned long);
+    SMALL_POLICY(float);
+    SMALL_POLICY(bool);
+    SMALL_POLICY(double);
+
+#undef SMALL_POLICY
+  }
   /**
    * DictionaryKey provides ordered map of strings.
    * Allows ordering by int value instead of string itself.
@@ -121,77 +235,6 @@ namespace Gsage {
   };
 
   /**
-   * CastException is raised when it's impossible to get value as<something>.
-   */
-  class CastException: public std::exception
-  {
-    virtual const char* what() const throw()
-    {
-      return "Failed to cast value";
-    }
-  };
-
-  /**
-   * NoopCaster does not do any cast.
-   *
-   * Implements behavior when no caster is found for the requested type.
-   */
-  template<class T>
-  struct NoopCaster
-  {
-    /**
-     * Noop.
-     */
-    typedef T Type;
-    bool to(const std::string& src, Type& dst)
-    {
-      return false;
-    }
-    /**
-     * Noop.
-     */
-    const std::string from(const Type& value)
-    {
-      return "";
-    }
-  };
-
-  /**
-   * Wrapper for Casters.
-   */
-  template<typename F, typename T>
-  struct TranslatorBetween
-  {
-    typedef NoopCaster<T> type;
-  };
-
-  TYPE_CASTER(DoubleCaster, double)
-  TYPE_CASTER(IntCaster, int)
-  TYPE_CASTER(UIntCaster, unsigned int)
-  TYPE_CASTER(UlongCaster, unsigned long)
-  TYPE_CASTER(FloatCaster, float)
-  TYPE_CASTER(BoolCaster, bool)
-  TYPE_CASTER(StringCaster, std::string)
-
-  /**
-   * Const string caster.
-   */
-  struct CStrCaster {
-    typedef const char* Type;
-    bool to(const std::string& src, Type& dst) const;
-    const std::string from(const Type& value) const;
-  };
-
-  /**
-   * Wraps CStrCaster.
-   */
-  template<size_t N>
-  struct TranslatorBetween<std::string, char[N]>
-  {
-    typedef CStrCaster type;
-  };
-
-  /**
    * Variable type dictionary.
    *
    * Stores all values as strings.
@@ -219,19 +262,13 @@ namespace Gsage {
        */
       typedef Children::const_iterator constIterator;
 
-      Dictionary(bool isArray = false) : mIsArray(isArray) {}
-      Dictionary(const std::string& data, bool isArray = false) : mValue(data), mIsArray(isArray) {}
-      virtual ~Dictionary() {}
+      typedef DictionaryKey key_type;
+      typedef std::pair<DictionaryKey, Dictionary> value_type;
 
-      DictionaryKey createKey(const std::string& key) const
-      {
-        DictionaryKey k(key);
-        if(mIsArray)
-        {
-          k = DictionaryKey(std::stoi(key), key);
-        }
-        return k;
-      }
+      Dictionary(bool isArray = false) : mIsArray(isArray), mChildren(new Children()) {}
+      Dictionary(const std::string& data, bool isArray = false) : mIsArray(isArray), mChildren(new Children()) { }
+
+      virtual ~Dictionary() {}
 
       /**
        * Reads dictionary value into a reference.
@@ -242,6 +279,12 @@ namespace Gsage {
       template<class T>
       bool getValue(T& dest) const
       {
+        //return policy->convert<T>(dest);
+        /*if(mPolicy->containsType<std::string>()) {
+          return typename TranslatorBetween<std::string, T>::type().to(*reinterpret_cast<const std::string*>(mPolicy->getValue(&mValue)), dest);
+        } else {
+          return false;
+        }*/
         return typename TranslatorBetween<std::string, T>::type().to(mValue, dest);
       }
 
@@ -304,10 +347,10 @@ namespace Gsage {
       bool read(const std::string& key, T& dest) const
       {
         DictionaryKey k = createKey(key);
-        if(mChildren.count(k) == 0)
+        if(mChildren->count(k) == 0)
           return false;
 
-        return mChildren.at(k).getValue(dest);
+        return mChildren->at(k).getValue(dest);
       }
 
       /**
@@ -363,13 +406,6 @@ namespace Gsage {
       }
 
       /**
-       * Special handling for const char* get.
-       *
-       * @copydoc Dictionary::get(key, value)
-       */
-      std::string get(const std::string& key, const char* def) const;
-
-      /**
        * Put value to key.
        * Thread unsafe
        *
@@ -385,11 +421,12 @@ namespace Gsage {
 
         for(int i = 0; i < parts.size(); i++) {
           DictionaryKey k = createKey(parts[i]);
-          if(dict->mChildren.count(k) == 0) {
-            dict->mChildren[k] = Dictionary();
+          Children& c = dict->getChildren();
+          if(c.count(k) == 0) {
+            c[k] = Dictionary();
           }
 
-          dict = &dict->mChildren[k];
+          dict = &c[k];
         }
 
         dict->set(value);
@@ -404,6 +441,8 @@ namespace Gsage {
       void set(const T& value)
       {
         mValue = typename TranslatorBetween<std::string, T>::type().from(value);
+        //mPolicy = detail::AccessPolicyFactory<T>::getPolicy();
+        //mPolicy->copyFromValue(&value, &mValue);
       }
 
       /**
@@ -411,7 +450,7 @@ namespace Gsage {
        */
       iterator begin()
       {
-        return mChildren.begin();
+        return mChildren->begin();
       }
 
       /**
@@ -419,7 +458,7 @@ namespace Gsage {
        */
       iterator end()
       {
-        return mChildren.end();
+        return mChildren->end();
       }
 
       /**
@@ -427,7 +466,7 @@ namespace Gsage {
        */
       constIterator begin() const
       {
-        return mChildren.begin();
+        return mChildren->begin();
       }
 
       /**
@@ -435,7 +474,7 @@ namespace Gsage {
        */
       constIterator end() const
       {
-        return mChildren.end();
+        return mChildren->end();
       }
 
       /**
@@ -443,7 +482,7 @@ namespace Gsage {
        */
       int size() const
       {
-        return mChildren.size();
+        return mChildren->size();
       }
 
       /**
@@ -451,7 +490,7 @@ namespace Gsage {
        */
       int count(const std::string &key) const
       {
-        return mChildren.count(key);
+        return mChildren->count(key);
       }
 
       /**
@@ -474,7 +513,7 @@ namespace Gsage {
         // clear children if type changed
         if(mIsArray != value)
         {
-          mChildren.clear();
+          mChildren->clear();
         }
         mIsArray = value;
       }
@@ -484,7 +523,7 @@ namespace Gsage {
        */
       bool empty() const
       {
-        return mValue.empty() && mChildren.empty();
+        return mChildren->empty();
       }
 
       /**
@@ -499,16 +538,37 @@ namespace Gsage {
         if(!mIsArray) {
           setArray(true);
         }
-        DictionaryKey k(mChildren.size(), "");
-        mChildren[k] = Dictionary();
-        mChildren[k].set(value);
+        Children& c = getChildren();
+        DictionaryKey k(c.size(), "");
+        c[k] = Dictionary();
+        c[k].set(value);
       }
+
+      std::pair<iterator, bool> insert(const value_type& val);
+
+      iterator insert(iterator position, const value_type& val);
+
+      DictionaryKey createKey(const std::string& key) const;
+      /**
+       * Special handling for const char* get.
+       *
+       * @copydoc Dictionary::get(key, value)
+       */
+      std::string get(const std::string& key, const char* def) const;
+
     private:
       bool walkPath(const std::string& key, Dictionary& dest) const;
 
-      Children mChildren;
-      std::string mValue;
+      Children& getChildren() {
+        return *mChildren.get();
+      }
 
+      const Children& getChildren() const {
+        return *mChildren.get();
+      }
+
+      std::shared_ptr<Children> mChildren;
+      std::string mValue;
       bool mIsArray;
   };
 

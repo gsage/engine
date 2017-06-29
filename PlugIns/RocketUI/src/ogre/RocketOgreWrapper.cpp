@@ -38,10 +38,11 @@ namespace Gsage {
     , mSystemInterface(0)
   {
     addEventListener(engine, RenderEvent::UPDATE_UI, &RocketOgreWrapper::render);
-    if(engine->hasSystem("render"))
+    OgreRenderSystem* render = engine->getSystem<OgreRenderSystem>();
+
+    if(render)
     {
-      OgreRenderSystem* renderer = static_cast<OgreRenderSystem*>(engine->getSystem("render"));
-      setUp(renderer->getWidth(), renderer->getHeight());
+      setUp(render->getWidth(), render->getHeight());
     }
   }
 

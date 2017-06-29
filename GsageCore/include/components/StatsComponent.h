@@ -101,16 +101,16 @@ namespace Gsage {
 
       /**
        * Overrides default behavior of the decoding
-       * @param dict Dictionary with all stats
+       * @param dict DataProxy with all stats
        */
-      bool read(const Dictionary& dict);
+      bool read(const DataProxy& dict);
 
       /**
        * Overrides default behavior of the encoding
        *
-       * @param dict Dictionary to write to
+       * @param dict DataProxy to write to
        */
-      bool dump(Dictionary& dict);
+      bool dump(DataProxy& dict);
 
       /**
        * Increase numeric types, shortcut function
@@ -121,8 +121,13 @@ namespace Gsage {
        * @returns Modified value
        */
       const float increase(const std::string& key, const float& n);
+
+      /**
+       * Get data
+       */
+      DataProxy& data();
     private:
-      Dictionary mStats;
+      DataProxy mStats;
   };
 }
 

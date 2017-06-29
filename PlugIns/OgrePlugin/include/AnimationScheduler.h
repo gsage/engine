@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 #include <queue>
 
-#include "DictionaryConverters.h"
+#include "OgreConverters.h"
 #include "Serializable.h"
 
 #define DEFAULT_FADE_SPEED 5.0f
@@ -161,7 +161,7 @@ namespace Gsage {
       /**
        * Initialize animation groups
        */
-      bool initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager);
+      bool initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager);
       /**
        * Gets animations speed
        */
@@ -232,11 +232,11 @@ namespace Gsage {
       /**
        * Read dict and configure groups, read anim states from entities
        *
-       * @param dict Dictionary to get settings from
+       * @param dict DataProxy to get settings from
        * @param sceneManager Ogre::SceneManager to get entities from
        * @param renderComponent target render component
        */
-      bool initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager, RenderComponent* renderComponent);
+      bool initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager, RenderComponent* renderComponent);
 
       /**
        * Adjust animation speed
@@ -296,13 +296,13 @@ namespace Gsage {
       }
       /**
        * Set animation states
-       * @param dict Dictionary with settings
+       * @param dict DataProxy with settings
        */
-      void setStates(const Dictionary& dict);
+      void setStates(const DataProxy& dict);
       /**
        * Get animation states serialized
        */
-      const Dictionary& getStates() const;
+      const DataProxy& getStates() const;
 
       Ogre::SceneManager* mSceneManager;
 
@@ -319,7 +319,7 @@ namespace Gsage {
       std::string mDefaultAnimation;
       std::string mCurrentAnimation;
 
-      Dictionary mAnimationStatesDict;
+      DataProxy mAnimationStatesDict;
 
       RenderComponent* mRenderComponent;
 

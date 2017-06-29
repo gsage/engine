@@ -37,6 +37,8 @@ namespace Gsage
   class CombatSystem : public ComponentStorage<StatsComponent>
   {
     public:
+      // System class identifier
+      static const std::string ID;
       CombatSystem();
       virtual ~CombatSystem();
 

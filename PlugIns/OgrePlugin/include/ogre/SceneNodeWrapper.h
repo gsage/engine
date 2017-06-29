@@ -46,7 +46,7 @@ namespace Gsage {
 
       bool initialize(
           OgreObjectManager* objectManager,
-          const Dictionary& dict,
+          const DataProxy& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -105,9 +105,9 @@ namespace Gsage {
        */
       Ogre::Quaternion getOrientation();
 
-      void readChildren(const Dictionary& dict);
+      void readChildren(const DataProxy& dict);
 
-      Dictionary writeChildren();
+      DataProxy writeChildren();
 
       /**
        * Set vector that defines "face" of the node
@@ -148,8 +148,9 @@ namespace Gsage {
        * Get child
        * @param type Type of the child
        * @param name Name, that was defined in the "name" field
+       * @param traverse Traverse children splitting name by .
        */
-      OgreObject* getChild(const std::string& type, const std::string& name);
+      OgreObject* getChild(const std::string& type, const std::string& name, bool traverse = false);
 
       /**
        * Get child of specific type
@@ -159,9 +160,40 @@ namespace Gsage {
       template<class T>
       T* getChildOfType(const std::string& name)
       {
-        return static_cast<T*>(getChild(T::TYPE, name));
+        return static_cast<T*>(getChild(T::TYPE, name, true));
       }
 
+      /**
+       * Rotate the node around X axis
+       *
+       * @param angle Rotation angle
+       * @param relativeTo Transformation space
+       */
+      void pitch(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo=Ogre::Node::TS_LOCAL);
+
+      /**
+       * Rotate the node around Y axis
+       *
+       * @param angle Rotation angle
+       * @param relativeTo Transformation space
+       */
+      void yaw(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo=Ogre::Node::TS_LOCAL);
+
+      /**
+       * Rotate the node around Z axis
+       *
+       * @param angle Rotation angle
+       * @param relativeTo Transformation space
+       */
+      void roll(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo=Ogre::Node::TS_LOCAL);
+
+      /**
+       * Moves the node along the Cartesian axes
+       *
+       * @param d Vector with x,y,z values representing the translation
+       * @param relativeTo Transformation space
+       */
+      void translate(const Ogre::Vector3& d, Ogre::Node::TransformSpace relativeTo=Ogre::Node::TS_LOCAL);
     private:
       /**
        * Handle factory removal event

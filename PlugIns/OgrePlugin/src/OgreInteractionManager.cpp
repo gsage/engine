@@ -94,8 +94,10 @@ namespace Gsage {
     Ogre::MovableObject* target;
     Ogre::Vector3 result;
     float closestDistance = 0.1f;
+    Ogre::Viewport* viewport = mRenderSystem->getViewport();
+
     Ogre::RenderWindow* window = mRenderSystem->getRenderWindow();
-    Ogre::Camera* camera = mRenderSystem->getOgreCamera();
+    Ogre::Camera* camera = viewport->getCamera();
     if(!camera || !window)
     {
       // camera or window can be not initialized

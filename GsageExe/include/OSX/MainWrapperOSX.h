@@ -28,7 +28,9 @@ THE SOFTWARE.
 */
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
+#ifndef nil
 #define nil NULL
+#endif
 #include <MacTypes.h>
 #include <QuartzCore/CVDisplayLink.h>
 #include <AppKit/NSWindow.h>

@@ -1,8 +1,6 @@
 set(LIB_NAME "OisInput")
 
 include_directories(
-  include
-  ${gsage_SOURCE_DIR}/GsageCore/include
   ${OIS_INCLUDE_DIRS}
 )
 

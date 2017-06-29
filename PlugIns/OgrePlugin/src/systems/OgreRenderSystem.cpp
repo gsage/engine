@@ -42,7 +42,6 @@ THE SOFTWARE.
 
 #include "AnimationScheduler.h"
 
-#include "CameraFactory.h"
 #include "ComponentStorage.h"
 #include "Entity.h"
 #include "Engine.h"
@@ -85,20 +84,20 @@ namespace Gsage {
   }
 
   const std::string OgreRenderSystem::CAMERA_CHANGED = "cameraChanged";
+  // Render system identifier for the factory registration
+  const std::string OgreRenderSystem::ID = "ogre";
 
   OgreRenderSystem::OgreRenderSystem() :
     mRoot(0),
     mFontManager(0),
     mManualMovableTextParticleFactory(0),
     mResourceManager(0),
-    mCameraController(0),
-    mCameraFactory(new CameraFactory()),
     mWindow(0),
     mViewport(0),
     mOgreInteractionManager(0),
     mWindowEventListener(0)
   {
-    mSystemInfo.put("type", "ogre");
+    mSystemInfo.put("type", OgreRenderSystem::ID);
     mLogManager = new Ogre::LogManager();
   }
 
@@ -106,7 +105,6 @@ namespace Gsage {
   {
     if(mOgreInteractionManager)
       delete mOgreInteractionManager;
-    delete mCameraFactory;
     if(mFontManager != 0)
       delete mFontManager;
 
@@ -126,7 +124,7 @@ namespace Gsage {
     delete mLogManager;
   }
 
-  bool OgreRenderSystem::initialize(const Dictionary& settings)
+  bool OgreRenderSystem::initialize(const DataProxy& settings)
   {
     std::string workdir   = mEngine->env().get("workdir", ".");
     std::string plugins   = workdir + GSAGE_PATH_SEPARATOR + settings.get("pluginsFile", ".");
@@ -149,12 +147,12 @@ namespace Gsage {
 
     Ogre::NameValuePairList params;
 
-    auto paramNode = settings.get<Dictionary>("window.params");
+    auto paramNode = settings.get<DataProxy>("window.params");
     if(paramNode.second)
     {
       for(auto& pair : paramNode.first)
       {
-        params[pair.first.str()] = pair.second.as<std::string>();
+        params[pair.first] = pair.second.as<std::string>();
       }
     }
 #if GSAGE_PLATFORM == GSAGE_APPLE
@@ -183,7 +181,7 @@ namespace Gsage {
     mManualMovableTextParticleFactory = new Ogre::ManualMovableTextRendererFactory();
     Ogre::ParticleSystemManager::getSingletonPtr()->addRendererFactory(mManualMovableTextParticleFactory);
 
-    auto resources = settings.get<Dictionary>("globalResources");
+    auto resources = settings.get<DataProxy>("globalResources");
     if(resources.second && !mResourceManager->load(resources.first))
       return false;
 
@@ -194,7 +192,7 @@ namespace Gsage {
     // get viewport to initialize it
     getViewport();
 
-    Dictionary rtt = settings.get("rtt", Dictionary());
+    DataProxy rtt = settings.get("rtt", DataProxy());
     if(rtt.size() > 0) {
       for(auto pair : rtt) {
         const std::string name = pair.first;
@@ -228,7 +226,7 @@ namespace Gsage {
     return true;
   }
 
-  bool OgreRenderSystem::fillComponentData(RenderComponent* c, const Dictionary& dict)
+  bool OgreRenderSystem::fillComponentData(RenderComponent* c, const DataProxy& dict)
   {
     if(!c->getResources().empty())
     {
@@ -236,12 +234,12 @@ namespace Gsage {
         return false;
     }
 
-    auto element = dict.get<Dictionary>("root");
+    auto element = dict.get<DataProxy>("root");
     if(element.second)
     {
       c->mRootNode = mObjectManager.create<SceneNodeWrapper>(element.first, c->getOwner()->getId(), mSceneManager);
     }
-    element = dict.get<Dictionary>("animations");
+    element = dict.get<DataProxy>("animations");
     if(element.second)
     {
       LOG(INFO) << "Read animations for component of entity " << c->getOwner()->getId();
@@ -258,8 +256,6 @@ namespace Gsage {
     Ogre::WindowEventUtilities::messagePump();
 
     mOgreInteractionManager->update(time);
-    if(mCameraController != 0)
-      mCameraController->update(time);
 
     bool continueRendering = !mWindow->isClosed();
     if(continueRendering)
@@ -274,16 +270,16 @@ namespace Gsage {
     component->mAnimationScheduler.update(time);
   }
 
-  bool OgreRenderSystem::configure(const Dictionary& config)
+  bool OgreRenderSystem::configure(const DataProxy& config)
   {
 
-    auto resources = mConfig.get<Dictionary>("resources");
+    auto resources = mConfig.get<DataProxy>("resources");
     if(resources.second)
       mResourceManager->unload(resources.first);
 
     EngineSystem::configure(config);
 
-    resources = mConfig.get<Dictionary>("resources");
+    resources = mConfig.get<DataProxy>("resources");
     if(resources.second)
       mResourceManager->load(resources.first);
     mSceneManager->setAmbientLight(config.get("colourAmbient", Ogre::ColourValue()));
@@ -298,25 +294,16 @@ namespace Gsage {
       );
     }
 
-    if(config.count("camera") != 0)
+    if(config.count("skybox") != 0)
     {
-      mCameraController = mCameraFactory->initializeController(
-          config.get<Dictionary>("camera").first,
-          this,
-          mEngine);
-      updateCurrentCamera(mCameraController->getCamera());
+      mSceneManager->setSkyBox(true, config.get("skybox", ""));
     }
+
     return true;
   }
 
-  Dictionary& OgreRenderSystem::getConfig()
+  DataProxy& OgreRenderSystem::getConfig()
   {
-    if(mCameraController)
-    {
-      Dictionary camera;
-      mCameraController->dump(camera);
-      mConfig.put("camera", camera);
-    }
     return mConfig;
   }
 
@@ -352,11 +339,6 @@ namespace Gsage {
         res.push_back(e);
     }
     return res;
-  }
-
-  CameraController* OgreRenderSystem::getCamera()
-  {
-    return mCameraController;
   }
 
   Ogre::Camera* OgreRenderSystem::getOgreCamera()

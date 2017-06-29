@@ -24,7 +24,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "DictionaryConverters.h"
+#include "OgreConverters.h"
 
 namespace Gsage {
   inline float fromHex(const unsigned int& value, const int& offset)
@@ -39,7 +39,7 @@ namespace Gsage {
 
   // -----------------------------------------------------------------------------
 
-  bool OgreDegreeCaster::to(const std::string& src, OgreDegreeCaster::Type& dst) const
+  bool OgreDegreeCaster::to(const OgreDegreeCaster::FromType& src, OgreDegreeCaster::Type& dst) const
   {
     if(src.empty())
       return false;
@@ -48,14 +48,14 @@ namespace Gsage {
     return true;
   }
 
-  const std::string OgreDegreeCaster::from(const OgreDegreeCaster::Type& value) const
+  const OgreDegreeCaster::FromType OgreDegreeCaster::from(const OgreDegreeCaster::Type& value) const
   {
     return std::to_string(value.valueDegrees());
   }
 
   // -----------------------------------------------------------------------------
 
-  bool OgreColourValueCaster::to(const std::string& src, OgreColourValueCaster::Type& dst) const
+  bool OgreColourValueCaster::to(const OgreColourValueCaster::FromType& src, OgreColourValueCaster::Type& dst) const
   {
     if(src.empty())
       return false;
@@ -77,7 +77,7 @@ namespace Gsage {
     return true;
   }
 
-  const std::string OgreColourValueCaster::from(const OgreColourValueCaster::Type& value) const
+  const OgreColourValueCaster::FromType OgreColourValueCaster::from(const OgreColourValueCaster::Type& value) const
   {
     std::stringstream stream;
     stream << "0x" <<std::hex << (toHex(value.a, 24) | toHex(value.r, 16) | toHex(value.g, 8) | toHex(value.b, 0));
@@ -86,7 +86,7 @@ namespace Gsage {
 
   // -----------------------------------------------------------------------------
 
-  bool OgreVector3Caster::to(const std::string& src, OgreVector3Caster::Type& dst) const
+  bool OgreVector3Caster::to(const OgreVector3Caster::FromType& src, OgreVector3Caster::Type& dst) const
   {
     if(src.empty())
       return false;
@@ -117,7 +117,7 @@ namespace Gsage {
     return true;
   }
 
-  const std::string OgreVector3Caster::from(const OgreVector3Caster::Type& value) const
+  const OgreVector3Caster::FromType OgreVector3Caster::from(const OgreVector3Caster::Type& value) const
   {
     std::stringstream stream;
     stream << value.x << "," << value.y << "," << value.z;
@@ -126,7 +126,7 @@ namespace Gsage {
 
   // -----------------------------------------------------------------------------
 
-  bool OgreQuaternionCaster::to(const std::string& src, OgreQuaternionCaster::Type& dst) const
+  bool OgreQuaternionCaster::to(const OgreQuaternionCaster::FromType& src, OgreQuaternionCaster::Type& dst) const
   {
     if(src.empty())
       return false;
@@ -160,7 +160,7 @@ namespace Gsage {
     return true;
   }
 
-  const std::string OgreQuaternionCaster::from(const OgreQuaternionCaster::Type& value) const
+  const OgreQuaternionCaster::FromType OgreQuaternionCaster::from(const OgreQuaternionCaster::Type& value) const
   {
     std::stringstream stream;
     stream << value.w << "," << value.x << "," << value.y << "," << value.z;
@@ -169,7 +169,7 @@ namespace Gsage {
 
   // -----------------------------------------------------------------------------
 
-  bool OgreFloatRectCaster::to(const std::string& src, OgreFloatRectCaster::Type& dst) const
+  bool OgreFloatRectCaster::to(const OgreFloatRectCaster::FromType& src, OgreFloatRectCaster::Type& dst) const
   {
     if(src.empty())
       return false;
@@ -203,7 +203,7 @@ namespace Gsage {
     return true;
   }
 
-  const std::string OgreFloatRectCaster::from(const OgreFloatRectCaster::Type& value) const
+  const OgreFloatRectCaster::FromType OgreFloatRectCaster::from(const OgreFloatRectCaster::Type& value) const
   {
     std::stringstream stream;
     stream << value.left << "," << value.top << "," << value.right << "," << value.bottom;
@@ -212,7 +212,7 @@ namespace Gsage {
 
   // -----------------------------------------------------------------------------
 
-  bool OgrePixelFormatCaster::to(const std::string& src, OgrePixelFormatCaster::Type& dst) const
+  bool OgrePixelFormatCaster::to(const OgrePixelFormatCaster::FromType& src, OgrePixelFormatCaster::Type& dst) const
   {
     if(src.empty())
       return false;
@@ -227,7 +227,7 @@ namespace Gsage {
     return true;
   }
 
-  const std::string OgrePixelFormatCaster::from(const OgrePixelFormatCaster::Type& value) const
+  const OgrePixelFormatCaster::FromType OgrePixelFormatCaster::from(const OgrePixelFormatCaster::Type& value) const
   {
     return std::to_string(value);
   }

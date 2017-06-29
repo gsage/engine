@@ -56,6 +56,29 @@ namespace Gsage {
         return registerFactory<ConcreteSystemFactory<S>>(id);
       }
 
+      /**
+       * Register system. Will create the factory for the system.
+       */
+      template<class S>
+      bool registerSystem()
+      {
+        return registerFactory<ConcreteSystemFactory<S>>(S::ID);
+      }
+
+      /**
+       * Unregister system factory using system ID
+       */
+      template<class S>
+      bool removeSystem()
+      {
+        return removeSystem(S::ID);
+      }
+
+      /**
+       * Unregister system factory
+       *
+       * @param id Factory ID
+       */
       bool removeSystem(const std::string& id)
       {
         if(mFactories.count(id) == 0)
@@ -79,6 +102,15 @@ namespace Gsage {
           return false;
         }
         return registerFactory(id, new F());
+      }
+
+      /*
+       * Register factory using ID from the system class
+       */
+      template<class F>
+      bool registerFactory()
+      {
+        return registerFactory<F>(F::systemType::ID);
       }
 
       /*

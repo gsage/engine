@@ -28,6 +28,8 @@ namespace Gsage
        * Set up lua bindings for a new particle emitter
        */
       void setupLuaBindings();
+    private:
+      bool handleSystemAdded(const Event& event);
   };
 }
 

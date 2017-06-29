@@ -1,0 +1,21 @@
+{
+  "dataManager":
+  {
+    "extension": "json",
+    "charactersFolder": "characters",
+    "levelsFolder": "levels",
+    "savesFolder": "templates"
+  },
+
+  "startLuaInterface": false,
+  "inputHandler": "fakeInput",
+  "systems": [
+    "testSystem"
+  ],
+
+  "plugins":
+  [
+    "PlugIns/System",
+    "PlugIns/UI"
+  ]
+}
