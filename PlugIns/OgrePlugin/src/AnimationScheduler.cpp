@@ -204,7 +204,7 @@ namespace Gsage {
   {
   }
 
-  bool AnimationGroup::initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager)
+  bool AnimationGroup::initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager)
   {
     for(auto& pair : dict)
     {
@@ -351,7 +351,7 @@ namespace Gsage {
     mRenderComponent = c;
   }
 
-  bool AnimationScheduler::initialize(const Dictionary& dict, Ogre::SceneManager* sceneManager, RenderComponent* c)
+  bool AnimationScheduler::initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager, RenderComponent* c)
   {
     mRenderComponent = c;
     mSceneManager = sceneManager;
@@ -498,7 +498,7 @@ namespace Gsage {
     }
   }
 
-  void AnimationScheduler::setStates(const Dictionary& dict)
+  void AnimationScheduler::setStates(const DataProxy& dict)
   {
     mAnimationStatesDict = dict;
     mAnimations.clear();
@@ -518,7 +518,7 @@ namespace Gsage {
     }
   }
 
-  const Dictionary& AnimationScheduler::getStates() const
+  const DataProxy& AnimationScheduler::getStates() const
   {
     return mAnimationStatesDict;
   }

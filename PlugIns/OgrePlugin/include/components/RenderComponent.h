@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "AnimationScheduler.h"
 #include "Component.h"
 #include "Serializable.h"
+#include <OgreNode.h>
 
 namespace Ogre
 {
@@ -47,6 +48,12 @@ namespace Gsage {
   class RenderComponent : public EntityComponent
   {
     public:
+      enum RotationAxis {
+        X_AXIS,
+        Y_AXIS,
+        Z_AXIS,
+        NONE
+      };
       static const std::string SYSTEM;
 
       RenderComponent();
@@ -73,6 +80,14 @@ namespace Gsage {
        * @param rotation Rotation quaternion (relative)
        */
       void rotate(const Ogre::Quaternion& rotation);
+      /**
+       * Equalient to Ogre::Node lookAt
+       * @param position Position to look at
+       * @param rotationAxis rotate only in one axis
+       * @param transformSpace ogre transform space
+       */
+      void lookAt(const Ogre::Vector3& position, const RotationAxis rotationAxis, Ogre::Node::TransformSpace transformSpace = Ogre::Node::TS_WORLD);
+
       /**
        * Equalient to Ogre::Node lookAt
        * @param position Position to look at
@@ -129,11 +144,11 @@ namespace Gsage {
       /**
        * Reads component root node
        */
-      Dictionary getRootNode();
+      DataProxy getRootNode();
       /**
        * Reads component animations
        */
-      Dictionary getAnimations();
+      DataProxy getAnimations();
 
       /**
        * Get root SceneNodeWrapper
@@ -141,15 +156,15 @@ namespace Gsage {
       SceneNodeWrapper* getRoot();
 
       /**
-       * Read additional resources paths from the Dictionary
-       * @param resources Dictionary with all resources settings
+       * Read additional resources paths from the DataProxy
+       * @param resources DataProxy with all resources settings
        */
-      void setResources(const Dictionary& resources);
+      void setResources(const DataProxy& resources);
 
       /**
        * Get resources
        */
-      const Dictionary& getResources() const;
+      const DataProxy& getResources() const;
     private:
       friend class OgreRenderSystem;
       bool mAddedToScene;
@@ -157,7 +172,7 @@ namespace Gsage {
       AnimationScheduler mAnimationScheduler;
       SceneNodeWrapper* mRootNode;
 
-      Dictionary mResources;
+      DataProxy mResources;
   };
 }
 

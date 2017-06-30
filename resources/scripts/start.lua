@@ -8,6 +8,8 @@ require 'math'
 require 'async'
 require 'behaviors'
 require 'actions'
+require 'factories.camera'
+require 'factories.emitters'
 
 function context()
   return rocket.contexts["main"]
@@ -43,9 +45,8 @@ function startup()
   console:AddEventListener('keydown', onKeyEvent, true)
 end
 
-function setActiveCamera(id)
-  local camera = entity.get(id)
-  camera:render().root:getChild("camera", id):attach(core:render().viewport)
+function setOrbitalCam(id, cameraID)
+  camera:createAndAttach('orbit', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20})
 end
 
 function spawnMore(count)
@@ -55,12 +56,7 @@ function spawnMore(count)
 end
 
 function spawn()
-  entity.create("ninja",
-  Dictionary.new({
-    movement = {
-      speed = 10
-    }
-  }))
+  entity.create("ninja", {movement = {speed = 10}})
 end
 
 function onKeyEvent(event)
@@ -79,8 +75,7 @@ function onKeyEvent(event)
   end
 end
 
-function onSelect(event)
-  e = OgreSelectEvent.cast(event)
+function onSelect(e)
   if e:hasFlags(OgreSceneNode.DYNAMIC) then
     local target = entity.get(e.entity)
     if actions.attackable(player, target) then
@@ -95,8 +90,7 @@ function onSelect(event)
   end
 end
 
-function onRoll(event)
-  e = OgreSelectEvent.cast(event)
+function onRoll(e)
   if e.type == "rollOver" then
     local target = entity.get(e.entity)
     if e:hasFlags(OgreSceneNode.DYNAMIC) then
@@ -118,10 +112,10 @@ function onReady(e)
   player = entity.get("sinbad")
   core:movement():setControlledEntity(player.id)
 
-  event:bind(core, "objectSelected", onSelect)
+  event:ogreSelect(core, "objectSelected", onSelect)
   if rocket ~= nil then
-    event:bind(core, "rollOver", onRoll)
-    event:bind(core, "rollOut", onRoll)
+    event:ogreSelect(core, "rollOver", onRoll)
+    event:ogreSelect(core, "rollOut", onRoll)
   end
 
   core:script():addUpdateListener(async.addTime)

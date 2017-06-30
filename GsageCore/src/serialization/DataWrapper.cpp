@@ -1,11 +1,8 @@
-#ifndef _DictionaryConverters_H_
-#define _DictionaryConverters_H_
-#
 /*
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2017 Artem Chernyshev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,20 +23,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
-#include <OgreCommon.h>
-#include <OgreImage.h>
-#include <OgreVector3.h>
-#include <OgreColourValue.h>
-#include <OgreQuaternion.h>
-#include "Dictionary.h"
+
+#include "serialization/DataWrapper.h"
 
 namespace Gsage {
-  TYPE_CASTER(OgreDegreeCaster, Ogre::Degree);
-  TYPE_CASTER(OgreColourValueCaster, Ogre::ColourValue);
-  TYPE_CASTER(OgreVector3Caster, Ogre::Vector3);
-  TYPE_CASTER(OgreQuaternionCaster, Ogre::Quaternion);
-  TYPE_CASTER(OgreFloatRectCaster, Ogre::FloatRect);
-  TYPE_CASTER(OgrePixelFormatCaster, Ogre::PixelFormat);
-}
 
-#endif
+  DataWrapper::DataWrapper(WrappedType type)
+    : mType(type)
+  {
+  }
+
+  DataWrapper::~DataWrapper()
+  {
+  }
+
+  DataWrapper::WrappedType DataWrapper::getType() const
+  {
+    return mType;
+  }
+
+  DataWrapper* DataWrapper::getChildAt(const std::string& key)
+  {
+    return const_cast<DataWrapper*>(const_cast<const DataWrapper*>(this)->getChildAt(key));
+  }
+
+  DataWrapper* DataWrapper::getChildAt(int key)
+  {
+    return const_cast<DataWrapper*>(const_cast<const DataWrapper*>(this)->getChildAt(key));
+  }
+
+  void DataWrapper::swap(const DataWrapper* other)
+  {
+    *this = *other;
+  }
+
+  std::string DataWrapper::toString() const
+  {
+    LOG(WARNING) << "To string is not supported for the type id: " << mType;
+    return "";
+  }
+
+  bool DataWrapper::fromString(const std::string& s)
+  {
+    LOG(WARNING) << "From string is not supported for the type id: " << mType;
+    return false;
+  }
+
+  void DataWrapper::makeArray()
+  {
+    // no-op by default
+  }
+}

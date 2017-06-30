@@ -65,22 +65,46 @@ namespace Gsage {
       mRootNode->rotate(rotation, Ogre::Node::TransformSpace::TS_LOCAL);
   }
 
-  void RenderComponent::lookAt(const Ogre::Vector3& position)
+  void RenderComponent::lookAt(const Ogre::Vector3& position, const RotationAxis rotationAxis, Ogre::Node::TransformSpace transformSpace)
   {
-    if(mRootNode)
-      mRootNode->lookAt(position * Ogre::Vector3(1, 0, 1) + (mRootNode->getPositionWithoutOffset() * Ogre::Vector3::UNIT_Y), Ogre::Node::TS_WORLD);
+    if(!mRootNode)
+      return;
+
+    Ogre::Vector3 axis = Ogre::Vector3::ZERO;
+
+    switch(rotationAxis) {
+      case X_AXIS:
+        axis.x = 1;
+        break;
+      case Y_AXIS:
+        axis.y = 1;
+        break;
+      case Z_AXIS:
+        axis.z = 1;
+        break;
+      default:
+        mRootNode->lookAt(position, transformSpace);
+        return;
+    }
+
+    mRootNode->lookAt(position * (Ogre::Vector3::UNIT_SCALE - axis) + (mRootNode->getPositionWithoutOffset() * axis), transformSpace);
   }
 
-  Dictionary RenderComponent::getAnimations()
+  void RenderComponent::lookAt(const Ogre::Vector3& position)
   {
-    Dictionary value;
+    lookAt(position, NONE);
+  }
+
+  DataProxy RenderComponent::getAnimations()
+  {
+    DataProxy value;
     mAnimationScheduler.dump(value);
     return value;
   }
 
-  Dictionary RenderComponent::getRootNode()
+  DataProxy RenderComponent::getRootNode()
   {
-    Dictionary value;
+    DataProxy value;
     if(mRootNode && mRootNode->hasNode())
       mRootNode->dump(value);
 
@@ -138,12 +162,12 @@ namespace Gsage {
   }
 
 
-  void RenderComponent::setResources(const Dictionary& dict)
+  void RenderComponent::setResources(const DataProxy& dict)
   {
     mResources = dict;
   }
 
-  const Dictionary& RenderComponent::getResources() const
+  const DataProxy& RenderComponent::getResources() const
   {
     return mResources;
   }

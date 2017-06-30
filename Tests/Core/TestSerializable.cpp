@@ -1,6 +1,5 @@
 #include "Serializable.h"
 #include "GsageDefinitions.h"
-#include <boost/property_tree/json_parser.hpp>
 #include <sstream>
 
 #include <gtest/gtest.h>
@@ -63,12 +62,12 @@ class StubSerializable : public Serializable<StubSerializable>
       return 0;
     }
 
-    void setNode(const Dictionary& node)
+    void setNode(const DataProxy& node)
     {
       this->node = node;
     }
 
-    Dictionary getNode()
+    DataProxy getNode()
     {
       return node;
     }
@@ -80,7 +79,7 @@ class StubSerializable : public Serializable<StubSerializable>
     bool readByAccessor;
 
     int intValue;
-    Dictionary node;
+    DataProxy node;
     NestedSerializable* nested;
 
 };
@@ -104,10 +103,10 @@ class TestSerializable : public ::testing::Test
 
 TEST_F(TestSerializable, TestSetProperty)
 {
-  Dictionary node;
+  DataProxy node;
   std::string ss =  "{\"boolValue\": true, \"floatValue\": 0.0001, \"intAccessor\": 1000, \"node\": {\"test\": 1}, \"forNested\":0}";
 
-  ASSERT_TRUE(parseJson(ss, node));
+  ASSERT_TRUE(loads(node, ss, DataWrapper::JSON_OBJECT));
   ASSERT_FALSE(mInstance->read(node));
 
   ASSERT_EQ(mInstance->boolValue, true);
@@ -134,14 +133,14 @@ TEST_F(TestSerializable, TestSetProperty)
 
 TEST_F(TestSerializable, TestReadErrors)
 {
-  Dictionary node;
+  DataProxy node;
   std::string s = "{\"boolValue\": true, \"floatValue\": 0.0001, \"intAccessor\": 1000}";
 
-  ASSERT_TRUE(parseJson(s, node));
+  ASSERT_TRUE(loads(node, s, DataWrapper::JSON_OBJECT));
   ASSERT_FALSE(mInstance->read(node));
 
   s = "{\"boolValue\": true, \"notFound\": 404, \"floatValue\": 0.0001, \"intAccessor\": 1000, \"node\": {\"test\": 1}, \"forNested\":0}";
 
-  ASSERT_TRUE(parseJson(s, node));
+  ASSERT_TRUE(loads(node, s, DataWrapper::JSON_OBJECT));
   ASSERT_TRUE(mInstance->read(node));
 }

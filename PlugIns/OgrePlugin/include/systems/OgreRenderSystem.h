@@ -64,7 +64,6 @@ namespace Ogre
 namespace Gsage
 {
   class AnimationScheduler;
-  class CameraFactory;
   class CameraController;
   class ResourceManager;
   class Entity;
@@ -89,6 +88,7 @@ namespace Gsage
   class OgreRenderSystem : public ComponentStorage<RenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public RenderSystem
   {
     public:
+      static const std::string ID;
       static const std::string CAMERA_CHANGED;
 
       OgreRenderSystem();
@@ -100,18 +100,18 @@ namespace Gsage
 
       /**
        * Intializes ogre render system
-       * @param settings Dictionary with initial settings for the render system
+       * @param settings DataProxy with initial settings for the render system
        */
-      virtual bool initialize(const Dictionary& settings);
+      virtual bool initialize(const DataProxy& settings);
 
       /**
        * Initializes RenderComponent: creates ogre node, lights and etc.
        *
        * @param component RenderComponent component to initialize
-       * @param data Dictionary with node settings
+       * @param data DataProxy with node settings
        * @returns false if failed to initialize component for some reason
        */
-      virtual bool fillComponentData(RenderComponent* component, const Dictionary& data);
+      virtual bool fillComponentData(RenderComponent* component, const DataProxy& data);
 
       /**
        * Update render system
@@ -138,14 +138,14 @@ namespace Gsage
       /**
        * Reconfigure render system
        *
-       * @param config Dictionary with configs
+       * @param config DataProxy with configs
        */
-      virtual bool configure(const Dictionary& config);
+      virtual bool configure(const DataProxy& config);
 
       /**
        * Get current configs of the system
        */
-      Dictionary& getConfig();
+      DataProxy& getConfig();
 
       // --------------------------------------------------------------------------------
       // Ogre::RenderQueueListener implementation
@@ -195,10 +195,6 @@ namespace Gsage
        * @param query Filter entities by some query, default is all
        */
       OgreEntities getEntities(const unsigned int& query = 0xFF);
-      /**
-       * Get currently active camera controller
-       */
-      CameraController* getCamera();
       /**
        * Get currently active ogre camera
        */
@@ -276,17 +272,14 @@ namespace Gsage
       Ogre::ManualMovableTextRendererFactory* mManualMovableTextParticleFactory;
       Ogre::Viewport* mViewport;
 
-      CameraController* mCameraController;
-
       OgreLogRedirect mLogRedirect;
-      CameraFactory* mCameraFactory;
       OgreObjectManager mObjectManager;
       OgreInteractionManager* mOgreInteractionManager;
       WindowEventListener* mWindowEventListener;
 
       ResourceManager* mResourceManager;
 
-      typedef std::queue<Dictionary> ComponentLoadQueue;
+      typedef std::queue<DataProxy> ComponentLoadQueue;
       ComponentLoadQueue mLoadQueue;
 
       typedef std::map<std::string, Ogre::TexturePtr> RttTextures;

@@ -52,20 +52,22 @@ namespace Gsage
   class RecastMovementSystem : public ComponentStorage<MovementComponent>, public EventSubscriber<RecastMovementSystem>
   {
     public:
+      // System class identifier
+      static const std::string ID;
       RecastMovementSystem();
       virtual ~RecastMovementSystem();
 
       /**
        * Initialize recast movement system
-       * @param settings Dictionary with recast system settings
+       * @param settings DataProxy with recast system settings
        */
-      bool initialize(const Dictionary& settings);
+      bool initialize(const DataProxy& settings);
       /**
        * Builds component instance
        * @param component MovementComponent instance to build
        * @param data Object with all settings
        */
-      bool fillComponentData(MovementComponent* component, const Dictionary& data);
+      bool fillComponentData(MovementComponent* component, const DataProxy& data);
       /**
        * Update movement component
        * @param component Movement component pointer

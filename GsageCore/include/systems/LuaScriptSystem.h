@@ -44,19 +44,26 @@ namespace Gsage
   class LuaScriptSystem : public ComponentStorage<ScriptComponent>
   {
     public:
+      static const std::string ID;
       LuaScriptSystem();
       virtual ~LuaScriptSystem();
 
       /**
        * @copydoc EngineSystem::initialize()
        */
-      virtual bool initialize(const Dictionary& settings);
+      virtual bool initialize(const DataProxy& settings);
+
+      /**
+       * @copydoc EngineSystem::configure()
+       */
+      virtual void configUpdated();
+
       /**
        * Registers the script in the script system
        * @param component ScriptComponent that contains all stuff
-       * @param data Dictionary with the script serialized data
+       * @param data DataProxy with the script serialized data
        */
-      bool fillComponentData(ScriptComponent* component, const Dictionary& data);
+      bool fillComponentData(ScriptComponent* component, const DataProxy& data);
 
       /**
        * Initialize script system with the specified lua state
@@ -99,6 +106,23 @@ namespace Gsage
       bool runScript(ScriptComponent* component, const std::string& script);
 
       /**
+       * Run script in the LuaScriptSystem
+       *
+       * @param script Script string or file to run
+       * @returns sol::protected_function_result
+       */
+      bool runScript(const std::string& script);
+
+      /**
+       * Run function in the LuaScriptSystem for the component
+       *
+       * @param component Target component
+       * @param func Function to run
+       * @returns true if succeed
+       */
+      bool runFunction(ScriptComponent* component, sol::protected_function func);
+
+      /**
        * Add lua function which will be called on each update of the system
        * @param function Sol function object, only LUA_TFUNCTION will be added as listener
        */
@@ -110,7 +134,12 @@ namespace Gsage
        */
       bool removeUpdateListener(const sol::object& function);
 
+      /**
+       * Unload components.
+       */
+      void unloadComponents();
     private:
+      std::string getScriptData(const std::string& data);
 
       sol::state_view* mState;
 

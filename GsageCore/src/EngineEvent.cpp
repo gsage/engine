@@ -33,6 +33,8 @@ namespace Gsage {
 
   const std::string EngineEvent::HALT = "halt";
 
+  const std::string SettingsEvent::UPDATE = "update";
+
   const std::string SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
 
   const std::string SystemChangeEvent::SYSTEM_REMOVED = "systemRemoved";
@@ -54,6 +56,16 @@ namespace Gsage {
   }
 
   EngineEvent::~EngineEvent()
+  {
+  }
+
+  SettingsEvent::SettingsEvent(const std::string& type, const DataProxy& settings)
+    : Event(type)
+    , settings(settings)
+  {
+  }
+
+  SettingsEvent::~SettingsEvent()
   {
   }
 

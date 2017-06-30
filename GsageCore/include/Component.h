@@ -58,9 +58,9 @@ namespace Gsage
       /**
        * Get serialized component variables
        */
-      virtual Dictionary getNode()
+      virtual DataProxy getNode()
       {
-        Dictionary node;
+        DataProxy node;
         dump(node);
         return node;
       };

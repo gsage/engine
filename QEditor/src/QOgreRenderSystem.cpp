@@ -65,7 +65,7 @@ namespace Gsage {
     mOgreContext->create();
   }
 
-  bool QOgreRenderSystem::initialize(const Dictionary& settings)
+  bool QOgreRenderSystem::initialize(const DataProxy& settings)
   {
     activateOgreContext();
     bool res = OgreRenderSystem::initialize(settings);
@@ -77,7 +77,7 @@ namespace Gsage {
     return res;
   }
 
-  bool QOgreRenderSystem::configure(const Dictionary& config)
+  bool QOgreRenderSystem::configure(const DataProxy& config)
   {
     activateOgreContext();
     bool res = OgreRenderSystem::configure(config);
@@ -85,7 +85,7 @@ namespace Gsage {
     return res;
   }
 
-  bool QOgreRenderSystem::fillComponentData(RenderComponent* component, const Dictionary& data)
+  bool QOgreRenderSystem::fillComponentData(RenderComponent* component, const DataProxy& data)
   {
     activateOgreContext();
     bool res = OgreRenderSystem::fillComponentData(component, data);

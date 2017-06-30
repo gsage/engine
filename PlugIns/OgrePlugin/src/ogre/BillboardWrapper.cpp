@@ -45,7 +45,7 @@ namespace Gsage {
     BIND_ACCESSOR_OPTIONAL("index", &BillboardWrapper::setTexcoordIndex, &BillboardWrapper::getTexcoordIndex);
   }
 
-  bool BillboardWrapper::initialize(const Dictionary& dict, Ogre::BillboardSet* billboardSet)
+  bool BillboardWrapper::initialize(const DataProxy& dict, Ogre::BillboardSet* billboardSet)
   {
     mBillboardSet = billboardSet;
     return Serializable<BillboardWrapper>::read(dict);
@@ -181,7 +181,7 @@ namespace Gsage {
   {
   }
 
-  bool BillboardSetWrapper::read(const Dictionary& dict)
+  bool BillboardSetWrapper::read(const DataProxy& dict)
   {
     mObject = mSceneManager->createBillboardSet();
     bool res = OgreObject::read(dict);
@@ -229,7 +229,7 @@ namespace Gsage {
     return mObject->getMaterialName();
   }
 
-  void BillboardSetWrapper::setBillboards(const Dictionary& dict)
+  void BillboardSetWrapper::setBillboards(const DataProxy& dict)
   {
     for(auto& pair : dict)
     {
@@ -239,12 +239,12 @@ namespace Gsage {
     }
   }
 
-  Dictionary BillboardSetWrapper::getBillboards()
+  DataProxy BillboardSetWrapper::getBillboards()
   {
-    Dictionary res;
+    DataProxy res;
     for(auto& bb : mBillboards)
     {
-      Dictionary bbData;
+      DataProxy bbData;
       bb.dump(bbData);
       res.push(bbData);
     }

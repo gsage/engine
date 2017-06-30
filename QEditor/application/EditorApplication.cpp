@@ -84,7 +84,7 @@ namespace Gsage {
       QCoreApplication::exit();
     }
 
-    auto projectManagerConfig = mConfig.get<Dictionary>("projectManager");
+    auto projectManagerConfig = mConfig.get<DataProxy>("projectManager");
     if(!projectManagerConfig.second)
     {
       LOG(ERROR) << "No projectManager configs found in config file";
@@ -145,7 +145,7 @@ namespace Gsage {
 
   bool EditorApplication::loadProject(const QString& projectFilePath)
   {
-    Dictionary projectConfig;
+    DataProxy projectConfig;
     if(!mProjectManager->loadProject(projectFilePath, projectConfig))
     {
       return false;
@@ -154,7 +154,7 @@ namespace Gsage {
     QFileInfo projectFileInfo(projectFilePath);
     QString gameConfig(projectConfig.get("configPath", "gameConfig.json").c_str());
     QString resourcePath(projectFileInfo.absolutePath().append(QDir::separator()).append("resources"));
-    mConfigOverride.put("render", mConfig.get<Dictionary>("render", Dictionary()));
+    mConfigOverride.put("render", mConfig.get<DataProxy>("render", DataProxy()));
 
     initEngine("renderWindow", gameConfig, resourcePath);
     return true;

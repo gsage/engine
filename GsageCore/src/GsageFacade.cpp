@@ -24,6 +24,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include <unistd.h>
 #include "GsageFacade.h"
 #include "UIManager.h"
 #include "Logger.h"
@@ -66,8 +67,8 @@ namespace Gsage {
     mLuaInterface = new LuaInterface(this);
 
     // Register core system factories
-    registerSystemFactory<CombatSystem>("dynamicStats");
-    mSystemManager.registerFactory("lua", new LuaScriptSystemFactory(mLuaInterface));
+    registerSystemFactory<CombatSystem>();
+    mSystemManager.registerFactory(LuaScriptSystem::ID, new LuaScriptSystemFactory(mLuaInterface));
   }
 
 
@@ -100,7 +101,7 @@ namespace Gsage {
 
   bool GsageFacade::initialize(const std::string& rsageConfigPath,
       const std::string& resourcePath,
-      Dictionary* configOverride,
+      DataProxy* configOverride,
       FileLoader::Encoding configEncoding)
   {
     assert(mStarted == false);
@@ -108,11 +109,11 @@ namespace Gsage {
 
     std::string configPath = resourcePath + GSAGE_PATH_SEPARATOR + rsageConfigPath;
 
-    Dictionary environment;
+    DataProxy environment;
     environment.put("workdir", resourcePath);
-    FileLoader::init(configEncoding, Dictionary());
+    FileLoader::init(configEncoding, DataProxy());
 
-    if(!FileLoader::getSingletonPtr()->load(configPath, Dictionary(), mConfig))
+    if(!FileLoader::getSingletonPtr()->load(configPath, DataProxy(), mConfig))
     {
       return false;
     }
@@ -128,7 +129,7 @@ namespace Gsage {
 
     if (configOverride != 0)
     {
-      unionDict(mConfig, *configOverride);
+      mergeInto(mConfig, *configOverride);
     }
 
     addEventListener(&mEngine, EngineEvent::HALT, &GsageFacade::onEngineHalt);
@@ -148,13 +149,13 @@ namespace Gsage {
 
     if(mConfig.count(PLUGINS_SECTION) != 0)
     {
-      for(auto& pair : mConfig.get<Dictionary>(PLUGINS_SECTION).first)
+      for(auto& pair : mConfig.get<DataProxy>(PLUGINS_SECTION).first)
       {
         loadPlugin(pair.second.as<std::string>());
       }
     }
 
-    auto systems = mConfig.get<Dictionary>("systems");
+    auto systems = mConfig.get<DataProxy>("systems");
     if(systems.second) {
       for(auto pair : systems.first) {
         auto id = pair.second.getValue<std::string>();
@@ -224,6 +225,8 @@ namespace Gsage {
     mEngine.update(frameTime);
     mInputManager.update(frameTime);
     mPreviousUpdateTime = now;
+    usleep(16000 - frameTime);
+
     return !mStopped;
   }
 

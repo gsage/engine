@@ -27,7 +27,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "Dictionary.h"
+#include "DataProxy.h"
 
 namespace Gsage {
   class FileLoader
@@ -38,7 +38,7 @@ namespace Gsage {
         Json
       };
 
-      FileLoader(Encoding format, const Dictionary& environment);
+      FileLoader(Encoding format, const DataProxy& environment);
       virtual ~FileLoader();
 
       /**
@@ -57,16 +57,16 @@ namespace Gsage {
        * @param format: format to use for the file loading
        * @param environment: environment for the application
        */
-      static void init(FileLoader::Encoding format, const Dictionary& environment);
+      static void init(FileLoader::Encoding format, const DataProxy& environment);
 
       /**
        * Load file with environment and params
        *
        * @param path: path to file
        * @param params: parameters
-       * @param dest: Dictionary to load into
+       * @param dest: DataProxy to load into
        */
-      bool load(const std::string& path, const Dictionary& params, Dictionary& dest) const;
+      bool load(const std::string& path, const DataProxy& params, DataProxy& dest) const;
 
       /**
        * Load file with environment and params
@@ -74,14 +74,14 @@ namespace Gsage {
        * @param path: path to file
        * @param params: parameters
        */
-      std::pair<Dictionary, bool> load(const std::string& path, const Dictionary& params) const;
+      std::pair<DataProxy, bool> load(const std::string& path, const DataProxy& params) const;
 
       /**
        * Load file with environment
        *
        * @param path: path to file
        */
-      std::pair<Dictionary, bool> load(const std::string& path) const;
+      std::pair<DataProxy, bool> load(const std::string& path) const;
 
       /**
        * Dump file to disk
@@ -89,14 +89,14 @@ namespace Gsage {
        * @param path: path to file
        * @param value: value to dump
        */
-      void dump(const std::string& path, const Dictionary& value) const;
+      void dump(const std::string& path, const DataProxy& value) const;
 
     private:
       std::pair<std::string, bool> loadFile(const std::string& path) const;
-      bool parse(const std::string& data, Dictionary& dest) const;
+      bool parse(const std::string& data, DataProxy& dest) const;
 
       Encoding mFormat;
-      Dictionary mEnvironment;
+      DataProxy mEnvironment;
 
       static FileLoader* mInstance;
   };

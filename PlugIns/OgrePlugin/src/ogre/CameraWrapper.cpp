@@ -36,16 +36,28 @@ namespace Gsage {
     : mTarget("")
     , mViewport(0)
     , mWindow(0)
+    , mIsActive(false)
   {
     BIND_ACCESSOR_WITH_PRIORITY("name", &CameraWrapper::createCamera, &CameraWrapper::getName, 1);
 
     BIND_PROPERTY("target", &mTarget);
     BIND_ACCESSOR("bgColour", &CameraWrapper::setBgColour, &CameraWrapper::getBgColour);
     BIND_ACCESSOR("clipDistance", &CameraWrapper::setClipDistance, &CameraWrapper::getClipDistance);
+    BIND_ACCESSOR("orientation", &CameraWrapper::setOrientation, &CameraWrapper::getOrientation);
   }
 
   CameraWrapper::~CameraWrapper()
   {
+  }
+
+  const Ogre::Quaternion& CameraWrapper::getOrientation() const
+  {
+    return static_cast<const Ogre::Camera*>(mObject)->getOrientation();
+  }
+
+  void CameraWrapper::setOrientation(const Ogre::Quaternion& orientation)
+  {
+    getCamera()->setOrientation(orientation);
   }
 
   void CameraWrapper::attach(Ogre::Viewport* viewport) {
@@ -60,6 +72,8 @@ namespace Gsage {
     camera->setAspectRatio(
         float(mViewport->getActualWidth()) / float(mViewport->getActualHeight()));
     mViewport->setCamera(camera);
+    mIsActive = true;
+    LOG(INFO) << "Attached camera to viewport";
   }
 
   void CameraWrapper::createCamera(const std::string& name)
@@ -67,7 +81,8 @@ namespace Gsage {
     mObjectId = name;
     LOG(TRACE) << "Create camera with id " << name;
     // toss camera object to the movable wrapper
-    mObject = mSceneManager->createCamera("name");
+    mObject = mSceneManager->createCamera(name);
+    attachObject(mObject);
   }
 
   Ogre::Camera* CameraWrapper::getCamera()
@@ -101,5 +116,10 @@ namespace Gsage {
   float CameraWrapper::getClipDistance()
   {
     return getCamera()->getNearClipDistance();
+  }
+
+  bool CameraWrapper::isActive() const
+  {
+    return mIsActive;
   }
 }

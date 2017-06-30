@@ -52,7 +52,7 @@ namespace Gsage {
     qDeleteAll(mTemplates);
   }
 
-  bool ProjectManager::initialize(const Dictionary& settings)
+  bool ProjectManager::initialize(const DataProxy& settings)
   {
     const std::string defaultProjectImage = settings.get("defaultProjectImage", "");
 
@@ -65,7 +65,7 @@ namespace Gsage {
     mTemplatesFolder = templatesFolder.first;
 
     // TODO: maybe it is better to iterate all project templates in the templates directory
-    auto templates = settings.get<Dictionary>("projectTemplates");
+    auto templates = settings.get<DataProxy>("projectTemplates");
     if(templates.second)
     {
       for(auto& pair : templates.first)
@@ -94,7 +94,7 @@ namespace Gsage {
     QString path = QDir(mTemplatesFolder.c_str()).filePath(templateFile.append(".json"));
     CreationStatus status = UNKNOWN;
 
-    Dictionary createInstructions;
+    DataProxy createInstructions;
 
     if(!readJson(path.toStdString(), createInstructions)) {
       LOG(ERROR) << "Failed to parse template file: " << path.toStdString();
@@ -126,7 +126,7 @@ namespace Gsage {
       directory.mkpath(".");
     }
 
-    auto resources = createInstructions.get<Dictionary>("resources");
+    auto resources = createInstructions.get<DataProxy>("resources");
     if (resources.second)
     {
       for (auto pair : resources.first)
@@ -163,7 +163,7 @@ namespace Gsage {
       }
     }
 
-    Dictionary projectConfig;
+    DataProxy projectConfig;
     if(!writeJson(projectSettingsFile.toStdString(), projectConfig))
     {
       return PROJECT_FILE_CREATION_FAILED;
@@ -189,7 +189,7 @@ namespace Gsage {
     return levels;
   }
 
-  bool ProjectManager::loadProject(QString projectFilePath, Dictionary& configs)
+  bool ProjectManager::loadProject(QString projectFilePath, DataProxy& configs)
   {
     if(!readJson(projectFilePath.toStdString(), configs))
     {

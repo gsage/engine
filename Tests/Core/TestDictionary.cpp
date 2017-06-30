@@ -214,9 +214,14 @@ TEST_F(TestJsonSerialization, TestDumpToJson)
 TEST_F(TestJsonSerialization, TestMsgpack)
 {
   std::string str = dumpMsgPack(mDictionary);
-  auto pair = parseMsgPack(str);
-  ASSERT_TRUE(pair.second);
-  mDictionary = pair.first;
+  std::pair<Dictionary, bool> pair;
+  try{
+    pair = parseMsgPack(str);
+    ASSERT_TRUE(pair.second);
+    mDictionary = pair.first;
+  } catch(std::exception e) {
+    LOG(INFO) << e.what();
+  }
   check();
   // check file write + read
   std::ofstream os("resources/test.msgpack");
@@ -228,4 +233,75 @@ TEST_F(TestJsonSerialization, TestMsgpack)
   pair = parseMsgPack(is);
   ASSERT_TRUE(pair.second);
   check();
+}
+
+class TestAccessPolicies : public ::testing::Test
+{
+  public:
+    /**
+     * Write to void* and then read
+     */
+    template<typename P, typename T>
+    void* writeAndRead(T value)
+    {
+      detail::AccessPolicy* policy = detail::AccessPolicyFactory<P>::getPolicy();
+
+      // copy
+      policy->copyFromValue(value, &mValue);
+
+      return policy->getValue(&mValue);
+    }
+
+    void* mValue;
+};
+
+TEST_F(TestAccessPolicies, TestConstChar)
+{
+  // create const char
+  const char* c = "abcd";
+  ASSERT_EQ(std::string(reinterpret_cast<const char*>(writeAndRead<const char*>(c))), "abcd");
+}
+
+TEST_F(TestAccessPolicies, TestArray)
+{
+  detail::AccessPolicy* policy = detail::AccessPolicyFactory<char[5]>::getPolicy();
+
+  // copy
+  policy->copyFromValue("abcd", &mValue);
+
+  ASSERT_EQ(std::string(reinterpret_cast<const char*>(mValue)), "abcd");
+}
+
+TEST_F(TestAccessPolicies, TestInt)
+{
+  // create int variable
+  int i = 1000;
+  ASSERT_EQ(*reinterpret_cast<int*>(writeAndRead<int>(&i)), i);
+}
+
+TEST_F(TestAccessPolicies, TestBigAccessPolicy)
+{
+  // create string variable
+  std::string s = "aaaa";
+  ASSERT_EQ(*reinterpret_cast<std::string*>(writeAndRead<std::string>(&s)), s);
+}
+
+class Fake
+{
+  public:
+    Fake(int a) : a(a) {}
+    virtual ~Fake() {}
+    int a;
+};
+
+TEST_F(TestAccessPolicies, TestPointers)
+{
+  // create string variable
+  Fake* f = new Fake(1);
+  detail::AccessPolicy* policy = detail::AccessPolicyFactory<Fake*>::getPolicy();
+
+  // copy
+  policy->copyFromValue(&f, &mValue);
+
+  ASSERT_EQ(reinterpret_cast<Fake*>(mValue), f);
 }

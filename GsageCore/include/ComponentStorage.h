@@ -44,7 +44,7 @@ namespace Gsage
         virtual ~ComponentStorage() {};
 
         /**
-         * Does some manipulations before reading Dictionary
+         * Does some manipulations before reading DataProxy
          * @param component Component to prepare
          * @returns true if succeed
          */
@@ -55,10 +55,10 @@ namespace Gsage
 
         /**
          * Create component in the storage
-         * @param data Dictionary to get values from
+         * @param data DataProxy to get values from
          * @param owner Entity, that owns the instance
          */
-        EntityComponent* createComponent(const Dictionary& data, Entity* owner)
+        EntityComponent* createComponent(const DataProxy& data, Entity* owner)
         {
           T* c = allocateComponent();
           c->setOwner(owner);
@@ -74,11 +74,11 @@ namespace Gsage
         /**
          * Fill component data from data node
          * @param component Component to fill
-         * @param data Dictionary to read
+         * @param data DataProxy to read
          *
          * @returns fill succeed
          */
-        virtual bool fillComponentData(T* component, const Dictionary& data) { return true; };
+        virtual bool fillComponentData(T* component, const DataProxy& data) { return true; };
         /**
          * Remove component by base class
          * @param component Pointer to the component for removal

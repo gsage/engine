@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include <map>
 
 #include "GsageDefinitions.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 #include "ObjectPool.h"
 #include "Logger.h"
 #include "EventDispatcher.h"
@@ -74,32 +74,32 @@ namespace Gsage {
       OgreObjectManager();
       virtual ~OgreObjectManager();
 
-      OgreObject* create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity);
+      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity);
 
       /**
-       * Create object from the Dictionary
-       * @param dict Dictionary with all values (dict should contain type field)
+       * Create object from the DataProxy
+       * @param dict DataProxy with all values (dict should contain type field)
        * @param owner Owner entity of the created object
        * @param sceneManager Ogre::SceneManager to create object in
        * @param parent Parent object to attach to
        * */
-      OgreObject* create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent = 0);
+      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent = 0);
 
       /**
-       * Create object from the Dictionary
-       * @param dict Dictionary with all values
+       * Create object from the DataProxy
+       * @param dict DataProxy with all values
        * @param owner Owner entity of the created object
        * @param sceneManager Ogre::SceneManager to create object in
        * @param type Object type string, defined explicitly
        * @param parent Parent object to attach to
        */
-      OgreObject* create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent = 0);
+      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent = 0);
 
       /**
        * @see OgreObjectManager::create
        */
       template<typename C>
-      C* create(const Dictionary& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent = 0)
+      C* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, Ogre::SceneNode* parent = 0)
       {
         return static_cast<C*>(create(dict, owner, sceneManager, C::TYPE, parent));
       }

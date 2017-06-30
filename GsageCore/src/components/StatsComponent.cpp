@@ -44,6 +44,7 @@ namespace Gsage {
   const std::string StatsComponent::SYSTEM = "combat";
 
   StatsComponent::StatsComponent()
+    : mStats(DataProxy::create(DataWrapper::JSON_OBJECT))
   {
   }
 
@@ -57,15 +58,20 @@ namespace Gsage {
     return mStats.count(id) != 0;
   }
 
-  bool StatsComponent::read(const Dictionary& dict)
+  bool StatsComponent::read(const DataProxy& dict)
   {
-    mStats = dict;
+    dict.dump(mStats, DataProxy::ForceCopy);
     return true;
   }
 
-  bool StatsComponent::dump(Dictionary& dict)
+  DataProxy& StatsComponent::data()
   {
-    dict = mStats;
+    return mStats;
+  }
+
+  bool StatsComponent::dump(DataProxy& dict)
+  {
+    mStats.dump(dict, DataProxy::ForceCopy);
     return true;
   }
 

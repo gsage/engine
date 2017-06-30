@@ -8,9 +8,11 @@ Bindings
 
 :cpp:class:`Gsage::Serializable` is a convenient base class which can be used
 to tell the Gsage Engine how the cpp object, which does not have any reflection
-and dynamic properties/methods lookup, can be converted into a :cpp:class:`Gsage::Dictionary`.
+and dynamic properties/methods lookup, can be converted into a :cpp:class:`Gsage::DataProxy`.
 
-:cpp:class:`Gsage::Dictionary` can be converted to :code:`json` and :code:`msgpack`.
+:cpp:class:`Gsage::DataProxy` can be converted to :code:`json` and :code:`msgpack`.
+Also it can wrap :code:`sol::table`, including decoding any data into it.
+Lua can pass :code:`sol::table` directly into the engine and it will be wrapped by the :cpp:class:`Gsage::DataProxy`.
 
 When you derive class from the :cpp:class:`Gsage::Serializable`, you should tell it what
 kind of properties you want to dump and read and how.
@@ -25,6 +27,7 @@ There are several macros for that:
 .. doxygendefine:: BIND_ACCESSOR_OPTIONAL
 .. doxygendefine:: BIND_GETTER
 .. doxygendefine:: BIND_GETTER_OPTIONAL
+.. doxygendefine:: BIND_SETTER_OPTIONAL
 .. doxygendefine:: BIND_READONLY_PROPERTY
 .. doxygendefine:: BIND_WRITEONLY_PROPERTY
 
@@ -56,5 +59,5 @@ Read and Dump
 After the bindings are defined, it will be possible to use :cpp:func:`Gsage::Serializable::dump` and :cpp:func:`Gsage::Serializable::read`
 functions.
 
-* :cpp:func:`Gsage::Serializable::read` - will allow to convert :cpp:class:`Gsage::Dictionary` to the class. It will return :code:`false` if any of non-Optional field is missing from the dict.
-* :cpp:func:`Gsage::Serializable::dump` - will allow to convert the class :cpp:class:`Gsage::Dictionary`.
+* :cpp:func:`Gsage::Serializable::read` - will allow to convert :cpp:class:`Gsage::DataProxy` to the class. It will return :code:`false` if any of non-Optional field is missing from the dict.
+* :cpp:func:`Gsage::Serializable::dump` - will allow to convert the class :cpp:class:`Gsage::DataProxy`.

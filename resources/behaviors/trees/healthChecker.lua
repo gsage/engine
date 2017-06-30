@@ -29,7 +29,7 @@ local function attack(self, context)
   end
   local aspd = self:stats():getNumber('aspd', 1)
 
-  self:render():lookAt(context.target:render().position)
+  self:render():lookAt(context.target:render().position, RenderComponent.Y_AXIS, OgreNode.TS_WORLD)
   local anims = {"attack1", "attack2"}
   self:render():playAnimation(anims[math.random(2)], 1, 1*aspd, 0, false)
   async.waitSeconds(0.43/aspd)

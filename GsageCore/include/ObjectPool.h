@@ -58,13 +58,14 @@ namespace Gsage {
         mNodeCapacity(initialCapacity),
         mFirstNode(initialCapacity),
         mMaxBlockLength(maxBlockLength)
-    {
-      if (mMaxBlockLength < 1)
-        throw std::invalid_argument("mMaxBlockLength must be at least 1.");
+      {
+        if (mMaxBlockLength < 1)
+          throw std::invalid_argument("mMaxBlockLength must be at least 1.");
 
-      mNodeMemory = mFirstNode.memory;
-      mLastNode = &mFirstNode;
-    }
+        mNodeMemory = mFirstNode.memory;
+        mLastNode = &mFirstNode;
+      }
+
       ~ObjectPool()
       {
         Node *node = mFirstNode.nextNode;
@@ -82,7 +83,14 @@ namespace Gsage {
       T* create()
       {
         T* address = getAddress();
-        return new(address) T();
+        return new (address) T();
+      }
+
+      template<class ... Types>
+      T* create(Types ... args)
+      {
+        T* address = getAddress();
+        return new (address) T(args...);
       }
 
       /**

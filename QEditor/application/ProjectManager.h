@@ -28,7 +28,7 @@ THE SOFTWARE.
 #define _ProjectManager_H_
 
 #include "GsageDefinitions.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 #include <QObject>
 #include <QQmlListProperty>
 
@@ -119,16 +119,16 @@ namespace Gsage {
        * Initialize project manager:
        * - load all project templates
        * - load recent projects
-       * @param settings Dictionary with all project manager settings
+       * @param settings DataProxy with all project manager settings
        */
-      bool initialize(const Dictionary& settings);
+      bool initialize(const DataProxy& settings);
 
       /**
        * Load project
        * @param projectFilePath Project file path
-       * @param configs Project will be read in this Dictionary
+       * @param configs Project will be read in this DataProxy
        */
-      bool loadProject(QString projectFilePath, Dictionary& configs);
+      bool loadProject(QString projectFilePath, DataProxy& configs);
 
       /**
        * Get project manager default working directory

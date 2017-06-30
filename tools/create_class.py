@@ -3,7 +3,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2017 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 """
 import argparse
-import sys
 import os
 import re
 
@@ -41,7 +40,7 @@ parser.add_argument('-ct', '--src-template', dest="src_template", default=os.pat
 parser.add_argument('-of', '--one-folder', dest="one_folder", default=False, action='store_true')
 
 # vars
-args = parser.parse_args();
+args = parser.parse_args()
 folder_path = args.folder
 module_path = args.module
 

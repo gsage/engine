@@ -78,6 +78,7 @@ namespace Gsage {
   class ConcreteSystemFactory : public SystemFactory
   {
     public:
+      typedef S systemType;
       ConcreteSystemFactory()
       {
         if(!std::is_base_of<EngineSystem, S>::value) {

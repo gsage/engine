@@ -36,7 +36,12 @@ namespace Gsage  {
 
   LuaEventProxy::~LuaEventProxy()
   {
-
+    for(auto& pair : mCallbackBindings) {
+      for(auto cb : pair.second) {
+        delete cb;
+      }
+    }
+    mCallbackBindings.clear();
   }
 
   bool LuaEventProxy::addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
@@ -46,7 +51,7 @@ namespace Gsage  {
 
     Callbacks* cb = getCallbacks(dispatcher, eventType);
     Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);
-    callbacks.push_back(callback.as<sol::protected_function>());
+    callbacks.push_back(new GenericCallback(callback.as<sol::protected_function>()));
     return true;
   }
 
@@ -63,6 +68,7 @@ namespace Gsage  {
     if(iter == callbacks->end())
       return false;
 
+    delete *iter;
     callbacks->erase(iter);
     if(callbacks->size() == 0)
     {
@@ -79,16 +85,16 @@ namespace Gsage  {
     Callbacks* callbacks = getCallbacks(sender, event.getType());
     if(callbacks != 0)
     {
-      for(sol::protected_function& callback : (*callbacks))
+      for(auto& callback : (*callbacks))
       {
-        if(!callback.valid())
+        if(!callback->valid())
         {
-          removeEventListener(sender, event.getType(), callback);
+          removeEventListener(sender, event.getType(), callback->func());
           LOG(ERROR) << "Failed to call " << event.getType() << " listener invalid, removed from subscribers";
           continue;
         }
         std::string error;
-        auto res = callback(std::ref(event));
+        auto res = (*callback)(event);
         if(!res.valid()) {
           sol::error err = res;
           error = err.what();
@@ -96,7 +102,7 @@ namespace Gsage  {
 
         if(!error.empty())
         {
-          removeEventListener(sender, event.getType(), callback);
+          removeEventListener(sender, event.getType(), callback->func());
           LOG(ERROR) << "Failed to call " << event.getType() << " listener: " << error  << ", removed from subscribers";
         }
       }

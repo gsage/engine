@@ -44,7 +44,7 @@ class AccelerationSystem : public ComponentStorage<AccelerationComponent>
 
     }
 
-    bool fillComponentData(AccelerationComponent* c, const Dictionary& data)
+    bool fillComponentData(AccelerationComponent* c, const DataProxy& data)
     {
       c->value = data.get<double>("acceleration").first;
       return true;
@@ -63,7 +63,7 @@ class TestSystem : public ComponentStorage<SpeedComponent>
       component->value *= mEngine->getComponent<AccelerationComponent>(*entity, "accelerator")->value;
     }
 
-    bool fillComponentData(SpeedComponent* c, const Dictionary& data)
+    bool fillComponentData(SpeedComponent* c, const DataProxy& data)
     {
       c->value = data.get<double>("speed").first;
       return true;
@@ -91,9 +91,9 @@ TEST_F(TestEngine, TestAddSystem)
   TestSystem system;
   mInstance->addSystem("speed", &system);
   mInstance->addSystem("accelerator", new AccelerationSystem());
-  Dictionary entityData;
-  Dictionary speed;
-  Dictionary accelerator;
+  DataProxy entityData;
+  DataProxy speed;
+  DataProxy accelerator;
   speed.put("speed", 2.0);
   accelerator.put("acceleration", 1.5);
 
@@ -101,7 +101,7 @@ TEST_F(TestEngine, TestAddSystem)
   entityData.put("speed", speed);
   entityData.put("accelerator", accelerator);
 
-  Dictionary entityData2;
+  DataProxy entityData2;
   entityData2.put("id", "test2");
   entityData2.put("speed", speed);
   entityData2.put("accelerator", accelerator);
@@ -134,9 +134,9 @@ TEST_F(TestEngine, TestEntityAddFailure)
   TestSystem system;
   mInstance->addSystem("speed", &system);
   mInstance->addSystem("accelerator", new AccelerationSystem());
-  Dictionary entityData;
-  Dictionary speed;
-  Dictionary accelerator;
+  DataProxy entityData;
+  DataProxy speed;
+  DataProxy accelerator;
   speed.put("speed", 2.0);
   accelerator.put("acceleration", 1.5);
 

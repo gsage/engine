@@ -39,20 +39,20 @@ EngineSystem::~EngineSystem()
 {
 }
 
-bool EngineSystem::configure(const Dictionary& config)
+bool EngineSystem::configure(const DataProxy& config)
 {
-  unionDict(mConfig, config);
+  mergeInto(mConfig, config);
   mEnabled = mConfig.get("enabled", true);
   mConfigDirty = true;
   return true;
 }
 
-const Dictionary& EngineSystem::getConfig()
+const DataProxy& EngineSystem::getConfig()
 {
   return mConfig;
 }
 
-bool EngineSystem::initialize(const Dictionary& settings)
+bool EngineSystem::initialize(const DataProxy& settings)
 {
   mConfig = settings;
   return mReady = true;
@@ -79,7 +79,7 @@ void EngineSystem::setEnabled(bool value)
   mConfig.put("enabled", value);
 }
 
-const Dictionary& EngineSystem::getSystemInfo() const
+const DataProxy& EngineSystem::getSystemInfo() const
 {
   return mSystemInfo;
 }

@@ -29,20 +29,65 @@ THE SOFTWARE.
 
 #include "EventSubscriber.h"
 #include "GsageDefinitions.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 #include "Engine.h"
+#include "sol.hpp"
 
 struct lua_State;
-
-namespace sol
-{
-  class state_view;
-}
 
 namespace Ogre
 {
   class Vector3;
 }
+
+namespace sol
+{
+  // Gsage::DataProxy can be converted to the lua table in a very simple way
+  template <>
+  struct lua_type_of<Gsage::DataProxy> : std::integral_constant<sol::type, sol::type::table> {};
+
+  // Now, specialize various stack structures
+  namespace stack {
+
+    template <>
+    struct checker<Gsage::DataProxy> {
+      template <typename Handler>
+        static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+          // indices can be negative to count backwards from the top of the stack,
+          // rather than the bottom up
+          // to deal with this, we adjust the index to
+          // its absolute position using the lua_absindex function
+          int absolute_index = lua_absindex(L, index);
+          // Check first and second second index for being the proper types
+          bool success = stack::check<sol::table>(L, absolute_index, handler);
+          tracking.use(1);
+          return success;
+        }
+    };
+
+    template <>
+    struct getter<Gsage::DataProxy> {
+      static Gsage::DataProxy get(lua_State* L, int index, record& tracking) {
+        int absolute_index = lua_absindex(L, index);
+        sol::table t = stack::get<sol::table>(L, absolute_index);
+        Gsage::DataProxy dp = Gsage::DataProxy::create(t);
+        tracking.use(1);
+        return dp;
+      }
+    };
+
+    template <>
+    struct pusher<Gsage::DataProxy> {
+      static int push(lua_State* L, const Gsage::DataProxy& value) {
+        sol::table t = sol::state_view(L).create_table();
+        Gsage::DataProxy dp = Gsage::DataProxy::wrap(t);
+        value.dump(dp);
+        t.push();
+        return 1;
+      }
+    };
+  }
+} // sol
 
 namespace Gsage
 {
@@ -113,9 +158,13 @@ namespace Gsage
       DataManagerProxy(GameDataManager* instance);
       virtual ~DataManagerProxy();
       /**
-       * @see GameDataManager::createEntity(const std::string&, const Dictionary& params)
+       * @see GameDataManager::createEntity(const DataProxy& params)
        */
-      Entity* createEntity(const std::string& templateFile, Dictionary params);
+      Entity* createEntity(DataProxy params);
+      /**
+       * @see GameDataManager::createEntity(const std::string&, const DataProxy& params)
+       */
+      Entity* createEntity(const std::string& templateFile, DataProxy params);
       /**
        * @see GameDataManager::createEntity(const std::string&)
        */
@@ -162,6 +211,16 @@ namespace Gsage
        * @param path Path to folder with resources
        */
       void setResourcePath(const std::string& path);
+
+      /**
+       * Register new event type
+       *
+       * @param name Lua event class name
+       * @param handler Name of handler to create
+       * @param ut Bindings
+       */
+      template<class T>
+      void registerEvent(const std::string& name, const std::string& handler, sol::usertype<T> ut);
     private:
       void closeLuaState();
       GsageFacade* mInstance;

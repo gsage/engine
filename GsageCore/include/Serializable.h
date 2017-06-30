@@ -28,7 +28,7 @@ THE SOFTWARE.
 #define __SERIALIZABLE_H__
 
 #include "GsageDefinitions.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 #include <map>
 
 /**
@@ -83,6 +83,14 @@ THE SOFTWARE.
 #define BIND_ACCESSOR_OPTIONAL(name, setter, getter) registerProperty(name, this, setter, getter, Optional)
 
 /**
+ * Bind using setter. Tries to read value only
+ *
+ * @param name String id to read from/dump to
+ * @param setter Setter function
+ */
+#define BIND_SETTER_OPTIONAL(name, setter) registerSetter(name, this, setter, Optional)
+
+/**
  * Bind using getter. Property will be dumped only
  *
  * @param name String id to read from/dump to
@@ -125,7 +133,7 @@ namespace Gsage
 {
 
   template<typename Type>
-  inline bool get(const Dictionary& dict, const std::string& id, Type& dest)
+  inline bool get(const DataProxy& dict, const std::string& id, Type& dest)
   {
     auto value = dict.get<Type>(id);
     if(!value.second)
@@ -135,9 +143,9 @@ namespace Gsage
     return true;
   }
 
-  inline bool get(const Dictionary& dict, std::string& id, Dictionary& dest)
+  inline bool get(const DataProxy& dict, std::string& id, DataProxy& dest)
   {
-    auto value = dict.get<Dictionary>(id);
+    auto value = dict.get<DataProxy>(id);
     if(!value.second)
       return false;
 
@@ -146,13 +154,13 @@ namespace Gsage
   }
 
   template<typename Type>
-  inline bool put(Dictionary& dict, const std::string& id, const Type& value)
+  inline bool put(DataProxy& dict, const std::string& id, const Type& value)
   {
     dict.put(id, value);
     return true;
   }
 
-  inline bool put(Dictionary& dict, const std::string& id, const Dictionary& child)
+  inline bool put(DataProxy& dict, const std::string& id, const DataProxy& child)
   {
     if(child.empty())
       return true;
@@ -160,7 +168,7 @@ namespace Gsage
     return true;
   }
 
-  inline bool put(Dictionary& dict, const std::string& id, const std::string& value)
+  inline bool put(DataProxy& dict, const std::string& id, const std::string& value)
   {
     if(value.empty())
       return true;
@@ -169,7 +177,7 @@ namespace Gsage
   }
 
   /**
-   * Class that has bindings for quick reading fields from Dictionary and writing it to it
+   * Class that has bindings for quick reading fields from DataProxy and writing it to it
    */
   template<typename C>
   class Serializable
@@ -188,15 +196,15 @@ namespace Gsage
           {};
           virtual ~AbstractProperty() {};
           /**
-           * Read property from Dictionary
-           * @param dict Dictionary
+           * Read property from DataProxy
+           * @param dict DataProxy
            */
-          virtual bool read(const Dictionary& dict) = 0;
+          virtual bool read(const DataProxy& dict) = 0;
           /**
-           * Write property to the Dictionary
-           * @param dict Dictionary
+           * Write property to the DataProxy
+           * @param dict DataProxy
            */
-          virtual bool dump(Dictionary& dict) = 0;
+          virtual bool dump(DataProxy& dict) = 0;
 
           std::string mName;
           bool isFlagSet(const PropertyFlag& flag)
@@ -224,7 +232,7 @@ namespace Gsage
            * Read property value from the node
            * @param dict Should contain value with key, that is defined in constructor of object
            */
-          bool read(const Dictionary& dict)
+          bool read(const DataProxy& dict)
           {
             if(AbstractProperty::isFlagSet(Readonly) || AbstractProperty::isFlagSet(Optional))
               return true;
@@ -234,9 +242,9 @@ namespace Gsage
 
           /**
            * Write property to the data node
-           * @param dict Dictionary will contain value with specified key
+           * @param dict DataProxy will contain value with specified key
            */
-          bool dump(Dictionary& dict)
+          bool dump(DataProxy& dict)
           {
             if(AbstractProperty::isFlagSet(Writeonly))
               return true;
@@ -269,7 +277,7 @@ namespace Gsage
            * Read property value from the node and call class setter
            * @param dict Should contain value with key, that is defined in constructor of object
            */
-          bool read(const Dictionary& dict)
+          bool read(const DataProxy& dict)
           {
             T value;
             // setter is not set, it is normal
@@ -284,12 +292,12 @@ namespace Gsage
 
           /**
            * Call class getter and write return value to the data node
-           * @param dict Dictionary will contain value with specified key
+           * @param dict DataProxy will contain value with specified key
            */
-          bool dump(Dictionary& dict)
+          bool dump(DataProxy& dict)
           {
             if(mGetter == 0)
-              return false;
+              return true;
 
             return put(dict, AbstractProperty::mName, (mInstance->*mGetter)());
           }
@@ -317,7 +325,7 @@ namespace Gsage
        * @param dict To read property from
        * @param id Property id
        */
-      virtual bool read(const Dictionary& dict, const std::string& id)
+      virtual bool read(const DataProxy& dict, const std::string& id)
       {
         if(mPropMappings.count(id) == 0)
           return false;
@@ -327,9 +335,9 @@ namespace Gsage
 
       /**
        * Iterates through all specified properties and reads each from the node
-       * @param dict Dictionary to read
+       * @param dict DataProxy to read
        */
-      virtual bool read(const Dictionary& dict)
+      virtual bool read(const DataProxy& dict)
       {
         bool allSucceed = true;
         for(auto pair : mProperties) {
@@ -346,9 +354,9 @@ namespace Gsage
 
       /**
        * Iterates through all specified properties and puts each to the node
-       * @param dict Dictionary to write
+       * @param dict DataProxy to write
        */
-      virtual bool dump(Dictionary& dict)
+      virtual bool dump(DataProxy& dict)
       {
         bool allSucceed = true;
         for(auto pair : mProperties) {
@@ -363,7 +371,7 @@ namespace Gsage
 
       /**
        * Register property as serializable
-       * @param name Key to search in Dictionary
+       * @param name Key to search in DataProxy
        * @param dest Pointer to field to wrap
        * @param flags property flags
        */
@@ -376,7 +384,7 @@ namespace Gsage
       /**
        * Register property setter/getter as serializable.
        * This method can be used with any class, not self only.
-       * @param name Key to search in Dictionary
+       * @param name Key to search in DataProxy
        * @param instance Instance of object, that contains getters and setters
        * @param setter Property setter
        * @param getter Property getter
@@ -389,7 +397,7 @@ namespace Gsage
       /**
        * Register property setter/getter as serializable.
        * This method can be used with any class, not self only.
-       * @param name Key to search in Dictionary
+       * @param name Key to search in DataProxy
        * @param instance Instance of object, that contains getters and setters
        * @param setter Property setter
        * @param getter Property getter
@@ -402,7 +410,7 @@ namespace Gsage
       /**
        * Register property getter as serializable.
        * This method can be used with any class, not self only.
-       * @param name Key to search in Dictionary
+       * @param name Key to search in DataProxy
        * @param instance Instance of object, that contains getters and setters
        * @param getter Property getter
        */
@@ -412,8 +420,21 @@ namespace Gsage
         addProperty(new PropertyAccessor<TDest, void (TInstance::*)(const TDest& value), TDest (TInstance::*)(), TInstance>(name, instance, getter, 0, flags), priority);
       }
       /**
+       * Register property setter as serializable.
+       * This method can be used with any class, not self only.
+       *
+       * @param name Key to search in DataProxy
+       * @param instance Instance of object, that contains getters and setters
+       * @param getter Property getter
+       */
+      template<typename TDest, class TInstance, class TRetVal>
+      void registerSetter(const std::string& name, TInstance* instance, TRetVal (TInstance::*setter)(const TDest& value), int flags = 0x00, int priority = 0)
+      {
+        addProperty(new PropertyAccessor<TDest, TRetVal (TInstance::*)(const TDest& value), TDest (TInstance::*)(), TInstance>(name, instance, 0, setter, flags), priority);
+      }
+      /**
        * Register property setter/getter as serializable
-       * @param name Key to search in Dictionary
+       * @param name Key to search in DataProxy
        * @param setter Property setter
        * @param getter Property getter
        */

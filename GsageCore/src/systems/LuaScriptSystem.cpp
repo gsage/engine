@@ -40,10 +40,13 @@ extern "C" {
 
 namespace Gsage {
 
+  const std::string LuaScriptSystem::ID = "lua";
+
   LuaScriptSystem::LuaScriptSystem()
     : mState(0)
     , mWorkdir(".")
   {
+    mSystemInfo.put("type", LuaScriptSystem::ID);
   }
 
   LuaScriptSystem::~LuaScriptSystem()
@@ -54,20 +57,44 @@ namespace Gsage {
     }
   }
 
-  bool LuaScriptSystem::initialize(const Dictionary& settings) {
+  bool LuaScriptSystem::initialize(const DataProxy& settings) {
     mWorkdir = mEngine->env().get("workdir", ".");
     EngineSystem::initialize(settings);
     return true;
   }
 
-  bool LuaScriptSystem::fillComponentData(ScriptComponent* component, const Dictionary& data)
+  void LuaScriptSystem::configUpdated() {
+    EngineSystem::configUpdated();
+    std::pair<DataProxy, bool> hooks = mConfig.get<DataProxy>("hooks");
+    if(hooks.second) {
+      for(auto& pair : hooks.first) {
+        std::string hook = pair.second.getValueOptional<std::string>("");
+        if(hook.empty()) {
+          LOG(WARNING) << "Got empty hook " << pair.first;
+          continue;
+        }
+
+        if(!runScript(hook))
+        {
+          LOG(ERROR) << "Startup hook run failed";
+        }
+      }
+    }
+  }
+
+  bool LuaScriptSystem::fillComponentData(ScriptComponent* component, const DataProxy& data)
   {
     bool createdComponent = ComponentStorage<ScriptComponent>::fillComponentData(component, data);
     if(!createdComponent)
       return false;
 
+
     if(component->getBehavior().empty())
+    {
+      sol::table t = mState->create_table();
+      component->setData(t);
       return true;
+    }
 
     if(mState)
     {
@@ -75,6 +102,7 @@ namespace Gsage {
       sol::table btree = initializeBtree(component->getOwner()->getId(), component->getBehavior());
       component->setBtree(btree);
       sol::table context = btree["context"];
+
       component->setData(context);
 
       LOG(INFO) << "Successfuly registered script component for entity " << component->getOwner()->getId();
@@ -118,6 +146,7 @@ namespace Gsage {
   {
     if(!component->getSetupExecuted())
     {
+      runFunction(component, component->getSetupFunction());
       LOG(INFO) << entity->getId() << " executing script";
       runScript(component, component->getSetupScript());
       component->setSetupExecuted(true);
@@ -137,18 +166,17 @@ namespace Gsage {
     if(mState && component->hasBehavior())
     {
       sol::function stopBtree = (*mState)["btree"]["deinitialize"].get<sol::protected_function>();
+      auto res = stopBtree(id);
+      if(!res.valid()) {
+        sol::error err = res;
+        LOG(ERROR) << "Failed to stop btree " << err.what();
+      }
+
+
       if(!runScript(component, component->getTearDownScript()))
       {
-        LOG(ERROR) << "Failed to tear down script component";
+        LOG(ERROR) << "Failed to tear down script component (tear down script)";
         stopped = false;
-      }
-      else
-      {
-        auto res = stopBtree(id);
-        if(!res.valid()) {
-          sol::error err = res;
-          LOG(ERROR) << "Failed to stop btree " << err.what();
-        }
       }
     }
 
@@ -156,43 +184,26 @@ namespace Gsage {
     return res && stopped;
   }
 
+  bool LuaScriptSystem::runFunction(ScriptComponent* component, sol::protected_function func)
+  {
+    if(func.valid()) {
+      std::string id = component->getOwner()->getId();
+      LOG(INFO) << id << " executing function";
+      try {
+        auto res = func(EntityProxy(id, mEngine));
+        return res.valid();
+      } catch(sol::error e) {
+        LOG(ERROR) << "Failed to run function " << e.what();
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool LuaScriptSystem::runScript(ScriptComponent* component, const std::string& script)
   {
-    std::vector<std::string> parts = split(script, ':');
-    std::string scriptData;
-    if (parts.size() == 2 && parts[0] == "@File")
-    {
-      std::string filename = mWorkdir + GSAGE_PATH_SEPARATOR + parts[1];
-      std::ifstream stream(filename);
-      stream.seekg(0, std::ios::end);
-      long int size = stream.tellg();
-      if(size == -1)
-      {
-        LOG(ERROR) << "Failed to read script file: " << filename;
-        return false;
-      }
-
-      scriptData.reserve(size);
-      stream.seekg(0, std::ios::beg);
-      try
-      {
-        scriptData.assign((std::istreambuf_iterator<char>(stream)),
-            std::istreambuf_iterator<char>());
-      }
-      catch(std::ifstream::failure e)
-      {
-        LOG(ERROR) << "Failed to read script file: " << script;
-        stream.close();
-        return false;
-      }
-
-      stream.close();
-    } else {
-      scriptData = script;
-    }
-
     try {
-      auto res = mState->script(scriptData.c_str());
+      auto res = mState->script(getScriptData(script).c_str());
       if(!res.valid())
       {
         sol::error err = res;
@@ -205,13 +216,65 @@ namespace Gsage {
         return true;
       }
 
-      // If script returns a function, it means that it want's to have a sandbox
+      // If script returns a function, it means that it wants to have a sandbox
 
       sol::protected_function callback = r;
       auto callResult = callback(EntityProxy(component->getOwner()->getId(), mEngine));
       if(!callResult.valid()) {
         sol::error err = callResult;
         LOG(ERROR) << "Failed to execute lua script " << err.what();
+        return false;
+      }
+    } catch(sol::error e) {
+      LOG(ERROR) << "Failed to execute lua script " << e.what();
+      return false;
+    }
+
+    return true;
+  }
+
+  std::string LuaScriptSystem::getScriptData(const std::string& data)
+  {
+    std::vector<std::string> parts = split(data, ':');
+    std::string scriptData;
+    if (parts.size() == 2 && parts[0] == "@File")
+    {
+      std::string filename = mWorkdir + GSAGE_PATH_SEPARATOR + parts[1];
+      std::ifstream stream(filename);
+      stream.seekg(0, std::ios::end);
+      long int size = stream.tellg();
+      if(size == -1)
+      {
+        LOG(ERROR) << "Failed to read script file: " << filename;
+		    return "";
+      }
+
+      scriptData.reserve(size);
+      stream.seekg(0, std::ios::beg);
+      try
+      {
+        scriptData.assign((std::istreambuf_iterator<char>(stream)),
+            std::istreambuf_iterator<char>());
+      }
+      catch(std::ifstream::failure e)
+      {
+        LOG(ERROR) << "Failed to read script file: " << data;
+        stream.close();
+		    return "";
+      }
+
+      stream.close();
+    } else {
+      scriptData = data;
+    }
+    return scriptData;
+  }
+
+  bool LuaScriptSystem::runScript(const std::string& script)
+  {
+    try {
+      auto res = mState->script(getScriptData(script).c_str());
+      if(!res.valid()) {
         return false;
       }
     } catch(sol::error e) {
@@ -246,5 +309,11 @@ namespace Gsage {
 
     mUpdateListeners.erase(element);
     return true;
+  }
+
+  void LuaScriptSystem::unloadComponents()
+  {
+    mUpdateListeners.clear();
+    ComponentStorage<ScriptComponent>::unloadComponents();
   }
 }

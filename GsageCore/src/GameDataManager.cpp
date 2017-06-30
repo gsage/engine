@@ -37,7 +37,7 @@ namespace Gsage {
 
   const std::string GameDataManager::CONFIG_SECTION = "dataManager";
 
-  GameDataManager::GameDataManager(Engine* engine, const Dictionary& config)
+  GameDataManager::GameDataManager(Engine* engine, const DataProxy& config)
     : mEngine(engine)
     , mCurrentSaveFile(0)
   {
@@ -55,9 +55,9 @@ namespace Gsage {
   bool GameDataManager::initGame(const std::string& templateFile)
   {
     resetSaveFile();
-    Dictionary& root = getSaveFile();
+    DataProxy& root = getSaveFile();
 
-    if(!FileLoader::getSingletonPtr()->load(mSavesFolder + GSAGE_PATH_SEPARATOR + templateFile + "." + mFileExtension, Dictionary(), root))
+    if(!FileLoader::getSingletonPtr()->load(mSavesFolder + GSAGE_PATH_SEPARATOR + templateFile + "." + mFileExtension, DataProxy(), root))
       return false;
 
     const std::string& area = root.get("area", "none");
@@ -74,9 +74,9 @@ namespace Gsage {
   bool GameDataManager::loadSave(const std::string& saveFile)
   {
     resetSaveFile();
-    Dictionary& root = getSaveFile();
+    DataProxy& root = getSaveFile();
 
-    if(!FileLoader::getSingletonPtr()->load(saveFile + "." + mFileExtension, Dictionary(), root))
+    if(!FileLoader::getSingletonPtr()->load(saveFile + "." + mFileExtension, DataProxy(), root))
       return initGame(saveFile);
 
     const std::string& area = root.get<std::string>("area", "none");
@@ -86,13 +86,13 @@ namespace Gsage {
       return false;
     }
 
-    auto placement = root.get<Dictionary>("placement." + area);
+    auto placement = root.get<DataProxy>("placement." + area);
     if(placement.second)
     {
       for(auto& pair : placement.first)
       {
         // TODO figure out more flexible way to do it
-        Dictionary params;
+        DataProxy params;
         params.put("render.root.position", pair.second.get("position", "0,0,0"));
         Entity* e = addCharacter(pair.first, &params);
       }
@@ -104,9 +104,9 @@ namespace Gsage {
   bool GameDataManager::dumpSave(const std::string& saveFile)
   {
     const ObjectPool<Entity>::PointerVector& entities = mEngine->getEntities();
-    Dictionary saveData;
-    Dictionary entitiesNode;
-    Dictionary placementNode;
+    DataProxy saveData;
+    DataProxy entitiesNode;
+    DataProxy placementNode;
 
     std::string currentArea = getSaveFile().get("area", "none");
     saveData.put("area", currentArea);
@@ -116,7 +116,7 @@ namespace Gsage {
       if(!entity->hasFlag("dynamic"))
         continue;
 
-      Dictionary entityNode;
+      DataProxy entityNode;
       for(auto pair : entity->mComponents)
       {
         EntityComponent* c = mEngine->getComponent(entity, pair.first);
@@ -133,17 +133,17 @@ namespace Gsage {
 
       if(render)
       {
-        Dictionary renderData;
+        DataProxy renderData;
         render->dump(renderData);
         placementNode.put(entity->getId() + ".position", renderData.get("root.position", "0,0,0"));
       }
     }
 
-    Dictionary settingsNode;
+    DataProxy settingsNode;
     Engine::EngineSystems& systems = mEngine->getSystems();
     for(auto pair : systems)
     {
-      Dictionary config = pair.second->getConfig();
+      DataProxy config = pair.second->getConfig();
       if(config.empty())
         continue;
 
@@ -159,17 +159,17 @@ namespace Gsage {
 
   Entity* GameDataManager::createEntity(const std::string& json)
   {
-    Dictionary dest;
-    if(!parseJson(json, dest)) {
+    DataProxy dest = DataProxy::create(DataWrapper::JSON_OBJECT);
+    if(!loads(dest, json, DataWrapper::JSON_OBJECT)) {
       LOG(ERROR) << "Failed to read json: " << json;
       return 0;
     }
     return mEngine->createEntity(dest);
   }
 
-  Entity* GameDataManager::createEntity(const std::string& name, const Dictionary& params)
+  Entity* GameDataManager::createEntity(const std::string& name, const DataProxy& params)
   {
-    Dictionary dest;
+    DataProxy dest;
     if(!FileLoader::getSingletonPtr()->load(name, params, dest))
     {
       return 0;
@@ -177,22 +177,27 @@ namespace Gsage {
     return mEngine->createEntity(dest);
   }
 
+  Entity* GameDataManager::createEntity(DataProxy data)
+  {
+    return mEngine->createEntity(data);
+  }
+
   bool GameDataManager::loadArea(const std::string& area)
   {
-    Dictionary areaInfo;
-    if(!FileLoader::getSingletonPtr()->load(mLevelsFolder + "/" + area + "." + mFileExtension, Dictionary(), areaInfo))
+    DataProxy areaInfo;
+    if(!FileLoader::getSingletonPtr()->load(mLevelsFolder + "/" + area + "." + mFileExtension, DataProxy(), areaInfo))
       return false;
 
-    auto entities = areaInfo.get<Dictionary>("entities");
+    auto entities = areaInfo.get<DataProxy>("entities");
     if(!entities.second)
     {
       LOG(ERROR) << "No entities in area: " << area;
       return false;
     }
 
-    auto systemsConfigs = getSaveFile().get<Dictionary>("settings");
+    auto systemsConfigs = getSaveFile().get<DataProxy>("settings");
     if(!systemsConfigs.second)
-      systemsConfigs = areaInfo.get<Dictionary>("settings");
+      systemsConfigs = areaInfo.get<DataProxy>("settings");
 
     if(systemsConfigs.second)
     {
@@ -206,17 +211,17 @@ namespace Gsage {
     return true;
   }
 
-  Entity* GameDataManager::addCharacter(const std::string& name, Dictionary* params)
+  Entity* GameDataManager::addCharacter(const std::string& name, DataProxy* params)
   {
-    Dictionary entityNode;
-    Dictionary& saveFile = getSaveFile();
-    auto entityNodeOpt = saveFile.get<Dictionary>("characters." + name);
+    DataProxy entityNode;
+    DataProxy& saveFile = getSaveFile();
+    auto entityNodeOpt = saveFile.get<DataProxy>("characters." + name);
 
     if(entityNodeOpt.second)
     {
       entityNode = entityNodeOpt.first;
     }
-    else if(FileLoader::getSingletonPtr()->load(mCharactersFolder + "/" + name + "." + mFileExtension, Dictionary(), entityNode))
+    else if(FileLoader::getSingletonPtr()->load(mCharactersFolder + "/" + name + "." + mFileExtension, DataProxy(), entityNode))
     {
       LOG(INFO) << "Creating new character";
     }
@@ -227,7 +232,7 @@ namespace Gsage {
     }
 
     if(params) {
-      unionDict(entityNode, *params);
+      mergeInto(entityNode, *params);
     }
 
     Entity* e = mEngine->createEntity(entityNode);
@@ -237,11 +242,11 @@ namespace Gsage {
 
   bool GameDataManager::loadCharacters(const std::string& area)
   {
-    Dictionary charactersIndex;
-    if(!FileLoader::getSingletonPtr()->load(mLevelsFolder + "/placement." + mFileExtension, Dictionary(), charactersIndex))
+    DataProxy charactersIndex;
+    if(!FileLoader::getSingletonPtr()->load(mLevelsFolder + "/placement." + mFileExtension, DataProxy(), charactersIndex))
       return false;
 
-    auto locationCharacters = charactersIndex.get<Dictionary>(area);
+    auto locationCharacters = charactersIndex.get<DataProxy>(area);
     // no charactes on specified area
     if(!locationCharacters.second)
       return true;
@@ -256,10 +261,10 @@ namespace Gsage {
     return true;
   }
 
-  Dictionary& GameDataManager::getSaveFile()
+  DataProxy& GameDataManager::getSaveFile()
   {
     if(mCurrentSaveFile == 0)
-      mCurrentSaveFile = new Dictionary();
+      mCurrentSaveFile = new DataProxy();
 
     return *mCurrentSaveFile;
   }

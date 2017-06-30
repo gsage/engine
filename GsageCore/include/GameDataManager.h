@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <ostream>
 #include <map>
 #include "GsageDefinitions.h"
-#include "Dictionary.h"
+#include "DataProxy.h"
 
 namespace Gsage
 {
@@ -45,7 +45,7 @@ namespace Gsage
   class GameDataManager
   {
     public:
-      GameDataManager(Engine* engine, const Dictionary& config);
+      GameDataManager(Engine* engine, const DataProxy& config);
       virtual ~GameDataManager();
 
       /**
@@ -71,14 +71,21 @@ namespace Gsage
        *
        * @param name Template file name
        */
-      Entity* createEntity(const std::string& name, const Dictionary& params);
+      Entity* createEntity(const std::string& name, const DataProxy& params);
+
+      /**
+       * Create entity from any wrapped data
+       *
+       * @param data DataProxy
+       */
+      Entity* createEntity(DataProxy data);
       /**
        * Adds character
        *
        * @param name Entity id
        * @param params Override default parameters of the character
        */
-      Entity* addCharacter(const std::string& name, Dictionary* params = 0);
+      Entity* addCharacter(const std::string& name, DataProxy* params = 0);
       /**
        * Get file extension
        */
@@ -103,7 +110,7 @@ namespace Gsage
     private:
       static const std::string CONFIG_SECTION;
 
-      Dictionary* mCurrentSaveFile;
+      DataProxy* mCurrentSaveFile;
 
       Engine* mEngine;
 
@@ -115,7 +122,7 @@ namespace Gsage
 
       bool loadCharacters(const std::string& area);
 
-      Dictionary& getSaveFile();
+      DataProxy& getSaveFile();
       void resetSaveFile();
 
       const std::string readFile(const std::string& path);

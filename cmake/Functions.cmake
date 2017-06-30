@@ -58,6 +58,11 @@ macro(configure)
 endmacro()
 
 macro(gsage_plugin plugin_name)
+  include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+
+  gsage_includes()
   add_library(${plugin_name} SHARED ${ARGN})
   add_definitions(-DPLUGIN_EXPORT -D_USRDLL)
 
@@ -65,6 +70,21 @@ macro(gsage_plugin plugin_name)
     PROPERTIES
     PREFIX ""
     LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_PATH})
+endmacro()
+
+macro(gsage_includes)
+  include_directories(
+    ${gsage_SOURCE_DIR}/Components/Sol2/include
+    ${gsage_SOURCE_DIR}/GsageCore/include
+
+    ${JSONCPP_INCLUDE_DIR}
+    ${MSGPACK_INCLUDE_DIR}
+    ${LUAJIT_INCLUDE_DIR}
+  )
+endmacro()
+
+macro(gsage_libs libs)
+  set(${libs} GsageCore ${LUAJIT_LIBRARIES} ${libs})
 endmacro()
 
 macro(gsage_executable executable_name)

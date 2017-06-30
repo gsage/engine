@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
+#include <OgreSceneManager.h>
 
 namespace Gsage {
   static long counter = 0;
@@ -51,7 +52,7 @@ namespace Gsage {
 
   bool OgreObject::initialize(
           OgreObjectManager* objectManager,
-          const Dictionary& dict,
+          const DataProxy& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -65,7 +66,7 @@ namespace Gsage {
 
   bool OgreObject::initialize(
           OgreObjectManager* objectManager,
-          const Dictionary& dict,
+          const DataProxy& dict,
           const std::string& ownerId,
           const std::string& type,
           Ogre::SceneManager* sceneManager,
@@ -117,5 +118,15 @@ namespace Gsage {
       mParentEntity->attachObjectToBone(mBoneId, object);
     else
       LOG(ERROR) << "Failed to attach movable object, no attach configuration found";
+  }
+
+  std::string OgreObject::generateName() const
+  {
+    if(mParentNode == mSceneManager->getRootSceneNode()) {
+      return mObjectId;
+    } else if(mParentEntity) {
+      return mParentEntity->getName() + "." + mObjectId;
+    }
+    return mParentNode->getName() + "." + mObjectId;
   }
 }

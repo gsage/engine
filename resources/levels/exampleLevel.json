@@ -3,18 +3,27 @@
     "render": {
       "resources": {
         "exampleLevel": [
-          "Zip:models/packs/exampleLevel.zip"
+          "Zip:models/packs/exampleLevel.zip",
+          "Zip:models/packs/torch.zip"
         ]
       },
 
       "colourBackground": "0xc0c0c",
       "colourAmbient": "0x7F7F7F",
-      "colourDiffuse": "0xc0c0c",
-      "camera": {
-        "type": "isometric",
-        "id": "main",
-        "bgColour": "0x000000",
-
+      "colourDiffuse": "0xc0c0c"
+    },
+    "script": {
+      "hooks": {
+        "setUpCamera": "setOrbitalCam()",
+        "damageEmitter": "emitter.create('damage')"
+      }
+    }
+  },
+  "entities": [
+  {
+    "script": {
+      "setupScript": "@File:scripts/setup/orbitCamera.lua",
+      "context": {
         "maxDistance": 100,
         "minDistance": 20,
         "maxAngle": 190,
@@ -22,26 +31,11 @@
 
         "target": "sinbad",
         "uAngle": 45,
-        "vAngle": 290,
+        "vAngle": 45,
         "distance": 30,
         "clipDistance": 0.01,
         "cameraOffset": "0,4,0",
         "zoomStepMultiplier": 0.015
-      }
-    }
-  },
-  "entities": [
-  {
-    "id": "camera",
-    "render": {
-      "root": {
-        "position": "0,0,0",
-        "rotation": "1,0,-1,0",
-        "scale": "1,1,1",
-        "children": [{
-          "type": "camera",
-          "name": "camera"
-        }]
       }
     }
   }, {
@@ -93,29 +87,5 @@
         }]
       }
     }
-  }, {
-    "id": "GlobalParticleSystems",
-    "render": {
-      "root": {
-        "position": "0, 30, 0",
-        "children": [{
-          "type": "particleSystem",
-          "name": "damageHit",
-          "template": "Damage/Hit"
-        }, {
-          "type": "particleSystem",
-          "name": "damageMiss",
-          "template": "Damage/Miss"
-        }, {
-          "type": "particleSystem",
-          "name": "damageEnemy",
-          "template": "Damage/Enemy"
-        }]
-      }
-    },
-    "script": {
-      "setupScript": "@File:scripts/setup/damage.lua"
-    }
-
   }]
 }

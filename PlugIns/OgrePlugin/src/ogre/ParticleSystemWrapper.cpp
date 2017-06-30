@@ -47,7 +47,7 @@ namespace Gsage {
   {
   }
 
-  bool ParticleSystemWrapper::read(const Dictionary& dict)
+  bool ParticleSystemWrapper::read(const DataProxy& dict)
   {
     bool res = OgreObject::read(dict);
     if(!mParticleSystem)
