@@ -14,3 +14,6 @@ docs/structlist.rst
 docs/latex
 docs/xml
 *.dumped
+resources/gameConfig.json
+resources/plugins.cfg
+resources/testConfig.json
