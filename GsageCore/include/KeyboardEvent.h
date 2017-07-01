@@ -200,7 +200,7 @@ namespace Gsage {
        *
        * @param modifier Modifier code
        */
-      bool isModifierDown(const Modifier& modifier);
+      bool isModifierDown(const Modifier& modifier) const;
       /**
        * Get modifier state flags
        */

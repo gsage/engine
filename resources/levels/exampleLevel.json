@@ -21,24 +21,6 @@
   },
   "entities": [
   {
-    "script": {
-      "setupScript": "@File:scripts/setup/orbitCamera.lua",
-      "context": {
-        "maxDistance": 100,
-        "minDistance": 20,
-        "maxAngle": 190,
-        "minAngle": 10,
-
-        "target": "sinbad",
-        "uAngle": 45,
-        "vAngle": 45,
-        "distance": 30,
-        "clipDistance": 0.01,
-        "cameraOffset": "0,4,0",
-        "zoomStepMultiplier": 0.015
-      }
-    }
-  }, {
     "id": "castle",
     "render": {
       "root": {

@@ -13,9 +13,9 @@ add_subdirectory(GsageExe)
 add_subdirectory(PlugIns)
 add_subdirectory(Tests)
 add_subdirectory(googletest)
+add_subdirectory(Components)
 
 if(OGRE_FOUND)
-  add_subdirectory(Components)
   add_subdirectory(Editor)
 
   if(Qt5_FOUND)

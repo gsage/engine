@@ -41,12 +41,32 @@ namespace Gsage {
     public:
       static const std::string UPDATE_UI;
 
-      RenderEvent(const std::string& type, OgreRenderSystem* renderSystem);
+      /**
+       * Main update
+       */
+      static const std::string UPDATE;
+
+      /**
+       * Same to ogre render queue ended
+       */
+      static const std::string RENDER_QUEUE_ENDED;
+
+      RenderEvent(const std::string& type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID = 0, const std::string& invocation = "");
       virtual ~RenderEvent();
       /**
        * Gets a reference to the current render system
        */
       OgreRenderSystem* getRenderSystem();
+
+      /**
+       * Ogre invocation string
+       */
+      std::string invocation;
+
+      /**
+       * Ogre queue id
+       */
+      Ogre::uint8 queueID;
 
     private:
       OgreRenderSystem* mRenderSystem;

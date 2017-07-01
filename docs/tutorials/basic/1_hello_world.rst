@@ -223,10 +223,13 @@ You can create another one.
 Modifying UI
 ------------
 
-There is only one supported UI library at the moment. Imgui will be the next one.
-
 UI integration is managed by classes, derived from :cpp:class:`Gsage::UIManager` interface.
 Engine can have several UI libraries running at the same time.
+
+LibRocket
+^^^^^^^^^
+
+:code:`RocketUI` plugIn should be installed.
 
 LibRocket looks like a dead project, but it can be configured
 very nicely using rml and rcss files.
@@ -236,3 +239,33 @@ connection with other parts of the engine.
 
 All librocket ui files are stored in the :code:`resources/ui` folder.
 Currently it's in the mess, but it will be cleaned up very soon.
+
+Imgui
+^^^^^
+
+:code:`ImGUI` plugIn should be installed.
+
+Imgui views can be registered in lua using:
+
+   .. code-block:: lua
+
+      -- render method
+      function render()
+      imgui.ShowTestDialog()
+      end
+
+      -- render view class for stateful UI
+      View = class(function()
+      end)
+
+      function view:__call()
+      imgui.ShowTestDialog()
+      end
+
+      local view = View()
+
+      imgui.render:addView("viewID", view)
+      imgui.render:addView("viewID2", render)
+
+      -- remove
+      success = imgui.render:removeView("viewID")

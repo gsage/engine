@@ -484,6 +484,13 @@ namespace Gsage {
 
     mInstance->getEngine()->fireEvent(EngineEvent(EngineEvent::LUA_STATE_CHANGE));
 
+    lua["log"] = lua.create_table();
+    lua["log"]["info"] = [] (const char* message) { LOG(INFO) << message; };
+    lua["log"]["error"] = [] (const char* message) { LOG(ERROR) << message; };
+    lua["log"]["debug"] = [] (const char* message) { LOG(DEBUG) << message; };
+    lua["log"]["warn"] = [] (const char* message) { LOG(WARNING) << message; };
+    lua["log"]["trace"] = [] (const char* message) { LOG(TRACE) << message; };
+
     lua["resourcePath"] = mResourcePath;
     lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
     lua["game"] = mInstance;

@@ -156,6 +156,11 @@ namespace Gsage
        */
       virtual void renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
 
+      /**
+       * Render queue event pass through
+       */
+      virtual void renderQueueEnded(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
+
       // --------------------------------------------------------------------------------
       /**
        * Register new type of factory in the render system

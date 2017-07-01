@@ -18,7 +18,8 @@
   [
     "@PLUGINS_DIRECTORY@/OisInput",
     "@PLUGINS_DIRECTORY@/RocketUI",
-    "@PLUGINS_DIRECTORY@/OgrePlugin"
+    "@PLUGINS_DIRECTORY@/OgrePlugin",
+    "@PLUGINS_DIRECTORY@/ImGUI"
   ],
 
   "render":
