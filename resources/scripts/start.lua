@@ -129,3 +129,14 @@ console_visible = false
 startup()
 game:loadSave('gameStart')
 
+-- test view for imgui
+TestView = class(function()
+end)
+
+function view.__call()
+  imgui.ShowTestWindow()
+end
+
+if imgui then
+  imgui.render:addView("test", view)
+end

@@ -42,7 +42,7 @@ namespace Gsage {
   {
   }
 
-  bool KeyboardEvent::isModifierDown(const Modifier& modifier)
+  bool KeyboardEvent::isModifierDown(const Modifier& modifier) const
   {
     return (modifierState & modifier) == modifier;
   }

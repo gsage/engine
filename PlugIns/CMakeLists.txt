@@ -13,3 +13,5 @@ endif(${LIBROCKET_FOUND})
 if(${OIS_FOUND})
   add_subdirectory(OisInput)
 endif(${OIS_FOUND})
+
+add_subdirectory(ImGUI)

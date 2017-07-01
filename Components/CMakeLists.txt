@@ -1,5 +1,5 @@
-add_subdirectory(OgreCrowd)
-
-# not yet
-#add_subdirectory(imgui)
+if(OGRE_FOUND)
+  add_subdirectory(OgreCrowd)
+endif(OGRE_FOUND)
+add_subdirectory(imgui)
 

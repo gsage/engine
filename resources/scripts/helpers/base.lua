@@ -53,34 +53,3 @@ function view.getObjectsAround(id, distance, flags, targetId)
   end
   return entities
 end
-
--- Logging
-
-if rocket ~= nil then
-  log = log or {}
-
-  log.ERROR = Log.logtype.error
-  log.WARNING = Log.logtype.warning
-  log.INFO = Log.logtype.info
-  log.DEBUG = Log.logtype.debug
-
-  function log.error(message)
-    log.msg(log.ERROR, message)
-  end
-
-  function log.warn(message)
-    log.msg(log.WARNING, message)
-  end
-
-  function log.info(message)
-    log.msg(log.INFO, message)
-  end
-
-  function log.debug(message)
-    log.msg(log.DEBUG, message)
-  end
-
-  function log.msg(level, message)
-    Log.Message(level, message)
-  end
-end

@@ -257,6 +257,8 @@ namespace Gsage {
 
     mOgreInteractionManager->update(time);
 
+    mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE, this));
+
     bool continueRendering = !mWindow->isClosed();
     if(continueRendering)
       continueRendering = mRoot->renderOneFrame();
@@ -310,7 +312,12 @@ namespace Gsage {
   void OgreRenderSystem::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation)
   {
     if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY)
-      mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE_UI, this));
+      mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE_UI, this, queueGroupId, invocation));
+  }
+
+  void OgreRenderSystem::renderQueueEnded(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation)
+  {
+    mEngine->fireEvent(RenderEvent(RenderEvent::RENDER_QUEUE_ENDED, this, queueGroupId, invocation));
   }
 
   bool OgreRenderSystem::removeComponent(RenderComponent* component)
