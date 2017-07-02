@@ -46,14 +46,14 @@ namespace Gsage {
       bool render(EventDispatcher* sender, const Event& event);
       bool renderQueueEnded(EventDispatcher* sender, const Event& event);
 
-      void updateVertexData();
+      void updateVertexData(Ogre::Viewport* vp);
       void createMaterial();
       void createFontTexture();
 
       std::chrono::high_resolution_clock::time_point mPreviousUpdateTime;
       Engine* mEngine;
 
-      std::list<ImGUIRenderable*> mRenderables;
+      std::vector<ImGUIRenderable*> mRenderables;
 
       Ogre::SceneManager*	mSceneMgr;
       Ogre::Pass*	mPass;
