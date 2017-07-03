@@ -69,7 +69,7 @@ namespace Gsage {
     }
   }
 
-  void ImguiOgreWrapper::updateVertexData()
+  void ImguiOgreWrapper::updateVertexData(Ogre::Viewport* vp)
   {
     int currentFrame = ImGui::GetFrameCount();
     if(currentFrame == mLastRenderedFrame)
@@ -78,24 +78,98 @@ namespace Gsage {
     }
     mLastRenderedFrame = currentFrame;
 
-    ImDrawData* draw_data = ImGui::GetDrawData();
-    while(mRenderables.size()<draw_data->CmdListsCount)
+    ImGui::Render();
+
+    ImGuiIO& io = ImGui::GetIO();
+    Ogre::Matrix4 projMatrix(2.0f / io.DisplaySize.x, 0.0f, 0.0f, -1.0f,
+        0.0f, -2.0f / io.DisplaySize.y, 0.0f, 1.0f,
+        0.0f, 0.0f, -1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+
+#if OGRE_VERSION_MAJOR == 2
+    const Ogre::HlmsBlendblock *blendblock = mPass->getBlendblock();
+    const Ogre::HlmsMacroblock *macroblock = mPass->getMacroblock();
+    mSceneMgr->getDestinationRenderSystem()->_setHlmsBlendblock(blendblock);
+    mSceneMgr->getDestinationRenderSystem()->_setHlmsMacroblock(macroblock);
+#endif
+    mPass->getVertexProgramParameters()->setNamedConstant("ProjectionMatrix", projMatrix);
+
+    ImDrawData *drawData = ImGui::GetDrawData();
+    int numberDraws = 0;
+
+    //iterate through all lists (at the moment every window has its own)
+    for (int n = 0; n < drawData->CmdListsCount; n++)
     {
-      mRenderables.push_back(new ImGUIRenderable());
+      const ImDrawList* drawList = drawData->CmdLists[n];
+      const ImDrawVert* vtxBuf = drawList->VtxBuffer.Data;
+      const ImDrawIdx* idxBuf = drawList->IdxBuffer.Data;
+
+      unsigned int startIdx = 0;
+
+      for (int i = 0; i < drawList->CmdBuffer.Size; i++)
+      {
+        //create renderables if necessary
+        if (i >= mRenderables.size())
+        {
+          mRenderables.push_back(new ImGUIRenderable());
+        }
+
+        //update their vertex buffers
+        const ImDrawCmd *drawCmd = &drawList->CmdBuffer[i];
+        mRenderables[i]->updateVertexData(vtxBuf, &idxBuf[startIdx], drawList->VtxBuffer.Size, drawCmd->ElemCount);
+
+        //set scissoring
+        int vpLeft, vpTop, vpWidth, vpHeight;
+        vp->getActualDimensions(vpLeft, vpTop, vpWidth, vpHeight);
+
+        int scLeft = drawCmd->ClipRect.x;
+        int scTop = drawCmd->ClipRect.y;
+        int scRight = drawCmd->ClipRect.z;
+        int scBottom = drawCmd->ClipRect.w;
+
+        scLeft = scLeft < 0 ? 0 : (scLeft > vpWidth ? vpWidth : scLeft);
+        scRight = scRight < 0 ? 0 : (scRight > vpWidth ? vpWidth : scRight);
+        scTop = scTop < 0 ? 0 : (scTop > vpHeight ? vpHeight : scTop);
+        scBottom = scBottom < 0 ? 0 : (scBottom > vpHeight ? vpHeight : scBottom);
+
+#if OGRE_VERSION_MAJOR == 1
+        mSceneMgr->getDestinationRenderSystem()->setScissorTest(true, scLeft, scTop, scRight, scBottom);
+#elif OGRE_VERSION_MAJOR == 2
+        float left = (float)scLeft / (float)vpWidth;
+        float top = (float)scTop / (float)vpHeight;
+        float width = (float)(scRight - scLeft) / (float)vpWidth;
+        float height = (float)(scBottom - scTop) / (float)vpHeight;
+        vp->setScissors(left, top, width, height);
+        mSceneMgr->getDestinationRenderSystem()->_setViewport(vp);
+#endif
+
+        //render the object
+#if OGRE_VERSION_MAJOR == 1
+        mSceneMgr->_injectRenderWithPass(mPass, mRenderables[i], false, false);
+#elif OGRE_VERSION_MAJOR == 2
+        mSceneMgr->_injectRenderWithPass(mPass, mRenderables[i], 0, false, false);
+#endif
+
+        //increase start index of indexbuffer
+        startIdx += drawCmd->ElemCount;
+        numberDraws++;
+      }
     }
 
-    while(mRenderables.size()>draw_data->CmdListsCount)
+    //reset Scissors
+#if OGRE_VERSION_MAJOR == 1
+    mSceneMgr->getDestinationRenderSystem()->setScissorTest(false);
+#elif OGRE_VERSION_MAJOR == 2
+    vp->setScissors(0, 0, 1, 1);
+    mSceneMgr->getDestinationRenderSystem()->_setViewport(vp);
+#endif
+
+    //delete unused renderables
+    while (mRenderables.size() > numberDraws)
     {
       delete mRenderables.back();
       mRenderables.pop_back();
     }
-
-    unsigned int index=0;
-    for(std::list<ImGUIRenderable*>::iterator it = mRenderables.begin(); it!=mRenderables.end(); ++it, ++index)
-    {
-      (*it)->updateVertexData(draw_data, index);
-    }
-
   }
 
   //-----------------------------------------------------------------------------------
@@ -103,39 +177,23 @@ namespace Gsage {
   bool ImguiOgreWrapper::renderQueueEnded(EventDispatcher* sender, const Event& e)
   {
     RenderEvent event = static_cast<const RenderEvent&>(e);
-
-    if(event.queueID == Ogre::RENDER_QUEUE_OVERLAY && event.invocation != "SHADOWS")
+    if(event.queueID != Ogre::RENDER_QUEUE_OVERLAY || event.invocation == "SHADOWS")
     {
-      OgreRenderSystem* render = event.getRenderSystem();
-      Ogre::Viewport* vp = render->getViewport();
-
-      if(vp != NULL && vp->getTarget()->isPrimary())
-      {
-        if (vp->getOverlaysEnabled())
-        {
-          if(mFrameEnded) {
-            return true;
-          }
-
-          mFrameEnded = true;
-          ImGui::Render();
-          updateVertexData();
-
-          ImGuiIO& io = ImGui::GetIO();
-
-          Ogre::Matrix4 projMatrix(2.0f/io.DisplaySize.x, 0.0f,                   0.0f,-1.0f,
-              0.0f,                 -2.0f/io.DisplaySize.y,  0.0f, 1.0f,
-              0.0f,                  0.0f,                  -1.0f, 0.0f,
-              0.0f,                  0.0f,                   0.0f, 1.0f);
-
-          mPass->getVertexProgramParameters()->setNamedConstant("ProjectionMatrix", projMatrix);
-          for(std::list<ImGUIRenderable*>::iterator it = mRenderables.begin(); it != mRenderables.end(); ++it)
-          {
-            mSceneMgr->_injectRenderWithPass(mPass, (*it), false, false);
-          }
-        }
-      }
+      return true;
     }
+
+    OgreRenderSystem* render = event.getRenderSystem();
+    Ogre::Viewport* vp = render->getViewport();
+
+    if(vp == NULL || !vp->getTarget()->isPrimary() || !vp->getOverlaysEnabled())
+      return true;
+
+    if(mFrameEnded) {
+      return true;
+    }
+
+    mFrameEnded = true;
+    updateVertexData(vp);
     return true;
   }
 

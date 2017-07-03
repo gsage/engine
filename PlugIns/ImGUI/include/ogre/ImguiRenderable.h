@@ -5,6 +5,7 @@
 #include "OgrePrerequisites.h"
 #include "OgreRenderable.h"
 #include <OgreRenderOperation.h>
+#include <imgui.h>
 
 struct ImDrawData;
 namespace Gsage
@@ -25,6 +26,7 @@ namespace Gsage
       ~ImGUIRenderable();
 
       void updateVertexData(ImDrawData* data, unsigned int cmdIndex);
+      void updateVertexData(const ImDrawVert* vtxBuf, const ImDrawIdx* idxBuf, unsigned int vtxCount, unsigned int idxCount);
 
       Ogre::Real getSquaredViewDepth(const Ogre::Camera* cam) const { 
         (void)cam;

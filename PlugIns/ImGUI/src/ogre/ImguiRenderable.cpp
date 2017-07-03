@@ -27,8 +27,6 @@
    */
 #include "OgreStableHeaders.h"
 
-#include <imgui.h>
-
 #include "ogre/ImguiRenderable.h"
 
 #include "OgreHardwareBufferManager.h"
@@ -153,6 +151,40 @@ namespace Gsage
     mRenderOp.vertexData->vertexCount =  cmd_list->VtxBuffer.size();
     mRenderOp.indexData->indexStart = 0;
     mRenderOp.indexData->indexCount =  cmd_list->IdxBuffer.size();
+
+    bind->getBuffer(0)->unlock();
+    mRenderOp.indexData->indexBuffer->unlock();
+  }
+
+  void ImGUIRenderable::updateVertexData(const ImDrawVert* vtxBuf, const ImDrawIdx* idxBuf, unsigned int vtxCount, unsigned int idxCount)
+  {
+    Ogre::VertexBufferBinding* bind = mRenderOp.vertexData->vertexBufferBinding;
+
+    if (bind->getBindings().empty() || mVertexBufferSize != vtxCount)
+    {
+      mVertexBufferSize = vtxCount;
+
+      bind->setBinding(0, Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(sizeof(ImDrawVert), mVertexBufferSize, Ogre::HardwareBuffer::HBU_WRITE_ONLY));
+    }
+    if (mRenderOp.indexData->indexBuffer.isNull() || mIndexBufferSize != idxCount)
+    {
+      mIndexBufferSize = idxCount;
+
+      mRenderOp.indexData->indexBuffer =
+        Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, mIndexBufferSize, Ogre::HardwareBuffer::HBU_WRITE_ONLY);
+    }
+
+    // Copy all vertices
+    ImDrawVert* vtxDst = (ImDrawVert*)(bind->getBuffer(0)->lock(Ogre::HardwareBuffer::HBL_DISCARD));
+    ImDrawIdx* idxDst = (ImDrawIdx*)(mRenderOp.indexData->indexBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
+
+    memcpy(vtxDst, vtxBuf, mVertexBufferSize * sizeof(ImDrawVert));
+    memcpy(idxDst, idxBuf, mIndexBufferSize * sizeof(ImDrawIdx));
+
+    mRenderOp.vertexData->vertexStart = 0;
+    mRenderOp.vertexData->vertexCount = vtxCount;
+    mRenderOp.indexData->indexStart = 0;
+    mRenderOp.indexData->indexCount = idxCount;
 
     bind->getBuffer(0)->unlock();
     mRenderOp.indexData->indexBuffer->unlock();
