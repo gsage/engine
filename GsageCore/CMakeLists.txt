@@ -10,10 +10,10 @@ endif(APPLE)
 
 include_directories(
   include/
-  ${gsage_SOURCE_DIR}/Components/Sol2/include
+  ${gsage_SOURCE_DIR}/Vendor/Sol2/include
+  ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
 
   ${LUAJIT_INCLUDE_DIR}
-  ${JSONCPP_INCLUDE_DIR}
   ${MSGPACK_INCLUDE_DIRS}
 )
 
@@ -22,8 +22,8 @@ add_library(${LIB_NAME} SHARED ${headers} ${sources})
 set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d)
 
 set(LIBS
+  jsoncpp
   ${LUAJIT_LIBRARIES}
-  ${JSONCPP_LIBRARIES}
   ${MSGPACK_LIBRARIES})
 
 if(APPLE)
@@ -40,7 +40,7 @@ install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
   FILES_MATCHING PATTERN "*.h"
 )
 
-install(DIRECTORY ${gsage_SOURCE_DIR}/Components/Sol2/include/ DESTINATION /usr/local/include/gsage
+install(DIRECTORY ${gsage_SOURCE_DIR}/Vendor/Sol2/include/ DESTINATION /usr/local/include/gsage
   FILES_MATCHING PATTERN "*.hpp"
 )
 

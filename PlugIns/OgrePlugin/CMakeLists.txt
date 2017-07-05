@@ -2,7 +2,7 @@ set(PLUGIN_NAME "OgrePlugin")
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${gsage_SOURCE_DIR}/Components/OgreCrowd/include
+  ${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Overlay_INCLUDE_DIR}
   ${OGRE_Terrain_INCLUDE_DIR}

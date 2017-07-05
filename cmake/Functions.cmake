@@ -74,10 +74,10 @@ endmacro()
 
 macro(gsage_includes)
   include_directories(
-    ${gsage_SOURCE_DIR}/Components/Sol2/include
+    ${gsage_SOURCE_DIR}/Vendor/Sol2/include
+    ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
     ${gsage_SOURCE_DIR}/GsageCore/include
 
-    ${JSONCPP_INCLUDE_DIR}
     ${MSGPACK_INCLUDE_DIR}
     ${LUAJIT_INCLUDE_DIR}
   )

@@ -76,7 +76,7 @@ Dependencies
 
 .. code-block:: bash
 
-  sudo apt-get install libois-dev libluajit-5.1-dev libjsoncpp-dev libmsgpack3
+  sudo apt-get install libois-dev libluajit-5.1-dev libmsgpack3
 
 Building
 ^^^^^^^^

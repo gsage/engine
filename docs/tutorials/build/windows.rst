@@ -27,15 +27,13 @@ Building Engine
 ---------------
 
 1. Get/Build luajit 5.1.
-2. Get/Build jsoncpp.
-3. Get/Build msgpackc.
-4. You should define the following env variables to make engine find dependencies:
-   * :code:`JSONCPP_DIR` for jsoncpp.
+2. Get/Build msgpackc.
+3. You should define the following env variables to make engine find dependencies:
    * :code:`LIBROCKET_DIR` for librocket.
    * :code:`LUAJIT_DIR` for luajit.
    * :code:`MSGPACK_DIR` for msgpackc.
    * :code:`OGRE_DEPENDENCIES_DIR` for OIS, boost and other ogre dependencies.
-5. Run cmake and build with VS 14.
+4. Run cmake and build with VS 14.
 
 .. important::
   QT5 editor was never build on windows yet.
