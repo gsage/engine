@@ -30,6 +30,9 @@ Download Ogre Sources
 Install Ogre Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Download cg toolkit:
+https://developer.nvidia.com/cg-toolkit-download
+
 Two options:
 
 1. Download from here http://sourceforge.net/projects/ogre/files/ogre-dependencies-mac/1.9/OgreDependencies_OSX_libc%2B%2B_20130610.zip/download
@@ -52,7 +55,7 @@ Downloading Sources
 
 .. code-block:: bash
 
-  git clone https://github.com/libRocket/libRocket.git
+  git clone https://github.com/unix4ever/libRocket.git
   cd libRocket
 
 Building
@@ -61,7 +64,7 @@ Building
 .. code-block:: bash
 
   cd Build
-  cmake . -DBUILD_LUA_BINDINGS=1
+  cmake . -DBUILD_LUA_BINDINGS=1 -DUSE_LUAJIT=1
   make -j4
   sudo make install
 
@@ -73,7 +76,7 @@ Dependencies
 
 .. code-block:: bash
 
-  sudo apt-get install libois-dev libluajit-5.1-dev libjsoncpp-dev libmsgpack3
+  brew install luajit glew --universal
 
 Building
 ^^^^^^^^
@@ -82,10 +85,11 @@ If dependencies are not installed by brew :code:`<path_with_dependencies>` shoul
 
 .. code-block:: bash
 
+  export OGRE_HOME=<ogre_home_directory>
   mkdir build
   cd build
-  OGRE_DEPENDENCIES_DIR=<path_with_dependencies> OGRE_HOME=<ogre_home_directory> cmake ../
-  make -j4
+  OGRE_DEPENDENCIES_DIR=<path_with_dependencies> cmake ../ -DCMAKE_OSX_ARCHITECTURES=x86_64
+  make -j $(sysctl -n hw.ncpu)
 
 If you want to build editor, you should install Qt5 and define :code:`CMAKE_PREFIX_PATH` variable in the PATH to the Qt cmake modules.
 

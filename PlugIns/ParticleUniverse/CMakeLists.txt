@@ -4,6 +4,7 @@ include_directories(
   include
   ${gsage_SOURCE_DIR}/GsageCore/include
   ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
+  ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
 )
 
 set(LIBS
@@ -17,7 +18,6 @@ set(LIBS
 include_directories(
   ${OGRE_INCLUDE_DIRS}
   ${LUAJIT_INCLUDE_DIR}
-  ${JSONCPP_INCLUDE_DIR}
 )
 
 add_definitions(-DPLUGIN_EXPORT)

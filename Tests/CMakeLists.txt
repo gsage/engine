@@ -4,18 +4,18 @@ set(TEST_DEPENDENCIES
   ${TEST_DEPENDENCIES}
   GsageCore
   gtest
-  ${JSONCPP_LIBRARIES}
+  jsoncpp
   ${LUAJIT_LIBRARIES}
 )
 
 include_directories(
   include
   ${gsage_SOURCE_DIR}/GsageCore/include
-  ${gsage_SOURCE_DIR}/Components/Sol2/include
-  ${gsage_SOURCE_DIR}/googletest/googletest/include
+  ${gsage_SOURCE_DIR}/Vendor/Sol2/include
+  ${gsage_SOURCE_DIR}/Vendor/googletest/googletest/include
+  ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
 
   ${LUAJIT_INCLUDE_DIR}
-  ${JSONCPP_INCLUDE_DIR}
 )
 
 add_subdirectory(TestPlugins)

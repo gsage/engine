@@ -69,7 +69,6 @@ if(OGRE_FOUND)
 endif(OGRE_FOUND)
 
 find_package(LuaJIT REQUIRED)
-find_package(Jsoncpp REQUIRED)
 find_package(Msgpack REQUIRED)
 
 find_package(Qt5 COMPONENTS Quick Core QUIET)

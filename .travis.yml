@@ -23,7 +23,6 @@ matrix:
             - libfreetype6-dev
             - libluajit-5.1-dev
             - libois-dev
-            - libjsoncpp-dev
             # vendor deps
             - libfreetype6-dev
             - libboost-date-time-dev
@@ -48,8 +47,9 @@ matrix:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install jsoncpp luajit --universal ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install luajit --universal ; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
+  - cmake --version
 
 install:
   - git clone https://github.com/msgpack/msgpack-c.git

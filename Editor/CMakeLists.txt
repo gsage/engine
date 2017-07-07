@@ -2,12 +2,12 @@ set(APP_NAME "GsageEditor")
 
 include_directories(include)
 include_directories(${gsage_SOURCE_DIR}/GsageCore/include)
-include_directories(${gsage_SOURCE_DIR}/Components/OgreCrowd/include)
-include_directories(${gsage_SOURCE_DIR}/Components/Sol2/include)
+include_directories(${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include)
+include_directories(${gsage_SOURCE_DIR}/Vendor/Sol2/include)
+include_directories(${gsage_SOURCE_DIR}/Vendor/jsoncpp/include)
 
 include_directories(
   ${LUAJIT_INCLUDE_DIR}
-  ${JSONCPP_INCLUDE_DIR}
   ${MSGPACK_INCLUDE_DIR}
   ${PYBIND11_INCLUDE_DIRS})
 

@@ -21,17 +21,17 @@ qt5_use_modules(${APP_NAME} Qml Quick Core Network OpenGL)
 
 include_directories(
   ${gsage_SOURCE_DIR}/GsageCore/include
-  ${gsage_SOURCE_DIR}/Components/OgreCrowd/include
-  ${gsage_SOURCE_DIR}/Components/Sol2/include
+  ${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include
+  ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
   ${gsage_SOURCE_DIR}/RocketWrapper/include
+  ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
 
   ${OIS_INCLUDE_DIRS}
   ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}
   ${LUAJIT_INCLUDE_DIR}
   ${LIBROCKET_INCLUDE_DIRS}
-  ${JSONCPP_INCLUDE_DIR}
 )
 
 if(WIN32)
