@@ -129,12 +129,12 @@ namespace Gsage {
     if(!mState)
       return;
 
-    for(sol::protected_function& function : mUpdateListeners)
+    for(Listener& listener : mUpdateListeners)
     {
-      auto res = function(time);
+      auto res = listener.function(time);
       if(!res.valid()) {
         sol::error err = res;
-        removeUpdateListener(function);
+        removeUpdateListener(listener.function);
         LOG(ERROR) << "Failed to call update listener: " << err.what() << "\n\t" << lua_tostring(mState->lua_state(), -1) << ", force unsubscribe";
       }
     }
@@ -288,13 +288,13 @@ namespace Gsage {
     return true;
   }
 
-  bool LuaScriptSystem::addUpdateListener(const sol::object& function)
+  bool LuaScriptSystem::addUpdateListener(const sol::object& function, bool global)
   {
-    if(std::find(mUpdateListeners.begin(), mUpdateListeners.end(), function) != mUpdateListeners.end())
+    if(std::find_if(mUpdateListeners.begin(), mUpdateListeners.end(), [function] (Listener l) { return l.function == function; } ) != mUpdateListeners.end())
       return true;
 
     if(function.get_type() == sol::type::function) {
-      mUpdateListeners.push_back(function.as<sol::protected_function>());
+      mUpdateListeners.emplace_back(function.as<sol::protected_function>(), global);
     } else {
       LOG(WARNING) << "Tried to add update listener object of unsupported type";
       return false;
@@ -306,7 +306,8 @@ namespace Gsage {
   bool LuaScriptSystem::removeUpdateListener(const sol::object& object)
   {
     sol::protected_function function = object.as<sol::protected_function>();
-    UpdateListeners::iterator element = std::find(mUpdateListeners.begin(), mUpdateListeners.end(), function);
+
+    UpdateListeners::iterator element = std::find_if(mUpdateListeners.begin(), mUpdateListeners.end(), [function] (Listener l) { return l.function == function; } );
     if(element == mUpdateListeners.end())
       return false;
 
@@ -316,7 +317,16 @@ namespace Gsage {
 
   void LuaScriptSystem::unloadComponents()
   {
-    mUpdateListeners.clear();
+    setEnabled(false);
+    for (auto i = mUpdateListeners.begin(); i != mUpdateListeners.end();) {
+      if(i->global) {
+        ++i;
+        continue;
+      }
+
+      i = mUpdateListeners.erase(i);
+    }
     ComponentStorage<ScriptComponent>::unloadComponents();
+    setEnabled(true);
   }
 }

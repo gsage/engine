@@ -1,4 +1,5 @@
 require 'lib.class'
+require 'lib.async'
 
 btree = btree or {}
 
@@ -57,6 +58,12 @@ BehaviorTree = class(function(self, context)
   self.currentBehavior = nil
   self.context = context
   self.mainCoroutine = nil
+  self.context.waitSeconds = function(time)
+    async.waitSeconds(time)
+    if not self.mainCoroutine then
+      error("btree stopped")
+    end
+  end
 end)
 
 function BehaviorTree:start(rootNode)
