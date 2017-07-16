@@ -1,4 +1,4 @@
-require 'class'
+require 'lib.class'
 require 'factories.base'
 
 Camera = class(function(self, name, settings, cameraPath)

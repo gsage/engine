@@ -1,3 +1,4 @@
+
 require 'actions'
 
 local function moveRandomly(self, context)

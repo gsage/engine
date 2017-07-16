@@ -194,6 +194,14 @@ namespace Gsage {
        * @param relativeTo Transformation space
        */
       void translate(const Ogre::Vector3& d, Ogre::Node::TransformSpace relativeTo=Ogre::Node::TS_LOCAL);
+
+      /**
+       * Get Ogre::SceneNode
+       */
+      Ogre::SceneNode* getNode()
+      {
+        return mNode;
+      }
     private:
       /**
        * Handle factory removal event

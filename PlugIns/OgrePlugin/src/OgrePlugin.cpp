@@ -112,7 +112,9 @@ namespace Gsage {
       lua.new_usertype<CameraWrapper>("CameraWrapper",
           sol::base_classes, sol::bases<OgreObject>(),
           "attach", &CameraWrapper::attach,
-          "isActive", &CameraWrapper::isActive
+          "isActive", &CameraWrapper::isActive,
+          "getProjectionMatrix", &CameraWrapper::getProjectionMatrix,
+          "getViewMatrix", &CameraWrapper::getViewMatrix
       );
 
       // Systems
@@ -120,7 +122,13 @@ namespace Gsage {
       lua.new_usertype<OgreRenderSystem>("RenderSystem",
           sol::base_classes, sol::bases<EngineSystem>(),
           "viewport", sol::property(&OgreRenderSystem::getViewport),
-          "getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius
+          "getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius,
+          "createRttTexture", &OgreRenderSystem::createRttTexture,
+          "renderCameraToTarget", &OgreRenderSystem::renderCameraToTarget
+      );
+
+      lua["ogre"] = lua.create_table_with(
+          "PF_R8G8B8A8", Ogre::PF_R8G8B8A8
       );
 
       lua.new_usertype<RecastMovementSystem>("MovementSystem",
@@ -208,6 +216,8 @@ namespace Gsage {
           "y", &Ogre::Quaternion::y,
           "z", &Ogre::Quaternion::z,
           "getPitch", &Ogre::Quaternion::getPitch,
+          "getYaw", &Ogre::Quaternion::getYaw,
+          "getRoll", &Ogre::Quaternion::getRoll,
           sol::meta_function::multiplication, sol::overload(
             (Ogre::Quaternion(Ogre::Quaternion::*)(const Ogre::Quaternion&)const)  &Ogre::Quaternion::operator*,
             (Ogre::Vector3(Ogre::Quaternion::*)(const Ogre::Vector3&)const)  &Ogre::Quaternion::operator*
@@ -224,6 +234,14 @@ namespace Gsage {
           sol::constructors<sol::types<float>>(),
           "degrees", sol::property(&Ogre::Degree::valueDegrees),
           "radians", sol::property(&Ogre::Degree::valueRadians)
+      );
+
+      lua.new_usertype<Ogre::Matrix4>("Matrix4",
+          sol::constructors<sol::types<float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float>>(),
+          "row", [] (const Ogre::Matrix4& value, size_t row) -> const std::vector<float> {
+            const float* r = value[row];
+            return std::vector<float>(r, r + 4);
+          }
       );
 
       // Override select event

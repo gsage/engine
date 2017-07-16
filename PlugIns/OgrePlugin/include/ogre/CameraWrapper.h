@@ -72,6 +72,11 @@ namespace Gsage {
       Ogre::Camera* getCamera();
 
       /**
+       * Get camera ogre object
+       */
+      const Ogre::Camera* getCamera() const;
+
+      /**
        * Get camera name
        */
       const std::string& getName() const;
@@ -99,6 +104,16 @@ namespace Gsage {
        * Check if camera is active
        */
       bool isActive() const;
+
+      /**
+       * Get view matrix
+       */
+      const Ogre::Matrix4& getViewMatrix() const;
+
+      /**
+       * Get projection matrix
+       */
+      const Ogre::Matrix4& getProjectionMatrix() const;
     private:
       std::string mTarget;
 

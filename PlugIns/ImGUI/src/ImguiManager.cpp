@@ -28,6 +28,7 @@ THE SOFTWARE.
 
 #ifdef OGRE_INTERFACE
 #include "ogre/ImguiOgreWrapper.h"
+#include "ogre/Gizmo.h"
 #endif
 
 #include <imgui.h>
@@ -189,6 +190,22 @@ namespace Gsage {
     mLuaState = L;
     sol::state_view lua(L);
     lua["imgui"]["render"] = mRenderer;
+#ifdef OGRE_INTERFACE
+    lua["imgui"]["createGizmo"] = [this] () -> std::shared_ptr<Gizmo>{
+      OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
+      if(render == 0) {
+        return std::shared_ptr<Gizmo>(nullptr);
+      }
+      return std::shared_ptr<Gizmo>(new Gizmo(render));
+    };
+    lua.new_usertype<Gizmo>("Gizmo",
+        "setTarget", &Gizmo::setTarget,
+        "enable", &Gizmo::enable,
+        "render", &Gizmo::render,
+        "operation", sol::property(&Gizmo::getOperation, &Gizmo::setOperation),
+        "mode", sol::property(&Gizmo::getMode, &Gizmo::setMode)
+    );
+#endif
   }
 
   bool ImguiManager::handleMouseEvent(EventDispatcher* sender, const Event& event)

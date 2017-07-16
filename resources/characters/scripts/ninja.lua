@@ -1,4 +1,4 @@
-require 'async'
+require 'lib.async'
 
 return function(self)
   local function checkHp(e)

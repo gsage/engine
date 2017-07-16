@@ -257,15 +257,24 @@ namespace Gsage
        * @param target Name of RTT to render to
        */
       void renderCameraToTarget(const std::string& cameraName, const std::string& target);
+
+      /**
+       * Create rtt texture
+       *
+       * @param name Texture name
+       * @param width Texture width
+       * @param height Texture height
+       * @param samples FSAA
+       * @param pf Pixel format
+       */
+      void createRttTexture(const std::string& name, unsigned int width,
+          unsigned int height, unsigned int samples, Ogre::PixelFormat pf);
     protected:
       /**
        * Update current camera
        * @param camera New camera instance
        */
       void updateCurrentCamera(Ogre::Camera* camera);
-
-      void createRttTexture(const std::string& name, unsigned int width,
-          unsigned int height, unsigned int samples, Ogre::PixelFormat pf);
 
       Ogre::Root* mRoot;
       Ogre::SceneManager* mSceneManager;

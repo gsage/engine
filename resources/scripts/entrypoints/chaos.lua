@@ -1,15 +1,17 @@
+-- this entrypoint is a mess, which is used mostly for concepts test purposes
+
 package.path = package.path .. ';' .. getResourcePath('scripts/?.lua') ..
-                               ';' .. getResourcePath('scripts/helpers/?.lua') ..
                                ';' .. getResourcePath('behaviors/trees/?.lua') .. 
                                ";" .. getResourcePath('behaviors/?.lua') .. ";"
 
-require 'base'
 require 'math'
-require 'async'
-require 'behaviors'
+require 'helpers.base'
+require 'lib.async'
+require 'lib.behaviors'
 require 'actions'
 require 'factories.camera'
 require 'factories.emitters'
+require 'imgui.gizmo'
 
 function context()
   return rocket.contexts["main"]
@@ -75,9 +77,32 @@ function onKeyEvent(event)
   end
 end
 
+local selectTransform = false
+
+function handleKeyEvent(e)
+  if e.type == KeyboardEvent.KEY_UP then
+    selectTransform = false
+    return
+  end
+
+  if e.key == Keys.KC_T and e.type == KeyboardEvent.KEY_DOWN then
+    selectTransform = true
+  end
+end
+
+event:onKey(core, KeyboardEvent.KEY_DOWN, handleKeyEvent)
+event:onKey(core, KeyboardEvent.KEY_UP, handleKeyEvent)
+
+local gizmo = Gizmo()
+
 function onSelect(e)
+  local target = entity.get(e.entity)
+  if selectTransform then
+    gizmo:setTarget(target)
+    return
+  end
+
   if e:hasFlags(OgreSceneNode.DYNAMIC) then
-    local target = entity.get(e.entity)
     if actions.attackable(player, target) then
       player:script().state.target = target
     end
@@ -129,14 +154,6 @@ console_visible = false
 startup()
 game:loadSave('gameStart')
 
--- test view for imgui
-TestView = class(function()
-end)
-
-function view.__call()
-  imgui.ShowTestWindow()
-end
-
 if imgui then
-  imgui.render:addView("test", view)
+  imgui.render:addView("gizmo", gizmo)
 end
