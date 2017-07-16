@@ -125,8 +125,11 @@ namespace Gsage
       /**
        * Add lua function which will be called on each update of the system
        * @param function Sol function object, only LUA_TFUNCTION will be added as listener
+       * @param global Flag to tell script system that the callback is a global function so it won't be
+       *               removed on LuaScriptSystem::unloadComponents call
+       * @returns true if passed type is a function
        */
-      bool addUpdateListener(const sol::object& function);
+      bool addUpdateListener(const sol::object& function, bool global = false);
 
       /**
        * Remove lua function from update listeners list
@@ -139,11 +142,22 @@ namespace Gsage
        */
       void unloadComponents();
     private:
+      struct Listener
+      {
+        Listener(sol::protected_function function, bool global)
+          : function(function)
+          , global(global)
+        {}
+
+        sol::protected_function function;
+        bool global;
+      };
+
       std::string getScriptData(const std::string& data);
 
       sol::state_view* mState;
 
-      typedef std::vector<sol::protected_function> UpdateListeners;
+      typedef std::vector<Listener> UpdateListeners;
       UpdateListeners mUpdateListeners;
 
       std::string mWorkdir;

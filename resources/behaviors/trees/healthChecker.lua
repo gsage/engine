@@ -4,7 +4,7 @@ local function isDead(self, context)
 end
 
 local function die(self, context)
-  async.waitSeconds(0.5)
+  context.waitSeconds(0.5)
   core:removeEntity(self.id)
   game:reset()
   game:loadSave("gameStart")
@@ -32,9 +32,9 @@ local function attack(self, context)
   self:render():lookAt(context.target:render().position, RenderComponent.Y_AXIS, OgreNode.TS_WORLD)
   local anims = {"attack1", "attack2"}
   self:render():playAnimation(anims[math.random(2)], 1, 1*aspd, 0, false)
-  async.waitSeconds(0.43/aspd)
+  context.waitSeconds(0.43/aspd)
   actions.inflictDamage(self, context.target)
-  async.waitSeconds(0.2/aspd)
+  context.waitSeconds(0.2/aspd)
   return true
 end
 

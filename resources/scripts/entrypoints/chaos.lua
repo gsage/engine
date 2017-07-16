@@ -143,7 +143,7 @@ function onReady(e)
     event:ogreSelect(core, "rollOut", onRoll)
   end
 
-  core:script():addUpdateListener(async.addTime)
+  core:script():addUpdateListener(async.addTime, true)
 
   spawn()
   spawnMore(10)
