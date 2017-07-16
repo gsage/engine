@@ -90,6 +90,11 @@ namespace Gsage {
     return static_cast<Ogre::Camera*>(mObject);
   }
 
+  const Ogre::Camera* CameraWrapper::getCamera() const
+  {
+    return static_cast<const Ogre::Camera*>(mObject);
+  }
+
   const std::string& CameraWrapper::getName() const
   {
     return mObjectId;
@@ -121,5 +126,15 @@ namespace Gsage {
   bool CameraWrapper::isActive() const
   {
     return mIsActive;
+  }
+
+  const Ogre::Matrix4& CameraWrapper::getViewMatrix() const
+  {
+    return getCamera()->getViewMatrix();
+  }
+
+  const Ogre::Matrix4& CameraWrapper::getProjectionMatrix() const
+  {
+    return getCamera()->getProjectionMatrix();
   }
 }

@@ -8,7 +8,7 @@
   },
 
   "logConfig": "log.cfg",
-  "startupScript": "scripts/start.lua",
+  "startupScript": "scripts/entrypoints/chaos.lua",
   "inputHandler": "ois",
   "systems": [
     "ogre", "recast", "dynamicStats", "lua"

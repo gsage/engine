@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include "ImguiLuaInterface.h"
 #include <imgui.h>
 
+#include "ImGuizmo.h"
+
 #include "sol.hpp"
 
 namespace Gsage {
@@ -71,6 +73,19 @@ namespace Gsage {
     );
 
     ImguiLuaInterface::addLuaBindings(lua.lua_state());
+
+    sol::table gizmo = lua.create_table();
+
+    gizmo["IsOver"] = [] () -> bool { return ImGuizmo::IsOver(); };
+    gizmo["IsUsing"] = [] () -> bool { return ImGuizmo::IsUsing(); };
+    gizmo["ROTATE"] = ImGuizmo::OPERATION::ROTATE;
+    gizmo["TRANSLATE"] = ImGuizmo::OPERATION::TRANSLATE;
+    gizmo["SCALE"] = ImGuizmo::OPERATION::SCALE;
+
+    gizmo["WORLD"] = ImGuizmo::MODE::WORLD;
+    gizmo["LOCAL"] = ImGuizmo::MODE::LOCAL;
+
+    lua["imgui"]["gizmo"] = gizmo;
   }
 }
 

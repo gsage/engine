@@ -1,4 +1,4 @@
-require 'class'
+require 'lib.class'
 
 -- base factory
 EntityFactory = class(function(self, id, definitions)

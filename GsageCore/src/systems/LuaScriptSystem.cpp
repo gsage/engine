@@ -228,6 +228,9 @@ namespace Gsage {
     } catch(sol::error e) {
       LOG(ERROR) << "Failed to execute lua script " << e.what();
       return false;
+    } catch(...) {
+      LOG(ERROR) << "Failed to execute lua script: unknown error";
+      return false;
     }
 
     return true;

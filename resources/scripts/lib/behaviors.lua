@@ -1,4 +1,4 @@
-require 'class'
+require 'lib.class'
 
 btree = btree or {}
 
