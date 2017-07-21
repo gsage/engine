@@ -28,19 +28,24 @@ THE SOFTWARE.
 */
 
 #include "IPlugin.h"
-#include "EngineSystem.h"
+#include "ComponentStorage.h"
 
 namespace Gsage {
   class TestComponent : public EntityComponent
   {
     public:
+      TestComponent() {
+        BIND_PROPERTY("prop", &mProp);
+      }
+      virtual ~TestComponent() {}
       static const std::string SYSTEM;
+      std::string mProp;
   };
 
   /**
    * Fake test system
    */
-  class TestSystem : public EngineSystem
+  class TestSystem : public ComponentStorage<TestComponent>
   {
     public:
       static const std::string ID;
@@ -52,26 +57,19 @@ namespace Gsage {
       bool initialize(const DataProxy& config)
       {
         EngineSystem::initialize(config);
+        mSystemInfo.put("type", ID);
         mSetting = config.get<bool>("testSetting", false);
         return true;
       }
+      virtual bool fillComponentData(TestComponent* component, const DataProxy& data) 
+      {
+        return component->read(data);
+      };
 
-      void update(const double& time)
+      void updateComponent(TestComponent* c, Entity* entity, const double& time)
       {
-      }
-
-      EntityComponent* createComponent(const DataProxy& data, Entity* owner)
-      {
-        return 0;
-      }
-      bool removeComponent(EntityComponent* component)
-      {
-        return 0;
       }
 
-      void unloadComponents()
-      {
-      }
     private:
       bool mSetting;
   };

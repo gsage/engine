@@ -27,43 +27,75 @@ THE SOFTWARE.
 #include "Entity.h"
 #include "Component.h"
 
-using namespace Gsage;
-
-Entity::Entity()
+namespace Gsage
 {
-}
 
-Entity::~Entity()
-{
-}
+  Entity::Entity()
+  {
+  }
 
-void Entity::addComponent(const std::string& name, EntityComponent* c)
-{
-  mComponents[name] = c;
-}
+  Entity::~Entity()
+  {
+  }
 
-bool Entity::removeComponent(const std::string& name)
-{
-  if(mComponents.count(name) == 0)
-    return false;
+  void Entity::addComponent(const std::string& name, EntityComponent* c)
+  {
+    mComponents[name] = c;
+  }
 
-  return mComponents.erase(name);
-}
+  bool Entity::removeComponent(const std::string& name)
+  {
+    if(mComponents.count(name) == 0)
+      return false;
 
-EntityComponent* Entity::getComponent(const std::string& name)
-{
-  return mComponents[name];
-}
+    return mComponents.erase(name);
+  }
 
-void Entity::setFlag(const std::string& flag)
-{
-  if(hasFlag(flag))
-    return;
+  EntityComponent* Entity::getComponent(const std::string& name)
+  {
+    return mComponents[name];
+  }
 
-  mFlags.push_back(flag);
-}
+  void Entity::setFlag(const std::string& flag)
+  {
+    if(hasFlag(flag))
+      return;
 
-bool Entity::hasFlag(const std::string& flag)
-{
-  return std::find(mFlags.begin(), mFlags.end(), flag) != mFlags.end();
+    mFlags.push_back(flag);
+  }
+
+  bool Entity::hasFlag(const std::string& flag)
+  {
+    return std::find(mFlags.begin(), mFlags.end(), flag) != mFlags.end();
+  }
+
+  const std::string& Entity::getClass() const
+  {
+    return mClass;
+  }
+
+  void Entity::setClass(const std::string& cls)
+  {
+    mClass = cls;
+  }
+
+  DataProxy& Entity::getProps()
+  {
+    return mProps;
+  }
+
+  void Entity::setProps(const DataProxy& props)
+  {
+    mProps = props;
+  }
+
+  std::vector<std::string> Entity::getComponentNames() const
+  {
+    std::vector<std::string> res;
+    for(auto pair : mComponents) {
+      res.push_back(pair.first);
+    }
+    return res;
+  }
+
 }

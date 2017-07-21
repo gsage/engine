@@ -825,6 +825,9 @@ public:
 
    Ogre::SceneManager* m_pSceneMgr;
 
+   dtNavMesh* getNavMesh() {
+     return m_navMesh;
+   }
 
 protected:
    /**

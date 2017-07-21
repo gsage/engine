@@ -1,6 +1,7 @@
 #include "GsageDefinitions.h"
 #include <sstream>
 #include "DataProxy.h"
+#include "lua/LuaInterface.h"
 
 #include <json/json.h>
 #include <gtest/gtest.h>
@@ -390,6 +391,23 @@ TEST_P(TestSerialization, TestDumpRead)
 
   validate(read);
 }
+
+// check DataProxy access from lua
+TEST_F(TestDataProxy, TestLuaAccess)
+{
+  DataProxy t = DataProxy::create(lua.create_named_table("table"));
+  t.put("property", 1);
+  // return DataProxy from C++ should be automatically converted to the sol::table
+  lua["getTable"] = [t] () {
+    return t;
+  };
+
+  sol::protected_function_result res = lua.do_string("local t = getTable(); t.setFromLua = true; return t.property");
+  ASSERT_TRUE(res.valid());
+  ASSERT_EQ(res.get<int>(), 1);
+  ASSERT_EQ(t.get<bool>("setFromLua", false), true);
+}
+
 
 INSTANTIATE_TEST_CASE_P(TestDumpRead,
                         TestSerialization,

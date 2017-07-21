@@ -31,7 +31,7 @@ Install Ogre Dependencies
   libboost-thread-dev nvidia-cg-toolkit libfreeimage-dev \
   zlib1g-dev libzzip-dev libois-dev libcppunit-dev doxygen \
   libxt-dev libxaw7-dev libxxf86vm-dev libxrandr-dev libglu-dev \
-  libboost-dev cmake libx11-dev g++
+  libboost-dev cmake libx11-dev g++ libglew-dev
 
 Building Ogre
 ^^^^^^^^^^^^^

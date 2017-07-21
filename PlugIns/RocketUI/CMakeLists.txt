@@ -4,10 +4,12 @@ include_directories(
     ${LIBROCKET_INCLUDE_DIRS}
 )
 
-set(LIBS
-  GsageCore
-  ${LIBROCKET_LIBRARIES}
-  ${LUAJIT_LIBRARIES})
+set(LIBROCKET_LIBS ${LIBROCKET_LIBRARIES})
+if(UNIX AND NOT APPLE)
+  set(LIBROCKET_LIBS -Wl,--whole-archive ${LIBROCKET_LIBRARIES} -Wl,--no-whole-archive)
+endif(UNIX AND NOT APPLE)
+
+set(LIBS GsageCore ${LIBROCKET_LIBS})
 
 file(GLOB sources src/*.cpp)
 

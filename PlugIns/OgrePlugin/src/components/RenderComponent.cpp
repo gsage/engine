@@ -33,6 +33,10 @@ THE SOFTWARE.
 namespace Gsage {
 
   const std::string RenderComponent::SYSTEM = "render";
+  /**
+   * Fired on render component position change
+   */
+  const std::string RenderComponent::POSITION_CHANGE = "RenderComponent.POSITION_CHANGE";
 
   RenderComponent::RenderComponent() :
     mAddedToScene(false),
@@ -49,8 +53,10 @@ namespace Gsage {
 
   void RenderComponent::setPosition(const Ogre::Vector3& position)
   {
-    if(mRootNode)
+    if(mRootNode) {
       mRootNode->setPosition(position);
+      fireEvent(Event(RenderComponent::POSITION_CHANGE));
+    }
   }
 
   void RenderComponent::setOrientation(const Ogre::Quaternion& orientation)

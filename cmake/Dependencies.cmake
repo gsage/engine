@@ -78,33 +78,35 @@ find_package(OIS QUIET)
 find_package(PythonLibs QUIET)
 find_package(PYBIND11 QUIET)
 
-# Find Boost
-if (NOT OGRE_BUILD_PLATFORM_IPHONE)
-  if (WIN32 OR APPLE)
-    set(Boost_USE_STATIC_LIBS TRUE)
-  else ()
-    # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-    set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-  endif ()
-  if (MINGW)
-    # this is probably a bug in CMake: the boost find module tries to look for
-    # boost libraries with name libboost_*, but CMake already prefixes library
-    # search names with "lib". This is the workaround.
-    set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
-  endif ()
-  set(Boost_ADDITIONAL_VERSIONS "1.54" )
-  # Components that need linking (NB does not include header-only components like bind)
-  set(OGRE_BOOST_COMPONENTS system filesystem thread date_time)
-  find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
-
-  if (NOT Boost_FOUND)
-    # Try again with the other type of libs
-    set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+if(OGRE_FOUND)
+  # Find Boost
+  if (NOT OGRE_BUILD_PLATFORM_IPHONE)
+    if (WIN32 OR APPLE)
+      set(Boost_USE_STATIC_LIBS TRUE)
+    else ()
+      # Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
+      set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
+    endif ()
+    if (MINGW)
+      # this is probably a bug in CMake: the boost find module tries to look for
+      # boost libraries with name libboost_*, but CMake already prefixes library
+      # search names with "lib". This is the workaround.
+      set(CMAKE_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES} "")
+    endif ()
+    set(Boost_ADDITIONAL_VERSIONS "1.54" )
+    # Components that need linking (NB does not include header-only components like bind)
+    set(OGRE_BOOST_COMPONENTS system filesystem thread date_time)
     find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
-  endif(NOT Boost_FOUND)
 
-  # Set up referencing of Boost
-  include_directories(${Boost_INCLUDE_DIR})
-  add_definitions(-DBOOST_ALL_NO_LIB)
-  set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
-endif()
+    if (NOT Boost_FOUND)
+      # Try again with the other type of libs
+      set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+      find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
+    endif(NOT Boost_FOUND)
+
+    # Set up referencing of Boost
+    include_directories(${Boost_INCLUDE_DIR})
+    add_definitions(-DBOOST_ALL_NO_LIB)
+    set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
+  endif()
+set(OGRE_INCLUDE_DIRS $ENV{OGRE_HOME}/include/OGRE "${OGRE_INCLUDE_DIRS}")

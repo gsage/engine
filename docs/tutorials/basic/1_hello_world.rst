@@ -152,12 +152,12 @@ You can create another one.
       },
 
 
-   3.3. Write Combat Component
+   3.3. Write Stats Component
 
    .. code-block:: javascript
 
-      // combat component is not limited by param types at all
-      "combat": {
+      // stats component is not limited by param types at all
+      "stats": {
         "anything": 123
       }
 

@@ -30,13 +30,7 @@ THE SOFTWARE.
 #include "Logger.h"
 #include "Engine.h"
 #include "lua/LuaInterface.h"
-
-extern "C" {
-  #include "lua.h"
-  #include "lauxlib.h"
-  #include "lualib.h"
-}
-
+#include "lua.hpp"
 
 namespace Gsage {
 
@@ -51,10 +45,6 @@ namespace Gsage {
 
   LuaScriptSystem::~LuaScriptSystem()
   {
-    if(mState != 0)
-    {
-      delete mState;
-    }
   }
 
   bool LuaScriptSystem::initialize(const DataProxy& settings) {
@@ -88,30 +78,13 @@ namespace Gsage {
     if(!createdComponent)
       return false;
 
-
     if(component->getBehavior().empty())
     {
       sol::table t = mState->create_table();
       component->setData(t);
       return true;
     }
-
-    if(mState)
-    {
-      sol::function initializeBtree = (*mState)["btree"]["initialize"].get<sol::function>();
-      sol::table btree = initializeBtree(component->getOwner()->getId(), component->getBehavior());
-      component->setBtree(btree);
-      sol::table context = btree["context"];
-
-      component->setData(context);
-
-      LOG(INFO) << "Successfuly registered script component for entity " << component->getOwner()->getId();
-    }
-    else
-    {
-      LOG(ERROR) << "Failed to register script";
-      return false;
-    }
+    
     return true;
   }
 
@@ -152,6 +125,17 @@ namespace Gsage {
       component->setSetupExecuted(true);
     }
 
+    if(!component->getBehavior().empty() && component->getBtree() == sol::lua_nil) {
+      sol::function initializeBtree = (*mState)["btree"]["initialize"].get<sol::function>();
+      sol::table btree = initializeBtree(component->getOwner()->getId(), component->getBehavior());
+      component->setBtree(btree);
+      sol::table context = btree["context"];
+
+      component->setData(context);
+
+      LOG(INFO) << "Successfuly registered script component for entity " << component->getOwner()->getId();
+    }
+
     if(component->hasBehavior())
     {
       sol::table& btree = component->getBtree();
@@ -190,7 +174,7 @@ namespace Gsage {
       std::string id = component->getOwner()->getId();
       LOG(INFO) << id << " executing function";
       try {
-        auto res = func(EntityProxy(id, mEngine));
+        auto res = func(component->getOwner());
         return res.valid();
       } catch(sol::error e) {
         LOG(ERROR) << "Failed to run function " << e.what();
@@ -219,7 +203,7 @@ namespace Gsage {
       // If script returns a function, it means that it wants to have a sandbox
 
       sol::protected_function callback = r;
-      auto callResult = callback(EntityProxy(component->getOwner()->getId(), mEngine));
+      auto callResult = callback(component->getOwner());
       if(!callResult.valid()) {
         sol::error err = callResult;
         LOG(ERROR) << "Failed to execute lua script " << err.what();

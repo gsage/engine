@@ -8,21 +8,18 @@ platform: x64
 configuration: RelWithDebInfo
 
 install:
-  # by default, all script lines are interpreted as batch
-
-build:
-  project: INSTALL.vcxproj      # path to Visual Studio solution or project
+  - set PATH=%PATH%;%PYTHON%/Scripts/
+  - pip.exe install conan_package_tools # It install conan too
+  - conan user # It creates the conan data directory
+  - copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
 
 # scripts to run before build
 before_build:
-  - echo Running cmake...
-  - mkdir c:\projects\gsage\build
-  - cd c:\projects\gsage\build
-  - cmake .. -G "Visual Studio 14 2015 Win64" -DCMAKE_INSTALL_PREFIX=%P%
+  - c:\MinGW\bin\mingw32-make.exe build
 
 # scripts to run after build
 test_script:
-  - c:\projects\gsage\build\bin\unit-tests.exe
+  - c:\MinGW\bin\mingw32-make.exe test
 
 # scripts to run after build
 after_build:

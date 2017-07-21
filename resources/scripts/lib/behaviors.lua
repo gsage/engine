@@ -1,5 +1,6 @@
 require 'lib.class'
-require 'lib.async'
+local async = require 'lib.async'
+local eal = require 'lib.eal.manager'
 
 btree = btree or {}
 
@@ -60,9 +61,6 @@ BehaviorTree = class(function(self, context)
   self.mainCoroutine = nil
   self.context.waitSeconds = function(time)
     async.waitSeconds(time)
-    if not self.mainCoroutine then
-      error("btree stopped")
-    end
   end
 end)
 
@@ -117,7 +115,7 @@ end
 
 RunContext = class(function(self, id)
   self.id = id
-  self.entity = engine:get(id)
+  self.entity = eal:getEntity(id)
   self.valid = true
 
   self.stacks = {}
@@ -289,8 +287,13 @@ function Leaf:run(context)
     return false
   end
 
-  local succeed, res = pcall(function() return self.callback(context.entity, context) end)
-  if failed then
+  local entity = eal:getEntity(context.id)
+  if not entity then
+    return false
+  end
+
+  local succeed, res = pcall(function() return self.callback(entity, context) end)
+  if not succeed then
     log.error("Failed to call leaf: " .. res)
     return false
   end

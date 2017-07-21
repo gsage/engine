@@ -70,9 +70,10 @@ namespace Gsage
        * Create entity from template
        *
        * @param name Template file name
+       * @param params placeholders will be replaced by the parameters
+       * @return created entity pointer
        */
       Entity* createEntity(const std::string& name, const DataProxy& params);
-
       /**
        * Create entity from any wrapped data
        *

@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "AnimationScheduler.h"
 #include "Component.h"
 #include "Serializable.h"
+#include "EventDispatcher.h"
 #include <OgreNode.h>
 
 namespace Ogre
@@ -45,7 +46,7 @@ namespace Gsage {
   /**
    * Ogre render system component
    */
-  class RenderComponent : public EntityComponent
+  class RenderComponent : public EntityComponent, public EventDispatcher
   {
     public:
       enum RotationAxis {
@@ -55,6 +56,7 @@ namespace Gsage {
         NONE
       };
       static const std::string SYSTEM;
+      static const std::string POSITION_CHANGE;
 
       RenderComponent();
       virtual ~RenderComponent();

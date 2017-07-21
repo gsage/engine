@@ -24,7 +24,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "OgrePlugin.h"
+#include "GsageOgrePlugin.h"
 #include "GsageFacade.h"
 #include "EngineEvent.h"
 #include "OgreSelectEvent.h"
@@ -134,6 +134,7 @@ namespace Gsage {
       lua.new_usertype<RecastMovementSystem>("MovementSystem",
           sol::base_classes, sol::bases<EngineSystem>(),
           "showNavMesh", &RecastMovementSystem::showNavMesh,
+          "rebuildNavMesh", &RecastMovementSystem::rebuild,
           "setControlledEntity", &RecastMovementSystem::setControlledEntity,
           "resetControlledEntity", &RecastMovementSystem::resetControlledEntity
       );
@@ -141,6 +142,7 @@ namespace Gsage {
       // Components
 
       lua.new_usertype<RenderComponent>("RenderComponent",
+          sol::base_classes, sol::bases<EventDispatcher>(),
           "position", sol::property((void(RenderComponent::*)(const Ogre::Vector3&))&RenderComponent::setPosition, &RenderComponent::getPosition),
           "root", sol::property(&RenderComponent::getRoot),
           "direction", sol::property(&RenderComponent::getDirection),
@@ -158,7 +160,8 @@ namespace Gsage {
 
           "X_AXIS", sol::var(RenderComponent::X_AXIS),
           "Y_AXIS", sol::var(RenderComponent::Y_AXIS),
-          "Z_AXIS", sol::var(RenderComponent::Z_AXIS)
+          "Z_AXIS", sol::var(RenderComponent::Z_AXIS),
+          "POSITION_CHANGE", sol::var(RenderComponent::POSITION_CHANGE)
       );
 
       lua.new_usertype<MovementComponent>("MovementComponent",
@@ -245,18 +248,16 @@ namespace Gsage {
       );
 
       // Override select event
-      mLuaInterface->registerEvent("OgreSelectEvent", "ogreSelect",
-        sol::usertype<OgreSelectEvent>(
-          sol::base_classes, sol::bases<Event, SelectEvent>(),
-          "intersection", sol::property(&OgreSelectEvent::getIntersection)
-        )
+      mLuaInterface->registerEvent<OgreSelectEvent>("OgreSelectEvent",
+        "onOgreSelect",
+        sol::base_classes, sol::bases<Event, SelectEvent>(),
+        "intersection", sol::property(&OgreSelectEvent::getIntersection)
       );
 
       lua["Engine"]["render"] = &Engine::getSystem<OgreRenderSystem>;
       lua["Engine"]["movement"] = &Engine::getSystem<RecastMovementSystem>;
-
-      lua["EntityProxy"]["render"] = &EntityProxy::getComponent<RenderComponent>;
-      lua["EntityProxy"]["movement"] = &EntityProxy::getComponent<MovementComponent>;
+      lua["Entity"]["render"] = &Entity::getComponent<RenderComponent>;
+      lua["Entity"]["movement"] = &Entity::getComponent<MovementComponent>;
       LOG(INFO) << "Registered lua bindings for " << PLUGIN_NAME;
     }
     else
@@ -280,9 +281,8 @@ namespace Gsage {
 
       lua["Engine"]["render"] = sol::lua_nil;
       lua["Engine"]["movement"] = sol::lua_nil;
-
-      lua["EntityProxy"]["render"] = sol::lua_nil;
-      lua["EntityProxy"]["movement"] = sol::lua_nil;
+      lua["Entity"]["render"] = sol::lua_nil;
+      lua["Entity"]["movement"] = sol::lua_nil;
     }
 
     mFacade->getEngine()->removeSystem("render");

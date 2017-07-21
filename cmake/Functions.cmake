@@ -55,6 +55,11 @@ macro(configure)
     set(CMAKE_CXX_FLAGS "-fPIC -O0 ${CMAKE_CXX_FLAGS}")
     set(CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
   endif(UNIX)
+  if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+  endif(MSVC)
+  add_definitions(-DLUAJIT_INCLUDE_DIR="${LUAJIT_INCLUDE_DIR}")
+  add_definitions(-DSOL_EXCEPTIONS_SAFE_PROPAGATION)
 endmacro()
 
 macro(gsage_plugin plugin_name)
@@ -70,6 +75,12 @@ macro(gsage_plugin plugin_name)
     PROPERTIES
     PREFIX ""
     LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_PATH})
+  if(APPLE)
+    set_target_properties(${plugin_name}
+      PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+      INSTALL_RPATH "@rpath"
+    )
+  endif(APPLE)
 endmacro()
 
 macro(gsage_includes)
@@ -84,7 +95,7 @@ macro(gsage_includes)
 endmacro()
 
 macro(gsage_libs libs)
-  set(${libs} GsageCore ${LUAJIT_LIBRARIES} ${libs})
+  set(${libs} GsageCore ${libs})
 endmacro()
 
 macro(gsage_executable executable_name)
@@ -143,7 +154,7 @@ macro(process_templates)
   else(APPLE)
     set(PLUGINS_DIRECTORY "PlugIns")
     if(OGRE_FOUND)
-      get_filename_component(OGRE_PLUGINS ${OGRE_Plugin_OctreeSceneManager_LIBRARY_REL} PATH)
+      get_filename_component(OGRE_PLUGINS "${OGRE_Plugin_OctreeSceneManager_LIBRARY_REL}" DIRECTORY)
     endif(OGRE_FOUND)
   endif(APPLE)
   configure_file(resources/testConfig.json.in ${gsage_SOURCE_DIR}/resources/testConfig.json)

@@ -1,4 +1,7 @@
 require 'coroutine'
+local time = require 'lib.time'
+
+local async = {}
 
 -- This file implements waitSeconds, waitSignal, signal, and their supporting stuff.
 
@@ -14,8 +17,6 @@ local WAITING_ON_SIGNAL = {}
 
 -- Keep track of how long the game has been running.
 local CURRENT_TIME = 0
-
-async = async or {}
 
 function async.isSuspended(co)
   return WAITING_ON_TIME[co] ~= nil or WAITING_ON_SIGNAL_ALL[co] ~= nil
@@ -74,14 +75,14 @@ function async.waitSignal(signalName)
     local co = coroutine.running()
     assert(co ~= nil, "The main thread cannot wait!")
 
-    if WAITING_ON_SIGNAL[signalStr] == nil then
+    if WAITING_ON_SIGNAL[signalName] == nil then
         -- If there wasn't already a list for this signal, start a new one.
         WAITING_ON_SIGNAL[signalName] = { co }
     else
         table.insert(WAITING_ON_SIGNAL[signalName], co)
     end
 
-    WAITING_THREADS[co] = true
+    WAITING_ON_SIGNAL_ALL[co] = true
     return coroutine.yield()
 end
 
@@ -90,8 +91,12 @@ function async.signal(signalName)
     if threads == nil then return end
 
     WAITING_ON_SIGNAL[signalName] = nil
-    for _, co in ipairs(threads) do
+    for _, co in pairs(threads) do
         WAITING_ON_SIGNAL_ALL[co] = nil
         coroutine.resume(co)
     end
 end
+
+time.addHandler("async", async.addTime, true)
+
+return async

@@ -90,7 +90,10 @@ extern "C" {
       }
 #endif
 
-      return retVal;
+      if(retVal != 0)
+        return retVal;
+
+      return facade.getExitCode();
     }
 #ifdef __cplusplus
 }

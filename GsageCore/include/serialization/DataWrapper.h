@@ -231,7 +231,6 @@ namespace Gsage {
           return typename TranslatorBetween<std::string, T>::type().to(value, dest);
         }
 
-        char* charValue;
         if(dw->readExact(key, value)) {
           return typename TranslatorBetween<std::string, T>::type().to(value, dest);
         }

@@ -2,6 +2,7 @@ Graphics System Agnostic Game Engine
 ====================================
 
 [![Documentation Status](https://readthedocs.org/projects/engine/badge/?version=latest)](https://engine.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/gsage/engine.svg?branch=master)](https://travis-ci.org/gsage/engine)
+[![Gitter chat](https://badges.gitter.im/gsage/gitter.png)](https://gitter.im/gsage)
 
 # The Purpose
 
@@ -25,8 +26,12 @@ It operates [entities](http://engine.readthedocs.io/en/latest/tutorials/basic/5_
 
 You can read more documentation on [http://engine.readthedocs.io/](http://engine.readthedocs.io/).
 
-This engine supports three OS systems at the moment:
+This engine supports three OS systems at the moment.
 
+Prefferred option is to use Conan:
+* [Conan Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/conan.html)
+
+But it's also possible to build it manually:
 * [Linux Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/linux.html)
 * [OSX Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/mac.html)
 * [Windows Build Instructions](http://engine.readthedocs.io/en/latest/tutorials/build/windows.html)

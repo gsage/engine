@@ -21,7 +21,7 @@ endif()
 
 set(MSGPACK_DEFINITIONS ${PC_MSGPACK_CFLAGS_OTHER})
 
-find_path(MSGPACK_INCLUDE_DIR msgpack/version_master.h
+find_path(MSGPACK_INCLUDE_DIR msgpack/version_master.h include/msgpack/version_master.h
   HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS} $ENV{MSGPACK_DIR}
   ${LIMIT_SEARCH})
 
@@ -43,17 +43,17 @@ if(MSGPACK_USE_STATIC)
 endif()
 
 if(MSVC)
-  # The import library for the msgpack DLL has a different name
-  list(APPEND MSGPACK_NAMES msgpack_import)
-else()
+
   list(APPEND MSGPACK_NAMES msgpackc msgpack)
 endif()
+
+message("${MSGPACK_NAMES}")
 
 find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   # Check each directory for all names to avoid using headers/libraries from
   # different places.
   NAMES_PER_DIR
-  HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
+  HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS} $ENV{MSGPACK_DIR}/lib
   ${LIMIT_SEARCH})
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)

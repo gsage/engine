@@ -153,8 +153,8 @@ Example:
       lua["Engine"]["render"] = &Engine::getSystem<OgreRenderSystem>;
       lua["Engine"]["movement"] = &Engine::getSystem<RecastMovementSystem>;
 
-      lua["EntityProxy"]["render"] = &EntityProxy::getComponent<RenderComponent>;
-      lua["EntityProxy"]["movement"] = &EntityProxy::getComponent<MovementComponent>;
+      lua["Entity"]["render"] = &Entity::getComponent<RenderComponent>;
+      lua["Entity"]["movement"] = &Entity::getComponent<MovementComponent>;
 
       ...
 

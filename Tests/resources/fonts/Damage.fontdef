@@ -1,0 +1,8 @@
+Damage
+{
+  type truetype
+  source impact.ttf
+  size 30
+  resolution 72
+  antialias_colour true
+}

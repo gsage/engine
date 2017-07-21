@@ -63,7 +63,7 @@ namespace Gsage {
     protected:
       virtual void renderViews();
 
-      typedef std::function<sol::protected_function()> RenderView;
+      typedef std::function<sol::protected_function_result()> RenderView;
 
       typedef std::map<std::string, RenderView> Views;
 
