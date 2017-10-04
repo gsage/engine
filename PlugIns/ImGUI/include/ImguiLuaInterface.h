@@ -25,19 +25,60 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-struct lua_State;
+#include <string>
+
+namespace sol {
+  class state_view;
+}
 
 namespace Gsage {
+
+  /**
+   * Imgui buffer that can be used by lua
+   */
+  class ImguiTextBuffer {
+    public:
+      ImguiTextBuffer(int size, const char* initialValue = "");
+      virtual ~ImguiTextBuffer();
+
+      /**
+       * Read the buffer
+       */
+      std::string read() const;
+
+      /**
+       * Read the buffer
+       */
+      char* read();
+
+      /**
+       * Overwrite the buffer.
+       *
+       * @param value to write
+       */
+      bool write(const std::string& value);
+
+      /**
+       * Returns buffer size.
+       */
+      int size() const { return mSize; };
+
+    private:
+      char* mBuffer;
+
+      int mSize;
+  };
 
   class ImguiLuaInterface {
     public:
       /**
        * Add IMGUI bindings to the lua state
        *
-       * @param L state to modify
+       * @param lua state to enrich with imgui bindings
        */
-      static void addLuaBindings(lua_State* L);
+      static void addLuaBindings(sol::state_view& lua);
   };
+
 }
 
 #endif

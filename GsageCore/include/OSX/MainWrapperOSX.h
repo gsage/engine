@@ -128,6 +128,11 @@ THE SOFTWARE.
       mTimer = nil;
     }
 
+    if(mFacade->getExitCode() != 0)
+    {
+      exit(mFacade->getExitCode());
+    }
+
     [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
   }
 }

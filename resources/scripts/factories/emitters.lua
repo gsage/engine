@@ -1,3 +1,5 @@
+local eal = require 'lib.eal.manager'
+
 emitter = emitter or {}
 
 local systems = {}
@@ -5,6 +7,12 @@ local systems = {}
 function systems.damage(name)
   local data = {
     id = name,
+    props = {
+      class = "damageEmitter",
+      pc = "damageHit",
+      miss = "damageMiss",
+      hostile = "damageEnemy",
+    },
     render = {
       root = {
         children = {
@@ -25,14 +33,6 @@ function systems.damage(name)
           }
         }
       }
-    },
-    script = {
-      setupFunction = function(self)
-        -- injecting
-        damageHit = self:render().root:getParticleSystem('damageHit')
-        damageMiss = self:render().root:getParticleSystem('damageMiss')
-        damageEnemy = self:render().root:getParticleSystem('damageEnemy')
-      end
     }
   }
 
@@ -49,5 +49,5 @@ function emitter.create(name)
   if not data:createEntity(factory(name)) then
     return nil
   end
-  return entity.get(name)
+  return eal:getEntity(name)
 end

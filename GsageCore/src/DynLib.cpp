@@ -68,6 +68,13 @@ namespace Gsage {
       name += ".dll";
 #endif
     mInst = (DYNLIB_HANDLE)DYNLIB_LOAD( name.c_str() );
+    if( !mInst )
+    {
+      LOG(WARNING) <<
+          "Could not load dynamic library " << mName <<
+          ".  System Error: " << dynlibError() <<
+          " DynLib::load";
+    }
 #if GSAGE_PLATFORM == GSAGE_APPLE
     if(!mInst)
     {
@@ -94,7 +101,7 @@ namespace Gsage {
 
     if( DYNLIB_UNLOAD( mInst ) )
     {
-      LOG(ERROR) << "Could not unload dynamic library " << mName << ".  System Error: " << dynlibError() << "DynLib::unload";
+      LOG(ERROR) << "Could not unload dynamic library " << mName << ".  System Error: " << dynlibError() << " DynLib::unload";
       return false;
     }
     return true;
@@ -107,21 +114,21 @@ namespace Gsage {
     return (void*)DYNLIB_GETSYM( mInst, strName.c_str() );
   }
   //-----------------------------------------------------------------------
-  std::string DynLib::dynlibError( void ) 
+  std::string DynLib::dynlibError( void )
   {
 #if GSAGE_PLATFORM == GSAGE_WIN32
-    LPTSTR lpMsgBuf; 
-    FormatMessage( 
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM | 
-        FORMAT_MESSAGE_IGNORE_INSERTS, 
-        NULL, 
-        GetLastError(), 
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
-        (LPTSTR)&lpMsgBuf, 
-        0, 
-        NULL 
-        ); 
+    LPTSTR lpMsgBuf;
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        GetLastError(),
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR)&lpMsgBuf,
+        0,
+        NULL
+        );
     std::string ret = lpMsgBuf;
     // Free the buffer.
     LocalFree( lpMsgBuf );
@@ -134,4 +141,3 @@ namespace Gsage {
   }
 
 }
-

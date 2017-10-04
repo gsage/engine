@@ -1,8 +1,8 @@
 # Locate Lua library
 # This module defines
-#  LUAJIT_FOUND, if false, do not try to link to Lua 
+#  LUAJIT_FOUND, if false, do not try to link to Lua
 #  LUAJIT_LIBRARIES
-#  LUAJIT_INCLUDE_DIR, where to find lua.h 
+#  LUAJIT_INCLUDE_DIR, where to find lua.h
 #
 # Note that the expected include convention is
 #  #include "lua.h"
@@ -43,7 +43,7 @@ FIND_PATH(LUAJIT_INCLUDE_DIR lua.h
   /opt
 )
 
-FIND_LIBRARY(LUAJIT_LIBRARY 
+FIND_LIBRARY(LUAJIT_LIBRARY
   NAMES luajit-51 luajit-5.1 luajit
   HINTS
   $ENV{LUAJIT_DIR}
@@ -59,7 +59,23 @@ FIND_LIBRARY(LUAJIT_LIBRARY
   /opt
 )
 
-FIND_LIBRARY(LUAJIT_STATIC_LIBRARY 
+FIND_LIBRARY(LUA_LIBRARY
+  NAMES lua51 lua5.1
+  HINTS
+  $ENV{LUAJIT_DIR}
+  PATH_SUFFIXES lib64 lib
+  PATHS
+  ~/Library/Frameworks
+  /Library/Frameworks
+  /usr/local
+  /usr
+  /sw
+  /opt/local
+  /opt/csw
+  /opt
+)
+
+FIND_LIBRARY(LUAJIT_STATIC_LIBRARY
   NAMES libluajit-51.a libluajit-5.1.a
   HINTS
   $ENV{LUAJIT_DIR}
@@ -82,12 +98,12 @@ IF(LUAJIT_LIBRARY)
     SET( LUAJIT_LIBRARIES "${LUAJIT_LIBRARY};${LUAJIT_MATH_LIBRARY}" CACHE STRING "Lua Libraries")
   # For Windows and Mac, don't need to explicitly include the math library
   ELSE(UNIX AND NOT APPLE)
-    SET( LUAJIT_LIBRARIES "${LUAJIT_LIBRARY}" CACHE STRING "Lua Libraries")
+    SET( LUAJIT_LIBRARIES "${LUAJIT_LIBRARY}" "${LUA_LIBRARY}" CACHE STRING "Lua Libraries")
   ENDIF(UNIX AND NOT APPLE)
 ENDIF(LUAJIT_LIBRARY)
 
 INCLUDE(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set LUAJIT_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set LUAJIT_FOUND to TRUE if
 # all listed variables are TRUE
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(LuaJIT  DEFAULT_MSG  LUAJIT_LIBRARIES LUAJIT_INCLUDE_DIR)
 

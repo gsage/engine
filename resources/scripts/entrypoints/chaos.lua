@@ -1,17 +1,24 @@
 -- this entrypoint is a mess, which is used mostly for concepts test purposes
 
 package.path = package.path .. ';' .. getResourcePath('scripts/?.lua') ..
-                               ';' .. getResourcePath('behaviors/trees/?.lua') .. 
+                               ';' .. getResourcePath('behaviors/trees/?.lua') ..
                                ";" .. getResourcePath('behaviors/?.lua') .. ";"
 
 require 'math'
 require 'helpers.base'
-require 'lib.async'
 require 'lib.behaviors'
 require 'actions'
 require 'factories.camera'
 require 'factories.emitters'
 require 'imgui.gizmo'
+require 'imgui.console'
+require 'imgui.stats'
+
+local event = require 'lib.event'
+local eal = require 'lib.eal.manager'
+local async = require "lib.async"
+
+imguiConsole = Console()
 
 function context()
   return rocket.contexts["main"]
@@ -48,7 +55,7 @@ function startup()
 end
 
 function setOrbitalCam(id, cameraID)
-  camera:createAndAttach('orbit', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20})
+  camera:createAndAttach('orbit', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
 end
 
 function spawnMore(count)
@@ -58,7 +65,7 @@ function spawnMore(count)
 end
 
 function spawn()
-  entity.create("ninja", {movement = {speed = 10}})
+  data:createEntity(getResourcePath('characters/ninja.json'), {movement = {speed = 10}})
 end
 
 function onKeyEvent(event)
@@ -90,13 +97,14 @@ function handleKeyEvent(e)
   end
 end
 
-event:onKey(core, KeyboardEvent.KEY_DOWN, handleKeyEvent)
-event:onKey(core, KeyboardEvent.KEY_UP, handleKeyEvent)
+event:onKeyboard(core, KeyboardEvent.KEY_DOWN, handleKeyEvent)
+event:onKeyboard(core, KeyboardEvent.KEY_UP, handleKeyEvent)
 
 local gizmo = Gizmo()
 
 function onSelect(e)
-  local target = entity.get(e.entity)
+  local target = eal:getEntity(e.entity)
+
   if selectTransform then
     gizmo:setTarget(target)
     return
@@ -104,20 +112,20 @@ function onSelect(e)
 
   if e:hasFlags(OgreSceneNode.DYNAMIC) then
     if actions.attackable(player, target) then
-      player:script().state.target = target
+      player.script.state.target = target
     end
   elseif e:hasFlags(OgreSceneNode.STATIC) then
-    player:script().state.target = nil
-    if player:movement() == nil or player:render() == nil then
+    player.script.state.target = nil
+    if player.movement == nil or player.render == nil then
       return
     end
-    player:movement():go(e.intersection)
+    player.movement:go(e.intersection)
   end
 end
 
 function onRoll(e)
-  if e.type == "rollOver" then
-    local target = entity.get(e.entity)
+  if e.type == OgreSelectEvent.ROLL_OVER then
+    local target = eal:getEntity(e.entity)
     if e:hasFlags(OgreSceneNode.DYNAMIC) then
       cursor:GetElementById("cursorIcon"):SetClass("attack", actions.attackable(player, target))
     end
@@ -134,26 +142,29 @@ function onReady(e)
   end
 
   initialized = true
-  player = entity.get("sinbad")
+  player = eal:getEntity("sinbad")
   core:movement():setControlledEntity(player.id)
 
-  event:ogreSelect(core, "objectSelected", onSelect)
+  event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
   if rocket ~= nil then
-    event:ogreSelect(core, "rollOver", onRoll)
-    event:ogreSelect(core, "rollOut", onRoll)
+    event:onOgreSelect(core, SelectEvent.ROLL_OVER, onRoll)
+    event:onOgreSelect(core, SelectEvent.ROLL_OUT, onRoll)
   end
-
-  core:script():addUpdateListener(async.addTime, true)
 
   spawn()
   spawnMore(10)
 end
 
-event:bind(core, "load", onReady)
+event:bind(core, Facade.LOAD, onReady)
 console_visible = false
 startup()
 game:loadSave('gameStart')
 
+imguiConsole:setOpen(true)
+
 if imgui then
   imgui.render:addView("gizmo", gizmo)
+  imgui.render:addView("console", imguiConsole)
+  stats = Stats()
+  imgui.render:addView("stats", stats)
 end

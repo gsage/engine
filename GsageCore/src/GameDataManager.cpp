@@ -126,6 +126,8 @@ namespace Gsage {
         }
       }
       entityNode.put("id", entity->getId());
+      entityNode.put("class", entity->getClass());
+      entityNode.put("props", entity->getProps());
       entitiesNode.put(entity->getId(), entityNode);
 
       // TODO figure out more flexible way to do it
@@ -185,7 +187,9 @@ namespace Gsage {
   bool GameDataManager::loadArea(const std::string& area)
   {
     DataProxy areaInfo;
-    if(!FileLoader::getSingletonPtr()->load(mLevelsFolder + "/" + area + "." + mFileExtension, DataProxy(), areaInfo))
+    std::string path = mLevelsFolder + "/" + area + "." + mFileExtension;
+    LOG(INFO) << "Loading area " << path;
+    if(!FileLoader::getSingletonPtr()->load(path, DataProxy(), areaInfo))
       return false;
 
     auto entities = areaInfo.get<DataProxy>("entities");

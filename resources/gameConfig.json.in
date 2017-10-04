@@ -13,12 +13,17 @@
   "systems": [
     "ogre", "recast", "dynamicStats", "lua"
   ],
+  "packager": {
+    "deps": [
+      "tween"
+    ]
+  },
 
   "plugins":
   [
+    "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/OisInput",
     "@PLUGINS_DIRECTORY@/RocketUI",
-    "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/ImGUI"
   ],
 
@@ -26,6 +31,11 @@
   {
     "pluginsFile": "plugins.cfg",
     "configFile": "ogreConfig.cfg",
+    "plugins": [
+      "RenderSystem_GL",
+      "OctreeSceneManager",
+      "ParticleFX"
+    ],
     "globalResources":
     {
       "General":

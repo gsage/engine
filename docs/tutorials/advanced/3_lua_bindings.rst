@@ -83,7 +83,7 @@ Bind Entity Components
 ^^^^^^^^^^^^^^^^^^^^^^
 
 It's very likely that you will want to access system components.
-It's almost the same as for the system, but instead of :code:`Engine` binding, you should use :code:`EntityProxy`:
+It's almost the same as for the system, but instead of :code:`Engine` binding, you should use :code:`Entity`:
 
 .. code-block:: cpp
 
@@ -91,14 +91,14 @@ It's almost the same as for the system, but instead of :code:`Engine` binding, y
       "meow", &KittyComponent::meow
     );
 
-    lua["EntityProxy"]["kitty"] = &EntityProxy::getComponent<KittyComponent>;
+    lua["Entity"]["kitty"] = &Entity::getComponent<KittyComponent>;
 
 And then you will be able to work with this component from Lua:
 
 .. code-block:: lua
 
-    e = entity.get("cat")
-    cat:kitty():meow()
+    e = eal:getEntity("cat")
+    cat.kitty:meow()
 
 Bind Events
 ^^^^^^^^^^^

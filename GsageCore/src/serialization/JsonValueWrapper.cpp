@@ -51,7 +51,7 @@ namespace Gsage {
 
   JsonValueWrapper::~JsonValueWrapper()
   {
-    if(mSelfAllocatedObject and mObject != 0) {
+    if(mSelfAllocatedObject && mObject != 0) {
       delete mObject;
     }
   }

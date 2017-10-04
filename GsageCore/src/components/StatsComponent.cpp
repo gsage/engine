@@ -41,7 +41,7 @@ namespace Gsage {
     return mStatId;
   }
 
-  const std::string StatsComponent::SYSTEM = "combat";
+  const std::string StatsComponent::SYSTEM = "stats";
 
   StatsComponent::StatsComponent()
     : mStats(DataProxy::create(DataWrapper::JSON_OBJECT))

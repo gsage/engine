@@ -29,14 +29,39 @@ THE SOFTWARE.
 #include <imgui.h>
 #include <deque>
 
-extern "C" {
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-}
 #include "sol.hpp"
 
 namespace Gsage {
+
+  ImguiTextBuffer::ImguiTextBuffer(int size, const char* value)
+    : mBuffer(new char[size]())
+    , mSize(size)
+  {
+  }
+
+  ImguiTextBuffer::~ImguiTextBuffer()
+  {
+    delete mBuffer;
+  }
+
+  std::string ImguiTextBuffer::read() const
+  {
+    return std::string(mBuffer);
+  }
+
+  char* ImguiTextBuffer::read()
+  {
+    return mBuffer;
+  }
+
+  bool ImguiTextBuffer::write(const std::string& value)
+  {
+    if(value.size() > mSize) {
+      return false;
+    }
+    strcpy(mBuffer, value.c_str());
+    return true;
+  }
 
   // define ENABLE_IM_LUA_END_STACK
   // to keep track of end and begins and clean up the imgui stack
@@ -351,7 +376,22 @@ namespace Gsage {
     {NULL, NULL}
   };
 
-  void ImguiLuaInterface::addLuaBindings(lua_State *L) {
+  bool InputText(const char* label, ImguiTextBuffer& buffer, ImGuiInputTextFlags flags = 0)
+  {
+    return ImGui::InputText(label, buffer.read(), buffer.size(), flags);
+  }
+
+  bool InputTextWithCallback(const char* label, ImguiTextBuffer& buffer, ImGuiInputTextFlags flags, sol::function callback)
+  {
+    return ImGui::InputText(label, buffer.read(), buffer.size(), flags, [](ImGuiTextEditCallbackData* data) {
+        sol::function cb = *static_cast<sol::function*>(data->UserData);
+        int res = cb(data);
+        return res;
+    }, &callback);
+  }
+
+  void ImguiLuaInterface::addLuaBindings(sol::state_view& lua) {
+    lua_State* L = lua.lua_state();
     lua_newtable(L);
     luaL_setfuncs(L, imguilib, 0);
     lua_setglobal(L, "imgui");
@@ -439,6 +479,10 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiSelectableFlags_DontClosePopups");
     lua_pushnumber(L, ImGuiSelectableFlags_SpanAllColumns);
     lua_setglobal(L, "ImGuiSelectableFlags_SpanAllColumns");
+    lua_pushnumber(L, ImGuiStyleVar_FramePadding);
+    lua_setglobal(L, "ImGuiStyleVar_FramePadding");
+    lua_pushnumber(L, ImGuiStyleVar_ItemSpacing);
+    lua_setglobal(L, "ImGuiStyleVar_ItemSpacing");
     lua_pushnumber(L, ImGuiKey_Tab);
     lua_setglobal(L, "ImGuiKey_Tab");
     lua_pushnumber(L, ImGuiKey_LeftArrow);
@@ -455,5 +499,45 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiKey_PageDown");
     lua_pushnumber(L, ImGuiKey_Home);
     lua_setglobal(L, "ImGuiKey_Home");
+    lua_pushnumber(L, ImGuiCol_Text);
+    lua_setglobal(L, "ImGuiCol_Text");
+
+    sol::table imgui = lua["imgui"];
+
+    imgui["TextBuffer"] = [] (int size) -> std::shared_ptr<ImguiTextBuffer> {
+      return std::shared_ptr<ImguiTextBuffer>(new ImguiTextBuffer(size));
+    };
+
+    imgui.new_usertype<ImguiTextBuffer>("ImguiTextBuffer",
+        "write", &ImguiTextBuffer::write,
+        "read", (std::string(ImguiTextBuffer::*)()const)&ImguiTextBuffer::read
+    );
+
+    imgui["InputText"] = sol::overload(
+        InputText,
+        InputTextWithCallback
+    );
+
+    imgui.new_usertype<ImGuiTextEditCallbackData>("ImGuiTextEditCallbackData",
+        "eventFlag", &ImGuiTextEditCallbackData::EventFlag,
+        "insertChars", &ImGuiTextEditCallbackData::InsertChars,
+        "deleteChars", &ImGuiTextEditCallbackData::DeleteChars,
+        "cursorPos", &ImGuiTextEditCallbackData::CursorPos,
+        "getBuf", [] (ImGuiTextEditCallbackData* data) { return std::string(data->Buf); },
+        "setBuf", [] (ImGuiTextEditCallbackData* data, const std::string& value) {
+            strcpy(data->Buf, value.c_str());
+            return value.size();
+          },
+        "bufSize", &ImGuiTextEditCallbackData::BufSize,
+        "eventKey", &ImGuiTextEditCallbackData::EventKey,
+        "bufDirty", &ImGuiTextEditCallbackData::BufDirty,
+        "selectionStart", &ImGuiTextEditCallbackData::SelectionStart,
+        "selectionEnd", &ImGuiTextEditCallbackData::SelectionEnd,
+        "bufTextLen", &ImGuiTextEditCallbackData::BufTextLen
+    );
+
+    imgui.new_usertype<ImVector<char>>("ImVector",
+        "data", &ImVector<char>::Data
+    );
   }
 }

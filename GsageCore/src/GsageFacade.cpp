@@ -24,7 +24,9 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include <unistd.h>
+#include <thread>
+#include <chrono>
+
 #include "GsageFacade.h"
 #include "UIManager.h"
 #include "Logger.h"
@@ -45,6 +47,7 @@ namespace Gsage {
   const std::string PLUGINS_SECTION = "plugins";
   const std::string GsageFacade::LOAD = "load";
   const std::string GsageFacade::RESET = "reset";
+  const std::string GsageFacade::BEFORE_RESET = "beforeReset";
 
   GsageFacade::GsageFacade() :
       mStarted(false),
@@ -55,7 +58,8 @@ namespace Gsage {
       mStartupScriptRun(false),
       mInputManager(&mEngine),
       mSystemManager(&mEngine),
-      mPreviousUpdateTime(std::chrono::high_resolution_clock::now())
+      mPreviousUpdateTime(std::chrono::high_resolution_clock::now()),
+      mExitCode(0)
   {
     el::Configurations defaultConf;
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
@@ -115,13 +119,13 @@ namespace Gsage {
 
     if(!FileLoader::getSingletonPtr()->load(configPath, DataProxy(), mConfig))
     {
+      LOG(ERROR) << "Failed to load file " << configPath;
       return false;
     }
 
     auto logConfig = mConfig.get<std::string>("logConfig");
     if (logConfig.second) {
       el::Configurations conf(resourcePath + GSAGE_PATH_SEPARATOR + logConfig.first);
-      conf.setToDefault();
       el::Loggers::reconfigureLogger("default", conf);
     }
 
@@ -144,8 +148,24 @@ namespace Gsage {
 
     mGameDataManager = new GameDataManager(&mEngine, mConfig);
     mLuaInterface->setResourcePath(resourcePath);
-    if(mConfig.get<bool>("startLuaInterface", true))
-      mLuaInterface->initialize();
+    if(mConfig.get<bool>("startLuaInterface", true)) {
+      mLuaInterface->initialize(mLuaState);
+      // execute lua package manager, if it's enabled
+      auto pair = mConfig.get<DataProxy>("packager");
+
+      auto scriptsPath = mConfig.get<std::string>("scriptsPath", resourcePath);
+      if(pair.second) {
+        DataProxy deps = pair.first.get("deps", DataProxy::create(DataWrapper::JSON_OBJECT));
+        std::string scriptPath = pair.first.get(
+            "script",
+            resourcePath + GSAGE_PATH_SEPARATOR + "scripts" + GSAGE_PATH_SEPARATOR + "lib" + GSAGE_PATH_SEPARATOR + "packager.lua"
+        );
+        if(!mLuaInterface->runPackager(scriptPath, deps)) {
+          LOG(ERROR) << "Failed to run lua packager";
+          return false;
+        }
+      }
+    }
 
     if(mConfig.count(PLUGINS_SECTION) != 0)
     {
@@ -175,9 +195,10 @@ namespace Gsage {
       pair.second->initialize(&mEngine, mLuaInterface->getState());
     }
 
+    auto scriptsPath = mConfig.get<std::string>("scriptsPath", resourcePath);
     auto startupScript = mConfig.get<std::string>("startupScript");
     if(startupScript.second) {
-      mStartupScript = resourcePath + GSAGE_PATH_SEPARATOR + startupScript.first;
+      mStartupScript = scriptsPath + GSAGE_PATH_SEPARATOR + startupScript.first;
     }
     return true;
   }
@@ -187,9 +208,13 @@ namespace Gsage {
     mEngine.addSystem(id, system);
   }
 
-  void GsageFacade::setLuaState(lua_State* L)
+  void GsageFacade::setLuaState(lua_State* L, bool initialize)
   {
     mLuaState = L;
+
+    if(!initialize)
+      return;
+
     if(mLuaInterface && L)
       mLuaInterface->initialize(L);
 
@@ -225,18 +250,25 @@ namespace Gsage {
     mEngine.update(frameTime);
     mInputManager.update(frameTime);
     mPreviousUpdateTime = now;
-    usleep(16000 - frameTime);
+    std::this_thread::sleep_for(std::chrono::microseconds((long)(6000 - frameTime)));
 
     return !mStopped;
   }
 
-  void GsageFacade::halt()
+  int GsageFacade::getExitCode() const
   {
+    return mExitCode;
+  }
+
+  void GsageFacade::halt(int exitCode)
+  {
+    mExitCode = exitCode;
     mStopped = true;
   }
 
   void GsageFacade::reset()
   {
+    mEngine.fireEvent(Event(BEFORE_RESET));
     mEngine.unloadAll();
     mEngine.fireEvent(Event(RESET));
   }
@@ -366,5 +398,10 @@ namespace Gsage {
   void GsageFacade::removeInputFactory(const std::string& id)
   {
     mInputManager.removeFactory(id);
+  }
+
+  bool GsageFacade::createSystem(const std::string& systemID)
+  {
+    return mSystemManager.create(systemID);
   }
 }

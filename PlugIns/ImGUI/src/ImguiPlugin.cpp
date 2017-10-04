@@ -72,7 +72,7 @@ namespace Gsage {
         "removeView", &ImguiRenderer::removeView
     );
 
-    ImguiLuaInterface::addLuaBindings(lua.lua_state());
+    ImguiLuaInterface::addLuaBindings(lua);
 
     sol::table gizmo = lua.create_table();
 

@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "script": {
+      "hooks": {
+        "testHook": "hookCalled = true"
+      }
+    }
+  },
+  "entities": [
+  {
+    "id": "static",
+    "class": "testing",
+    "test": {
+      "prop": "static entity"
+    }
+  }]
+}

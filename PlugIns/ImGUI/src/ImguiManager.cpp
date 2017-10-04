@@ -75,8 +75,12 @@ namespace Gsage {
     for(auto pair : mViews) {
       try {
         auto res = pair.second();
+        if(!res.valid()) {
+          sol::error e = res;
+          LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
+        }
       } catch(sol::error e) {
-        LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
+        LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
       }
     }
   }
@@ -137,6 +141,9 @@ namespace Gsage {
     bool initialized = false;
 #ifdef OGRE_INTERFACE
     if(type == "ogre") {
+      if(mRenderer) {
+        delete mRenderer;
+      }
       LOG(INFO) << "Initialize for render system ogre3d";
       mRenderer = new ImguiOgreWrapper(mEngine);
       initialized = true;

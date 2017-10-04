@@ -58,6 +58,14 @@ THE SOFTWARE.
 #include "ogre/ManualMovableTextRenderer.h"
 #include "WindowEventListener.h"
 
+#ifdef OGRE_STATIC
+#include <RenderSystems/GL/OgreGLPlugin.h>
+#include <OgreBspSceneManagerPlugin.h>
+#include <OgreOctreePlugin.h>
+#include <OgrePCZPlugin.h>
+#include <OgreParticleFXPlugin.h>
+#endif
+
 
 namespace Gsage {
 
@@ -127,8 +135,11 @@ namespace Gsage {
   bool OgreRenderSystem::initialize(const DataProxy& settings)
   {
     std::string workdir   = mEngine->env().get("workdir", ".");
-    std::string plugins   = workdir + GSAGE_PATH_SEPARATOR + settings.get("pluginsFile", ".");
-    std::string config    = workdir + GSAGE_PATH_SEPARATOR + settings.get("configFile", ".");
+    std::string plugins;
+    std::string config    = workdir + GSAGE_PATH_SEPARATOR + settings.get("configFile", "ogreConfig.cfg");
+#ifndef OGRE_STATIC
+    plugins = workdir + GSAGE_PATH_SEPARATOR + settings.get("pluginsFile", "plugins.cfg");
+#endif
 
     // redirect ogre logs to custom logger
     mLogManager->createLog("", true, false, false);
@@ -139,12 +150,36 @@ namespace Gsage {
     // initialize resource manager
     mResourceManager = new ResourceManager(workdir);
 
+#ifdef OGRE_STATIC
+    auto pair = settings.get<DataProxy>("plugins");
+    if(pair.second) {
+      for(auto p : pair.first) {
+        std::string id = p.second.getValueOptional<std::string>("");
+        LOG(INFO) << "Installing plugin " << id;
+
+        if(id == "RenderSystem_GL") {
+          mRoot->installPlugin(new Ogre::GLPlugin());
+        } else if(id == "OctreeSceneManager") {
+          mRoot->installPlugin(new Ogre::OctreePlugin());
+        } else if(id == "ParticleFX") {
+          mRoot->installPlugin(new Ogre::ParticleFXPlugin());
+        } else if(id == "PCZSceneManager") {
+          mRoot->installPlugin(new Ogre::PCZPlugin());
+        } else if(id == "BSPSceneManager") {
+          mRoot->installPlugin(new Ogre::BspSceneManagerPlugin());
+        } else {
+          LOG(ERROR) << "Can't install plugin " << id;
+          return false;
+        }
+      }
+    }
+#endif
+
     if(!(mRoot->restoreConfig()))
         return false;
 
     // initialize render window
     mRoot->initialise(false);
-
     Ogre::NameValuePairList params;
 
     auto paramNode = settings.get<DataProxy>("window.params");
@@ -161,7 +196,7 @@ namespace Gsage {
 
     // create window
     mWindow = mRoot->createRenderWindow(
-        settings.get("window.name", ""),
+        settings.get("window.name", "default"),
         settings.get("window.width", 1024),
         settings.get("window.height", 786),
         settings.get("window.fullscreen", false),

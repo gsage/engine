@@ -25,11 +25,7 @@ THE SOFTWARE.
 */
 
 #include "lua/LuaInterface.h"
-extern "C" {
-  #include "lua.h"
-  #include "lauxlib.h"
-  #include "lualib.h"
-}
+#include "lua.hpp"
 
 #include "GsageFacade.h"
 
@@ -37,6 +33,7 @@ extern "C" {
 #include "EngineEvent.h"
 #include "KeyboardEvent.h"
 #include "MouseEvent.h"
+#include "ResourceMonitor.h"
 
 #include "components/StatsComponent.h"
 #include "components/ScriptComponent.h"
@@ -45,79 +42,72 @@ extern "C" {
 #include "systems/LuaScriptSystem.h"
 
 #include "lua/LuaEventProxy.h"
+#include "lua/LuaEventConnection.h"
 #include "lua/LuaHelpers.h"
+
+#if GSAGE_PLATFORM == GSAGE_LINUX || GSAGE_PLATFORM == GSAGE_APPLE
+#include <limits.h>
+#include <stdlib.h>
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+#include <windows.h>
+#include <tchar.h>
+#endif
 
 namespace Gsage {
 
-  void fillRecoursively(const sol::object& t, DataProxy& dest) {
-  }
-
-  std::shared_ptr<DataProxy> wrapObject(const sol::object& t)
-  {
-    sol::table table = t.as<sol::table>();
-    DataProxy* d = new DataProxy(DataProxy::wrap(table));
-    return std::shared_ptr<DataProxy>(d);
-  }
-
-  DataProxy getDataProxyKey(const DataProxy& d, const std::string& key)
-  {
-    return d.get(key, DataProxy());
-  }
-
-  DataManagerProxy::DataManagerProxy(GameDataManager* instance)
-    : mInstance(instance)
+  LogProxy::LogProxy()
   {
   }
 
-  DataManagerProxy::~DataManagerProxy()
+  LogProxy::~LogProxy()
   {
   }
 
-  Entity* DataManagerProxy::createEntity(DataProxy data)
+  void LogProxy::subscribe(const std::string& name, sol::protected_function function)
   {
-    return mInstance->createEntity(data);
+    el::Helpers::installLogDispatchCallback<LogSubscriber>(name);
+    el::Helpers::logDispatchCallback<LogSubscriber>(name)->setWrappedFunction(function);
   }
 
-  Entity* DataManagerProxy::createEntity(const std::string& templateFile, DataProxy params)
+  void LogProxy::unsubscribe(const std::string& name)
   {
-    return mInstance->createEntity(templateFile, params);
+    el::Helpers::uninstallLogDispatchCallback<LogSubscriber>(name);
   }
 
-  Entity* DataManagerProxy::createEntity(const std::string& json)
+  void LogProxy::LogSubscriber::handle(const el::LogDispatchData* data)
   {
-    return mInstance->createEntity(json);
+    if(!mReady || !mWrapped.valid()) {
+      return;
+    }
+
+    mWrapped(data->logMessage());
   }
 
-  EntityProxy* EngineProxy::getEntity(const std::string& id)
+  void LogProxy::LogSubscriber::setWrappedFunction(sol::protected_function wrapped)
   {
-    return new EntityProxy(id, mEngine);
+    if(wrapped.valid()) {
+      mWrapped = wrapped;
+      mReady = true;
+    }
   }
-
-  EntityProxy::EntityProxy(const std::string& entityId, Engine* engine)
-    : mEngine(engine)
-    , mEntityId(entityId)
-  {
-    // TODO: create entity remove event and subscribe to it
-  }
-
-  EntityProxy::~EntityProxy()
+  PropertyDescription::PropertyDescription(const std::string& name, const std::string& docstring)
+    : mName(name)
+    , mDocstring(docstring)
   {
   }
 
-  const std::string& EntityProxy::getId()
+  const std::string& PropertyDescription::getName() const
   {
-    return mEntityId;
+    return mName;
   }
 
-  bool EntityProxy::isValid()
+  const std::string& PropertyDescription::getDocstring() const
   {
-    return mEngine->getEntity(mEntityId) != 0;
+    return mDocstring;
   }
 
   LuaInterface::LuaInterface(GsageFacade* instance, const std::string& resourcePath)
     : mInstance(instance)
-    , mDataManagerProxy(0)
-    , mEngineProxy(0)
     , mEventProxy(new LuaEventProxy())
     , mState(0)
     , mResourcePath(resourcePath)
@@ -128,14 +118,8 @@ namespace Gsage {
 
   LuaInterface::~LuaInterface()
   {
-    if(mDataManagerProxy)
-      delete mDataManagerProxy;
-
     if(mEventProxy)
       delete mEventProxy;
-
-    if(mEngineProxy)
-      delete mEngineProxy;
 
     if(mStateView)
       delete mStateView;
@@ -175,35 +159,50 @@ namespace Gsage {
     mStateView = new sol::state_view(mState);
     sol::state_view lua = *mStateView;
 
+    lua.new_usertype<PropertyDescription>("PropertyDescription",
+        "new", sol::constructors<sol::types<const std::string&, const std::string&>>(),
+        "name", sol::property(&PropertyDescription::getName),
+        "docstring", sol::property(&PropertyDescription::getDocstring)
+    );
+
+    lua.new_usertype<UpdateListener>("UpdateListener");
+
+    lua.new_usertype<ResourceMonitor>("ResourceMonitor",
+        sol::base_classes, sol::bases<UpdateListener>(),
+        "new", sol::constructors<sol::types<float>>(),
+        "stats", sol::property(&ResourceMonitor::getStats)
+    );
+
+    lua.new_usertype<ResourceMonitor::Stats>("ResourceMonitorStats",
+        "physicalMem", &ResourceMonitor::Stats::physicalMem,
+        "virtualMem", &ResourceMonitor::Stats::virtualMem,
+        "lastCPU", &ResourceMonitor::Stats::lastCPU,
+        "lastSysCPU", &ResourceMonitor::Stats::lastSysCPU,
+        "lastUserCPU", &ResourceMonitor::Stats::lastUserCPU
+    );
+
     lua.new_usertype<GsageFacade>("Facade",
         "new", sol::no_constructor,
         "halt", &GsageFacade::halt,
         "reset", &GsageFacade::reset,
         "loadSave", &GsageFacade::loadSave,
         "dumpSave", &GsageFacade::dumpSave,
+        "loadArea", &GsageFacade::loadArea,
         "loadPlugin", &GsageFacade::loadPlugin,
         "unloadPlugin", &GsageFacade::unloadPlugin,
-        "RESET", sol::var(GsageFacade::RESET)
+        "createSystem", &GsageFacade::createSystem,
+        "addUpdateListener", &GsageFacade::addUpdateListener,
+        "BEFORE_RESET", sol::var(GsageFacade::BEFORE_RESET),
+        "RESET", sol::var(GsageFacade::RESET),
+        "LOAD", sol::var(GsageFacade::LOAD)
     );
-
-    lua.new_usertype<EngineProxy>("EngineProxy",
-        "get", &EngineProxy::getEntity
-    );
-
-    lua.new_usertype<EntityProxy>("EntityProxy",
-        sol::constructors<sol::types<const std::string&, Engine*>>(),
-        "id", sol::property(&EntityProxy::getId),
-        "valid", sol::property(&EntityProxy::isValid)
-    );
-
-    lua["EntityProxy"]["stats"] = &EntityProxy::getComponent<StatsComponent>;
-    lua["EntityProxy"]["script"] = &EntityProxy::getComponent<ScriptComponent>;
 
     // --------------------------------------------------------------------------------
     // Systems
 
     lua.new_usertype<EngineSystem>("EngineSystem",
-        "enabled", sol::property(&EngineSystem::isEnabled, &EngineSystem::setEnabled)
+        "enabled", sol::property(&EngineSystem::isEnabled, &EngineSystem::setEnabled),
+        "info", sol::property(&EngineSystem::getSystemInfo)
     );
 
     lua.new_usertype<LuaScriptSystem>("ScriptSystem",
@@ -244,10 +243,20 @@ namespace Gsage {
     );
 
     lua.new_usertype<Entity>("Entity",
-        "id", sol::property(&Entity::getId)
+        "id", sol::property(&Entity::getId),
+        "class", sol::property(&Entity::getClass),
+        "props", sol::property(&Entity::getProps, &Entity::setProps),
+        "getProps", &Entity::getProps,
+        "hasComponent", &Entity::hasComponent,
+        "hasComponents", &Entity::hasComponents,
+        "componentNames", sol::property(&Entity::getComponentNames)
     );
 
-    lua.new_usertype<Engine>("Engine",
+    lua["Entity"]["script"] = &Entity::getComponent<ScriptComponent>;
+    lua["Entity"]["stats"] = &Entity::getComponent<StatsComponent>;
+    lua["Entity"]["getProps"] = &Entity::getProps;
+
+    lua.new_simple_usertype<Engine>("Engine",
         sol::base_classes, sol::bases<EventDispatcher>(),
         "settings", sol::property(&Engine::settings)
     );
@@ -255,19 +264,45 @@ namespace Gsage {
     lua["Engine"]["removeEntity"] = (bool(Engine::*)(const std::string& id))&Engine::removeEntity;
     lua["Engine"]["getEntity"] = &Engine::getEntity;
     lua["Engine"]["getSystem"] = (EngineSystem*(Engine::*)(const std::string& name))&Engine::getSystem;
+    lua["Engine"]["getSystems"] = &Engine::getSystems;
+    lua["Engine"]["hasSystem"] = (bool(Engine::*)(const std::string& name))&Engine::hasSystem;
     lua["Engine"]["script"] = sol::property(&Engine::getSystem<LuaScriptSystem>);
+    lua["Engine"]["getSystemNames"] = [](Engine* e) -> std::vector<std::string>{
+      std::vector<std::string> res;
+      for(auto& pair : e->getSystems()) {
+        res.push_back(pair.first);
+      }
+      return res;
+    };
 
-    lua.new_usertype<DataManagerProxy>("DataManager",
+    lua.new_usertype<GameDataManager>("DataManager",
         "createEntity", sol::overload(
-          (Entity*(DataManagerProxy::*)(const std::string&))&DataManagerProxy::createEntity,
-          (Entity*(DataManagerProxy::*)(const std::string&, DataProxy))&DataManagerProxy::createEntity,
-          (Entity*(DataManagerProxy::*)(DataProxy))&DataManagerProxy::createEntity
+          (Entity*(GameDataManager::*)(const std::string&))&GameDataManager::createEntity,
+          (Entity*(GameDataManager::*)(const std::string&, const DataProxy&))&GameDataManager::createEntity,
+          [] (GameDataManager* self, const std::string& name, DataProxy params)
+          {
+            return self->createEntity(name, params);
+          },
+          (Entity*(GameDataManager::*)(DataProxy))&GameDataManager::createEntity
         )
     );
 
-    lua.new_simple_usertype<LuaEventProxy>("LuaEventProxy");
+    lua.new_usertype<EventDispatcher>("EventDispatcher",
+        "new", sol::no_constructor,
+        "id", [](EventDispatcher* instance){ return (unsigned long long)(instance); }
+    );
+
+    lua.new_simple_usertype<LuaEventProxy>("LuaEventProxy",
+        "new", sol::constructors<>()
+    );
     lua["LuaEventProxy"]["bind"] = (bool(LuaEventProxy::*)(EventDispatcher*, const std::string&, const sol::object&))&LuaEventProxy::addEventListener;
     lua["LuaEventProxy"]["unbind"] = &LuaEventProxy::removeEventListener;
+
+    lua.new_simple_usertype<LuaEventConnection>("LuaEventConnection",
+        "new", sol::constructors<sol::types<sol::protected_function>>()
+    );
+    lua["LuaEventConnection"]["bind"] = (long(LuaEventConnection::*)(EventDispatcher*, const std::string&))&LuaEventConnection::bind;
+    lua["LuaEventConnection"]["unbind"] = &LuaEventConnection::unbind;
 
     // events
 
@@ -275,33 +310,55 @@ namespace Gsage {
         "type", sol::property(&Event::getType)
     );
 
-    registerEvent("SelectEvent", "onSelect", sol::usertype<SelectEvent>(
+    registerEvent<SystemChangeEvent>("SystemChangeEvent",
+        "onSystemChange",
+        sol::base_classes, sol::bases<Event>(),
+        "systemID", &SystemChangeEvent::mSystemId,
+        "SYSTEM_ADDED", sol::var(SystemChangeEvent::SYSTEM_ADDED),
+        "SYSTEM_REMOVED", sol::var(SystemChangeEvent::SYSTEM_REMOVED)
+    );
+
+    registerEvent<SelectEvent>("SelectEvent",
+        "onSelect",
         sol::base_classes, sol::bases<Event>(),
         "hasFlags", &SelectEvent::hasFlags,
         "entity", sol::property(&SelectEvent::getEntityId),
-        "cast", cast<const Event&, const SelectEvent&>
-    ));
+        "OBJECT_SELECTED", sol::var(SelectEvent::OBJECT_SELECTED),
+        "ROLL_OVER", sol::var(SelectEvent::ROLL_OVER),
+        "ROLL_OUT", sol::var(SelectEvent::ROLL_OUT)
+    );
 
-    registerEvent("SettingsEvent", "onSettings", sol::usertype<SettingsEvent>(
+    registerEvent<SettingsEvent>("SettingsEvent",
+        "onSettings",
         sol::base_classes, sol::bases<Event>(),
         "UPDATE", sol::var(SettingsEvent::UPDATE),
         "settings", sol::readonly(&SettingsEvent::settings)
-    ));
+    );
 
-    registerEvent("StatEvent", "onStat", sol::usertype<StatEvent>(
+    registerEvent<StatEvent>("StatEvent",
+        "onStat",
         sol::base_classes, sol::bases<Event>(),
         "id", sol::property(&StatEvent::getId),
-        "cast", cast<const Event&, const StatEvent&>
-    ));
+        "STAT_CHANGE", sol::var(StatEvent::STAT_CHANGE)
+    );
 
-    registerEvent("KeyboardEvent", "onKey", sol::usertype<KeyboardEvent>(
+    registerEvent<KeyboardEvent>("KeyboardEvent",
+        "onKeyboard",
         sol::base_classes, sol::bases<Event>(),
         "text", sol::readonly(&KeyboardEvent::text),
         "key", sol::readonly(&KeyboardEvent::key),
         "isModifierDown", &KeyboardEvent::isModifierDown,
         "KEY_DOWN", sol::var(KeyboardEvent::KEY_DOWN),
         "KEY_UP", sol::var(KeyboardEvent::KEY_UP)
-    ));
+    );
+
+    registerEvent<EntityEvent>("EntityEvent",
+        "onEntity",
+        sol::base_classes, sol::bases<Event>(),
+        "id", sol::readonly(&EntityEvent::mEntityId),
+        "CREATE", sol::var(EntityEvent::CREATE),
+        "DELETE", sol::var(EntityEvent::DELETE)
+    );
 
     lua.create_table("Keys");
 
@@ -454,7 +511,8 @@ namespace Gsage {
     lua["Keys"]["KC_MAIL"] = KeyboardEvent::KC_MAIL;
     lua["Keys"]["KC_MEDIASELECT"] = KeyboardEvent::KC_MEDIASELECT;
 
-    registerEvent("MouseEvent", "onMouse", sol::usertype<MouseEvent>(
+    registerEvent<MouseEvent>("MouseEvent",
+        "onMouse",
         sol::base_classes, sol::bases<Event>(),
         "button", sol::readonly(&MouseEvent::button),
         "x", sol::readonly(&MouseEvent::mouseX),
@@ -465,24 +523,46 @@ namespace Gsage {
         "relZ", sol::readonly(&MouseEvent::relativeZ),
         "width", sol::readonly(&MouseEvent::width),
         "height", sol::readonly(&MouseEvent::height),
-        "Left", sol::var(MouseEvent::Left),
-        "Right", sol::var(MouseEvent::Right),
-        "Middle", sol::var(MouseEvent::Middle),
-        "Button3", sol::var(MouseEvent::Button3),
-        "Button4", sol::var(MouseEvent::Button4),
-        "Button5", sol::var(MouseEvent::Button5),
-        "Button6", sol::var(MouseEvent::Button6),
-        "Button7", sol::var(MouseEvent::Button7),
-        "None", sol::var(MouseEvent::None),
         "MOUSE_DOWN", sol::var(MouseEvent::MOUSE_DOWN),
         "MOUSE_UP", sol::var(MouseEvent::MOUSE_UP),
         "MOUSE_MOVE", sol::var(MouseEvent::MOUSE_MOVE)
-    ));
+    );
 
-    mDataManagerProxy = new DataManagerProxy(mInstance->getGameDataManager());
-    mEngineProxy = new EngineProxy(mInstance->getEngine());
+    lua.create_table("Mouse");
+
+    lua["Mouse"]["Left"] = sol::var(MouseEvent::Left);
+    lua["Mouse"]["Right"] = sol::var(MouseEvent::Right);
+    lua["Mouse"]["Middle"] = sol::var(MouseEvent::Middle);
+    lua["Mouse"]["Button3"] = sol::var(MouseEvent::Button3);
+    lua["Mouse"]["Button4"] = sol::var(MouseEvent::Button4);
+    lua["Mouse"]["Button5"] = sol::var(MouseEvent::Button5);
+    lua["Mouse"]["Button6"] = sol::var(MouseEvent::Button6);
+    lua["Mouse"]["Button7"] = sol::var(MouseEvent::Button7);
+    lua["Mouse"]["None"] = sol::var(MouseEvent::None);
 
     mInstance->getEngine()->fireEvent(EngineEvent(EngineEvent::LUA_STATE_CHANGE));
+
+    // Logging
+    lua.new_usertype<LogProxy>("LogProxy",
+        "subscribe", &LogProxy::subscribe,
+        "unsubscribe", &LogProxy::unsubscribe
+    );
+
+    lua.new_usertype<el::LogMessage>("LogMessage",
+        "level", &el::LogMessage::level,
+        "message", &el::LogMessage::message,
+        "file", &el::LogMessage::file,
+        "line", &el::LogMessage::line,
+        "func", &el::LogMessage::func,
+        "Global", sol::var(el::Level::Global),
+        "Trace", sol::var(el::Level::Trace),
+        "Debug", sol::var(el::Level::Debug),
+        "Error", sol::var(el::Level::Error),
+        "Fatal", sol::var(el::Level::Fatal),
+        "Warning", sol::var(el::Level::Warning),
+        "Verbose", sol::var(el::Level::Verbose),
+        "Info", sol::var(el::Level::Info)
+    );
 
     lua["log"] = lua.create_table();
     lua["log"]["info"] = [] (const char* message) { LOG(INFO) << message; };
@@ -491,14 +571,19 @@ namespace Gsage {
     lua["log"]["warn"] = [] (const char* message) { LOG(WARNING) << message; };
     lua["log"]["trace"] = [] (const char* message) { LOG(TRACE) << message; };
 
+    lua["log"]["proxy"] = std::shared_ptr<LogProxy>(new LogProxy());
+
     lua["resourcePath"] = mResourcePath;
     lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
     lua["game"] = mInstance;
-    lua["engine"] = mEngineProxy;
     lua["core"] = mInstance->getEngine();
-    lua["data"] = mDataManagerProxy;
-    lua["event"] = mEventProxy;
+    lua["data"] = mInstance->getGameDataManager();
 
+    // some utility functions
+    lua["md5Hash"] = [] (const std::string& value) -> size_t {return std::hash<std::string>()(value);};
+    lua["split"] = [](const std::string& s, char delim) -> std::vector<std::string> {
+      return split(s, delim);
+    };
     return true;
   }
 
@@ -520,19 +605,45 @@ namespace Gsage {
     return mState;
   }
 
-  bool LuaInterface::runScript(const std::string& script)
+  bool LuaInterface::runPackager(const std::string& path, const DataProxy& dependencies)
   {
-    if(!mStateView)
+    sol::state lua;
+    luaL_openlibs(lua.lua_state());
+    lua["dependencies"] = dependencies;
+    lua["resourcePath"] = mResourcePath;
+    const std::string runPrefix = mResourcePath + GSAGE_PATH_SEPARATOR + "luarocks";
+#if GSAGE_PLATFORM == GSAGE_LINUX || GSAGE_PLATFORM == GSAGE_APPLE
+    char *full_path = realpath(runPrefix.c_str(), NULL);
+    lua["run_prefix"] = std::string(full_path);
+    free(full_path);
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+    TCHAR full_path[200];
+    GetFullPathName(_T(runPrefix.c_str()), 200, full_path, NULL);
+    lua["run_prefix"] = full_path;
+#else
+    lua["run_prefix"] = runPrefix;
+#endif
+    lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
+    return runScript(path, &lua);
+  }
+
+  bool LuaInterface::runScript(const std::string& script, sol::state_view* state)
+  {
+    sol::state_view* targetState = state ? state : mStateView;
+    if(!targetState)
       return false;
 
     try {
       LOG(INFO) << "Executing script " << script;
-      auto res = mStateView->script_file(script);
+      auto res = targetState->script_file(script);
       if(!res.valid()) {
         sol::error err = res;
         throw err;
       }
     } catch(sol::error& err) {
+      LOG(ERROR) << "Failed to execute lua script: " << err.what();
+      return false;
+    } catch(std::exception& err) {
       LOG(ERROR) << "Failed to execute lua script: " << err.what();
       return false;
     } catch(...) {

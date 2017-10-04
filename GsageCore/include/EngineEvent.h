@@ -51,6 +51,29 @@ namespace Gsage {
   };
 
   /**
+   * Entity changes event
+   */
+  class EntityEvent : public Event
+  {
+    public:
+      /**
+       * Entity added event
+       */
+      static const std::string CREATE;
+
+      /**
+       * Entity removed event
+       */
+      static const std::string DELETE;
+
+      EntityEvent(const std::string& type, const std::string& entityId);
+
+      virtual ~EntityEvent();
+
+      std::string mEntityId;
+  };
+
+  /**
    * Triggered when settings are changed
    */
   class SettingsEvent : public Event
@@ -159,4 +182,3 @@ namespace Gsage {
 }
 
 #endif
-

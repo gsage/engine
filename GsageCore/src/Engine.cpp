@@ -173,13 +173,23 @@ Entity* Engine::createEntity(DataProxy& data)
   std::string id = data.get<std::string>(KEY_ID).first;
 
   Entity* entity = getEntity(id);
+  bool created = false;
   if(!entity)
   {
     entity = mEntities.create();
     entity->mId = id;
+    entity->setClass(data.get<std::string>("class", "default"));
+    auto pair = data.get<DataProxy>("props");
+    if(pair.second) {
+      entity->setProps(pair.first);
+    }
     mEntityMap[id] = entity;
+    created = true;
   }
   readEntityData(entity, data);
+  if(created) {
+    fireEvent(EntityEvent(EntityEvent::CREATE, entity->getId()));
+  }
   return entity;
 }
 
@@ -192,6 +202,7 @@ bool Engine::removeEntity(Entity* entity)
 {
   if(entity == 0 || mEntityMap.count(entity->getId()) == 0)
     return false;
+  fireEvent(EntityEvent(EntityEvent::DELETE, entity->getId()));
   for(auto& pair : entity->mComponents)
   {
     if(!hasSystem(pair.first))
@@ -256,7 +267,7 @@ bool Engine::readEntityData(Entity* entity, const DataProxy& dict)
 
   for(auto& pair : dict)
   {
-    if(pair.first == KEY_ID || pair.first == KEY_FLAGS)
+    if(pair.first == KEY_ID || pair.first == KEY_FLAGS ||  pair.first == "class" || pair.first == "props")
       continue;
 
     if(!entity->hasComponent(pair.first))

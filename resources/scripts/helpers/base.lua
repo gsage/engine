@@ -4,6 +4,8 @@
 -- Resource loading helpers
 resource = resource or {}
 
+local eal = 'lib.eal.manager'
+
 if rocket ~= nil then
   function resource.loadFont(fileName)
     rocket:LoadFontFace(getResourcePath('fonts/' .. fileName))
@@ -18,38 +20,20 @@ if rocket ~= nil then
   end
 end
 
--- Entity management helpers
---
-entity = entity or {}
-
-function entity.get(id)
-  if entity[id] == nil then
-    local e = EntityProxy.new(id, core)
-    if e.valid then
-      entity[id] = e
-    end
-  end
-  return entity[id]
-end
-
-function entity.create(template, params)
-  data:createEntity(getResourcePath('characters/' .. template .. '.json'), params)
-end
-
 -- View related functions
 
 view = view or {}
 
-function view.getObjectsAround(id, distance, flags, targetId)
-  local target = entity.get(id)
-  if target == nil or target:render() == nil then
-    return {}
+function table.toString(t)
+  local s = {}
+  for k, v in pairs(t) do
+    if type(v) == "table" then
+      v = table.toString(v)
+    else
+      v = tostring(v)
+    end
+    s[#s+1] = tostring(k) .. " = " .. v
   end
-
-  local entities = {}
-  local objects = core:render():getObjectsInRadius(target:render().position, distance, flags, targetId)
-  for i = 1, #objects do
-    table.insert(entities, entity.get(objects[i].id))
-  end
-  return entities
+  s = table.concat(s, ', ')
+  return "{" .. s .. "}"
 end

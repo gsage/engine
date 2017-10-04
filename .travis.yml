@@ -4,9 +4,6 @@ matrix:
     - compiler: gcc
       dist: trusty
       sudo: required
-      env:
-        - UNIT_TESTS="cd ./bin && ./unit-tests"
-        - NCORES=$(nproc --all)
       addons:
         apt:
           sources:
@@ -15,44 +12,44 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             # install toolchains
-            - gcc-5
-            - g++-5
+            - xvfb
+            - gcc-4.9
+            - g++-4.9
             - cmake
             - clang-3.6
-            # gsage deps
-            - libfreetype6-dev
-            - libluajit-5.1-dev
-            - libois-dev
-            # vendor deps
-            - libfreetype6-dev
-            - libboost-date-time-dev
-            - libboost-thread-dev
-            - nvidia-cg-toolkit
-            - libfreeimage-dev
-            - zlib1g-dev
-            - libzzip-dev
-            - libcppunit-dev
-            - libxt-dev
-            - libxaw7-dev
-            - libxxf86vm-dev
-            - libxrandr-dev
             - libglu-dev
             - libois-dev
+            - python-dev
+            - libxt-dev
+            - libxaw7-dev
+            - libxrandr-dev
+            - libglu-dev
+            - libglew-dev
+
     - compiler: clang
       os: osx
       osx_image: xcode7.3
       env:
-        - UNIT_TESTS="./bin/unit-tests.app/Contents/MacOS/unit-tests"
-        - NCORES=$(sysctl -n hw.ncpu)
+        - OGRE_ENABLED=0
 
 before_install:
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install luajit --universal ; fi
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
-  - cmake --version
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew --universal ; fi
+  - export DISPLAY=:99.0
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sh -e /etc/init.d/xvfb start; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then ( sudo Xvfb :99 -ac -screen 0 1024x768x8; echo ok ) & fi
+  - sleep 3
 
 install:
-  - git clone https://github.com/msgpack/msgpack-c.git
-  - cd msgpack-c && cmake . && make && sudo make install && cd ..
+  - sudo pip install conan
+  - make build
 script:
-  - mkdir build && cd build && cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 && make -j $NCORES && $UNIT_TESTS --gtest_output=xml:TestResults.xml
+  - make ci
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/fa6e13f485a9f03b623d
+    on_success: change
+    on_failure: always
+    on_start: never

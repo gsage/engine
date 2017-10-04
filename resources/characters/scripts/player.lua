@@ -1,3 +1,5 @@
+local event = require 'lib.event'
+
 return function(self)
   local model = self:render().root:getEntity('sinbad')
   local sword = {
@@ -26,6 +28,6 @@ return function(self)
     end
 
     initStatusBar()
-    event:onStat(self:stats(), 'statChange', updateHp)
+    event:onStat(self:stats(), StatEvent.STAT_CHANGE, updateHp)
   end
 end

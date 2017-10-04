@@ -55,6 +55,10 @@ else(APPLE)
   add_definitions(-DRESOURCES_FOLDER="../../resources")
 endif(APPLE)
 
+if(LINUX)
+  set(LIBS ${CMAKE_DL_LIBS} ${LIBS})
+endif(LINUX)
+
 target_link_libraries(${APP_NAME} ${LIBS})
 
 # post-build copy for win32

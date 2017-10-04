@@ -73,19 +73,17 @@ namespace Gsage {
        */
       virtual bool install()
       {
-        el::Configurations defaultConf;
-        el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
-        defaultConf.setToDefault();
-        std::stringstream ss;
-#if GSAGE_PLATFORM == GSAGE_APPLE
-        ss << "%datetime %level [" << getName() << "] %msg [%fbase:%line]";
-#else
-        ss << "%datetime %level %msg [%fbase:%line]";
-#endif
-        // To set GLOBAL configurations you may use
-        defaultConf.setGlobally(
-            el::ConfigurationType::Format, ss.str());
-        el::Loggers::reconfigureLogger("default", defaultConf);
+        if(!el::Loggers::hasLogger("default")) {
+          el::Configurations defaultConf;
+          el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
+          defaultConf.setToDefault();
+          std::stringstream ss;
+          ss << "%datetime %level %msg [%fbase:%line]";
+          // To set GLOBAL configurations you may use
+          defaultConf.setGlobally(
+              el::ConfigurationType::Format, ss.str());
+          el::Loggers::reconfigureLogger("default", defaultConf);
+        }
         if(!installImpl()) {
           return false;
         }

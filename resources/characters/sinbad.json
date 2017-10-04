@@ -52,7 +52,7 @@
     "moveAnimation": "run",
     "animSpeedRatio": "0.1"
   },
-  "combat":
+  "stats":
   {
     "level": 1,
     "maxHP": 100000,

@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include "Engine.h"
 #include "sol.hpp"
 
+#include <stdexcept>
+
 struct lua_State;
 
 namespace Ogre
@@ -79,10 +81,16 @@ namespace sol
     template <>
     struct pusher<Gsage::DataProxy> {
       static int push(lua_State* L, const Gsage::DataProxy& value) {
-        sol::table t = sol::state_view(L).create_table();
-        Gsage::DataProxy dp = Gsage::DataProxy::wrap(t);
-        value.dump(dp);
-        t.push();
+        sol::table t;
+        if(value.getWrappedType() == Gsage::DataWrapper::LUA_TABLE) {
+          // access the lua table directly from the wrapper, if it's already a lua table
+          t = value.getWrapper<Gsage::DataWrapper::LUA_TABLE>()->getObject();
+        } else {
+          t = sol::state_view(L).create_table();
+          Gsage::DataProxy dp = Gsage::DataProxy::wrap(t);
+          value.dump(dp);
+        }
+        t.push(L);
         return 1;
       }
     };
@@ -103,74 +111,67 @@ namespace Gsage
   class GameDataManager;
   class LuaEventProxy;
 
-  class EntityProxy;
-
-  class EngineProxy
-  {
-    public:
-      EngineProxy(Engine* engine) : mEngine(engine) {}
-      virtual ~EngineProxy() {}
-
-      /**
-       * Get entity by id
-       * @param id Entity id
-       */
-      EntityProxy* getEntity(const std::string& id);
-    private:
-      Engine* mEngine;
-  };
-
   /**
-   * Lua entity wrapper, not to be created in C++
+   * Easylogging++ log listeners manager
    */
-  class EntityProxy
+  class LogProxy
   {
     public:
-      EntityProxy(const std::string& entityId, Engine* engine);
-      virtual ~EntityProxy();
+      LogProxy();
+      virtual ~LogProxy();
       /**
-       * Get component
+       * Subscribe lua callback to logs.
+       * @param name callback name
+       * @param function sol::protected_function
        */
-      template<class C>
-      C* getComponent()
+      void subscribe(const std::string& name, sol::protected_function function);
+
+      /**
+       * Unsubscrube lua callback from logs.
+       * @param name callback name
+       */
+      void unsubscribe(const std::string& name);
+    private:
+      class LogSubscriber : public el::LogDispatchCallback
       {
-        return mEngine->getComponent<C>(mEntityId);
-      }
-      /**
-       * Get id of underlying entity
-       */
-      const std::string& getId();
-      /**
-       * Checks if there is entity instance with specified id
-       */
-      bool isValid();
-    private:
-      Engine* mEngine;
-      std::string mEntityId;
+        public:
+          LogSubscriber() {};
+          virtual ~LogSubscriber() {};
+
+          /**
+           * Set wrapped function
+           * @param wrapped sol::protected_function
+           */
+          void setWrappedFunction(sol::protected_function wrapped);
+        protected:
+          void handle(const el::LogDispatchData* data);
+        private:
+          sol::protected_function mWrapped;
+          bool mReady;
+      };
   };
 
   /**
-   * Lua data manager wrapper
+   * Lua property description.
    */
-  class DataManagerProxy
+  class PropertyDescription
   {
     public:
-      DataManagerProxy(GameDataManager* instance);
-      virtual ~DataManagerProxy();
+      PropertyDescription(const std::string& name, const std::string& docstring);
+      virtual ~PropertyDescription() {};
+
       /**
-       * @see GameDataManager::createEntity(const DataProxy& params)
+       * Get name.
        */
-      Entity* createEntity(DataProxy params);
+      const std::string& getName() const;
+
       /**
-       * @see GameDataManager::createEntity(const std::string&, const DataProxy& params)
+       * Get docstring.
        */
-      Entity* createEntity(const std::string& templateFile, DataProxy params);
-      /**
-       * @see GameDataManager::createEntity(const std::string&)
-       */
-      Entity* createEntity(const std::string& json);
+      const std::string& getDocstring() const;
     private:
-      GameDataManager* mInstance;
+      std::string mName;
+      std::string mDocstring;
   };
 
   /**
@@ -179,6 +180,7 @@ namespace Gsage
   class LuaInterface
   {
     public:
+      typedef std::map<std::string, std::string> EventTypes;
       LuaInterface(GsageFacade* instance, const std::string& resourcePath = "./resources");
       virtual ~LuaInterface();
       /**
@@ -192,12 +194,22 @@ namespace Gsage
        * Get lua state to which this interface is attached
        */
       lua_State* getState();
+
+      /**
+       * Run lua packager script. It is executed in a separate temporary lua state.
+       *
+       * @param path packager script path
+       * @param dependencies dependencies list
+       * @returns true if succeed
+       */
+      bool runPackager(const std::string& script, const DataProxy& dependencies);
       /**
        * Run lua script
        *
        * @param path Path to the file with script
+       * @param state sol::state to run script into
        */
-      bool runScript(const std::string& path);
+      bool runScript(const std::string& path, sol::state_view* state = 0);
 
       /**
        * Returns sol2 state view
@@ -221,13 +233,14 @@ namespace Gsage
        */
       template<class T>
       void registerEvent(const std::string& name, const std::string& handler, sol::usertype<T> ut);
+
+      template<typename C, typename... Args>
+      void registerEvent(const std::string& name, const std::string& handler, Args&&... args);
     private:
       void closeLuaState();
       GsageFacade* mInstance;
       std::string mResourcePath;
 
-      EngineProxy* mEngineProxy;
-      DataManagerProxy* mDataManagerProxy;
       LuaEventProxy* mEventProxy;
 
       lua_State* mState;

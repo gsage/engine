@@ -28,6 +28,7 @@ THE SOFTWARE.
 
 #include "sol.hpp"
 #include "lua/LuaEventProxy.h"
+#include "lua/LuaEventConnection.h"
 
 namespace Gsage {
   template<class T>
@@ -49,6 +50,47 @@ namespace Gsage {
 
     lua.set_usertype(name, ut);
     lua["LuaEventProxy"][handler] = &LuaEventProxy::addEventListener<T>;
+  }
+
+  typedef sol::var_wrapper<sol::meta::unqualified_t<std::string>> StringVar;
+
+  void expand(std::function<void(const char*)> setter)
+  {
+    // nothing
+  }
+
+  template<typename... Args>
+  void expand(std::function<void(const char*)> setter, const char* key, StringVar& value, Args&... args)
+  {
+    setter(key);
+    expand(setter, args...);
+  }
+
+  template<typename K, typename V, typename... Args>
+  void expand(std::function<void(const char*)> setter, K key, V& value, Args&... args)
+  {
+    expand(setter, args...);
+  }
+
+  template<typename C, typename... Args>
+  void LuaInterface::registerEvent(const std::string& name, const std::string& handler, Args&&... args)
+  {
+    if(!std::is_base_of<Event, C>::value)
+    {
+      LOG(ERROR) << "Event not registered: specified type is not derived from Event";
+      return;
+    }
+
+    if(!mStateView)
+    {
+      LOG(ERROR) << "Event not registered: no lua state";
+      return;
+    }
+
+    sol::state_view& lua = *mStateView;
+    lua.new_usertype<C>(name, std::forward<Args>(args)...);
+    lua["LuaEventConnection"][handler] = &LuaEventConnection::bind<C>;
+    lua["LuaEventProxy"][handler] = &LuaEventProxy::addEventListener<C>;
   }
 }
 #endif

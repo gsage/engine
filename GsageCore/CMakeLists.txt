@@ -24,11 +24,14 @@ set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d)
 set(LIBS
   jsoncpp
   ${LUAJIT_LIBRARIES}
-  ${MSGPACK_LIBRARIES})
+  ${MSGPACK_LIBRARIES}
+)
 
 if(APPLE)
   set(LIBS ${LIBS}
     ${COREFOUNDATION_LIBRARY})
+elseif(UNIX)
+  set(LIBS ${CMAKE_DL_LIBS} ${LIBS})
 endif(APPLE)
 
 target_link_libraries(
@@ -36,11 +39,15 @@ target_link_libraries(
   ${LIBS}
 )
 
-install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
+install(DIRECTORY include/ DESTINATION include/gsage
   FILES_MATCHING PATTERN "*.h"
 )
 
-install(DIRECTORY ${gsage_SOURCE_DIR}/Vendor/Sol2/include/ DESTINATION /usr/local/include/gsage
+install(DIRECTORY ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include/json DESTINATION include/gsage
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY ${gsage_SOURCE_DIR}/Vendor/Sol2/include/ DESTINATION include/gsage
   FILES_MATCHING PATTERN "*.hpp"
 )
 
@@ -48,4 +55,4 @@ install(TARGETS ${LIB_NAME}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
-install(TARGETS ${LIB_NAME} DESTINATION /usr/local/lib)
+install(TARGETS ${LIB_NAME} DESTINATION "${CMAKE_INSTALL_PATH}/lib")

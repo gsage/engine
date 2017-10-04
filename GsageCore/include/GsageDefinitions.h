@@ -56,7 +56,7 @@ static inline std::vector<std::string> split(const std::string &s, char delim) {
 static inline std::string join(const std::vector<std::string>& vector, const char delim)
 {
   std::stringstream s;
-  for(int i = 0; i < vector.size(); i++)
+  for(unsigned int i = 0; i < vector.size(); i++)
   {
     s << vector[i];
     if(i < vector.size() - 1)

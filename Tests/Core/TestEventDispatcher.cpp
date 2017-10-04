@@ -292,3 +292,42 @@ TEST(TestEventDispatcherDeletion, TestTwoDispatchers)
 
   delete handler;
 }
+
+class TestEventHandlerRemove : public EventSubscriber<TestEventHandlerRemove>
+{
+  public:
+    TestEventHandlerRemove() : gotEvent(false), removed(false) {}
+
+    bool onTestEvent(EventDispatcher* sender, const Event& event)
+    {
+      gotEvent = true;
+      removed = removeEventListener(sender, event.getType(), &TestEventHandlerRemove::onTestEvent);
+      return true;
+    }
+
+    bool gotEvent;
+    bool removed;
+};
+
+/**
+ * Test removing event listener from a listener
+ * No segfaults expected.
+ */
+TEST(TestRemoveEventListener, TestRemoveInHandler)
+{
+  EventDispatcher* dispatcher = new EventDispatcher();
+  TestEventHandlerRemove* handler = new TestEventHandlerRemove();
+  handler->addEventListener(dispatcher, TestEvent::PING, &TestEventHandlerRemove::onTestEvent);
+
+  dispatcher->fireEvent(TestEvent(TestEvent::PING, 1));
+
+  ASSERT_TRUE(handler->gotEvent);
+  ASSERT_TRUE(handler->removed);
+  handler->gotEvent = false;
+
+  dispatcher->fireEvent(TestEvent(TestEvent::PING, 1));
+  ASSERT_FALSE(handler->gotEvent);
+
+  delete handler;
+  delete dispatcher;
+}

@@ -65,8 +65,20 @@ namespace Gsage
       typedef bool(*INSTALL_PLUGIN)(GsageFacade*);
       typedef bool(*UNINSTALL_PLUGIN)(GsageFacade*);
 
+      /**
+       * Event id dispatched when level is loaded
+       */
       static const std::string LOAD;
+
+      /**
+       * Event id dispatched when level is unloaded
+       */
       static const std::string RESET;
+
+      /**
+       * Event id dispatched before level unload
+       */
+      static const std::string BEFORE_RESET;
 
       GsageFacade();
       virtual ~GsageFacade();
@@ -155,7 +167,11 @@ namespace Gsage
       /**
        * Stops the engine
        */
-      void halt();
+      void halt(int exitCode = 0);
+      /**
+       * Get halt exit code
+       */
+      int getExitCode() const;
       /**
        * Unloads current scene from engine
        */
@@ -214,8 +230,9 @@ namespace Gsage
       /**
        * Set lua state to use in the lua interface and systems
        * @param lua_State Lua state pointer
+       * @param initialize initialize lua interface and update ui managers
        */
-      void setLuaState(lua_State* L);
+      void setLuaState(lua_State* L, bool initialize = true);
 
       /**
        * Get lua state
@@ -245,6 +262,12 @@ namespace Gsage
        * @param id Unique id of the factory
        */
       void removeInputFactory(const std::string& id);
+
+      /**
+       * Create system using system manager
+       * @param systemID system ID
+       */
+      bool createSystem(const std::string& systemID);
     protected:
       bool onEngineHalt(EventDispatcher* sender, const Event& event);
 
@@ -279,6 +302,8 @@ namespace Gsage
 
       typedef std::map<long, UIManager*> UIManagers;
       UIManagers mUIManagers;
+
+      int mExitCode;
   };
 }
 #endif

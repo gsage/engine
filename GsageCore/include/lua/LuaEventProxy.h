@@ -43,14 +43,17 @@ namespace Gsage {
       class GenericCallback
       {
         public:
-          GenericCallback(sol::protected_function func) : mFunc(func) {};
+          GenericCallback(sol::protected_function func)
+            : mFunc(func)
+            , mState(func.lua_state()) {};
+
           virtual ~GenericCallback() {};
           /**
            * Checks if wrapped function is valid
            * @returns sol::protected_function valid result
            */
           bool valid() const{
-            return mFunc.valid();
+            return mState != NULL && mFunc.lua_state() == mState && mFunc.valid();
           }
 
           /**
@@ -79,6 +82,7 @@ namespace Gsage {
 
         protected:
           sol::protected_function mFunc;
+          lua_State* mState;
       };
 
       /**
@@ -102,8 +106,9 @@ namespace Gsage {
           }
       };
 
+      typedef std::shared_ptr<GenericCallback> GenericCallbackPtr;
       typedef std::pair<EventDispatcher*, const std::string> CallbackBinding;
-      typedef std::vector<GenericCallback*> Callbacks;
+      typedef std::vector<GenericCallbackPtr> Callbacks;
       typedef std::map<CallbackBinding, Callbacks> CallbackBindings;
 
       LuaEventProxy();
@@ -129,7 +134,8 @@ namespace Gsage {
 
         Callbacks* cb = getCallbacks(dispatcher, eventType);
         Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);
-        callbacks.push_back(new Callback<T>(callback.as<sol::protected_function>()));
+        GenericCallback* c = new Callback<T>(callback.as<sol::protected_function>());
+        callbacks.push_back(GenericCallbackPtr(c));
         return true;
       }
 

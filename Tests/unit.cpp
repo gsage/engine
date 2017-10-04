@@ -9,6 +9,8 @@
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
+#include <Shellapi.h>
+#include <string>
 INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
 #else
 int main(int argc, char *argv[])
@@ -26,6 +28,10 @@ int main(int argc, char *argv[])
   std::stringstream p;
   p << path << "/Contents";
   chdir(p.str().c_str()); // error: expected constructor, destructor or type conversion before '(' token
+#endif
+#if GSAGE_PLATFORM == GSAGE_WIN32
+  int argc = 0;
+  char* argv[1] = {0};
 #endif
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

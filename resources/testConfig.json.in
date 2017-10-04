@@ -1,4 +1,5 @@
 {
+  "logConfig": "testlog.cfg",
   "dataManager":
   {
     "extension": "json",
@@ -10,12 +11,51 @@
   "startLuaInterface": false,
   "inputHandler": "fakeInput",
   "systems": [
-    "testSystem"
+    "testSystem",
+    "dynamicStats",
+    "lua"
   ],
+  "packager": {
+    "deps": [
+      "busted"
+    ]
+  },
 
   "plugins":
   [
     "@PLUGINS_DIRECTORY@/System",
     "@PLUGINS_DIRECTORY@/UI"
-  ]
+  ],
+  "render": {
+    "pluginsFile": "plugins.cfg",
+    "configFile": "ogreConfig.cfg",
+    "globalResources":
+    {
+      "General":
+      [
+        "FileSystem:materials/",
+        "FileSystem:programs/",
+        "FileSystem:particles/PU",
+        "FileSystem:particles/Ogre"
+      ]
+    },
+    "window":
+    {
+      "name": "functional-tests",
+      "width": 320,
+      "height": 240,
+      "visible": false,
+      "params":
+      {
+        "FSAA": 16,
+        "displayFrequency": 50,
+        "vsync": false
+      }
+    },
+    "plugins": [
+      "RenderSystem_GL",
+      "OctreeSceneManager",
+      "ParticleFX"
+    ]
+  }
 }

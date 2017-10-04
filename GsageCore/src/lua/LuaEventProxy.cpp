@@ -36,11 +36,6 @@ namespace Gsage  {
 
   LuaEventProxy::~LuaEventProxy()
   {
-    for(auto& pair : mCallbackBindings) {
-      for(auto cb : pair.second) {
-        delete cb;
-      }
-    }
     mCallbackBindings.clear();
   }
 
@@ -51,7 +46,7 @@ namespace Gsage  {
 
     Callbacks* cb = getCallbacks(dispatcher, eventType);
     Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);
-    callbacks.push_back(new GenericCallback(callback.as<sol::protected_function>()));
+    callbacks.push_back(GenericCallbackPtr(new GenericCallback(callback.as<sol::protected_function>())));
     return true;
   }
 
@@ -64,17 +59,23 @@ namespace Gsage  {
     if(!callbacks)
       return false;
 
-    Callbacks::iterator iter = std::find(callbacks->begin(), callbacks->end(), callback.as<sol::protected_function>());
+    sol::protected_function listener = callback.as<sol::protected_function>();
+    Callbacks::iterator iter = std::find_if(callbacks->begin(), callbacks->end(), [listener](GenericCallbackPtr e){
+      return e->func() == listener;
+    });
     if(iter == callbacks->end())
       return false;
 
-    delete *iter;
+    int previousSize = callbacks->size();
     callbacks->erase(iter);
     if(callbacks->size() == 0)
     {
       EventSubscriber<LuaEventProxy>::removeEventListener(dispatcher, eventType, &LuaEventProxy::handleEvent);
       mCallbackBindings.erase(CallbackBinding(dispatcher, eventType));
       LOG(INFO) << "Removed event listener for event " << eventType << " as there is no more lua callbacks";
+    } else {
+      LOG(INFO) << "Removed event callback " << eventType;
+      assert(getCallbacks(dispatcher, eventType)->size() != previousSize);
     }
 
     return true;
@@ -85,7 +86,7 @@ namespace Gsage  {
     Callbacks* callbacks = getCallbacks(sender, event.getType());
     if(callbacks != 0)
     {
-      for(auto& callback : (*callbacks))
+      for(auto callback : (*callbacks))
       {
         if(!callback->valid())
         {
@@ -102,13 +103,12 @@ namespace Gsage  {
 
         if(!error.empty())
         {
-          removeEventListener(sender, event.getType(), callback->func());
-          LOG(ERROR) << "Failed to call " << event.getType() << " listener: " << error  << ", removed from subscribers";
+          LOG(WARNING) << "Failed to call " << event.getType() << " lua listener: " << error;
         }
       }
     }
 
-    return false;
+    return true;
   }
 
   bool LuaEventProxy::onForceUnsubscribe(EventDispatcher* sender, const Event& event)

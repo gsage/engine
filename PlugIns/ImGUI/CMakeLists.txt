@@ -20,10 +20,12 @@ if(OGRE_FOUND)
   include_directories(${OGRE_INCLUDE_DIRS}
           ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include)
 
-  set(LIBS ${LIBS}
-      OgrePlugin
-      ${OGRE_LIBRARIES}
-      ${OGRE_Overlay_LIBRARIES})
+  set(LIBS ${LIBS} OgrePlugin)
+  if(NOT OGRE_STATIC)
+    set(LIBS ${LIBS}
+        ${OGRE_LIBRARIES}
+        ${OGRE_Overlay_LIBRARIES})
+  endif(NOT OGRE_STATIC)
 
   file(GLOB ogre_related_sources src/ogre/*.cpp)
   set(sources ${ogre_related_sources} ${sources})

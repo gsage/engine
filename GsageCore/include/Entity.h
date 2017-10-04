@@ -81,7 +81,7 @@ namespace Gsage
        *
        * @param component Name of the system component belongs to
        */
-      bool hasComponent(const std::string& component)
+      bool hasComponent(const std::string& component) const
       {
         return mComponents.count(component) != 0;
       }
@@ -91,6 +91,15 @@ namespace Gsage
        * @param name Name of the system component belongs to
        */
       EntityComponent* operator[](const std::string& name) { return getComponent(name); };
+
+      /**
+       * Get component of a specific type
+       */
+      template<class C>
+      C* getComponent() {
+        return static_cast<C*>(getComponent(C::SYSTEM));
+      }
+
       /**
        * Get entity id
        */
@@ -108,6 +117,35 @@ namespace Gsage
        */
       bool hasFlag(const std::string& flag);
 
+      /**
+       * Get entity class used in EAL
+       * @returns entity class
+       */
+      const std::string& getClass() const;
+
+      /**
+       * Set entity class for EAL
+       * @param cls string class id
+       */
+      void setClass(const std::string& cls);
+
+      /**
+       * Get entity properties
+       */
+      DataProxy& getProps();
+
+      /**
+       * Set set entity props
+       * @param props DataProxy
+       */
+      void setProps(const DataProxy& props);
+
+      /**
+       * Get component names in a vector
+       * @returns names vector
+       */
+      std::vector<std::string> getComponentNames() const;
+
       typedef std::map<const std::string, EntityComponent*> Components;
       typedef Components::const_iterator ComponentsIterator;
 
@@ -118,6 +156,8 @@ namespace Gsage
       std::string mId;
       typedef std::vector<std::string> Flags;
       Flags mFlags;
+      std::string mClass;
+      DataProxy mProps;
   };
 }
 

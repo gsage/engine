@@ -1,4 +1,9 @@
 {
+  "props": {
+    "mixins": ["mortal"],
+    "type": "npc",
+    "hostile": true
+  },
   "flags": ["dynamic"],
   "render":
   {
@@ -30,12 +35,13 @@
     {
       "states":
       {
-        "walk": {"body": "model.Walk"},
-        "astd": {"body": ""},
-        "idle": {"body": ""},
+        "walk": {"top": "model.Walk"},
+        "idle": {"top": "model.Idle2"},
         "attack1": {"top": "model.Attack1"},
         "attack2": {"top": "model.Attack2"},
-        "attack3": {"top": "model.Attack3"}
+        "attack3": {"top": "model.Attack3"},
+        "death1": {"top": "model.Death1"},
+        "death2": {"top": "model.Death2"}
       },
       "defaultState": "idle",
       "defaultSpeed": 1
@@ -47,7 +53,7 @@
     "moveAnimation": "walk",
     "animSpeedRatio": 0.15
   },
-  "combat":
+  "stats":
   {
     "atk": 500,
     "attackDistance": 5,
@@ -58,7 +64,6 @@
   },
   "script":
   {
-    "setupScript": "@File:characters/scripts/ninja.lua",
     "behavior": "dumbMonster"
   }
 }

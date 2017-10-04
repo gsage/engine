@@ -3,16 +3,16 @@ require 'actions'
 
 local function moveRandomly(self, context)
   local position = Vector3:new(
-    self:render().position.x + math.random(30) - 15,
+    self.render.position.x + math.random(30) - 15,
     0,
-    self:render().position.z + math.random(30) - 15
+    self.render.position.z + math.random(30) - 15
   )
 
-  self:movement():go(position)
+  self.movement:go(position)
 end
 
 local function findEnemy(self, context, distance)
-  local objects = view.getObjectsAround(self.id, distance, OgreSceneNode.DYNAMIC, self:stats():getString("enemy", "none"))
+  local objects = self:getObjectsAround(distance, OgreSceneNode.DYNAMIC, self.stats:getString("enemy", "none"))
   context.target = nil
   for _, object in pairs(objects) do
     if actions.attackable(self, object) then
@@ -27,7 +27,7 @@ local function targetInRange(self, context)
   if context.target == nil then
     return false
   end
-  return self:render().position:squaredDistance(context.target:render().position) < self:stats():getNumber("attackDistance", 5) * 2
+  return self.render.position:squaredDistance(context.target.render.position) < self.stats:getNumber("attackDistance", 5) * 2
 end
 
 local function attack(self, context)
@@ -36,8 +36,8 @@ local function attack(self, context)
     return false
   end
 
-  self:render():lookAt(context.target:render().position, RenderComponent.Y_AXIS, OgreNode.TS_WORLD)
-  self:render():playAnimation(anims[math.random(3)], 1, 1, 0, false)
+  self.render:lookAt(context.target.render.position, RenderComponent.Y_AXIS, OgreNode.TS_WORLD)
+  self.render:playAnimation(anims[math.random(3)], 1, 1, 0, false)
   context.waitSeconds(0.5)
   actions.inflictDamage(self, context.target)
   context.waitSeconds(0.5)
@@ -48,7 +48,7 @@ local function follow(self, context)
   if context.target == nil then
     return false
   end
-  return self:movement():go(context.target:render().position)
+  return self.movement:go(context.target.render.position)
 end
 
 local function createTree()
@@ -56,17 +56,17 @@ local function createTree()
     Sequence(
       Invertor(
         Sequence(
-          Leaf(function(self, context) return findEnemy(self, context, self:stats():getNumber("aggroDistance", 0)) end),
+          Leaf(function(self, context) return findEnemy(self, context, self.stats:getNumber("aggroDistance", 0)) end),
           Leaf(follow),
           RepeatUntil(
             Selector(
               Sequence(
                 Leaf(targetInRange),
-                Leaf(function(self, context) self:movement():stop() end),
+                Leaf(function(self, context) self.movement:stop() end),
                 Leaf(attack)
               ),
               Sequence(
-                Leaf(function(self, context) return findEnemy(self, context, self:stats():getNumber("followDistance", 0)) end),
+                Leaf(function(self, context) return findEnemy(self, context, self.stats:getNumber("followDistance", 0)) end),
                 Leaf(follow)
               )
             )
@@ -79,4 +79,3 @@ local function createTree()
 end
 
 btree.register("dumbMonster", createTree)
-

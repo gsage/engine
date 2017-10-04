@@ -33,6 +33,10 @@ namespace Gsage {
 
   const std::string EngineEvent::HALT = "halt";
 
+  const std::string EntityEvent::CREATE = "entityCreated";
+
+  const std::string EntityEvent::DELETE = "entityDeleted";
+
   const std::string SettingsEvent::UPDATE = "update";
 
   const std::string SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
@@ -56,6 +60,16 @@ namespace Gsage {
   }
 
   EngineEvent::~EngineEvent()
+  {
+  }
+
+  EntityEvent::EntityEvent(const std::string& type, const std::string& entityId)
+    : Event(type)
+    , mEntityId(entityId)
+  {
+  }
+
+  EntityEvent::~EntityEvent()
   {
   }
 

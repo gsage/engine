@@ -25,10 +25,35 @@ if(APPLE)
     ${CARBON}
     ${IOKIT}
     ${COCOA_LIBRARY}
+    ${OpenGL_LIBRARY}
+    ${OPENGL_glu_LIBRARY}
   )
 endif(APPLE)
 
-install(DIRECTORY include/ DESTINATION /usr/local/include/gsage
+# Linux specific
+if(UNIX AND NOT APPLE)
+  find_package(OpenGL)
+  find_package(X11)
+  find_package(Threads REQUIRED)
+  find_library(Xaw Xaw7 PATHS ${X11_LIB_SEARCH_PATH})
+
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+
+  set(LIBS
+    ${OPENGL_LIBRARIES}
+    ${X11_LIBRARIES}
+    -Wl,--whole-archive
+    ${CMAKE_DL_LIBS}
+    ${X11_Xrandr_LIB}
+    ${X11_Xext_LIB}
+    ${Xaw}
+    Threads::Threads
+    ${CONAN_LIBS_OGRE}
+    -Wl,--no-whole-archive
+    ${LIBS})
+endif(UNIX AND NOT APPLE)
+
+install(DIRECTORY include/ DESTINATION include/gsage
   FILES_MATCHING PATTERN "*.(h|hpp)"
 )
 
@@ -36,7 +61,6 @@ install(TARGETS ${LIB_NAME}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
-install(TARGETS ${LIB_NAME} DESTINATION /usr/local/lib)
 
 # Dynamic plugin
 

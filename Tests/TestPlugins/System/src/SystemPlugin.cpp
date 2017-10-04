@@ -60,7 +60,6 @@ namespace Gsage {
 
   void SystemPlugin::setupLuaBindings()
   {
-    return;
     if(!mLuaInterface)
       return;
 
@@ -70,6 +69,13 @@ namespace Gsage {
     }
 
     l->new_usertype<TestSystem>("TestSystem");
+    l->new_usertype<TestComponent>("TestComponent",
+        "prop", &TestComponent::mProp
+    );
+
+    (*l)["Engine"]["test"] = &Engine::getSystem<TestSystem>;
+
+    (*l)["Entity"]["test"] = &Entity::getComponent<TestComponent>;
   }
 }
 

@@ -83,7 +83,6 @@ namespace Gsage {
     ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     float delta[16] = {0.f};
 
-    ImGuizmo::DrawCube(&v[0], &p[0], &mModelMatrix[0]);
     ImGuizmo::Manipulate(&v[0], &p[0], mOperation, mMode, &mModelMatrix[0], &delta[0]);
 
     if(!ImGuizmo::IsUsing()) {

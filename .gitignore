@@ -17,3 +17,9 @@ docs/xml
 resources/gameConfig.json
 resources/plugins.cfg
 resources/testConfig.json
+resources/luarocks
+resources/imgui.ini
+conanbuildinfo.cmake
+conaninfo.txt
+conan_imports_manifest.txt
+logs/
