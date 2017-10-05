@@ -11,9 +11,10 @@ EAL helps to tie Lua code to the engine entities.
 Besides that EAL allows extensive code reuse between different objects.
 
 The idea is pretty simple, each engine entity can have defined:
-1. A single :code:`class` type.
-2. Several :code:`mixin` s.
-3. Each component can also trigger EAL to add more Lua logic.
+
+* A single :code:`class` type.
+* Several :code:`mixin` s.
+* Each component can also trigger EAL to add more Lua logic.
 
 Defining an Extension
 ^^^^^^^^^^^^^^^^^^^^^
@@ -21,6 +22,7 @@ Defining an Extension
 Extension is a function that accepts a class prototype as a first parameter.
 
 .. code-block:: lua
+
   local function extension(cls)
 
   end
@@ -28,6 +30,7 @@ Extension is a function that accepts a class prototype as a first parameter.
 Then in that function it is possible any amount of additional methods.
 
 .. code-block:: lua
+
   local function extension(cls)
     function cls:moveToOrigin()
       self.render:setPosition(0, 0, 0)
@@ -38,6 +41,7 @@ Besides defining custom methods, it is also possible to define :code:`setup` and
 They are pretty similar to constructor methods, but there can be more than one :code:`setup` and :code:`teardown`.
 
 .. code-block:: lua
+
   local function extension(cls)
     ...
     cls.onCreate(function(self)
@@ -53,12 +57,14 @@ They are pretty similar to constructor methods, but there can be more than one :
 To add this extension to the system, it is required to call :code:`extend` method.
 
 .. code-block:: lua
+
   eal:extend({mixin = "extension"}, extension)
 
 
 Now everything combined will look like that:
 
 .. code-block:: lua
+
   local eal = require 'eal.manager'
 
   local function extension(cls)
@@ -81,6 +87,7 @@ In this example, extension is created as a mixin.
 Then, to use this extension for an entity, it is required to modify it's JSON data.
 
 .. code-block:: json
+
   {
     "id": "something",
     "props": {
@@ -95,6 +102,7 @@ Then, to use this extension for an entity, it is required to modify it's JSON da
 After all these manipulations you should be able to use this EAL interface:
 
 .. code-block:: lua
+
   local e = eal:getEntity("something")
   -- our extension method
   e:moveToOrigin()
@@ -110,7 +118,9 @@ System
 Allows applying extension for all entities that have a component of a system :code:`system` with subtype :code:`type`.
 
 Extending EAL:
+
 .. code-block:: lua
+
   eal:extend({system="render", type="ogre"}, extension)
 
 There is no need to modify entity data as this extension will be applied system wide:
@@ -124,11 +134,14 @@ different system :code:`subtype`, it is better to use the class extension.
 Though it is also possible to define a class without a strict requirement of system type.
 
 .. code-block:: lua
+
   -- enable this extension only when render system type is "ogre"
   eal:extend({class = {name = "camera", requires = {render = "ogre"}}}, extension)
 
 Using it in the entity data:
+
 .. code-block:: json
+
   {
     ...
     "props": {
