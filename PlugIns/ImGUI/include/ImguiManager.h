@@ -114,6 +114,10 @@ namespace Gsage {
        */
       bool handleKeyboardEvent(EventDispatcher* sender, const Event& event);
       /**
+       * Handle input event from engine
+       */
+      bool handleInputEvent(EventDispatcher* sender, const Event& event);
+      /**
        * Check if mouse event can be captured by any rocket element
        */
       bool doCapture();

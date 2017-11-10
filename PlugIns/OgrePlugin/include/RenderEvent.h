@@ -39,19 +39,19 @@ namespace Gsage {
   class RenderEvent : public Event
   {
     public:
-      static const std::string UPDATE_UI;
+      static const Event::Type UPDATE_UI;
 
       /**
        * Main update
        */
-      static const std::string UPDATE;
+      static const Event::Type UPDATE;
 
       /**
        * Same to ogre render queue ended
        */
-      static const std::string RENDER_QUEUE_ENDED;
+      static const Event::Type RENDER_QUEUE_ENDED;
 
-      RenderEvent(const std::string& type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID = 0, const std::string& invocation = "");
+      RenderEvent(Event::ConstType type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID = 0, const std::string& invocation = "");
       virtual ~RenderEvent();
       /**
        * Gets a reference to the current render system

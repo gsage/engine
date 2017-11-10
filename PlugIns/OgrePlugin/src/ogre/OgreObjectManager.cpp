@@ -32,7 +32,7 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const std::string OgreObjectManagerEvent::FACTORY_UNREGISTERED = "factoryUnregistered";
+  const Event::Type OgreObjectManagerEvent::FACTORY_UNREGISTERED = "factoryUnregistered";
 
   OgreObjectManager::OgreObjectManager()
   {

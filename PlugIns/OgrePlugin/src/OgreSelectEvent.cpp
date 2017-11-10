@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  OgreSelectEvent::OgreSelectEvent(const std::string& type, const unsigned int& flags, const std::string& entityId, const Ogre::Vector3& intersection)
+  OgreSelectEvent::OgreSelectEvent(Event::ConstType type, const unsigned int& flags, const std::string& entityId, const Ogre::Vector3& intersection)
     : SelectEvent(type, flags, entityId)
     , mIntersection(intersection)
   {

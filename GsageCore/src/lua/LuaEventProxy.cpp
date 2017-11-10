@@ -39,7 +39,7 @@ namespace Gsage  {
     mCallbackBindings.clear();
   }
 
-  bool LuaEventProxy::addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
+  bool LuaEventProxy::addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, const sol::object& callback)
   {
     if(callback.get_type() != sol::type::function)
       return false;
@@ -50,7 +50,7 @@ namespace Gsage  {
     return true;
   }
 
-  bool LuaEventProxy::removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
+  bool LuaEventProxy::removeEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, const sol::object& callback)
   {
     if(callback.get_type() != sol::type::function)
       return false;
@@ -131,7 +131,7 @@ namespace Gsage  {
     return true;
   }
 
-  LuaEventProxy::Callbacks* LuaEventProxy::getCallbacks(EventDispatcher* dispatcher, const std::string& eventType)
+  LuaEventProxy::Callbacks* LuaEventProxy::getCallbacks(EventDispatcher* dispatcher, Event::ConstType eventType)
   {
     CallbackBinding binding(dispatcher, eventType);
     if(mCallbackBindings.count(binding) == 0)
@@ -140,7 +140,7 @@ namespace Gsage  {
     return &mCallbackBindings[binding];
   }
 
-  LuaEventProxy::Callbacks& LuaEventProxy::subscribe(EventDispatcher* dispatcher, const std::string& eventType)
+  LuaEventProxy::Callbacks& LuaEventProxy::subscribe(EventDispatcher* dispatcher, Event::ConstType eventType)
   {
     Callbacks& res = mCallbackBindings[CallbackBinding(dispatcher, eventType)];
     EventSubscriber<LuaEventProxy>::addEventListener(dispatcher, eventType, &LuaEventProxy::handleEvent);

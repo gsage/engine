@@ -43,7 +43,7 @@ namespace Gsage {
       // Definitions
       //
       // Identification pair for each subscribed event -- EventDispatcher instance + event type string
-      typedef std::pair<EventDispatcher*, std::string> EventSubscription;
+      typedef std::pair<EventDispatcher*, Event::Type> EventSubscription;
       // List of handler descriptors for subscription
       typedef std::vector<HandlerDescriptor> Handlers;
       // Iterator for handlers vector
@@ -101,7 +101,7 @@ namespace Gsage {
        *
        * @returns true if added, false if already exists
        */
-      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, CallbackMemFn callback, const int priority = 0)
+      bool addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, CallbackMemFn callback, const int priority = 0)
       {
         EventSubscription subscription(dispatcher, eventType);
         // if there is the same listener, there is no need to add another
@@ -131,7 +131,7 @@ namespace Gsage {
        *
        * @returns true if successful
        */
-      bool removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, CallbackMemFn callback)
+      bool removeEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, CallbackMemFn callback)
       {
         EventSubscription subscription(dispatcher, eventType);
         if(!hasEventListener(dispatcher, eventType))
@@ -170,7 +170,7 @@ namespace Gsage {
         return true;
       }
 
-      bool hasEventListener(EventDispatcher* dispatcher, const std::string& eventType)
+      bool hasEventListener(EventDispatcher* dispatcher, Event::ConstType eventType)
       {
         EventSubscription subscription(dispatcher, eventType);
         return mConnections.count(subscription) > 0;

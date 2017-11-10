@@ -23,3 +23,5 @@ conanbuildinfo.cmake
 conaninfo.txt
 conan_imports_manifest.txt
 logs/
+.deps
+.repo

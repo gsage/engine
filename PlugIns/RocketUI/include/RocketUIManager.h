@@ -47,6 +47,7 @@ namespace Gsage {
     public:
       virtual ~RenderSystemWrapper() {};
       /**
+    addEventListener(engine, WindowEvent::RESIZE, &RocketUIManager::handleSystemChange);
        * Get context
        *
        * @returns rocket context
@@ -100,6 +101,14 @@ namespace Gsage {
        * Handle keyboard event from engine
        */
       bool handleKeyboardEvent(EventDispatcher* sender, const Event& event);
+      /**
+       * Handle keyboard event from engine
+       */
+      bool handleInputEvent(EventDispatcher* sender, const Event& event);
+      /*
+       * Handle window resize event from the engine
+       */
+      bool handleWindowResize(EventDispatcher* sender, const Event& event);
       /**
        * Get key modifier state
        */

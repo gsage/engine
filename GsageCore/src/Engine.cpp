@@ -100,8 +100,9 @@ void Engine::update(const double& time)
   }
 }
 
-bool Engine::addSystem(const std::string& name, EngineSystem* system)
+bool Engine::addSystem(const std::string& name, EngineSystem* system, bool configure)
 {
+  system->setName(name);
   if(mEngineSystems.count(name) != 0)
   {
     LOG(ERROR) << "Failed to add system \"" << name << "\": system with such id exists";
@@ -111,13 +112,31 @@ bool Engine::addSystem(const std::string& name, EngineSystem* system)
   mSetUpOrder.push_back(name);
   mEngineSystems[name] = system;
   system->setEngineInstance(this);
-  if(mInitialized)
+  if(mInitialized && configure)
   {
-    auto config = mConfiguration.get<DataProxy>(name);
-    system->initialize(config.second ? config.first : DataProxy());
+    if(!configureSystem(name)) {
+      LOG(ERROR) << "Failed to setup " << name << " system";
+      fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, system));
+      return false;
+    }
   }
 
-  fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, system));
+  return true;
+}
+
+bool Engine::configureSystem(const std::string& name) {
+  auto config = mConfiguration.get<DataProxy>(name);
+  EngineSystem* s = getSystem(name);
+  if(!s) {
+    return false;
+  }
+
+  bool res = s->initialize(config.second ? config.first : DataProxy());
+  if(!res) {
+    return false;
+  }
+
+  fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, s));
   return true;
 }
 

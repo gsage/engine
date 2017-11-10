@@ -33,13 +33,30 @@ namespace Gsage {
   class KeyboardEvent : public Event
   {
     public:
-      static const std::string KEY_DOWN;
-      static const std::string KEY_UP;
+      static const Event::Type KEY_DOWN;
+      static const Event::Type KEY_UP;
 
       enum Modifier {
-        Ctrl = 0x01,
-        Shift = 0x02,
-        Alt = 0x04
+        LShift = 0x0001,
+        RShift = 0x0002,
+
+        LCtrl = 0x0040,
+        RCtrl = 0x0080,
+
+        LAlt = 0x0100,
+        RAlt = 0x0200,
+
+        LWin = 0x0400,
+        RWin = 0x0800,
+
+        Num = 0x1000,
+        Caps = 0x2000,
+        Mode = 0x4000,
+
+        Shift = 0x0003,
+        Ctrl = 0x00C0,
+        Alt = 0x0300,
+        Win = 0x0C00
       };
 
       enum Key {
@@ -206,7 +223,27 @@ namespace Gsage {
        */
       unsigned int getModifiersState() const;
     private:
-      unsigned int modifierState;
+      unsigned long modifierState;
+  };
+
+  /**
+   * Event that is fired especially for the text input
+   */
+  class TextInputEvent : public Event
+  {
+    public:
+      static const Event::Type INPUT;
+
+      TextInputEvent(const std::string& type, const char* text);
+      virtual ~TextInputEvent();
+
+      /**
+       * Get text
+       * @return utf8 chars array
+       */
+      const char* getText() const;
+    private:
+      const char* mUTF8Chars;
   };
 }
 

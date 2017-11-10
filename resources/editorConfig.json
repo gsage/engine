@@ -10,20 +10,43 @@
     "templatesFolder": "../Resources/editor/projectTemplates"
   },
 
-  "render":
+  "systems": [
+    "lua"
+  ],
+
+  "dataManager":
   {
-    "window":
-    {
-      "visible": false,
-      "width":  1,
-      "height": 1,
-      "params":
-      {
-        "FSAA": 16,
-        "externalGLControl": true,
-        "currentGLContext": true
+    "extension": "json",
+    "charactersFolder": "characters",
+    "levelsFolder": "levels",
+    "savesFolder": "templates"
+  },
+
+  "logConfig": "log.cfg",
+  "startupScript": "scripts/entrypoints/editor.lua",
+  "inputHandler": "SDL",
+  "systems": [
+  ],
+  "packager": {
+    "deps": [
+      "tween"
+    ]
+  },
+
+  "windowManager": {
+    "type": "SDL",
+    "windows": {
+      "Coming Soon!": {
+        "width": 1024,
+        "height": 768
       }
     }
-  }
+  },
 
+  "plugins":
+  [
+    "PlugIns/OgrePlugin",
+    "PlugIns/ImGUI",
+    "PlugIns/SDL"
+  ]
 }

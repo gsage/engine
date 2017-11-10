@@ -647,7 +647,7 @@ namespace Gsage {
       LOG(ERROR) << "Failed to execute lua script: " << err.what();
       return false;
     } catch(...) {
-      LOG(ERROR) << "Unknown script execution error";
+      LOG(ERROR) << "Failed to execute lua script: " << lua_tostring(mStateView->lua_state(), -1);
       return false;
     }
 

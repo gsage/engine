@@ -37,13 +37,13 @@ namespace Gsage
   class MouseEvent : public Event
   {
     public:
-      static const std::string MOUSE_DOWN;
-      static const std::string MOUSE_UP;
-      static const std::string MOUSE_MOVE;
+      static const Event::Type MOUSE_DOWN;
+      static const Event::Type MOUSE_UP;
+      static const Event::Type MOUSE_MOVE;
 
       enum ButtonType { Left = 0, Right, Middle, Button3, Button4, Button5, Button6, Button7, None };
 
-      MouseEvent(const std::string& type,
+      MouseEvent(Event::ConstType type,
                  const float& width,
                  const float& height,
                  const ButtonType& button = None);

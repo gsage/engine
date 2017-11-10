@@ -32,7 +32,7 @@ THE SOFTWARE.
 
 namespace Gsage {
   template<class T>
-  void LuaInterface::registerEvent(const std::string& name, const std::string& handler, sol::usertype<T> ut)
+  void LuaInterface::registerEvent(Event::ConstType name, const std::string& handler, sol::usertype<T> ut)
   {
     if(!std::is_base_of<Event, T>::value)
     {
@@ -73,7 +73,7 @@ namespace Gsage {
   }
 
   template<typename C, typename... Args>
-  void LuaInterface::registerEvent(const std::string& name, const std::string& handler, Args&&... args)
+  void LuaInterface::registerEvent(Event::ConstType name, const std::string& handler, Args&&... args)
   {
     if(!std::is_base_of<Event, C>::value)
     {

@@ -27,10 +27,10 @@ THE SOFTWARE.
 #include "KeyboardEvent.h"
 
 namespace Gsage {
-  const std::string KeyboardEvent::KEY_DOWN = "keyDown";
-  const std::string KeyboardEvent::KEY_UP = "keyUp";
+  const Event::Type KeyboardEvent::KEY_DOWN = "KeyboardEvent::KEY_DOWN";
+  const Event::Type KeyboardEvent::KEY_UP = "KeyboardEvent::KEY_UP";
 
-  KeyboardEvent::KeyboardEvent(const std::string& type, const Key& code, const unsigned int t, const unsigned int modState)
+  KeyboardEvent::KeyboardEvent(Event::ConstType type, const Key& code, const unsigned int t, const unsigned int modState)
     : Event(type)
     , key(code)
     , text(t)
@@ -44,11 +44,28 @@ namespace Gsage {
 
   bool KeyboardEvent::isModifierDown(const Modifier& modifier) const
   {
-    return (modifierState & modifier) == modifier;
+    return (modifierState & modifier) != 0;
   }
 
   unsigned int KeyboardEvent::getModifiersState() const
   {
     return modifierState;
+  }
+
+  const Event::Type TextInputEvent::INPUT = "TextInputEvent::INPUT";
+
+  TextInputEvent::TextInputEvent(Event::ConstType type, const char* text)
+    : Event(type)
+    , mUTF8Chars(text)
+  {
+  }
+
+  TextInputEvent::~TextInputEvent()
+  {
+  }
+
+  const char* TextInputEvent::getText() const
+  {
+    return mUTF8Chars;
   }
 }

@@ -105,24 +105,27 @@ namespace Gsage {
   class Event
   {
     public:
-      Event(const std::string& type) : mType(type) {};
+      typedef std::string Type;
+      typedef const std::string& ConstType;
+
+      Event(ConstType type) : mType(type) {};
       virtual ~Event() {};
 
       /**
        * Get event type
        */
-      const std::string getType() const { return mType; };
+      ConstType getType() const { return mType; };
     private:
-      std::string mType;
+      Type mType;
 
   };
 
   class DispatcherEvent : public Event
   {
     public:
-      static const std::string FORCE_UNSUBSCRIBE;
+      static const Event::Type FORCE_UNSUBSCRIBE;
 
-      DispatcherEvent(const std::string& type) : Event(type) {}
+      DispatcherEvent(ConstType type) : Event(type) {}
       virtual ~DispatcherEvent() {};
   };
 
@@ -135,7 +138,7 @@ namespace Gsage {
       /**
        * All event bindings
        */
-      typedef std::map<std::string, EventSignal*> EventTypes;
+      typedef std::map<Event::Type, EventSignal*> EventTypes;
 
       /**
        * Dispatch event to all subscribers of the type, defined in the event.
@@ -151,7 +154,7 @@ namespace Gsage {
        *
        * @param type Event type
        */
-      bool hasListenersForType(const std::string& type);
+      bool hasListenersForType(Event::ConstType type);
       /**
        * Adds event subscriber to the event. Should be called by event subscriber class
        *
@@ -159,7 +162,7 @@ namespace Gsage {
        * @param callback Function binding
        * @param priority Priority of attached event callback
        */
-      EventConnection addEventListener(const std::string& eventType, EventCallback callback, const int priority = 0);
+      EventConnection addEventListener(Event::ConstType eventType, EventCallback callback, const int priority = 0);
       EventTypes mSignals;
   };
 }

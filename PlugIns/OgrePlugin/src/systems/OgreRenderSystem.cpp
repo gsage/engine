@@ -45,7 +45,9 @@ THE SOFTWARE.
 #include "ComponentStorage.h"
 #include "Entity.h"
 #include "Engine.h"
+#include "GsageFacade.h"
 #include "EngineEvent.h"
+#include "WindowManager.h"
 
 #include "ResourceManager.h"
 
@@ -116,9 +118,7 @@ namespace Gsage {
     if(mFontManager != 0)
       delete mFontManager;
 
-    // TODO: this probably can lead to some unexpected behavior in the future
-    // if the system will be rendered into an external window
-    if(mWindow != 0)
+    if(mWindow != 0 && mWindowEventListener != 0)
       mWindowEventListener->windowClosed(mWindow);
     if(mRoot != 0)
       delete mRoot;
@@ -174,14 +174,7 @@ namespace Gsage {
       }
     }
 #endif
-
-    if(!(mRoot->restoreConfig()))
-        return false;
-
-    // initialize render window
-    mRoot->initialise(false);
     Ogre::NameValuePairList params;
-
     auto paramNode = settings.get<DataProxy>("window.params");
     if(paramNode.second)
     {
@@ -193,6 +186,32 @@ namespace Gsage {
 #if GSAGE_PLATFORM == GSAGE_APPLE
     params["macAPI"] = "cocoa";
 #endif
+    if(settings.get("window.useWindowManager", false)) {
+      WindowPtr window = mFacade->getWindowManager()->createWindow(
+        settings.get("window.name", "default"),
+        settings.get("window.width", 1024),
+        settings.get("window.height", 786),
+        settings.get("window.fullscreen", false),
+        settings.get("window", DataProxy())
+      );
+      if(window == nullptr) {
+        return false;
+      }
+
+      unsigned long handle = window->getWindowHandle();
+#if GSAGE_PLATFORM == GSAGE_APPLE
+      params["macAPICocoaUseNSView"] = "true";
+      params["externalWindowHandle"] = Ogre::StringConverter::toString(handle);
+#else
+      params["parentWindowHandle"] = Ogre::StringConverter::toString(handle);
+#endif
+    }
+
+    if(!(mRoot->restoreConfig()))
+        return false;
+
+    // initialize render window
+    mRoot->initialise(false);
 
     // create window
     mWindow = mRoot->createRenderWindow(
@@ -201,9 +220,16 @@ namespace Gsage {
         settings.get("window.height", 786),
         settings.get("window.fullscreen", false),
         &params);
-    mWindow->setVisible(settings.get("window.visible", true));
-    mWindowEventListener = new WindowEventListener(mWindow, mEngine);
-    Ogre::WindowEventUtilities::addWindowEventListener(mWindow, mWindowEventListener);
+
+    EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, WindowEvent::RESIZE, &OgreRenderSystem::handleWindowResized, 0);
+
+    if(settings.get("window.useWindowManager", false)) {
+      mWindow->setVisible(false);
+    } else {
+      mWindow->setVisible(settings.get("window.visible", true));
+      mWindowEventListener = new WindowEventListener(mWindow, mEngine);
+      Ogre::WindowEventUtilities::addWindowEventListener(mWindow, mWindowEventListener);
+    }
 
     // initialize scene manager
     mSceneManager = mRoot->createSceneManager(settings.get("sceneManager", "OctreeSceneManager"));
@@ -295,8 +321,9 @@ namespace Gsage {
     mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE, this));
 
     bool continueRendering = !mWindow->isClosed();
-    if(continueRendering)
+    if(continueRendering) {
       continueRendering = mRoot->renderOneFrame();
+    }
 
     if(!continueRendering)
       mEngine->fireEvent(EngineEvent(EngineEvent::HALT));
@@ -569,5 +596,20 @@ namespace Gsage {
 
     Ogre::Real aspectRatio = texture->getWidth() / texture->getHeight();
     cam->setAspectRatio(aspectRatio);
+  }
+
+  bool OgreRenderSystem::handleWindowResized(EventDispatcher* sender, const Event& e)
+  {
+    const WindowEvent& event = static_cast<const WindowEvent&>(e);
+#if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
+    mWindow->resize(event.width, event.height);
+#else
+    mWindow->windowMovedOrResized();
+#endif
+    if(mCurrentCamera) {
+      Ogre::Real aspectRatio = Ogre::Real(event.width) / Ogre::Real(event.height);
+      mCurrentCamera->setAspectRatio(aspectRatio);
+    }
+    return true;
   }
 }

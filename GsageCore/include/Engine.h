@@ -75,12 +75,14 @@ namespace Gsage
       void update(const double& time);
       /**
        * Add system to the engine
+       * @param configure system after adding
+       * @returns system pointer if succeed
        */
       template<typename T>
-      T* addSystem()
+      T* addSystem(bool configure = true)
       {
         T* system = new T();
-        if(addSystem(T::type::SYSTEM, system))
+        if(addSystem(T::type::SYSTEM, system, configure))
         {
           mManagedByEngine.push_back(T::type::SYSTEM);
         }
@@ -94,9 +96,17 @@ namespace Gsage
       /**
        * Add system to the engine
        * @param name System name to associate with. Entity factory uses name to select proper system
+       * @param configure system after add
        * @param system System that handles components
+       * @returns true if succeed
        */
-      bool addSystem(const std::string& name, EngineSystem* system);
+      bool addSystem(const std::string& name, EngineSystem* system, bool configure = true);
+      /**
+       * Configure system (call initialize method)
+       * @param name system name to configure
+       * @returns true if succeed
+       */
+      bool configureSystem(const std::string& name);
       /**
        * Check that engine has specified system
        * @param name System name

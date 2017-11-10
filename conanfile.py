@@ -22,12 +22,16 @@ class GsageConan(ConanFile):
     requires = (
         ("luajit-rocks/2.0.5@gsage/master",),
         ("msgpack/2.1.3@gsage/master",),
+        ("SDL2/2.0.5@gsage/master",),
     )
 
     def source(self):
         self.run("git clone https://github.com/gsage/engine")
 
     def config_options(self):
+        if self.settings.os == "Macos":
+            self.options["SDL2"].x11_video = False
+
         if self.options.with_ogre == "1.9.0":
             self.requires.add("OGRE/1.9.0@gsage/master", private=True)
             self.options["OGRE"].shared = False

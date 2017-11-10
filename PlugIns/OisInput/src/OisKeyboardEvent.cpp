@@ -28,10 +28,10 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const std::string OisKeyboardEvent::KEY_DOWN = "keyDown";
-  const std::string OisKeyboardEvent::KEY_UP = "keyUp";
+  const Event::Type OisKeyboardEvent::KEY_DOWN = "keyDown";
+  const Event::Type OisKeyboardEvent::KEY_UP = "keyUp";
 
-  OisKeyboardEvent::OisKeyboardEvent(const std::string& type, const OIS::KeyCode& code, const unsigned int t, const unsigned int modState)
+  OisKeyboardEvent::OisKeyboardEvent(Event::ConstType type, const OIS::KeyCode& code, const unsigned int t, const unsigned int modState)
     : Event(type)
     , key(code)
     , text(t)

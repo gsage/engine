@@ -173,14 +173,14 @@ namespace Gsage
       /**
        * @copydoc Gsage::SystemFactory::create
        */
-      EngineSystem* create(Engine* engine)
+      EngineSystem* create(Engine* engine, bool configure = true)
       {
         lua_State* s = mLuaInterface->getState();
         if(s == 0) {
           return 0;
         }
 
-        LuaScriptSystem* script = engine->addSystem<LuaScriptSystem>();
+        LuaScriptSystem* script = engine->addSystem<LuaScriptSystem>(configure);
         if(!script){
           return 0;
         }

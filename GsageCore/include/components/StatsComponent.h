@@ -38,8 +38,8 @@ namespace Gsage {
   class StatEvent : public Event
   {
     public:
-      static const std::string STAT_CHANGE;
-      StatEvent(const std::string& type, const std::string& statId);
+      static const Type STAT_CHANGE;
+      StatEvent(ConstType type, const std::string& statId);
 
       /**
        * Get updated stat id

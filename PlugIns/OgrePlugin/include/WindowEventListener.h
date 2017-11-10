@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <OgreRenderWindow.h>
 #include <OgreWindowEventUtilities.h>
+#include "EventDispatcher.h"
 
 namespace Gsage {
   class Engine;
@@ -55,7 +56,7 @@ namespace Gsage {
        */
       virtual void windowClosed(Ogre::RenderWindow* window);
     private:
-      void fireWindowEvent(const std::string& type, Ogre::RenderWindow* window);
+      void fireWindowEvent(Event::ConstType type, Ogre::RenderWindow* window);
       Engine* mEngine;
   };
 }

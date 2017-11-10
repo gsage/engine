@@ -35,7 +35,7 @@ namespace Gsage {
   class OgreSelectEvent : public SelectEvent
   {
     public:
-      OgreSelectEvent(const std::string& type, const unsigned int& flags, const std::string& entityId, const Ogre::Vector3& intersection);
+      OgreSelectEvent(Event::ConstType type, const unsigned int& flags, const std::string& entityId, const Ogre::Vector3& intersection);
       virtual ~OgreSelectEvent();
       /**
        * Get selection hit point

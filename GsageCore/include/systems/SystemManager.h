@@ -135,9 +135,10 @@ namespace Gsage {
        * SystemManager will find appropriate factory for id and will register the system in the engine
        *
        * @param id Factory id
+       * @param configure configure the system
        * @returns pointer to created EngineSystem, 0 if failed
        */
-      EngineSystem* create(const std::string& id);
+      EngineSystem* create(const std::string& id, bool configure = true);
 
     private:
       typedef std::map<std::string, SystemFactory*> Factories;

@@ -35,10 +35,10 @@ namespace Gsage {
   class OisKeyboardEvent : public Event
   {
     public:
-      static const std::string KEY_DOWN;
-      static const std::string KEY_UP;
+      static const Event::Type KEY_DOWN;
+      static const Event::Type KEY_UP;
 
-      OisKeyboardEvent(const std::string& type, const OIS::KeyCode& key, const unsigned int text, const unsigned int modifierState);
+      OisKeyboardEvent(Event::ConstType type, const OIS::KeyCode& key, const unsigned int text, const unsigned int modifierState);
       virtual ~OisKeyboardEvent();
 
       OIS::KeyCode key;

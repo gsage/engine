@@ -107,7 +107,7 @@ namespace Gsage {
       };
 
       typedef std::shared_ptr<GenericCallback> GenericCallbackPtr;
-      typedef std::pair<EventDispatcher*, const std::string> CallbackBinding;
+      typedef std::pair<EventDispatcher*, const Event::Type> CallbackBinding;
       typedef std::vector<GenericCallbackPtr> Callbacks;
       typedef std::map<CallbackBinding, Callbacks> CallbackBindings;
 
@@ -121,13 +121,13 @@ namespace Gsage {
        * @param callback Lua object that is called on event dispatch
        * @returns true if the callback was added successfully
        */
-      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback);
+      bool addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, const sol::object& callback);
 
       /**
        * @copydoc LuaEventProxy::addEventListener
        */
       template<class T>
-      bool addEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback)
+      bool addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, const sol::object& callback)
       {
         if(callback.get_type() != sol::type::function)
           return false;
@@ -147,14 +147,14 @@ namespace Gsage {
        * @param callback Lua object that is called on event dispatch
        * @returns true if the callback was removed successfully
        */
-      bool removeEventListener(EventDispatcher* dispatcher, const std::string& eventType, const sol::object& callback);
+      bool removeEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, const sol::object& callback);
 
       /**
        * Get callbacks for binding
        * @param dispatcher Object that dispatches the event
        * @param eventType Event id
        */
-      Callbacks* getCallbacks(EventDispatcher* dispatcher, const std::string& eventType);
+      Callbacks* getCallbacks(EventDispatcher* dispatcher, Event::ConstType eventType);
 
       /**
        * Overriding standard callback which is called on dispatcher deletion
@@ -176,7 +176,7 @@ namespace Gsage {
        * @param eventType Event id
        * @returns list of callbacks
        */
-      Callbacks& subscribe(EventDispatcher* dispatcher, const std::string& eventType);
+      Callbacks& subscribe(EventDispatcher* dispatcher, Event::ConstType eventType);
 
       CallbackBindings mCallbackBindings;
   };

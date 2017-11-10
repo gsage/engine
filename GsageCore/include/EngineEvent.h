@@ -41,12 +41,12 @@ namespace Gsage {
       /**
        * New lua state was created, can be used to reinitialize all bindings
        */
-      static const std::string LUA_STATE_CHANGE;
+      static const Event::Type LUA_STATE_CHANGE;
       /**
        * Engine issued stopping
        */
-      static const std::string HALT;
-      EngineEvent(const std::string& type);
+      static const Event::Type HALT;
+      EngineEvent(Event::ConstType type);
       virtual ~EngineEvent();
   };
 
@@ -59,14 +59,14 @@ namespace Gsage {
       /**
        * Entity added event
        */
-      static const std::string CREATE;
+      static const Event::Type CREATE;
 
       /**
        * Entity removed event
        */
-      static const std::string DELETE;
+      static const Event::Type DELETE;
 
-      EntityEvent(const std::string& type, const std::string& entityId);
+      EntityEvent(Event::ConstType type, const std::string& entityId);
 
       virtual ~EntityEvent();
 
@@ -82,9 +82,9 @@ namespace Gsage {
       /**
        * Settings updated
        */
-      static const std::string UPDATE;
+      static const Event::Type UPDATE;
 
-      SettingsEvent(const std::string& type, const DataProxy& settings);
+      SettingsEvent(Event::ConstType type, const DataProxy& settings);
       virtual ~SettingsEvent();
       DataProxy settings;
   };
@@ -98,13 +98,13 @@ namespace Gsage {
       /**
        * System was added
        */
-      static const std::string SYSTEM_ADDED;
+      static const Event::Type SYSTEM_ADDED;
       /**
        * System was removed
        */
-      static const std::string SYSTEM_REMOVED;
+      static const Event::Type SYSTEM_REMOVED;
 
-      SystemChangeEvent(const std::string& type, const std::string& systemId, EngineSystem* system = 0);
+      SystemChangeEvent(Event::ConstType type, const std::string& systemId, EngineSystem* system = 0);
       virtual ~SystemChangeEvent();
 
       const std::string mSystemId;
@@ -117,17 +117,17 @@ namespace Gsage {
       /**
        * Window was created
        */
-      static const std::string CREATE;
+      static const Event::Type CREATE;
       /**
        * Window resized
        */
-      static const std::string RESIZE;
+      static const Event::Type RESIZE;
       /**
        * Window closed
        */
-      static const std::string CLOSE;
+      static const Event::Type CLOSE;
 
-      WindowEvent(const std::string& type, size_t handle, unsigned int width = 0, unsigned int height = 0);
+      WindowEvent(Event::ConstType type, size_t handle, unsigned int width = 0, unsigned int height = 0);
       virtual ~WindowEvent();
 
       unsigned int width;
@@ -144,16 +144,16 @@ namespace Gsage {
       /**
        * Object selected
        */
-      static const std::string OBJECT_SELECTED;
+      static const Event::Type OBJECT_SELECTED;
       /**
        * Object is rolled over
        */
-      static const std::string ROLL_OVER;
+      static const Event::Type ROLL_OVER;
       /**
        * Object is rolled out
        */
-      static const std::string ROLL_OUT;
-      SelectEvent(const std::string& type, const unsigned int& flags, const std::string& entityId)
+      static const Event::Type ROLL_OUT;
+      SelectEvent(Event::ConstType type, const unsigned int& flags, const std::string& entityId)
         : mFlags(flags)
         , mEntityId(entityId)
         , Event(type)

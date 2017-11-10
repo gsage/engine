@@ -115,8 +115,8 @@ namespace Gsage {
       size_t mHandle;
 
 
-      void fireMouseEvent(const std::string& type, const OIS::MouseEvent& event);
-      void fireMouseEvent(const std::string& type, const OIS::MouseEvent& event, const OIS::MouseButtonID& oisButtonID);
+      void fireMouseEvent(Event::ConstType type, const OIS::MouseEvent& event);
+      void fireMouseEvent(Event::ConstType type, const OIS::MouseEvent& event, const MouseEvent::ButtonType& button);
 
       MouseEvent::ButtonType mapButtonType(const OIS::MouseButtonID& oisButtonID);
 

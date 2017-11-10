@@ -114,7 +114,8 @@ namespace Gsage {
           "attach", &CameraWrapper::attach,
           "isActive", &CameraWrapper::isActive,
           "getProjectionMatrix", &CameraWrapper::getProjectionMatrix,
-          "getViewMatrix", &CameraWrapper::getViewMatrix
+          "getViewMatrix", &CameraWrapper::getViewMatrix,
+          "getCamera", (Ogre::Camera*(CameraWrapper::*)())&CameraWrapper::getCamera
       );
 
       // Systems
@@ -124,7 +125,8 @@ namespace Gsage {
           "viewport", sol::property(&OgreRenderSystem::getViewport),
           "getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius,
           "createRttTexture", &OgreRenderSystem::createRttTexture,
-          "renderCameraToTarget", &OgreRenderSystem::renderCameraToTarget
+          "renderCameraToTarget", &OgreRenderSystem::renderCameraToTarget,
+          "updateCurrentCamera", &OgreRenderSystem::updateCurrentCamera
       );
 
       lua["ogre"] = lua.create_table_with(

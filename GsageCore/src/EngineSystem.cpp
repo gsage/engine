@@ -26,60 +26,77 @@ THE SOFTWARE.
 
 #include "EngineSystem.h"
 
-using namespace Gsage;
-
-EngineSystem::EngineSystem() :
-  mReady(false),
-  mConfigDirty(false),
-  mEnabled(true)
+namespace Gsage
 {
-}
 
-EngineSystem::~EngineSystem()
-{
-}
+  EngineSystem::EngineSystem() :
+    mReady(false),
+    mConfigDirty(false),
+    mEnabled(true)
+  {
+  }
 
-bool EngineSystem::configure(const DataProxy& config)
-{
-  mergeInto(mConfig, config);
-  mEnabled = mConfig.get("enabled", true);
-  mConfigDirty = true;
-  return true;
-}
+  EngineSystem::~EngineSystem()
+  {
+  }
 
-const DataProxy& EngineSystem::getConfig()
-{
-  return mConfig;
-}
+  bool EngineSystem::configure(const DataProxy& config)
+  {
+    mergeInto(mConfig, config);
+    mEnabled = mConfig.get("enabled", true);
+    mConfigDirty = true;
+    return true;
+  }
 
-bool EngineSystem::initialize(const DataProxy& settings)
-{
-  mConfig = settings;
-  return mReady = true;
-}
+  const DataProxy& EngineSystem::getConfig()
+  {
+    return mConfig;
+  }
 
-void EngineSystem::setEngineInstance(Engine* value)
-{
-  mEngine = value;
-}
+  bool EngineSystem::initialize(const DataProxy& settings)
+  {
+    mConfig = settings;
+    return mReady = true;
+  }
 
-void EngineSystem::resetEngineInstance()
-{
-  mEngine = NULL;
-}
+  void EngineSystem::setEngineInstance(Engine* value)
+  {
+    mEngine = value;
+  }
 
-void EngineSystem::configUpdated()
-{
-  mConfigDirty = false;
-}
+  void EngineSystem::setFacadeInstance(GsageFacade* value)
+  {
+    mFacade = value;
+  }
 
-void EngineSystem::setEnabled(bool value)
-{
-  mEnabled = value;
-  mConfig.put("enabled", value);
-}
+  void EngineSystem::resetEngineInstance()
+  {
+    mEngine = NULL;
+  }
 
-const DataProxy& EngineSystem::getSystemInfo() const
-{
-  return mSystemInfo;
+  void EngineSystem::configUpdated()
+  {
+    mConfigDirty = false;
+  }
+
+  void EngineSystem::setEnabled(bool value)
+  {
+    mEnabled = value;
+    mConfig.put("enabled", value);
+  }
+
+  const DataProxy& EngineSystem::getSystemInfo() const
+  {
+    return mSystemInfo;
+  }
+
+  const std::string& EngineSystem::getName() const
+  {
+    return mName;
+  }
+
+  void EngineSystem::setName(const std::string& name)
+  {
+    mName = name;
+  }
 }

@@ -301,13 +301,13 @@ namespace Gsage {
 
   bool OisInputListener::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
   {
-    fireMouseEvent(MouseEvent::MOUSE_DOWN, arg, id);
+    fireMouseEvent(MouseEvent::MOUSE_DOWN, arg, mapButtonType(id));
     return true;
   }
 
   bool OisInputListener::mouseReleased(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
   {
-    fireMouseEvent(MouseEvent::MOUSE_UP, arg, id);
+    fireMouseEvent(MouseEvent::MOUSE_UP, arg, mapButtonType(id));
     return true;
   }
 
@@ -317,9 +317,9 @@ namespace Gsage {
     return true;
   }
 
-  void OisInputListener::fireMouseEvent(const std::string& type, const OIS::MouseEvent& event, const OIS::MouseButtonID& oisButtonID)
+  void OisInputListener::fireMouseEvent(Event::ConstType type, const OIS::MouseEvent& event, const MouseEvent::ButtonType& button)
   {
-    MouseEvent e(type, event.state.width, event.state.height, mapButtonType(oisButtonID));
+    MouseEvent e(type, event.state.width, event.state.height, button);
     e.setAbsolutePosition(event.state.X.abs, event.state.Y.abs, event.state.Z.abs);
     e.setRelativePosition(event.state.X.rel, event.state.Y.rel, event.state.Z.rel);
     if(mEventRedirect)
@@ -328,7 +328,7 @@ namespace Gsage {
       fireEvent(e);
   }
 
-  void OisInputListener::fireMouseEvent(const std::string& type, const OIS::MouseEvent& event)
+  void OisInputListener::fireMouseEvent(Event::ConstType type, const OIS::MouseEvent& event)
   {
     MouseEvent e(type, event.state.width, event.state.height);
     e.setAbsolutePosition(event.state.X.abs, event.state.Y.abs, event.state.Z.abs);

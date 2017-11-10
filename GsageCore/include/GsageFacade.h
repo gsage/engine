@@ -39,6 +39,8 @@ THE SOFTWARE.
 #include "FileLoader.h"
 #include "input/InputFactory.h"
 #include "systems/SystemManager.h"
+#include "WindowManager.h"
+#include "WindowManagerFactory.h"
 
 // forward declarations ------
 
@@ -68,17 +70,17 @@ namespace Gsage
       /**
        * Event id dispatched when level is loaded
        */
-      static const std::string LOAD;
+      static const Event::Type LOAD;
 
       /**
        * Event id dispatched when level is unloaded
        */
-      static const std::string RESET;
+      static const Event::Type RESET;
 
       /**
        * Event id dispatched before level unload
        */
-      static const std::string BEFORE_RESET;
+      static const Event::Type BEFORE_RESET;
 
       GsageFacade();
       virtual ~GsageFacade();
@@ -251,9 +253,9 @@ namespace Gsage
        * @param id Unique id of the factory
        */
       template<class T>
-      void registerInputFactory(const std::string& id)
+      T* registerInputFactory(const std::string& id)
       {
-        mInputManager.registerFactory<T>(id);
+        return mInputManager.registerFactory<T>(id);
       }
 
       /**
@@ -268,6 +270,36 @@ namespace Gsage
        * @param systemID system ID
        */
       bool createSystem(const std::string& systemID);
+
+      /**
+       * Register new window manager factory
+       * @param id factory name
+       */
+      template<class C>
+      void registerWindowManager(const std::string& id)
+      {
+        mWindowManagerFactory.registerWindowManager<C>(id);
+      }
+
+      /**
+       * Unregister window manager factory
+       * @param id factory name
+       * @returns true if the factory was removed
+       */
+      bool removeWindowManager(const std::string& id);
+
+      /**
+       * Get active window manager
+       * @returns current window manager pointer
+       */
+      WindowManagerPtr getWindowManager();
+
+      /**
+       * Handle window manager events, proxy them to the engine
+       * @param sender event sender
+       * @param event event to proxy
+       */
+      bool handleWindowManagerEvent(EventDispatcher* sender, const Event& event);
     protected:
       bool onEngineHalt(EventDispatcher* sender, const Event& event);
 
@@ -284,6 +316,8 @@ namespace Gsage
       InputManager mInputManager;
       SystemManager mSystemManager;
       GameDataManager* mGameDataManager;
+      WindowManagerPtr mWindowManager;
+      WindowManagerFactory mWindowManagerFactory;
 
       LuaInterface* mLuaInterface;
       lua_State* mLuaState;

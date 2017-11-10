@@ -58,6 +58,8 @@ But it's also possible to build it manually:
 * [Particle Universe](https://github.com/scrawl/particleuniverse) --
   ParticleUniverse plugin.
 * OIS -- from ogre dependencies.
+* [SDL2](https://www.libsdl.org/download-2.0.php) -- SDL2 windowing
+  and input.
 
 # Contributing
 

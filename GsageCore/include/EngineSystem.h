@@ -38,6 +38,7 @@ namespace Gsage
 {
   class Engine;
   class EntityComponent;
+  class GsageFacade;
 
   /**
    * Abstract system class.
@@ -47,6 +48,7 @@ namespace Gsage
     public:
       EngineSystem();
       virtual ~EngineSystem();
+
       /**
        * Configure the system. This method can be called several times
        *
@@ -91,6 +93,12 @@ namespace Gsage
        */
       virtual void setEngineInstance(Engine* engine);
       /**
+       * Sets gsage facade instance (called, when system is create by gsage facade)
+       *
+       * @param facade GsageFacade pointer
+       */
+      virtual void setFacadeInstance(GsageFacade* facade);
+      /**
        * Reset engine instance (called, when system is removed from engine)
        */
       void resetEngineInstance();
@@ -113,6 +121,18 @@ namespace Gsage
        * For example to detect if the render system is ogre.
        */
       const DataProxy& getSystemInfo() const;
+
+      /**
+       * Get system name as it is registered in the Engine
+       * @returns system's name string
+       */
+      const std::string& getName() const;
+
+      /**
+       * Called by the engine instance, sets system name
+       * @param name system's name as it's registered in the Engine
+       */
+      void setName(const std::string& name);
     protected:
 
       /**
@@ -124,9 +144,11 @@ namespace Gsage
       bool mReady;
       DataProxy mConfig;
       bool mConfigDirty;
+      GsageFacade* mFacade;
 
       bool mEnabled;
       DataProxy mSystemInfo;
+      std::string mName;
   };
 }
 

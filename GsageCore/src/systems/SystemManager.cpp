@@ -40,12 +40,12 @@ namespace Gsage {
     mFactories.clear();
   }
 
-  EngineSystem* SystemManager::create(const std::string& id)
+  EngineSystem* SystemManager::create(const std::string& id, bool configure)
   {
     if(mFactories.count(id) == 0) {
       return 0;
     }
 
-    return mFactories[id]->create(mEngine);
+    return mFactories[id]->create(mEngine, configure);
   }
 }

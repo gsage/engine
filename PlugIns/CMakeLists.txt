@@ -14,4 +14,8 @@ if(${OIS_FOUND})
   add_subdirectory(OisInput)
 endif(${OIS_FOUND})
 
+if(${SDL_FOUND})
+  add_subdirectory(SDL)
+endif(${SDL_FOUND})
+
 add_subdirectory(ImGUI)

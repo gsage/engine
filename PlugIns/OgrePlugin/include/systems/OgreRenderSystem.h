@@ -85,7 +85,7 @@ namespace Gsage
               );
   };
 
-  class OgreRenderSystem : public ComponentStorage<RenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public RenderSystem
+  class OgreRenderSystem : public ComponentStorage<RenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public RenderSystem, public EventSubscriber<OgreRenderSystem>
   {
     public:
       static const std::string ID;
@@ -269,12 +269,18 @@ namespace Gsage
        */
       void createRttTexture(const std::string& name, unsigned int width,
           unsigned int height, unsigned int samples, Ogre::PixelFormat pf);
-    protected:
       /**
        * Update current camera
        * @param camera New camera instance
        */
       void updateCurrentCamera(Ogre::Camera* camera);
+    protected:
+      /**
+       * Handle window resizing
+       * @param sender Engine
+       * @param event WindowEvent
+       */
+      bool handleWindowResized(EventDispatcher* sender, const Event& event);
 
       Ogre::Root* mRoot;
       Ogre::SceneManager* mSceneManager;

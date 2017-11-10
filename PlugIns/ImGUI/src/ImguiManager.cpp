@@ -184,6 +184,8 @@ namespace Gsage {
     // keyboard events
     addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &ImguiManager::handleKeyboardEvent, -100);
     addEventListener(mEngine, KeyboardEvent::KEY_UP, &ImguiManager::handleKeyboardEvent, -100);
+    // input event
+    addEventListener(mEngine, TextInputEvent::INPUT, &ImguiManager::handleInputEvent, -100);
     mIsSetUp = true;
   }
 
@@ -250,9 +252,22 @@ namespace Gsage {
     io.KeyCtrl = e.isModifierDown(KeyboardEvent::Ctrl);
     io.KeyShift = e.isModifierDown(KeyboardEvent::Shift);
     io.KeyAlt = e.isModifierDown(KeyboardEvent::Alt);
-    io.KeySuper = false;
+    io.KeySuper = e.isModifierDown(KeyboardEvent::Win);
 
     return !ImGui::IsAnyItemActive() || e.getType() == KeyboardEvent::KEY_UP;
+  }
+
+  bool ImguiManager::handleInputEvent(EventDispatcher* sender, const Event& event)
+  {
+    if(!mRenderer)
+      return true;
+
+    const TextInputEvent& e = static_cast<const TextInputEvent&>(event);
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.AddInputCharactersUTF8(e.getText());
+
+    return true;
   }
 
   bool ImguiManager::doCapture()

@@ -180,7 +180,6 @@ namespace Gsage
   class LuaInterface
   {
     public:
-      typedef std::map<std::string, std::string> EventTypes;
       LuaInterface(GsageFacade* instance, const std::string& resourcePath = "./resources");
       virtual ~LuaInterface();
       /**
@@ -232,10 +231,10 @@ namespace Gsage
        * @param ut Bindings
        */
       template<class T>
-      void registerEvent(const std::string& name, const std::string& handler, sol::usertype<T> ut);
+      void registerEvent(Event::ConstType name, const std::string& handler, sol::usertype<T> ut);
 
       template<typename C, typename... Args>
-      void registerEvent(const std::string& name, const std::string& handler, Args&&... args);
+      void registerEvent(Event::ConstType name, const std::string& handler, Args&&... args);
     private:
       void closeLuaState();
       GsageFacade* mInstance;
