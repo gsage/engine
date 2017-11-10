@@ -27,7 +27,9 @@ local function decorate(cls)
     if currentCamera then
       currentCamera:detach()
     end
-    self.render.root:getCamera(self.props.cameraPath):attach(core:render().viewport)
+    local cam = self.render.root:getCamera(self.props.cameraPath)
+    core:render():updateCurrentCamera(cam:getCamera())
+    cam:attach(core:render().viewport)
     currentCamera = self
     self.attached = true
     if self.update then

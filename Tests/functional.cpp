@@ -37,10 +37,6 @@ THE SOFTWARE.
 #include "windows.h"
 #endif
 
-#if GSAGE_PLATFORM == GSAGE_APPLE
-#include "OSX/MainWrapperOSX.h"
-#endif
-
 #ifndef RESOURCES_FOLDER
 #define RESOURCES_FOLDER "./resources"
 #endif
@@ -104,17 +100,10 @@ extern "C" {
         LOG(ERROR) << "Failed to initialize game engine";
         return 1;
       }
-#if GSAGE_PLATFORM == GSAGE_APPLE
-      NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-      id mAppDelegate = [[AppDelegate alloc] initWithClass:&facade];
-      [[NSApplication sharedApplication] setDelegate:mAppDelegate];
-      retVal = NSApplicationMain(argc, (const char **) argv);
-      [pool release];
-#else
+
       while(facade.update())
       {
       }
-#endif
 
       if(retVal != 0)
         return retVal;

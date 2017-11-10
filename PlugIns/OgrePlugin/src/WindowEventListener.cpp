@@ -50,7 +50,7 @@ namespace Gsage {
     fireWindowEvent(WindowEvent::CLOSE, window);
   }
 
-  void WindowEventListener::fireWindowEvent(const std::string& type, Ogre::RenderWindow* window)
+  void WindowEventListener::fireWindowEvent(Event::ConstType type, Ogre::RenderWindow* window)
   {
     size_t handle;
     window->getCustomAttribute("WINDOW", &handle);

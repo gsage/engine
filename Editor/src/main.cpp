@@ -37,13 +37,11 @@ THE SOFTWARE.
 #include "windows.h"
 #endif
 
-#if GSAGE_PLATFORM == GSAGE_APPLE
-#include "OSX/MainWrapperOSX.h"
-#endif
-
 #ifndef RESOURCES_FOLDER
 #define RESOURCES_FOLDER "./resources"
 #endif
+
+#include "sol.hpp"
 
 #define MALLOC_CHECK_ 2
 
@@ -70,7 +68,15 @@ extern "C" {
 #endif
       int retVal = 0;
       Gsage::GsageFacade facade;
-      std::string coreConfig = "gameConfig.json";
+      std::string coreConfig = "editorConfig.json";
+      lua_State* L = lua_open();
+      sol::state_view lua(L);
+      if(!L) {
+        LOG(ERROR) << "Lua state is not initialized";
+        return 1;
+      }
+
+      facade.setLuaState(L, false);
 
       if(!facade.initialize(coreConfig, RESOURCES_FOLDER))
       {
@@ -78,17 +84,9 @@ extern "C" {
         return 1;
       }
 
-#if GSAGE_PLATFORM == GSAGE_APPLE
-      NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-      id mAppDelegate = [[AppDelegate alloc] initWithClass:&facade];
-      [[NSApplication sharedApplication] setDelegate:mAppDelegate];
-      retVal = NSApplicationMain(argc, (const char **) argv);
-      [pool release];
-#else
       while(facade.update())
       {
       }
-#endif
 
       if(retVal != 0)
         return retVal;

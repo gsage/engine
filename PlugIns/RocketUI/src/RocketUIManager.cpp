@@ -59,6 +59,7 @@ namespace Gsage {
     setUp();
     addEventListener(engine, SystemChangeEvent::SYSTEM_ADDED, &RocketUIManager::handleSystemChange);
     addEventListener(engine, SystemChangeEvent::SYSTEM_REMOVED, &RocketUIManager::handleSystemChange);
+    addEventListener(engine, WindowEvent::RESIZE, &RocketUIManager::handleWindowResize);
   }
 
   bool RocketUIManager::handleSystemChange(EventDispatcher* sender, const Event& event)
@@ -116,6 +117,8 @@ namespace Gsage {
     // keyboard events
     addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &RocketUIManager::handleKeyboardEvent, -100);
     addEventListener(mEngine, KeyboardEvent::KEY_UP, &RocketUIManager::handleKeyboardEvent, -100);
+    // text input event
+    addEventListener(mEngine, TextInputEvent::INPUT, &RocketUIManager::handleInputEvent, -100);
     mIsSetUp = true;
   }
 
@@ -189,48 +192,42 @@ namespace Gsage {
     return true;
   }
 
+  bool RocketUIManager::handleInputEvent(EventDispatcher* sender, const Event& event)
+  {
+    if(!mRenderSystemWrapper)
+      return true;
+    const TextInputEvent& e = static_cast<const TextInputEvent&>(event);
+    mRenderSystemWrapper->getContext()->ProcessTextInput(e.getText());
+    return true;
+  }
+
+  bool RocketUIManager::handleWindowResize(EventDispatcher* sender, const Event& event)
+  {
+    if(!mRenderSystemWrapper)
+      return true;
+
+    const WindowEvent& e = static_cast<const WindowEvent&>(event);
+    mRenderSystemWrapper->getContext()->SetDimensions(Rocket::Core::Vector2i(e.width, e.height));
+
+    return true;
+  }
+
   int RocketUIManager::getKeyModifierState()
   {
     int modifierState = 0;
-    if ((mModifiersState & KeyboardEvent::Modifier::Ctrl) == KeyboardEvent::Modifier::Ctrl)
+    if ((mModifiersState & KeyboardEvent::Modifier::Ctrl) != 0)
       modifierState |= Rocket::Core::Input::KM_CTRL;
-    if ((mModifiersState & KeyboardEvent::Modifier::Shift) == KeyboardEvent::Modifier::Shift)
+    if ((mModifiersState & KeyboardEvent::Modifier::Shift) != 0)
       modifierState |= Rocket::Core::Input::KM_SHIFT;
-    if ((mModifiersState & KeyboardEvent::Modifier::Alt) == KeyboardEvent::Modifier::Alt)
+    if ((mModifiersState & KeyboardEvent::Modifier::Alt) != 0)
       modifierState |= Rocket::Core::Input::KM_ALT;
+    if ((mModifiersState & KeyboardEvent::Modifier::Caps) != 0)
+      modifierState |= Rocket::Core::Input::KM_CAPSLOCK;
+    if ((mModifiersState & KeyboardEvent::Modifier::Num) != 0)
+      modifierState |= Rocket::Core::Input::KM_NUMLOCK;
+    if ((mModifiersState & KeyboardEvent::Modifier::Mode) != 0)
+      modifierState |= Rocket::Core::Input::KM_SCROLLLOCK;
     return modifierState;
-  /*
-  TODO: this one is not compiling on linux (at least), need to figure out how to fix it
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-
-  if (GetKeyState(VK_CAPITAL) > 0)
-  modifier_state |= Rocket::Core::Input::KM_CAPSLOCK;
-  if (GetKeyState(VK_NUMLOCK) > 0)
-  modifier_state |= Rocket::Core::Input::KM_NUMLOCK;
-  if (GetKeyState(VK_SCROLL) > 0)
-  modifier_state |= Rocket::Core::Input::KM_SCROLLLOCK;
-
-#elif OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-
-  UInt32 key_modifiers = GetCurrentEventKeyModifiers();
-  if (key_modifiers & (1 << alphaLockBit))
-  modifier_state |= Rocket::Core::Input::KM_CAPSLOCK;
-
-#elif OGRE_PLATFORM == OGRE_PLATFORM_LINUX
-
-  XKeyboardState keyboard_state;
-  XGetKeyboardControl(DISPLAY, &keyboard_state);
-
-  if (keyboard_state.led_mask & (1 << 0))
-  modifier_state |= Rocket::Core::Input::KM_CAPSLOCK;
-  if (keyboard_state.led_mask & (1 << 1))
-  modifier_state |= Rocket::Core::Input::KM_NUMLOCK;
-  if (keyboard_state.led_mask & (1 << 2))
-  modifier_state |= Rocket::Core::Input::KM_SCROLLLOCK;
-
-#endif
-
-  return modifier_state;*/
   }
 
   void RocketUIManager::buildKeyMap()

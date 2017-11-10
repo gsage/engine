@@ -46,7 +46,7 @@ namespace Gsage {
        * @param type event type
        * @return binding id
        */
-      long bind(EventDispatcher* target, const std::string& type);
+      long bind(EventDispatcher* target, Event::ConstType type);
 
       /**
        * bind lua function
@@ -55,7 +55,7 @@ namespace Gsage {
        * @return binding id
        */
       template<typename C>
-      long bind(EventDispatcher* target, const std::string& type)
+      long bind(EventDispatcher* target, Event::ConstType type)
       {
         addEventListener(target, type, &LuaEventConnection::handle);
         EventSubscriber::EventSubscription binding(target, type);

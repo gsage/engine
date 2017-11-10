@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const std::string StatEvent::STAT_CHANGE = "statChange";
+  const Event::Type StatEvent::STAT_CHANGE = "statChange";
 
   StatEvent::StatEvent(const std::string& type, const std::string& statId)
     : Event(type)

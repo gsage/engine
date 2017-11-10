@@ -38,7 +38,7 @@ namespace Gsage {
   {
   }
 
-  long LuaEventConnection::bind(EventDispatcher* target, const std::string& type)
+  long LuaEventConnection::bind(EventDispatcher* target, Event::ConstType type)
   {
     return bind<Event>(target, type);
   }

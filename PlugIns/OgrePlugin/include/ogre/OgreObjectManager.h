@@ -51,13 +51,13 @@ namespace Gsage {
   class OgreObjectManagerEvent : public Event
   {
     public:
-      OgreObjectManagerEvent(const std::string& type, const std::string& factoryId) : Event(type), mId(factoryId) {}
+      OgreObjectManagerEvent(Event::ConstType type, const std::string& factoryId) : Event(type), mId(factoryId) {}
       virtual ~OgreObjectManagerEvent() {}
 
       /**
        * Factory was unregistered
        */
-      static const std::string FACTORY_UNREGISTERED;
+      static const Event::Type FACTORY_UNREGISTERED;
 
       /**
        * Get factory id that was unregistered

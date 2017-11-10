@@ -56,7 +56,7 @@ namespace Gsage {
         NONE
       };
       static const std::string SYSTEM;
-      static const std::string POSITION_CHANGE;
+      static const Event::Type POSITION_CHANGE;
 
       RenderComponent();
       virtual ~RenderComponent();

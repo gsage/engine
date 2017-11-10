@@ -66,9 +66,10 @@ namespace Gsage {
        * Creates the system in the engine
        *
        * @param engine Engine instance
+       * @param configure the system
        * @returns pointer to created EngineSystem, 0 if failed
        */
-      virtual EngineSystem* create(Engine* engine) = 0;
+      virtual EngineSystem* create(Engine* engine, bool configure) = 0;
   };
 
   /**
@@ -90,11 +91,12 @@ namespace Gsage {
        * Creates the system of type S in the engine
        *
        * @param engine Engine instance
+       * @param configure the system
        * @returns pointer to created EngineSystem, 0 if failed
        */
-      EngineSystem* create(Engine* engine)
+      EngineSystem* create(Engine* engine, bool configure = true)
       {
-        return engine->addSystem<S>();
+        return engine->addSystem<S>(configure);
       }
   };
 }

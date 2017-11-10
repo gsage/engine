@@ -29,33 +29,33 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const std::string EngineEvent::LUA_STATE_CHANGE = "luaStateChange";
+  const Event::Type EngineEvent::LUA_STATE_CHANGE = "luaStateChange";
 
-  const std::string EngineEvent::HALT = "halt";
+  const Event::Type EngineEvent::HALT = "halt";
 
-  const std::string EntityEvent::CREATE = "entityCreated";
+  const Event::Type EntityEvent::CREATE = "entityCreated";
 
-  const std::string EntityEvent::DELETE = "entityDeleted";
+  const Event::Type EntityEvent::DELETE = "entityDeleted";
 
-  const std::string SettingsEvent::UPDATE = "update";
+  const Event::Type SettingsEvent::UPDATE = "update";
 
-  const std::string SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
+  const Event::Type SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
 
-  const std::string SystemChangeEvent::SYSTEM_REMOVED = "systemRemoved";
+  const Event::Type SystemChangeEvent::SYSTEM_REMOVED = "systemRemoved";
 
-  const std::string SelectEvent::OBJECT_SELECTED = "objectSelected";
+  const Event::Type SelectEvent::OBJECT_SELECTED = "objectSelected";
 
-  const std::string SelectEvent::ROLL_OVER = "rollOver";
+  const Event::Type SelectEvent::ROLL_OVER = "rollOver";
 
-  const std::string SelectEvent::ROLL_OUT = "rollOut";
+  const Event::Type SelectEvent::ROLL_OUT = "rollOut";
 
-  const std::string WindowEvent::CREATE = "create";
+  const Event::Type WindowEvent::CREATE = "create";
 
-  const std::string WindowEvent::RESIZE = "resize";
+  const Event::Type WindowEvent::RESIZE = "resize";
 
-  const std::string WindowEvent::CLOSE = "close";
+  const Event::Type WindowEvent::CLOSE = "close";
 
-  EngineEvent::EngineEvent(const std::string& type) : Event(type)
+  EngineEvent::EngineEvent(Event::ConstType type) : Event(type)
   {
   }
 
@@ -63,7 +63,7 @@ namespace Gsage {
   {
   }
 
-  EntityEvent::EntityEvent(const std::string& type, const std::string& entityId)
+  EntityEvent::EntityEvent(Event::ConstType type, const std::string& entityId)
     : Event(type)
     , mEntityId(entityId)
   {
@@ -73,7 +73,7 @@ namespace Gsage {
   {
   }
 
-  SettingsEvent::SettingsEvent(const std::string& type, const DataProxy& settings)
+  SettingsEvent::SettingsEvent(Event::ConstType type, const DataProxy& settings)
     : Event(type)
     , settings(settings)
   {
@@ -83,7 +83,7 @@ namespace Gsage {
   {
   }
 
-  SystemChangeEvent::SystemChangeEvent(const std::string& type, const std::string& systemId, EngineSystem* system)
+  SystemChangeEvent::SystemChangeEvent(Event::ConstType type, const std::string& systemId, EngineSystem* system)
     : Event(type)
     , mSystemId(systemId)
     , mSystem(system)
@@ -94,7 +94,7 @@ namespace Gsage {
   {
   }
 
-  WindowEvent::WindowEvent(const std::string& type, size_t pHandle, unsigned int pWidth, unsigned int pHeight)
+  WindowEvent::WindowEvent(Event::ConstType type, size_t pHandle, unsigned int pWidth, unsigned int pHeight)
     : Event(type)
     , handle(pHandle)
     , width(pWidth)

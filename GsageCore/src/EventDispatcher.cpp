@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "Logger.h"
 
 namespace Gsage {
-  const std::string DispatcherEvent::FORCE_UNSUBSCRIBE = "forceUnsubscribe";
+  const Event::Type DispatcherEvent::FORCE_UNSUBSCRIBE = "forceUnsubscribe";
 
   EventDispatcher::EventDispatcher()
   {
@@ -36,7 +36,7 @@ namespace Gsage {
 
   EventDispatcher::~EventDispatcher()
   {
-    for(std::pair<std::string, EventSignal*> element : mSignals)
+    for(std::pair<Event::Type, EventSignal*> element : mSignals)
     {
       if (element.first == DispatcherEvent::FORCE_UNSUBSCRIBE)
       {
@@ -46,7 +46,7 @@ namespace Gsage {
     }
   }
 
-  EventConnection EventDispatcher::addEventListener(const std::string& eventType, EventCallback callback, const int priority)
+  EventConnection EventDispatcher::addEventListener(Event::ConstType eventType, EventCallback callback, const int priority)
   {
     if(!hasListenersForType(eventType))
       mSignals[eventType] = new EventSignal();
@@ -54,7 +54,7 @@ namespace Gsage {
     return mSignals[eventType]->connect(priority, callback);
   }
 
-  bool EventDispatcher::hasListenersForType(const std::string& type)
+  bool EventDispatcher::hasListenersForType(Event::ConstType type)
   {
     return mSignals.count(type) > 0;
   }

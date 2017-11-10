@@ -32,6 +32,11 @@ namespace Gsage {
   InputHandler::InputHandler(size_t windowHandle, Engine* engine)
     : mHandle(windowHandle)
     , mEngine(engine)
+    , mWidth(0)
+    , mHeight(0)
+    , mPreviousX(0)
+    , mPreviousY(0)
+    , mPreviousZ(0)
   {
     addEventListener(engine, WindowEvent::RESIZE, &InputHandler::handleWindowEvent);
   }
@@ -46,6 +51,22 @@ namespace Gsage {
 
     handleResize(event.width, event.height);
     return true;
+  }
+
+  void InputHandler::fireMouseEvent(Event::ConstType type, int x, int y, int z)
+  {
+    fireMouseEvent(type, x, y, z, MouseEvent::None);
+  }
+
+  void InputHandler::fireMouseEvent(Event::ConstType type, int x, int y, int z, const MouseEvent::ButtonType button)
+  {
+    MouseEvent e(type, mWidth, mHeight, button);
+    e.setAbsolutePosition(x, y, z);
+    e.setRelativePosition(x - mPreviousX, y - mPreviousY, z - mPreviousZ);
+    mPreviousX = x;
+    mPreviousY = y;
+    mPreviousZ = z;
+    mEngine->fireEvent(e);
   }
 
   InputManager::InputManager(Engine* engine)
@@ -74,6 +95,10 @@ namespace Gsage {
 
     delete mFactories[id];
     mFactories.erase(id);
+
+    if(mCurrentFactoryId == id) {
+      mInputHandlers.clear();
+    }
   }
 
   void InputManager::useFactory(const std::string& id)
@@ -100,6 +125,8 @@ namespace Gsage {
       if(mInputHandlers.count(event.handle) != 0) {
         return true;
       }
+
+      LOG(INFO) << "Created input handler " << mCurrentFactoryId;
 
       // Create new handler
       mInputHandlers[event.handle] = InputHandlerPtr(mFactories[mCurrentFactoryId]->create(event.handle, mEngine));

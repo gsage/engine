@@ -45,9 +45,9 @@ INITIALIZE_EASYLOGGINGPP
 namespace Gsage {
 
   const std::string PLUGINS_SECTION = "plugins";
-  const std::string GsageFacade::LOAD = "load";
-  const std::string GsageFacade::RESET = "reset";
-  const std::string GsageFacade::BEFORE_RESET = "beforeReset";
+  const Event::Type GsageFacade::LOAD = "load";
+  const Event::Type GsageFacade::RESET = "reset";
+  const Event::Type GsageFacade::BEFORE_RESET = "beforeReset";
 
   GsageFacade::GsageFacade() :
       mStarted(false),
@@ -59,7 +59,8 @@ namespace Gsage {
       mInputManager(&mEngine),
       mSystemManager(&mEngine),
       mPreviousUpdateTime(std::chrono::high_resolution_clock::now()),
-      mExitCode(0)
+      mExitCode(0),
+      mWindowManager(nullptr)
   {
     el::Configurations defaultConf;
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
@@ -83,6 +84,7 @@ namespace Gsage {
 
     mStopped = true;
     mEngine.removeSystems();
+    mWindowManager = nullptr;
 
     for (PluginOrder::reverse_iterator rit = mPluginOrder.rbegin(); rit != mPluginOrder.rend(); ++rit)
     {
@@ -140,6 +142,7 @@ namespace Gsage {
 
     auto inputHandler = mConfig.get<std::string>("inputHandler");
     if(inputHandler.second) {
+      LOG(INFO) << "Using input handler " << inputHandler.first;
       mInputManager.useFactory(inputHandler.first);
     }
 
@@ -175,6 +178,29 @@ namespace Gsage {
       }
     }
 
+    auto windowManager = mConfig.get<DataProxy>("windowManager");
+    if(windowManager.second) {
+      auto type = windowManager.first.get<std::string>("type");
+      if(!type.second) {
+        LOG(ERROR) << "Malformed window manager config was provided";
+        return false;
+      }
+      mWindowManager = mWindowManagerFactory.create(type.first);
+      if(mWindowManager == nullptr) {
+        LOG(ERROR) << "Failed to initialize window manager";
+        return false;
+      }
+      addEventListener(mWindowManager.get(), WindowEvent::CREATE, &GsageFacade::handleWindowManagerEvent);
+      addEventListener(mWindowManager.get(), WindowEvent::RESIZE, &GsageFacade::handleWindowManagerEvent);
+      addEventListener(mWindowManager.get(), WindowEvent::CLOSE, &GsageFacade::handleWindowManagerEvent);
+      if(!mWindowManager->initialize(windowManager.first)) {
+        LOG(ERROR) << "Failed to initialize window manager";
+        return false;
+      }
+
+      LOG(INFO) << "Using " << type.first << " window manager";
+    }
+
     auto systems = mConfig.get<DataProxy>("systems");
     if(systems.second) {
       for(auto pair : systems.first) {
@@ -184,9 +210,14 @@ namespace Gsage {
           continue;
         }
 
-        if(!mSystemManager.create(id.first)) {
+        EngineSystem* system = mSystemManager.create(id.first, false);
+        if(!system) {
           LOG(ERROR) << "Failed to create system of type \"" << id.first << "\"";
           continue;
+        }
+        system->setFacadeInstance(this);
+        if(!mEngine.configureSystem(system->getName())) {
+          return false;
         }
       }
     }
@@ -317,6 +348,14 @@ namespace Gsage {
     return true;
   }
 
+  bool GsageFacade::removeWindowManager(const std::string& id)
+  {
+    if(mWindowManager != nullptr && mWindowManager->getType() == id) {
+      mWindowManager = nullptr;
+    }
+    return mWindowManagerFactory.removeWindowManager(id);
+  }
+
   bool GsageFacade::onEngineHalt(EventDispatcher* sender, const Event& event)
   {
     halt();
@@ -402,6 +441,22 @@ namespace Gsage {
 
   bool GsageFacade::createSystem(const std::string& systemID)
   {
-    return mSystemManager.create(systemID);
+    EngineSystem* s = mSystemManager.create(systemID, false);
+    if(!s) {
+      return false;
+    }
+    s->setFacadeInstance(this);
+    return mEngine.configureSystem(s->getName());
+  }
+
+  WindowManagerPtr GsageFacade::getWindowManager()
+  {
+    return mWindowManager;
+  }
+
+  bool GsageFacade::handleWindowManagerEvent(EventDispatcher* sender, const Event& event)
+  {
+    mEngine.fireEvent(event);
+    return true;
   }
 }

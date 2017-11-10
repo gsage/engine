@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include "EventSubscriber.h"
 #include "UpdateListener.h"
+#include "MouseEvent.h"
 
 namespace Gsage {
   class Engine;
@@ -55,7 +56,16 @@ namespace Gsage {
     protected:
       bool handleWindowEvent(EventDispatcher* sender, const Event& event);
 
+      virtual void fireMouseEvent(Event::ConstType type, int x, int y, int z);
+
+      virtual void fireMouseEvent(Event::ConstType type, int x, int y, int z, const MouseEvent::ButtonType button);
+
       size_t mHandle;
+      int mWidth;
+      int mHeight;
+      int mPreviousX;
+      int mPreviousY;
+      int mPreviousZ;
       Engine* mEngine;
   };
 
@@ -110,14 +120,16 @@ namespace Gsage {
        * @param id String id of factory
        */
       template<class T>
-      void registerFactory(const std::string& id)
+      T* registerFactory(const std::string& id)
       {
         if(!std::is_base_of<AbstractInputFactory, T>::value)
         {
           LOG(ERROR) << "Factory for id '" << id << "' was not registered. It must be derived from AbstractInputFactory";
-          return;
+          return 0;
         }
-        mFactories[id] = new T();
+        T* factory = new T();
+        mFactories[id] = factory;
+        return factory;
       }
 
       /**

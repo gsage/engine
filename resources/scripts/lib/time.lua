@@ -23,7 +23,7 @@ function time.addHandler(id, handler, global)
   local co, isRoot = coroutine.running()
   -- if called from root coroutine, then we can register the handler
   -- directly in the script system
-  if not co or isRoot then
+  if not co or isRoot and core:script() then
     core:script():addUpdateListener(handler, global)
     time.rawHandlers[id] = {
       handler = handler,
@@ -76,6 +76,9 @@ function time.clearHandlers(all)
 end
 
 event:bind(core, Facade.BEFORE_RESET, time.clearHandlers)
-core:script():addUpdateListener(time.update, true)
+
+if core:script() then
+  core:script():addUpdateListener(time.update, true)
+end
 
 return time

@@ -28,11 +28,11 @@ THE SOFTWARE.
 
 using namespace Gsage;
 
-const std::string MouseEvent::MOUSE_DOWN = "mouseDown";
-const std::string MouseEvent::MOUSE_UP = "mouseUp";
-const std::string MouseEvent::MOUSE_MOVE = "mouseMove";
+const Event::Type MouseEvent::MOUSE_DOWN = "mouseDown";
+const Event::Type MouseEvent::MOUSE_UP = "mouseUp";
+const Event::Type MouseEvent::MOUSE_MOVE = "mouseMove";
 
-MouseEvent::MouseEvent(const std::string& type, const float& w, const float& h, const ButtonType& b) 
+MouseEvent::MouseEvent(Event::ConstType type, const float& w, const float& h, const ButtonType& b) 
   : Event(type)
   , width(w)
   , height(h)

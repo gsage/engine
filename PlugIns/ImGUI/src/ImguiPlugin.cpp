@@ -59,6 +59,10 @@ namespace Gsage {
 
   void ImguiPlugin::uninstallImpl()
   {
+    sol::state_view& lua = *mLuaInterface->getSolState();
+    lua["imgui"] = sol::lua_nil;
+    lua["ImguiRenderer"] = sol::lua_nil;
+
     mFacade->removeUIManager(mUIManagerHandle);
   }
 

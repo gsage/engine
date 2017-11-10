@@ -10,15 +10,16 @@ require 'lib.behaviors'
 require 'actions'
 require 'factories.camera'
 require 'factories.emitters'
-require 'imgui.gizmo'
-require 'imgui.console'
-require 'imgui.stats'
+
+if imgui then
+  require 'imgui.gizmo'
+  require 'imgui.console'
+  require 'imgui.stats'
+end
 
 local event = require 'lib.event'
 local eal = require 'lib.eal.manager'
 local async = require "lib.async"
-
-imguiConsole = Console()
 
 function context()
   return rocket.contexts["main"]
@@ -100,8 +101,6 @@ end
 event:onKeyboard(core, KeyboardEvent.KEY_DOWN, handleKeyEvent)
 event:onKeyboard(core, KeyboardEvent.KEY_UP, handleKeyEvent)
 
-local gizmo = Gizmo()
-
 function onSelect(e)
   local target = eal:getEntity(e.entity)
 
@@ -160,9 +159,10 @@ console_visible = false
 startup()
 game:loadSave('gameStart')
 
-imguiConsole:setOpen(true)
-
 if imgui then
+  gizmo = Gizmo()
+  imguiConsole = Console()
+  imguiConsole:setOpen(true)
   imgui.render:addView("gizmo", gizmo)
   imgui.render:addView("console", imguiConsole)
   stats = Stats()
