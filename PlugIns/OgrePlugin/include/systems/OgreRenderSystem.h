@@ -42,9 +42,9 @@ THE SOFTWARE.
 #include "components/RenderComponent.h"
 #include "ogre/OgreObjectManager.h"
 #include "EventDispatcher.h"
-#include "OgreInteractionManager.h"
 
 #include "RenderSystem.h"
+#include "RenderTarget.h"
 
 static const std::string OGRE_SECTION        = "OgreRenderer";
 static const std::string OGRE_PLUGINS_PATH   = "PluginsPath";
@@ -64,7 +64,6 @@ namespace Ogre
 namespace Gsage
 {
   class AnimationScheduler;
-  class CameraController;
   class ResourceManager;
   class Entity;
   class Engine;
@@ -89,7 +88,6 @@ namespace Gsage
   {
     public:
       static const std::string ID;
-      static const std::string CAMERA_CHANGED;
 
       OgreRenderSystem();
       virtual ~OgreRenderSystem();
@@ -177,7 +175,7 @@ namespace Gsage
       /**
        * Get ogre render window
        */
-      Ogre::RenderWindow* getRenderWindow() { return mWindow; }
+      Ogre::RenderWindow* getRenderWindow() { return static_cast<Ogre::RenderWindow*>(mWindow->getOgreRenderTarget()); }
 
       /**
        * Get ogre scene manager
@@ -201,21 +199,12 @@ namespace Gsage
        */
       OgreEntities getEntities(const unsigned int& query = 0xFF);
       /**
-       * Get currently active ogre camera
-       */
-      Ogre::Camera* getOgreCamera();
-      /**
        * Get objects in radius
        * @param position Point to search around
        * @param distance Radius of the sphere query
        * @returns list of entities
        */
       Entities getObjectsInRadius(const Ogre::Vector3& center, const float& distance, const unsigned int flags = 0xFF, const std::string& id = "");
-
-      /**
-       * Get main viewport
-       */
-      Ogre::Viewport* getViewport();
 
       virtual unsigned int getFBOID(const std::string& target = "") const;
 
@@ -259,21 +248,33 @@ namespace Gsage
       void renderCameraToTarget(const std::string& cameraName, const std::string& target);
 
       /**
-       * Create rtt texture
+       * Render camera to texture with name
        *
-       * @param name Texture name
-       * @param width Texture width
-       * @param height Texture height
-       * @param samples FSAA
-       * @param pf Pixel format
+       * @param cam Camera pointer
+       * @param target Name of RTT to render to
        */
-      void createRttTexture(const std::string& name, unsigned int width,
-          unsigned int height, unsigned int samples, Ogre::PixelFormat pf);
+      void renderCameraToTarget(Ogre::Camera* cam, const std::string& target);
+
       /**
-       * Update current camera
-       * @param camera New camera instance
+       * Create new render target
+       *
+       * @param name Render target name
+       * @param type Render target type
+       * @param parameters Additional parameters
        */
-      void updateCurrentCamera(Ogre::Camera* camera);
+      RenderTargetPtr createRenderTarget(const std::string& name, RenderTarget::Type type, DataProxy parameters);
+
+      /**
+       * Get render target by name
+       *
+       * @param name Render target name
+       */
+      RenderTargetPtr getRenderTarget(const std::string& name);
+
+      /**
+       * Get main render target (window)
+       */
+      RenderTargetPtr getMainRenderTarget();
     protected:
       /**
        * Handle window resizing
@@ -285,8 +286,6 @@ namespace Gsage
       Ogre::Root* mRoot;
       Ogre::SceneManager* mSceneManager;
       Ogre::RenderSystem* mRenderSystem;
-      Ogre::RenderWindow* mWindow;
-      Ogre::Camera* mCurrentCamera;
       Ogre::LogManager* mLogManager;
       Ogre::FontManager* mFontManager;
       Ogre::ManualMovableTextRendererFactory* mManualMovableTextParticleFactory;
@@ -294,7 +293,6 @@ namespace Gsage
 
       OgreLogRedirect mLogRedirect;
       OgreObjectManager mObjectManager;
-      OgreInteractionManager* mOgreInteractionManager;
       WindowEventListener* mWindowEventListener;
 
       ResourceManager* mResourceManager;
@@ -302,8 +300,15 @@ namespace Gsage
       typedef std::queue<DataProxy> ComponentLoadQueue;
       ComponentLoadQueue mLoadQueue;
 
-      typedef std::map<std::string, Ogre::TexturePtr> RttTextures;
-      RttTextures mRttTextures;
+      typedef std::map<std::string, RenderTargetPtr> RenderTargets;
+      RenderTargets mRenderTargets;
+
+      RenderTargetFactory mRenderTargetFactory;
+
+      typedef std::map<std::string, RenderTargetPtr> RenderWindowsByHandle;
+      RenderWindowsByHandle mRenderWindowsByHandle;
+
+      RenderTargetPtr mWindow;
   };
 }
 

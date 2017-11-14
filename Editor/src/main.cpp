@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 
 #include "GsageFacade.h"
+#include "Editor.h"
+#include "lua/LuaInterface.h"
 
 #include <stdio.h>
 #include <thread>
@@ -68,6 +70,7 @@ extern "C" {
 #endif
       int retVal = 0;
       Gsage::GsageFacade facade;
+      Gsage::Editor editor;
       std::string coreConfig = "editorConfig.json";
       lua_State* L = lua_open();
       sol::state_view lua(L);
@@ -76,11 +79,23 @@ extern "C" {
         return 1;
       }
 
+      lua.new_usertype<Gsage::Editor>("Editor",
+          "putToGlobalState", &Gsage::Editor::putToGlobalState,
+          "getGlobalState", &Gsage::Editor::getGlobalState,
+          "saveGlobalState", &Gsage::Editor::saveGlobalState
+      );
+      lua["editor"] = &editor;
+
       facade.setLuaState(L, false);
 
       if(!facade.initialize(coreConfig, RESOURCES_FOLDER))
       {
         LOG(ERROR) << "Failed to initialize game engine";
+        return 1;
+      }
+
+      if(!editor.initialize(RESOURCES_FOLDER)) {
+        LOG(ERROR) << "Failed to initialize editor core";
         return 1;
       }
 

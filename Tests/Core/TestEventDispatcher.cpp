@@ -240,6 +240,36 @@ TEST_F(TestEventDispatcher, TestRemoveEventListener)
 }
 
 /**
+ * Test addEventListener/removeEventListener
+ * 1. addEventListener
+ * 2. removeEventListener
+ * 3. addEventListener
+ * 4. Should receive event
+ */
+TEST_F(TestEventDispatcher, TestResubscribe)
+{
+  TestEvents receivedEvents;
+
+  TestEventHandler handler(receivedEvents);
+  handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+  mInstance->fireEvent(TestEvent(TestEvent::PING, 1));
+
+  ASSERT_EQ(receivedEvents.size(), 1);
+
+  handler.removeEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+
+  receivedEvents.clear();
+
+  handler.addEventListener(mInstance, TestEvent::PING, &TestEventHandler::onTestEvent);
+
+  mInstance->fireEvent(TestEvent(TestEvent::PING, 100));
+  ASSERT_EQ(receivedEvents.size(), 1);
+
+  delete mInstance;
+  mInstance = 0;
+}
+
+/**
  * Test flow when the EventDispatcher instance is deleted before the handler
  * 1. Create EventDispatcher and handler and subscribe the handler to PING event.
  * 2. Delete EventDispatcher and then delete the handler

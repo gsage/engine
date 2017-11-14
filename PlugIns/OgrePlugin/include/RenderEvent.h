@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <systems/OgreRenderSystem.h>
 
 #include "EventDispatcher.h"
+#include "RenderTarget.h"
 
 namespace Gsage {
 
@@ -39,7 +40,7 @@ namespace Gsage {
   class RenderEvent : public Event
   {
     public:
-      static const Event::Type UPDATE_UI;
+      static const Event::Type RENDER_QUEUE_STARTED;
 
       /**
        * Main update
@@ -51,7 +52,7 @@ namespace Gsage {
        */
       static const Event::Type RENDER_QUEUE_ENDED;
 
-      RenderEvent(Event::ConstType type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID = 0, const std::string& invocation = "");
+      RenderEvent(Event::ConstType type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID = 0, RenderTargetPtr renderTarget = nullptr);
       virtual ~RenderEvent();
       /**
        * Gets a reference to the current render system
@@ -59,14 +60,14 @@ namespace Gsage {
       OgreRenderSystem* getRenderSystem();
 
       /**
-       * Ogre invocation string
-       */
-      std::string invocation;
-
-      /**
        * Ogre queue id
        */
       Ogre::uint8 queueID;
+
+      /**
+       * RenderTarget that triggered that render event
+       */
+      RenderTargetPtr renderTarget;
 
     private:
       OgreRenderSystem* mRenderSystem;

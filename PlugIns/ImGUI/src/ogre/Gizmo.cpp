@@ -28,6 +28,8 @@ THE SOFTWARE.
 #include "ogre/SceneNodeWrapper.h"
 #include "systems/OgreRenderSystem.h"
 
+#include "RenderTarget.h"
+
 #include <imgui.h>
 
 namespace Gsage {
@@ -45,13 +47,18 @@ namespace Gsage {
   {
   }
 
-  void Gizmo::render()
+  void Gizmo::render(float x, float y, const std::string& rtName)
   {
     if(mTarget == nullptr || !mEnabled) {
       return;
     }
 
-    Ogre::Camera* cam = mRenderSystem->getViewport()->getCamera();
+    RenderTargetPtr renderTarget = mRenderSystem->getRenderTarget(rtName);
+    if(renderTarget == nullptr) {
+      return;
+    }
+
+    Ogre::Camera* cam = renderTarget->getCamera();
     Ogre::Matrix4 view = cam->getViewMatrix();
     Ogre::Matrix4 projection = cam->getProjectionMatrix();
 
@@ -79,8 +86,7 @@ namespace Gsage {
 
     ImGuizmo::BeginFrame();
     ImGuizmo::Enable(mEnabled);
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+    ImGuizmo::SetRect(x, y, renderTarget->getWidth(), renderTarget->getHeight());
     float delta[16] = {0.f};
 
     ImGuizmo::Manipulate(&v[0], &p[0], mOperation, mMode, &mModelMatrix[0], &delta[0]);
@@ -102,6 +108,7 @@ namespace Gsage {
       node->rotate(Ogre::Vector3::UNIT_Y, Ogre::Degree(deltaRotation[1]), Ogre::SceneNode::TS_WORLD);
       node->rotate(Ogre::Vector3::UNIT_Z, Ogre::Degree(deltaRotation[2]), Ogre::SceneNode::TS_WORLD);
     }
+    ImGuizmo::EndFrame();
   }
 
   void Gizmo::enable(bool value)
@@ -132,6 +139,52 @@ namespace Gsage {
   ImGuizmo::MODE Gizmo::getMode() const
   {
     return mMode;
+  }
+
+  bool Gizmo::drawCoordinatesEditor(float v_speed, float v_min, float v_max, const std::string& display_format, float power)
+  {
+    if(mTarget == nullptr || !mEnabled) {
+      return false;
+    }
+
+    Ogre::SceneNode* node = mTarget->getNode();
+    if(!node) {
+      return false;
+    }
+
+    Ogre::Vector3 position = node->_getDerivedPosition();
+    Ogre::Vector3 scale = node->_getDerivedScale();
+    Ogre::Quaternion orientation = node->_getDerivedOrientation();
+
+    float pitch = orientation.getPitch().valueDegrees();
+    float yaw = orientation.getYaw().valueDegrees();
+    float roll = orientation.getRoll().valueDegrees();
+    float rotation[3] = {pitch, yaw, roll};
+
+    ImGui::DragFloat3("position", position.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
+    ImGui::DragFloat3("rotation", rotation, v_speed, v_min, v_max, display_format.c_str(), power);
+    ImGui::DragFloat3("scale", scale.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
+
+    node->setPosition(position);
+    node->setScale(scale);
+
+    float deltaPitch = rotation[0] - pitch;
+    float deltaYaw = rotation[1] - yaw;
+    float deltaRoll = rotation[2] - roll;
+
+    if(deltaPitch) {
+      node->rotate(Ogre::Vector3::UNIT_X, Ogre::Degree(deltaPitch), Ogre::SceneNode::TS_WORLD);
+    }
+
+    if(deltaYaw) {
+      node->rotate(Ogre::Vector3::UNIT_Y, Ogre::Degree(deltaYaw), Ogre::SceneNode::TS_WORLD);
+    }
+
+    if(deltaRoll) {
+      node->rotate(Ogre::Vector3::UNIT_Z, Ogre::Degree(deltaRoll), Ogre::SceneNode::TS_WORLD);
+    }
+
+    return true;
   }
 
   bool Gizmo::extractMatrix(Ogre::Matrix4 matrix, float* dest, int length)

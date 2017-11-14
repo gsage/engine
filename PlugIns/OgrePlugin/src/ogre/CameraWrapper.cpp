@@ -50,6 +50,14 @@ namespace Gsage {
   {
   }
 
+  void CameraWrapper::destroy()
+  {
+    if(mObject) {
+      LOG(INFO) << "Destroy camera " << mObjectId;
+      mSceneManager->destroyCamera(mObjectId);
+    }
+  }
+
   const Ogre::Quaternion& CameraWrapper::getOrientation() const
   {
     return static_cast<const Ogre::Camera*>(mObject)->getOrientation();
@@ -74,6 +82,11 @@ namespace Gsage {
     mViewport->setCamera(camera);
     mIsActive = true;
     LOG(INFO) << "Attached camera to viewport";
+  }
+
+  void CameraWrapper::attach(RenderTargetPtr renderTarget) {
+    renderTarget->setCamera(getCamera());
+    LOG(INFO) << "Attached camera to render target " << renderTarget->getName();
   }
 
   void CameraWrapper::createCamera(const std::string& name)

@@ -81,13 +81,13 @@ function main()
   return coroutine.resume(testsCoroutine)
 end
 
-local halt = function()
+local shutdown = function()
   async.waitSignal("TestsComplete")
-  game:halt(exitCode)
+  game:shutdown(exitCode)
 end
 
-local haltCoroutine = coroutine.create(halt)
-coroutine.resume(haltCoroutine)
+local shutdownCoroutine = coroutine.create(shutdown)
+coroutine.resume(shutdownCoroutine)
 
 local success, exitCode = pcall(main)
 if not success then

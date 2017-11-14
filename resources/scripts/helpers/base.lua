@@ -6,18 +6,16 @@ resource = resource or {}
 
 local eal = 'lib.eal.manager'
 
-if rocket ~= nil then
-  function resource.loadFont(fileName)
-    rocket:LoadFontFace(getResourcePath('fonts/' .. fileName))
-  end
+function resource.loadFont(fileName)
+  rocket:LoadFontFace(getResourcePath('fonts/' .. fileName))
+end
 
-  function resource.loadDocument(context, documentName)
-    return context:LoadDocument(getResourcePath('ui/' .. documentName))
-  end
+function resource.loadDocument(context, documentName)
+  return context:LoadDocument(getResourcePath('ui/' .. documentName))
+end
 
-  function resource.loadCursor(context, cursor)
-    return context:LoadMouseCursor(getResourcePath('ui/' .. cursor))
-  end
+function resource.loadCursor(context, cursor)
+  return context:LoadMouseCursor(getResourcePath('ui/' .. cursor))
 end
 
 -- View related functions

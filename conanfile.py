@@ -1,3 +1,5 @@
+import os
+
 from conans import ConanFile, CMake, tools
 
 class GsageConan(ConanFile):
@@ -51,6 +53,7 @@ class GsageConan(ConanFile):
         cmake = CMake(self)
         options = {
             "CMAKE_INSTALL_PREFIX": "./sdk",
+            "CMAKE_BUILD_TYPE": os.environ.get("CMAKE_BUILD_TYPE", "Release")
         }
         if self.settings.os == "Macos":
             options["CMAKE_OSX_ARCHITECTURES"] = "x86_64"

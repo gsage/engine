@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "GsageFacade.h"
 #include "EngineEvent.h"
 #include "OgreSelectEvent.h"
+#include "RenderTarget.h"
 
 #include "lua/LuaInterface.h"
 #include "lua/LuaHelpers.h"
@@ -72,6 +73,7 @@ namespace Gsage {
       // Ogre Wrappers
 
       lua.new_usertype<OgreObject>("OgreObject",
+          sol::base_classes, sol::bases<Reflection>(),
           "type", sol::property(&OgreObject::getType),
           "name", sol::property(&OgreObject::getObjectId)
       );
@@ -91,6 +93,7 @@ namespace Gsage {
           "roll", &SceneNodeWrapper::roll,
           "translate", &SceneNodeWrapper::translate,
           "lookAt", &SceneNodeWrapper::lookAt,
+          "children", sol::property(&SceneNodeWrapper::writeChildren),
           "STATIC", sol::var(SceneNodeWrapper::STATIC),
           "DYNAMIC", sol::var(SceneNodeWrapper::DYNAMIC)
       );
@@ -111,26 +114,55 @@ namespace Gsage {
 
       lua.new_usertype<CameraWrapper>("CameraWrapper",
           sol::base_classes, sol::bases<OgreObject>(),
-          "attach", &CameraWrapper::attach,
+          "attach", sol::overload(
+            (void(CameraWrapper::*)(Ogre::Viewport* viewport))&CameraWrapper::attach,
+            (void(CameraWrapper::*)(RenderTargetPtr renderTarget))&CameraWrapper::attach
+          ),
           "isActive", &CameraWrapper::isActive,
           "getProjectionMatrix", &CameraWrapper::getProjectionMatrix,
           "getViewMatrix", &CameraWrapper::getViewMatrix,
           "getCamera", (Ogre::Camera*(CameraWrapper::*)())&CameraWrapper::getCamera
       );
 
+      lua.new_simple_usertype<Ogre::Camera>("Camera");
+
+      lua.new_usertype<RenderTarget>("RenderTarget",
+          "setCamera", &RenderTarget::setCamera,
+          "getCamera", &RenderTarget::getCamera,
+          "name", sol::property(&RenderTarget::getName),
+
+          "Rtt", sol::var(RenderTarget::Rtt),
+          "Window", sol::var(RenderTarget::Window)
+      );
+
+      lua.new_usertype<WindowRenderTarget>("WindowRenderTarget",
+          sol::base_classes, sol::bases<RenderTarget>()
+      );
+
+      lua.new_usertype<RttRenderTarget>("RttRenderTarget",
+          sol::base_classes, sol::bases<RenderTarget>()
+      );
+
       // Systems
 
       lua.new_usertype<OgreRenderSystem>("RenderSystem",
           sol::base_classes, sol::bases<EngineSystem>(),
-          "viewport", sol::property(&OgreRenderSystem::getViewport),
           "getObjectsInRadius", &OgreRenderSystem::getObjectsInRadius,
-          "createRttTexture", &OgreRenderSystem::createRttTexture,
-          "renderCameraToTarget", &OgreRenderSystem::renderCameraToTarget,
-          "updateCurrentCamera", &OgreRenderSystem::updateCurrentCamera
+          "createRenderTarget", &OgreRenderSystem::createRenderTarget,
+          "renderCameraToTarget", sol::overload(
+            (void(OgreRenderSystem::*)(const std::string&, const std::string&)) &OgreRenderSystem::renderCameraToTarget,
+            (void(OgreRenderSystem::*)(Ogre::Camera*, const std::string&)) &OgreRenderSystem::renderCameraToTarget
+          ),
+          "mainRenderTarget", sol::property(&OgreRenderSystem::getMainRenderTarget),
+          "getRenderTarget", &OgreRenderSystem::getRenderTarget
       );
 
       lua["ogre"] = lua.create_table_with(
-          "PF_R8G8B8A8", Ogre::PF_R8G8B8A8
+          "PF_R8G8B8A8", Ogre::PF_R8G8B8A8,
+          "RENDER_QUEUE_BACKGROUND", Ogre::RENDER_QUEUE_BACKGROUND,
+          "RENDER_QUEUE_SKIES_EARLY", Ogre::RENDER_QUEUE_SKIES_EARLY,
+          "RENDER_QUEUE_MAIN", Ogre::RENDER_QUEUE_MAIN,
+          "RENDER_QUEUE_OVERLAY", Ogre::RENDER_QUEUE_OVERLAY
       );
 
       lua.new_usertype<RecastMovementSystem>("MovementSystem",
@@ -144,7 +176,7 @@ namespace Gsage {
       // Components
 
       lua.new_usertype<RenderComponent>("RenderComponent",
-          sol::base_classes, sol::bases<EventDispatcher>(),
+          sol::base_classes, sol::bases<EventDispatcher, Reflection>(),
           "position", sol::property((void(RenderComponent::*)(const Ogre::Vector3&))&RenderComponent::setPosition, &RenderComponent::getPosition),
           "root", sol::property(&RenderComponent::getRoot),
           "direction", sol::property(&RenderComponent::getDirection),
@@ -167,6 +199,7 @@ namespace Gsage {
       );
 
       lua.new_usertype<MovementComponent>("MovementComponent",
+          sol::base_classes, sol::bases<Reflection>(),
           "go", sol::overload(
             (void(MovementComponent::*)(const Ogre::Vector3&))&MovementComponent::setTarget,
             (void(MovementComponent::*)(const float&, const float&, const float&))&MovementComponent::setTarget

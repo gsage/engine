@@ -45,7 +45,11 @@ namespace Gsage {
       /**
        * Engine issued stopping
        */
-      static const Event::Type HALT;
+      static const Event::Type STOPPING;
+      /**
+       * Engine was shut down
+       */
+      static const Event::Type SHUTDOWN;
       EngineEvent(Event::ConstType type);
       virtual ~EngineEvent();
   };

@@ -14,6 +14,7 @@ else(CONAN_PACKAGE_NAME)
   set(CMAKE_INSTALL_PATH "/usr/local")
   include(cmake/Dependencies.cmake)
 endif(CONAN_PACKAGE_NAME)
+
 process_templates()
 
 add_subdirectory(GsageCore)

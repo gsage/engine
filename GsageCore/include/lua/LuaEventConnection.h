@@ -57,7 +57,9 @@ namespace Gsage {
       template<typename C>
       long bind(EventDispatcher* target, Event::ConstType type)
       {
-        addEventListener(target, type, &LuaEventConnection::handle);
+        if(!hasEventListener(target, type)) {
+          addEventListener(target, type, &LuaEventConnection::handle, -100);
+        }
         EventSubscriber::EventSubscription binding(target, type);
         mBindings[mNextID] = binding;
 
@@ -77,6 +79,7 @@ namespace Gsage {
           {
             LOG(WARNING) << "Failed to call " << event.getType() << " lua listener: " << error;
           }
+
           sol::optional<bool> invalidate = res;
           if(invalidate) {
             return invalidate.value();

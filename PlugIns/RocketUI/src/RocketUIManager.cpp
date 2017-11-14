@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include "RocketUIManager.h"
+#include "RocketEvent.h"
 
 #include <Rocket/Core/Lua/Interpreter.h>
 #include <Rocket/Controls/Lua/Controls.h>
@@ -40,6 +41,58 @@ THE SOFTWARE.
 
 namespace Gsage {
 
+  RenderSystemWrapper::~RenderSystemWrapper()
+  {
+  }
+
+  void RenderSystemWrapper::destroy()
+  {
+    for(auto pair : mContexts) {
+      pair.second->RemoveReference();
+    }
+    Rocket::Core::Shutdown();
+  }
+
+  Rocket::Core::Context* RenderSystemWrapper::getContext(const std::string& name)
+  {
+    if(mContexts.count(name) == 0) {
+      return NULL;
+    }
+    return mContexts[name];
+  }
+
+  RenderSystemWrapper::Contexts RenderSystemWrapper::getContexts()
+  {
+    return mContexts;
+  }
+
+  void RenderSystemWrapper::setLuaState(lua_State* L)
+  {
+    mLuaState = L;
+    if(mInitialized) {
+      // Initialise the Lua interface
+      Rocket::Core::Lua::Interpreter::Initialise(mLuaState);
+      Rocket::Controls::Lua::RegisterTypes(Rocket::Core::Lua::Interpreter::GetLuaState());
+    }
+  }
+
+  Rocket::Core::Context* RenderSystemWrapper::createContext(const std::string& name, unsigned int width, unsigned int height)
+  {
+    if(!mInitialized) {
+      mInitialized = true;
+      setUpInterfaces(width, height);
+      Rocket::Core::Initialise();
+      Rocket::Controls::Initialise();
+      if(mLuaState) {
+        setLuaState(mLuaState);
+      }
+    }
+    mContexts[name] = Rocket::Core::CreateContext(name.c_str(), Rocket::Core::Vector2i(width, height));
+    mEngine->fireEvent(RocketContextEvent(RocketContextEvent::CREATE, name));
+    LOG(INFO) << "Created context " << name << ", initial size: " << width << "x" << height;
+    return mContexts[name];
+  }
+
   RocketUIManager::RocketUIManager()
     : mRenderSystemWrapper(0)
     , mIsSetUp(false)
@@ -49,8 +102,10 @@ namespace Gsage {
 
   RocketUIManager::~RocketUIManager()
   {
-    if(mRenderSystemWrapper)
+    if(mRenderSystemWrapper) {
+      mRenderSystemWrapper->destroy();
       delete mRenderSystemWrapper;
+    }
   }
 
   void RocketUIManager::initialize(Engine* engine, lua_State* luaState)
@@ -59,7 +114,6 @@ namespace Gsage {
     setUp();
     addEventListener(engine, SystemChangeEvent::SYSTEM_ADDED, &RocketUIManager::handleSystemChange);
     addEventListener(engine, SystemChangeEvent::SYSTEM_REMOVED, &RocketUIManager::handleSystemChange);
-    addEventListener(engine, WindowEvent::RESIZE, &RocketUIManager::handleWindowResize);
   }
 
   bool RocketUIManager::handleSystemChange(EventDispatcher* sender, const Event& event)
@@ -77,6 +131,7 @@ namespace Gsage {
     if(e.getType() == SystemChangeEvent::SYSTEM_REMOVED)
     {
       mIsSetUp = false;
+      mRenderSystemWrapper->destroy();
       delete mRenderSystemWrapper;
       LOG(INFO) << "Render system was removed, system wrapper was destroyed";
       mRenderSystemWrapper = 0;
@@ -130,37 +185,36 @@ namespace Gsage {
   void RocketUIManager::setLuaState(lua_State* L)
   {
     mLuaState = L;
-    // Initialise the Lua interface
-    Rocket::Core::Lua::Interpreter::Initialise(mLuaState);
-    Rocket::Controls::Lua::RegisterTypes(Rocket::Core::Lua::Interpreter::GetLuaState());
+    mRenderSystemWrapper->setLuaState(L);
   }
 
   bool RocketUIManager::handleMouseEvent(EventDispatcher* sender, const Event& event)
   {
-    if(!mRenderSystemWrapper || !mRenderSystemWrapper->getContext())
+    const MouseEvent& e = static_cast<const MouseEvent&>(event);
+    if(!mRenderSystemWrapper || !mRenderSystemWrapper->getContext(e.dispatcher))
       return true;
 
-    const MouseEvent& e = static_cast<const MouseEvent&>(event);
+    Rocket::Core::Context* ctx = mRenderSystemWrapper->getContext(e.dispatcher);
 
     if(e.getType() == MouseEvent::MOUSE_MOVE)
     {
       int keyModifierState = getKeyModifierState();
 
-      mRenderSystemWrapper->getContext()->ProcessMouseMove(e.mouseX, e.mouseY, keyModifierState);
+      ctx->ProcessMouseMove(e.mouseX, e.mouseY, keyModifierState);
       if (e.relativeZ != 0)
       {
-        mRenderSystemWrapper->getContext()->ProcessMouseWheel(e.relativeZ / -120, keyModifierState);
-        return !doCapture();
+        ctx->ProcessMouseWheel(e.relativeZ / -120, keyModifierState);
+        return !doCapture(ctx);
       }
     }
     else if(e.getType() == MouseEvent::MOUSE_DOWN)
     {
-      mRenderSystemWrapper->getContext()->ProcessMouseButtonDown((int) e.button, getKeyModifierState());
-      return !doCapture();
+      ctx->ProcessMouseButtonDown((int) e.button, getKeyModifierState());
+      return !doCapture(ctx);
     }
     else if(e.getType() == MouseEvent::MOUSE_UP)
     {
-      mRenderSystemWrapper->getContext()->ProcessMouseButtonUp((int) e.button, getKeyModifierState());
+      ctx->ProcessMouseButtonUp((int) e.button, getKeyModifierState());
     }
     return true;
   }
@@ -173,22 +227,25 @@ namespace Gsage {
     Rocket::Core::Input::KeyIdentifier key = mKeyMap[e.key];
     mModifiersState = e.getModifiersState();
 
-    if(e.getType() == KeyboardEvent::KEY_UP)
-    {
-      if(key != Rocket::Core::Input::KI_UNKNOWN)
-        mRenderSystemWrapper->getContext()->ProcessKeyUp(key, getKeyModifierState());
-    }
-    else if(e.getType() == KeyboardEvent::KEY_DOWN)
-    {
-      if (key != Rocket::Core::Input::KI_UNKNOWN)
-        mRenderSystemWrapper->getContext()->ProcessKeyDown(key, getKeyModifierState());
+    for(auto pair : mRenderSystemWrapper->getContexts()) {
+      if(e.getType() == KeyboardEvent::KEY_UP)
+      {
+        if(key != Rocket::Core::Input::KI_UNKNOWN)
+          pair.second->ProcessKeyUp(key, getKeyModifierState());
+      }
+      else if(e.getType() == KeyboardEvent::KEY_DOWN)
+      {
+        if (key != Rocket::Core::Input::KI_UNKNOWN)
+          pair.second->ProcessKeyDown(key, getKeyModifierState());
 
-      // Send through the ASCII value as text input if it is printable.
-      if (e.text >= 32)
-        mRenderSystemWrapper->getContext()->ProcessTextInput((Rocket::Core::word) e.text);
-      else if (key == Rocket::Core::Input::KI_RETURN)
-        mRenderSystemWrapper->getContext()->ProcessTextInput((Rocket::Core::word) '\n');
+        // Send through the ASCII value as text input if it is printable.
+        if (e.text >= 32)
+          pair.second->ProcessTextInput((Rocket::Core::word) e.text);
+        else if (key == Rocket::Core::Input::KI_RETURN)
+          pair.second->ProcessTextInput((Rocket::Core::word) '\n');
+      }
     }
+
     return true;
   }
 
@@ -197,18 +254,9 @@ namespace Gsage {
     if(!mRenderSystemWrapper)
       return true;
     const TextInputEvent& e = static_cast<const TextInputEvent&>(event);
-    mRenderSystemWrapper->getContext()->ProcessTextInput(e.getText());
-    return true;
-  }
-
-  bool RocketUIManager::handleWindowResize(EventDispatcher* sender, const Event& event)
-  {
-    if(!mRenderSystemWrapper)
-      return true;
-
-    const WindowEvent& e = static_cast<const WindowEvent&>(event);
-    mRenderSystemWrapper->getContext()->SetDimensions(Rocket::Core::Vector2i(e.width, e.height));
-
+    for(auto pair : mRenderSystemWrapper->getContexts()) {
+      pair.second->ProcessTextInput(e.getText());
+    }
     return true;
   }
 
@@ -379,11 +427,11 @@ namespace Gsage {
     mKeyMap[KeyboardEvent::KC_MEDIASELECT] = Rocket::Core::Input::KI_LAUNCH_MEDIA_SELECT;
   }
 
-  bool RocketUIManager::doCapture()
+  bool RocketUIManager::doCapture(Rocket::Core::Context* ctx)
   {
-    Rocket::Core::Element* e = mRenderSystemWrapper->getContext()->GetHoverElement();
+    Rocket::Core::Element* e = ctx->GetHoverElement();
 
-    if(e && e != mRenderSystemWrapper->getContext()->GetRootElement())
+    if(e && e != ctx->GetRootElement())
     {
       if(e->GetTagName() == "body")
         return false;

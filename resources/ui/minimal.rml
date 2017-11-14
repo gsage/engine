@@ -37,7 +37,7 @@
     <div class="bottomBar">
       <button id="save" onclick="game:dumpSave('save1')">Save game</button>
       <button id="load" onclick="game:reset();game:loadSave('save1')">Load game</button>
-      <button id="exit" onclick="game:halt()">Exit game</button>
+      <button id="exit" onclick="game:shutdown()">Exit game</button>
       <button id="exit" onclick="camera:createAndAttach('free', 'free')">Free look</button>
       <button id="exit" onclick="setOrbitalCam()">Orbit look</button>
     </div>

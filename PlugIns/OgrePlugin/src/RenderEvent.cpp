@@ -28,17 +28,17 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const Event::Type RenderEvent::UPDATE_UI = "renderUpdateUI";
+  const Event::Type RenderEvent::RENDER_QUEUE_STARTED = "renderQueueStarted";
 
   const Event::Type RenderEvent::UPDATE = "renderUpdate";
 
   const Event::Type RenderEvent::RENDER_QUEUE_ENDED = "renderQueueEnded";
 
-  RenderEvent::RenderEvent(Event::ConstType type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID, const std::string& invocation)
+  RenderEvent::RenderEvent(Event::ConstType type, OgreRenderSystem* renderSystem, Ogre::uint8 queueID, RenderTargetPtr renderTarget)
     : Event(type)
     , mRenderSystem(renderSystem)
     , queueID(queueID)
-    , invocation(invocation)
+    , renderTarget(renderTarget)
   {
   }
 

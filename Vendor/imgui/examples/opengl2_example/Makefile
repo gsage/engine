@@ -1,6 +1,6 @@
 #
 # Cross Platform Makefile
-# Compatible with Ubuntu 14.04.1 and Mac OS X
+# Compatible with MSYS2/MINGW, Ubuntu 14.04.1 and Mac OS X
 #
 #
 # if you using Mac OS X:
@@ -29,15 +29,15 @@ endif
 ifeq ($(UNAME_S), Darwin) #APPLE
 	ECHO_MESSAGE = "Mac OS X"
 	LIBS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
-	LIBS += -L/usr/local/lib -lglfw3
+	#LIBS += -L/usr/local/lib -lglfw3
+	LIBS += -L/usr/local/lib -lglfw
 
 	CXXFLAGS = -I../../ -I/usr/local/include
 	CXXFLAGS += -Wall -Wformat
-#	CXXFLAGS += -D__APPLE__
 	CFLAGS = $(CXXFLAGS)
 endif
 
-ifeq ($(UNAME_S), MINGW64_NT-6.3)
+ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
    ECHO_MESSAGE = "Windows"
    LIBS = -lglfw3 -lgdi32 -lopengl32 -limm32
 

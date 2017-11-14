@@ -14,7 +14,7 @@
     },
     "script": {
       "hooks": {
-        "setUpCamera": "setOrbitalCam()",
+        "camera": "setOrbitalCam()",
         "damageEmitter": "emitter.create('damage')"
       }
     }

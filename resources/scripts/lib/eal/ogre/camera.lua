@@ -8,9 +8,9 @@ currentCamera = currentCamera or nil
 -- mixin can add update method
 local function decorate(cls)
   cls.onCreate(function(self)
-    self.attached = false
     self.mouseSensivity = self.props.mouseSensivity or 0.003
     self.handlerId = self.id .. ".camera.update"
+    self.renderTargetName = nil
   end)
 
   cls.onDestroy(function(self)
@@ -18,7 +18,7 @@ local function decorate(cls)
   end)
 
   -- attach camera to viewport
-  function cls:attach()
+  function cls:attach(targetName)
     if not self.props.cameraPath then
       -- TODO: search for cameras in render
       log.error("Can't attach camera: must have \"cameraPath\" defined in properties")
@@ -28,10 +28,19 @@ local function decorate(cls)
       currentCamera:detach()
     end
     local cam = self.render.root:getCamera(self.props.cameraPath)
-    core:render():updateCurrentCamera(cam:getCamera())
-    cam:attach(core:render().viewport)
+    local renderTarget = core:render().mainRenderTarget
+
+    if targetName then
+      renderTarget = core:render():getRenderTarget(targetName)
+      if not renderTarget then
+        log.error("Can't attach camera to render target \"" .. targetName .. "\": not such render target was found")
+        return false
+      end
+    end
+
+    self.renderTargetName = renderTarget.name
+    cam:attach(renderTarget)
     currentCamera = self
-    self.attached = true
     if self.update then
       self.onTime = function(time)
         self:update(time)
@@ -42,13 +51,42 @@ local function decorate(cls)
     return true
   end
 
+  -- render camera to texture
+  function cls:renderToTexture(textureID, parameters)
+    local renderTarget = core:render():getRenderTarget(textureID)
+    if not renderTarget then
+      renderTarget = core:render():createRenderTarget(textureID, RenderTarget.Rtt, parameters or {});
+    end
+    local cam = self.render.root:getCamera(self.props.cameraPath)
+    cam:attach(renderTarget)
+    self.renderTargetName = textureID
+    if self.update then
+      self.onTime = function(time)
+        self:update(time)
+      end
+
+      time.addHandler(self.handlerId, self.onTime)
+    end
+  end
+
   -- detach camera
   function cls:detach()
+    if self.renderTargetName then
+      local renderTarget = core:render():getRenderTarget(self.renderTargetName)
+      if renderTarget then
+        renderTarget:setCamera(nil)
+      end
+    end
+
     currentCamera = nil
-    self.attached = false
+    self.renderTargetName = nil
     if self.update then
       time.removeHandler(self.handlerId)
     end
+  end
+
+  function cls:shouldHandleMouseEvent(event)
+    return event.type == MouseEvent.MOUSE_UP or self.renderTargetName == event.dispatcher
   end
 
   return cls
@@ -79,7 +117,8 @@ local function freeCamera(cls)
     self.rollNode = getNode("yaw.pitch.roll")
 
     self.onKeyPress = function(event)
-      if not self.attached then
+      -- TODO: handle keypress events for different targets
+      if not self.renderTargetName then
         return true
       end
 
@@ -108,9 +147,10 @@ local function freeCamera(cls)
     end
 
     self.onMouseEvent = function(event)
-      if not self.attached then
+      if not self:shouldHandleMouseEvent(event) then
         return true
       end
+
       if event.type == MouseEvent.MOUSE_DOWN and event.button == Mouse.Right then
         self.rotate = true
       elseif event.type == MouseEvent.MOUSE_UP and event.button == Mouse.Right then
@@ -193,7 +233,7 @@ local function orbitCamera(cls)
     self:onMouseChange()
 
     self.positionUpdater = function(event)
-      if self.attached then
+      if self.renderTargetName then
         self:follow(self.target.render)
       end
     end
@@ -204,6 +244,10 @@ local function orbitCamera(cls)
     local targetCreateId = event:onEntity(core, EntityEvent.CREATE, self.onTargetCreate)
 
     self.onMouseEvent = function(event)
+      if not self:shouldHandleMouseEvent(event) then
+        return true
+      end
+
       local changed = self.moveCamera
       if event.relZ ~= 0 then
         self.distance = self.distance + event.relZ * self.zoomStepMultiplier

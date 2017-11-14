@@ -45,21 +45,17 @@ namespace Gsage {
       virtual ~RocketOgreWrapper();
 
       /**
-       * Set up rocket ogre wrapper
-       *
-       * @param width window width
-       * @param height window height
+       * Destroy RocketOgreWrapper
        */
-       void setUp(unsigned int width, unsigned int height);
-
+      void destroy();
+    protected:
+      void setUpInterfaces(unsigned int width, unsigned int height);
     private:
       bool render(EventDispatcher* sender, const Event& event);
       void configureRenderSystem(RenderEvent& event);
 
       Rocket::Core::RenderInterface* mRenderInterface;
       Rocket::Core::SystemInterface* mSystemInterface;
-
-      Engine* mEngine;
   };
 }
 

@@ -28,6 +28,7 @@ THE SOFTWARE.
 */
 
 #include "ogre/MovableObjectWrapper.h"
+#include "RenderTarget.h"
 
 namespace Ogre {
   class Camera;
@@ -59,6 +60,13 @@ namespace Gsage {
        * Activate this camera
        */
       void attach(Ogre::Viewport* viewport);
+
+      /**
+       * Attach the camera to render target
+       *
+       * @param renderTarget RenderTarget
+       */
+      void attach(RenderTargetPtr renderTarget);
 
       /**
        * Create camera
@@ -114,6 +122,11 @@ namespace Gsage {
        * Get projection matrix
        */
       const Ogre::Matrix4& getProjectionMatrix() const;
+
+      /**
+       * Remove camera
+       */
+      void destroy();
     private:
       std::string mTarget;
 

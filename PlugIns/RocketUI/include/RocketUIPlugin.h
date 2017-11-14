@@ -55,6 +55,10 @@ namespace Gsage {
        */
       virtual void uninstallImpl();
 
+      /**
+       * Set up lua bindings
+       */
+      void setupLuaBindings();
     private:
       int mUIManagerHandle;
       RocketUIManager mUIManager;

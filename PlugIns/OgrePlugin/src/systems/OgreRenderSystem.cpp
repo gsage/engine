@@ -93,7 +93,6 @@ namespace Gsage {
      }
   }
 
-  const std::string OgreRenderSystem::CAMERA_CHANGED = "cameraChanged";
   // Render system identifier for the factory registration
   const std::string OgreRenderSystem::ID = "ogre";
 
@@ -102,10 +101,9 @@ namespace Gsage {
     mFontManager(0),
     mManualMovableTextParticleFactory(0),
     mResourceManager(0),
-    mWindow(0),
     mViewport(0),
-    mOgreInteractionManager(0),
-    mWindowEventListener(0)
+    mWindowEventListener(0),
+    mSceneManager(0)
   {
     mSystemInfo.put("type", OgreRenderSystem::ID);
     mLogManager = new Ogre::LogManager();
@@ -113,13 +111,13 @@ namespace Gsage {
 
   OgreRenderSystem::~OgreRenderSystem()
   {
-    if(mOgreInteractionManager)
-      delete mOgreInteractionManager;
+    mRenderTargets.clear();
+
     if(mFontManager != 0)
       delete mFontManager;
 
-    if(mWindow != 0 && mWindowEventListener != 0)
-      mWindowEventListener->windowClosed(mWindow);
+    if(getRenderWindow() != 0 && mWindowEventListener != 0)
+      mWindowEventListener->windowClosed(getRenderWindow());
     if(mRoot != 0)
       delete mRoot;
     if(mManualMovableTextParticleFactory != 0)
@@ -174,37 +172,29 @@ namespace Gsage {
       }
     }
 #endif
-    Ogre::NameValuePairList params;
-    auto paramNode = settings.get<DataProxy>("window.params");
-    if(paramNode.second)
-    {
-      for(auto& pair : paramNode.first)
-      {
-        params[pair.first] = pair.second.as<std::string>();
-      }
+    auto p = settings.get<DataProxy>("window");
+    if(!p.second) {
+      LOG(ERROR) << "No primary window is defined for OGRE render system";
+      return false;
     }
-#if GSAGE_PLATFORM == GSAGE_APPLE
-    params["macAPI"] = "cocoa";
-#endif
-    if(settings.get("window.useWindowManager", false)) {
+
+    DataProxy windowParams = p.first;
+
+    std::string windowName = windowParams.get("name", "mainWindow");
+
+    if(windowParams.get("useWindowManager", false)) {
       WindowPtr window = mFacade->getWindowManager()->createWindow(
-        settings.get("window.name", "default"),
-        settings.get("window.width", 1024),
-        settings.get("window.height", 786),
-        settings.get("window.fullscreen", false),
-        settings.get("window", DataProxy())
+        windowName,
+        windowParams.get("width", 1024),
+        windowParams.get("height", 786),
+        windowParams.get("fullscreen", false),
+        windowParams
       );
       if(window == nullptr) {
         return false;
       }
 
-      unsigned long handle = window->getWindowHandle();
-#if GSAGE_PLATFORM == GSAGE_APPLE
-      params["macAPICocoaUseNSView"] = "true";
-      params["externalWindowHandle"] = Ogre::StringConverter::toString(handle);
-#else
-      params["parentWindowHandle"] = Ogre::StringConverter::toString(handle);
-#endif
+      windowParams.put("windowHandle", Ogre::StringConverter::toString(window->getWindowHandle()));
     }
 
     if(!(mRoot->restoreConfig()))
@@ -213,22 +203,13 @@ namespace Gsage {
     // initialize render window
     mRoot->initialise(false);
 
-    // create window
-    mWindow = mRoot->createRenderWindow(
-        settings.get("window.name", "default"),
-        settings.get("window.width", 1024),
-        settings.get("window.height", 786),
-        settings.get("window.fullscreen", false),
-        &params);
+    mWindow = createRenderTarget(windowName, RenderTarget::Window, windowParams);
 
     EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, WindowEvent::RESIZE, &OgreRenderSystem::handleWindowResized, 0);
 
-    if(settings.get("window.useWindowManager", false)) {
-      mWindow->setVisible(false);
-    } else {
-      mWindow->setVisible(settings.get("window.visible", true));
-      mWindowEventListener = new WindowEventListener(mWindow, mEngine);
-      Ogre::WindowEventUtilities::addWindowEventListener(mWindow, mWindowEventListener);
+    if(!settings.get("window.useWindowManager", false)) {
+      mWindowEventListener = new WindowEventListener(getRenderWindow(), mEngine);
+      Ogre::WindowEventUtilities::addWindowEventListener(getRenderWindow(), mWindowEventListener);
     }
 
     // initialize scene manager
@@ -250,20 +231,16 @@ namespace Gsage {
 
     assert(mRenderSystem != 0);
 
-    // get viewport to initialize it
-    getViewport();
-
-    DataProxy rtt = settings.get("rtt", DataProxy());
+    DataProxy rtt = settings.get("renderTargets", DataProxy());
     if(rtt.size() > 0) {
       for(auto pair : rtt) {
         const std::string name = pair.first;
-        unsigned int width = pair.second.get<unsigned int>("width", 1);
-        unsigned int height = pair.second.get<unsigned int>("height", 1);
-        unsigned int samples = pair.second.get<unsigned int>("samples", 0);
-        Ogre::PixelFormat pf = pair.second.get<Ogre::PixelFormat>("format", Ogre::PF_R8G8B8A8);
+        if(pair.second.count("type") == 0) {
+          LOG(ERROR) << "Failed to create render target " << name << ": 'type' field is missing";
+          continue;
+        }
 
-        createRttTexture(name, width, height, samples, pf);
-
+        createRenderTarget(name, pair.second.get<RenderTarget::Type>("type", RenderTarget::Rtt), pair.second);
         auto camera = pair.second.get<std::string>("camera");
         if(camera.second) {
           renderCameraToTarget(camera.first, name);
@@ -281,8 +258,12 @@ namespace Gsage {
 
     mRoot->clearEventTimes();
     mRenderSystem->_initRenderTargets();
-    mOgreInteractionManager = new OgreInteractionManager();
-    mOgreInteractionManager->initialize(this, mEngine);
+
+    // finally initialize render targets defined in configs
+    for(auto pair : mRenderTargets) {
+      pair.second->initialize(mSceneManager);
+    }
+
     EngineSystem::initialize(settings);
     return true;
   }
@@ -316,17 +297,21 @@ namespace Gsage {
     ComponentStorage<RenderComponent>::update(time);
     Ogre::WindowEventUtilities::messagePump();
 
-    mOgreInteractionManager->update(time);
-
     mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE, this));
 
-    bool continueRendering = !mWindow->isClosed();
+    for(auto pair : mRenderTargets) {
+      if(!pair.second->isAutoUpdated()) {
+        pair.second->update();
+      }
+    }
+
+    bool continueRendering = !getRenderWindow()->isClosed();
     if(continueRendering) {
       continueRendering = mRoot->renderOneFrame();
     }
 
     if(!continueRendering)
-      mEngine->fireEvent(EngineEvent(EngineEvent::HALT));
+      mEngine->fireEvent(EngineEvent(EngineEvent::SHUTDOWN));
   }
 
   void OgreRenderSystem::updateComponent(RenderComponent* component, Entity* entity, const double& time)
@@ -373,13 +358,28 @@ namespace Gsage {
 
   void OgreRenderSystem::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation)
   {
-    if(queueGroupId == Ogre::RENDER_QUEUE_OVERLAY)
-      mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE_UI, this, queueGroupId, invocation));
+    if(!skipThisInvocation) {
+      RenderTargetPtr target;
+      if(mRenderTargets.count(invocation) != 0) {
+        target = mRenderTargets[invocation];
+      } else {
+        target = mWindow;
+      }
+      mEngine->fireEvent(RenderEvent(RenderEvent::RENDER_QUEUE_STARTED, this, queueGroupId, target));
+    }
   }
 
   void OgreRenderSystem::renderQueueEnded(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation)
   {
-    mEngine->fireEvent(RenderEvent(RenderEvent::RENDER_QUEUE_ENDED, this, queueGroupId, invocation));
+    if(!skipThisInvocation) {
+      RenderTargetPtr target;
+      if(mRenderTargets.count(invocation) != 0) {
+        target = mRenderTargets[invocation];
+      } else {
+        target = mWindow;
+      }
+      mEngine->fireEvent(RenderEvent(RenderEvent::RENDER_QUEUE_ENDED, this, queueGroupId, target));
+    }
   }
 
   bool OgreRenderSystem::removeComponent(RenderComponent* component)
@@ -408,11 +408,6 @@ namespace Gsage {
         res.push_back(e);
     }
     return res;
-  }
-
-  Ogre::Camera* OgreRenderSystem::getOgreCamera()
-  {
-    return mCurrentCamera;
   }
 
   OgreRenderSystem::Entities OgreRenderSystem::getObjectsInRadius(const Ogre::Vector3& center, const float& distance, const unsigned int flags, const std::string& id)
@@ -446,45 +441,35 @@ namespace Gsage {
     return res;
   }
 
-  void OgreRenderSystem::updateCurrentCamera(Ogre::Camera* camera)
-  {
-    mCurrentCamera = camera;
-    fireEvent(Event(OgreRenderSystem::CAMERA_CHANGED));
-  }
-
-  Ogre::Viewport* OgreRenderSystem::getViewport()
-  {
-    if(mViewport == 0) {
-      updateCurrentCamera(mSceneManager->createCamera("main"));
-      mViewport = mWindow->addViewport(mCurrentCamera);
-    }
-    return mViewport;
-  }
-
   unsigned int OgreRenderSystem::getFBOID(const std::string& target) const
   {
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       LOG(WARNING) << "Attempt to get fboid of not existing render target: " << target;
       return 0;
     }
 
-    Ogre::GLTexture *nativeTexture = static_cast<Ogre::GLTexture*>(mRttTextures.at(target).get());
-    return nativeTexture->getGLID();
+    if(mRenderTargets.at(target)->getType() != RenderTarget::Rtt) {
+      LOG(WARNING) << "FBOID can be obtained only from Rtt target";
+      return 0;
+    }
+
+    const RttRenderTarget* rtt = static_cast<const RttRenderTarget*>(mRenderTargets.at(target).get());
+    return rtt->getGLID();
   }
 
   void OgreRenderSystem::setWidth(unsigned int width, const std::string& target)
   {
     if(target.empty()) {
-      LOG(WARNING) << "Setting width for window is not implemented yet";
+      mWindow->setWidth(width);
+      return;
     }
 
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       LOG(WARNING) << "Attempt to set width to not existing render target: " << target;
       return;
     }
 
-    Ogre::TexturePtr texture = mRttTextures[target];
-    createRttTexture(target, width, texture->getHeight(), texture->getFSAA(), texture->getFormat());
+    mRenderTargets[target]->setWidth(width);
   }
 
   unsigned int OgreRenderSystem::getWidth(const std::string& target) const
@@ -492,27 +477,27 @@ namespace Gsage {
     if(target.empty())
       return mWindow ? mWindow->getWidth() : 0;
 
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       LOG(WARNING) << "Attempt to get height of not existing render target: " << target;
       return 0;
     }
 
-    return mRttTextures.at(target)->getWidth();
+    return mRenderTargets.at(target)->getWidth();
   }
 
   void OgreRenderSystem::setHeight(unsigned int height, const std::string& target)
   {
     if(target.empty()) {
-      LOG(WARNING) << "Setting height for window is not implemented yet";
+      mWindow->setHeight(height);
+      return;
     }
 
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       LOG(WARNING) << "Attempt to set height to not existing render target: " << target;
       return;
     }
 
-    Ogre::TexturePtr texture = mRttTextures[target];
-    createRttTexture(target, texture->getWidth(), height, texture->getFSAA(), texture->getFormat());
+    mRenderTargets[target]->setHeight(height);
   }
 
   unsigned int OgreRenderSystem::getHeight(const std::string& target) const
@@ -520,63 +505,59 @@ namespace Gsage {
     if(target.empty())
       return mWindow ? mWindow->getHeight() : 0;
 
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       LOG(WARNING) << "Attempt to get height of not existing render target: " << target;
       return 0;
     }
 
-    return mRttTextures.at(target)->getHeight();
+    return mRenderTargets.at(target)->getHeight();
   }
 
   void OgreRenderSystem::setSize(unsigned int width, unsigned int height, const std::string& target)
   {
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       LOG(WARNING) << "Attempt to set size of not existing render target: " << target;
       return;
     }
-    Ogre::TexturePtr texture = mRttTextures[target];
 
-    createRttTexture(target, width, height, texture->getFSAA(), texture->getFormat());
+    mRenderTargets[target]->setDimensions(width, height);
   }
 
-  void OgreRenderSystem::createRttTexture(const std::string& name,
-      unsigned int width,
-      unsigned int height,
-      unsigned int samples,
-      Ogre::PixelFormat pixelFormat) {
+  RenderTargetPtr OgreRenderSystem::createRenderTarget(const std::string& name, RenderTarget::Type type, DataProxy parameters) {
+    parameters.put("name", name);
+    mRenderTargets[name] = mRenderTargetFactory.create(name, type, parameters, mEngine);
+    if(type == RenderTarget::Window) {
+      std::string windowHandle = parameters.get("windowHandle", "");
+      if(!windowHandle.empty()) {
+        mRenderWindowsByHandle[windowHandle] = mRenderTargets[name];
+      }
+    }
 
-    Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
-    if(texManager.resourceExists(name))
-      texManager.remove(name);
+    if(mSceneManager) {
+      mRenderTargets[name]->initialize(mSceneManager);
+    }
+    return mRenderTargets[name];
+  }
 
-    mRttTextures[name] = texManager.createManual(name,
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-        Ogre::TEX_TYPE_2D,
-        width,
-        height,
-        0,
-        pixelFormat,
-        Ogre::TU_RENDERTARGET,
-        0,
-        false,
-        samples);
-    LOG(INFO) << "Created RTT texture \"" << name << "\", size: " << width << "x" << height << ", samples: " << samples << ", pixel format: " << pixelFormat;
+  void OgreRenderSystem::renderCameraToTarget(Ogre::Camera* cam, const std::string& target) {
+    if(mRenderTargets.count(target) == 0) {
+      LOG(ERROR) << "Can't render camera to target " << target << " no such RTT found";
+      return;
+    }
+
+    mRenderTargets[target]->setCamera(cam);
   }
 
   void OgreRenderSystem::renderCameraToTarget(const std::string& cameraName, const std::string& target) {
-    if(mRttTextures.count(target) == 0) {
+    if(mRenderTargets.count(target) == 0) {
       return;
     }
 
     Ogre::Camera* cam = NULL;
-    if(cameraName == "__current__") {
-      cam = mCurrentCamera;
-    } else {
-      try {
-        cam = mSceneManager->getCamera(cameraName);
-      } catch(...) {
-        LOG(WARNING) << "Camera with name " << cameraName << " does not exist";
-      }
+    try {
+      cam = mSceneManager->getCamera(cameraName);
+    } catch(...) {
+      LOG(WARNING) << "Camera with name " << cameraName << " does not exist";
     }
 
     if(cam == NULL) {
@@ -584,32 +565,27 @@ namespace Gsage {
       return;
     }
 
-    Ogre::TexturePtr texture = mRttTextures[target];
+    renderCameraToTarget(cam, target);
+  }
 
-    Ogre::RenderTarget* renderTarget = texture->getBuffer()->getRenderTarget();
+  RenderTargetPtr OgreRenderSystem::getRenderTarget(const std::string& name)
+  {
+    if(mRenderTargets.count(name) == 0) {
+      return nullptr;
+    }
 
-    renderTarget->addViewport(cam);
-    renderTarget->getViewport(0)->setClearEveryFrame(true);
-    renderTarget->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
-    renderTarget->getViewport(0)->setOverlaysEnabled(true);
-    renderTarget->setAutoUpdated(false);
+    return mRenderTargets[name];
+  }
 
-    Ogre::Real aspectRatio = texture->getWidth() / texture->getHeight();
-    cam->setAspectRatio(aspectRatio);
+  RenderTargetPtr OgreRenderSystem::getMainRenderTarget()
+  {
+    return mWindow;
   }
 
   bool OgreRenderSystem::handleWindowResized(EventDispatcher* sender, const Event& e)
   {
     const WindowEvent& event = static_cast<const WindowEvent&>(e);
-#if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
-    mWindow->resize(event.width, event.height);
-#else
-    mWindow->windowMovedOrResized();
-#endif
-    if(mCurrentCamera) {
-      Ogre::Real aspectRatio = Ogre::Real(event.width) / Ogre::Real(event.height);
-      mCurrentCamera->setAspectRatio(aspectRatio);
-    }
+    mWindow->setDimensions(event.width, event.height);
     return true;
   }
 }

@@ -411,8 +411,6 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiWindowFlags_NoCollapse");
     lua_pushnumber(L, ImGuiWindowFlags_AlwaysAutoResize);
     lua_setglobal(L, "ImGuiWindowFlags_AlwaysAutoResize");
-    lua_pushnumber(L, ImGuiWindowFlags_ShowBorders);
-    lua_setglobal(L, "ImGuiWindowFlags_ShowBorders");
     lua_pushnumber(L, ImGuiWindowFlags_NoSavedSettings);
     lua_setglobal(L, "ImGuiWindowFlags_NoSavedSettings");
     lua_pushnumber(L, ImGuiWindowFlags_NoInputs);
@@ -427,10 +425,6 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiWindowFlags_NoBringToFrontOnFocus");
     lua_pushnumber(L, ImGuiWindowFlags_ChildWindow);
     lua_setglobal(L, "ImGuiWindowFlags_ChildWindow");
-    lua_pushnumber(L, ImGuiWindowFlags_ChildWindowAutoFitX);
-    lua_setglobal(L, "ImGuiWindowFlags_ChildWindowAutoFitX");
-    lua_pushnumber(L, ImGuiWindowFlags_ChildWindowAutoFitY);
-    lua_setglobal(L, "ImGuiWindowFlags_ChildWindowAutoFitY");
     lua_pushnumber(L, ImGuiWindowFlags_ComboBox);
     lua_setglobal(L, "ImGuiWindowFlags_ComboBox");
     lua_pushnumber(L, ImGuiWindowFlags_Tooltip);
@@ -483,6 +477,8 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiStyleVar_FramePadding");
     lua_pushnumber(L, ImGuiStyleVar_ItemSpacing);
     lua_setglobal(L, "ImGuiStyleVar_ItemSpacing");
+    lua_pushnumber(L, ImGuiStyleVar_WindowPadding);
+    lua_setglobal(L, "ImGuiStyleVar_WindowPadding");
     lua_pushnumber(L, ImGuiKey_Tab);
     lua_setglobal(L, "ImGuiKey_Tab");
     lua_pushnumber(L, ImGuiKey_LeftArrow);
@@ -504,6 +500,64 @@ namespace Gsage {
 
     sol::table imgui = lua["imgui"];
 
+    imgui["InputFloatN"] = [] (const std::string& label, sol::table t, int length, int decimal_precision, ImGuiInputTextFlags extra_flags) -> bool {
+      float values[length];
+      for(int i = 0; i < length; i++) {
+        values[i] = t[i + 1];
+      }
+
+      bool ret = false;
+
+      switch(length) {
+        case 2:
+          ret = ImGui::InputFloat2(label.c_str(), values, decimal_precision, extra_flags);
+          break;
+        case 3:
+          ret = ImGui::InputFloat3(label.c_str(), values, decimal_precision, extra_flags);
+          break;
+        case 4:
+          ret = ImGui::InputFloat4(label.c_str(), values, decimal_precision, extra_flags);
+          break;
+        default:
+          return false;
+      }
+
+      for(int i = 0; i < length; i++) {
+        t[i + 1] = values[i];
+      }
+
+      return ret;
+    };
+
+    imgui["DragFloatN"] = [] (const std::string& label, sol::table t, int length, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f) -> bool {
+      float values[length];
+      for(int i = 0; i < length; i++) {
+        values[i] = t[i + 1];
+      }
+
+      bool ret = false;
+
+      switch(length) {
+        case 2:
+          ret = ImGui::DragFloat2(label.c_str(), values, v_speed, v_min, v_max, display_format.c_str(), power);
+          break;
+        case 3:
+          ret = ImGui::DragFloat3(label.c_str(), values, v_speed, v_min, v_max, display_format.c_str(), power);
+          break;
+        case 4:
+          ret = ImGui::DragFloat4(label.c_str(), values, v_speed, v_min, v_max, display_format.c_str(), power);
+          break;
+        default:
+          return false;
+      }
+
+      for(int i = 0; i < length; i++) {
+        t[i + 1] = values[i];
+      }
+
+      return ret;
+    };
+
     imgui["TextBuffer"] = [] (int size) -> std::shared_ptr<ImguiTextBuffer> {
       return std::shared_ptr<ImguiTextBuffer>(new ImguiTextBuffer(size));
     };
@@ -513,10 +567,8 @@ namespace Gsage {
         "read", (std::string(ImguiTextBuffer::*)()const)&ImguiTextBuffer::read
     );
 
-    imgui["InputText"] = sol::overload(
-        InputText,
-        InputTextWithCallback
-    );
+    imgui["InputText"] = InputText;
+    imgui["InputTextWithCallback"] = InputTextWithCallback;
 
     imgui.new_usertype<ImGuiTextEditCallbackData>("ImGuiTextEditCallbackData",
         "eventFlag", &ImGuiTextEditCallbackData::EventFlag,

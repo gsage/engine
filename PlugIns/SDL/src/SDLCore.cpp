@@ -57,7 +57,7 @@ namespace Gsage {
     SDL_PumpEvents();
     while(SDL_PollEvent(&event) != 0) {
       if(event.type == SDL_QUIT) {
-        mFacade->halt();
+        mFacade->shutdown();
         return;
       }
 

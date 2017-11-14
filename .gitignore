@@ -14,9 +14,11 @@ docs/structlist.rst
 docs/latex
 docs/xml
 *.dumped
+resources/workspace.json
 resources/gameConfig.json
 resources/plugins.cfg
 resources/testConfig.json
+resources/editorConfig.json
 resources/luarocks
 resources/imgui.ini
 conanbuildinfo.cmake

@@ -132,6 +132,25 @@ enum PropertyFlag
 namespace Gsage
 {
 
+  /**
+   * Class Reflection Mixin
+   */
+  class Reflection
+  {
+    public:
+      /**
+       * Get all class props
+       */
+      virtual DataProxy getProps() = 0;
+
+      /**
+       * Set all class props
+       *
+       * @param props DataProxy
+       */
+      virtual bool setProps(const DataProxy& props) = 0;
+  };
+
   template<typename Type>
   inline bool get(const DataProxy& dict, const std::string& id, Type& dest)
   {
@@ -180,7 +199,7 @@ namespace Gsage
    * Class that has bindings for quick reading fields from DataProxy and writing it to it
    */
   template<typename C>
-  class Serializable
+  class Serializable : public Reflection
   {
     public:
       /**
@@ -367,6 +386,28 @@ namespace Gsage
           }
         }
         return allSucceed;
+      }
+
+      /**
+       * Get DataProxy with all properties
+       *
+       * @return DataProxy
+       */
+      virtual DataProxy getProps()
+      {
+        DataProxy dp;
+        dump(dp);
+        return dp;
+      }
+
+      /**
+       * Set object properties
+       *
+       * @param props DataProxy
+       */
+      virtual bool setProps(const DataProxy& props)
+      {
+        return read(props);
       }
 
       /**

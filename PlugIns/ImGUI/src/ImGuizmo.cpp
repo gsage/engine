@@ -648,17 +648,27 @@ namespace ImGuizmo
 	   gContext.mY = y;
 	   gContext.mWidth = width;
 	   gContext.mHeight = height;
+     gContext.mDrawList->PushClipRect(
+         ImVec2(gContext.mX, gContext.mY),
+         ImVec2(gContext.mWidth + gContext.mX, gContext.mHeight + gContext.mY),
+         false
+     );
    }
 
    void BeginFrame()
    {
       ImGuiIO& io = ImGui::GetIO();
 
-      ImGui::Begin("gizmo", NULL, io.DisplaySize, 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
+      ImGui::Begin("gizmo", NULL, io.DisplaySize, 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing);
 
   	  gContext.mDrawList = ImGui::GetWindowDrawList();
 
       ImGui::End();
+   }
+
+	 void EndFrame()
+   {
+     gContext.mDrawList->PopClipRect();
    }
 
    bool IsUsing()
