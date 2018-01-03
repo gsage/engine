@@ -1,4 +1,4 @@
-conan_basic_setup()
+conan_basic_setup(NO_OUTPUT_DIRS KEEP_RPATHS)
 set(CMAKE_SKIP_RPATH 0)
 
 # set up apple frameworks

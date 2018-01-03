@@ -169,9 +169,9 @@ namespace Gsage
       /**
        * Stops the engine
        */
-      void halt(int exitCode = 0);
+      void shutdown(int exitCode = 0);
       /**
-       * Get halt exit code
+       * Get shutdown exit code
        */
       int getExitCode() const;
       /**
@@ -301,7 +301,7 @@ namespace Gsage
        */
       bool handleWindowManagerEvent(EventDispatcher* sender, const Event& event);
     protected:
-      bool onEngineHalt(EventDispatcher* sender, const Event& event);
+      bool onEngineShutdown(EventDispatcher* sender, const Event& event);
 
       bool mStarted;
       bool mStartupScriptRun;

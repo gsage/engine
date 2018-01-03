@@ -734,22 +734,22 @@ END_IMGUI_FUNC
 // Unsupported arg type  const char** out_text)
 // Unsupported arg type  void* data
 //    IMGUI_API bool          ColorButton(const ImVec4& col, bool small_height = false, bool outline_border = true);
-IMGUI_FUNCTION(ColorButton)
+/*IMGUI_FUNCTION(ColorButton)
 IM_VEC_4_ARG(col)
 OPTIONAL_BOOL_ARG(small_height, false)
 OPTIONAL_BOOL_ARG(outline_border, true)
 CALL_FUNCTION(ColorButton, bool, col, small_height, outline_border)
 PUSH_BOOL(ret)
-END_IMGUI_FUNC
+END_IMGUI_FUNC*/
 //    IMGUI_API bool          ColorEdit3(const char* label, float col[3]);                            // Hint: 'float col[3]' function argument is same as 'float* col'. You can pass address of first element out of a contiguous set, e.g. &myvector.x
 // Unsupported arg type  float col[3]
 //    IMGUI_API bool          ColorEdit4(const char* label, float col[4], bool show_alpha = true);    // "
 // Unsupported arg type  float col[4]
 //    IMGUI_API void          ColorEditMode(ImGuiColorEditMode mode);                                 // FIXME-OBSOLETE: This is inconsistent with most of the API and will be obsoleted/replaced.
-IMGUI_FUNCTION(ColorEditMode)
-INT_ARG(mode)
-CALL_FUNCTION_NO_RET(ColorEditMode, mode)
-END_IMGUI_FUNC
+//IMGUI_FUNCTION(ColorEditMode)
+//INT_ARG(mode)
+//CALL_FUNCTION_NO_RET(ColorEditMode, mode)
+//END_IMGUI_FUNC
 //    IMGUI_API void          PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2 0 0, int stride = sizeof(float));
 // Unsupported arg type  const float* values
 // Unsupported arg type  ImVec2 graph_size = ImVec2 0 0
@@ -1095,18 +1095,6 @@ NUMBER_ARG(v)
 OPTIONAL_LABEL_ARG(float_format)
 CALL_FUNCTION_NO_RET(Value, prefix, v, float_format)
 END_IMGUI_FUNC
-//    IMGUI_API void          ValueColor(const char* prefix, const ImVec4& v);
-IMGUI_FUNCTION(ValueColor)
-LABEL_ARG(prefix)
-IM_VEC_4_ARG(v)
-CALL_FUNCTION_NO_RET(ValueColor, prefix, v)
-END_IMGUI_FUNC
-//    IMGUI_API void          ValueColor(const char* prefix, ImU32 v);
-IMGUI_FUNCTION(ValueColor_2)
-LABEL_ARG(prefix)
-UINT_ARG(v)
-CALL_FUNCTION_NO_RET(ValueColor, prefix, v)
-END_IMGUI_FUNC
 //    IMGUI_API void          SetTooltip(const char* fmt, ...);                  // set tooltip under mouse-cursor, typically use with ImGui::IsHovered(). last call wins
 // Variadic functions aren't suppported but here it is anyway
 IMGUI_FUNCTION(SetTooltip)
@@ -1209,12 +1197,12 @@ CALL_FUNCTION(BeginPopupContextItem, bool, str_id, mouse_button)
 IF_RET_ADD_END_STACK(9)
 PUSH_BOOL(ret)
 END_IMGUI_FUNC
-//    IMGUI_API bool          BeginPopupContextWindow(bool also_over_items = true, const char* str_id = NULL, int mouse_button = 1);  // helper to open and begin popup when clicked on current window.
+//    IMGUI_API bool          BeginPopupContextWindow(const char* str_id = NULL, int mouse_button = 1);  // helper to open and begin popup when clicked on current window.
 IMGUI_FUNCTION(BeginPopupContextWindow)
 OPTIONAL_BOOL_ARG(also_over_items, true)
 OPTIONAL_LABEL_ARG(str_id)
 OPTIONAL_INT_ARG(mouse_button, 1)
-CALL_FUNCTION(BeginPopupContextWindow, bool, also_over_items, str_id, mouse_button)
+CALL_FUNCTION(BeginPopupContextWindow, bool, str_id, mouse_button)
 IF_RET_ADD_END_STACK(9)
 PUSH_BOOL(ret)
 END_IMGUI_FUNC

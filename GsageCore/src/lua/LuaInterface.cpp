@@ -183,7 +183,7 @@ namespace Gsage {
 
     lua.new_usertype<GsageFacade>("Facade",
         "new", sol::no_constructor,
-        "halt", &GsageFacade::halt,
+        "shutdown", &GsageFacade::shutdown,
         "reset", &GsageFacade::reset,
         "loadSave", &GsageFacade::loadSave,
         "dumpSave", &GsageFacade::dumpSave,
@@ -197,6 +197,10 @@ namespace Gsage {
         "LOAD", sol::var(GsageFacade::LOAD)
     );
 
+    lua.new_usertype<Reflection>("Reflection",
+        "props", sol::property(&Reflection::getProps, &Reflection::setProps)
+    );
+
     // --------------------------------------------------------------------------------
     // Systems
 
@@ -206,7 +210,6 @@ namespace Gsage {
     );
 
     lua.new_usertype<LuaScriptSystem>("ScriptSystem",
-        sol::base_classes, sol::bases<EngineSystem>(),
         "addUpdateListener", &LuaScriptSystem::addUpdateListener,
         "removeUpdateListener", &LuaScriptSystem::removeUpdateListener
     );
@@ -215,7 +218,7 @@ namespace Gsage {
     // Components
 
     lua.new_usertype<StatsComponent>("StatsComponent",
-        sol::base_classes, sol::bases<EventDispatcher>(),
+        sol::base_classes, sol::bases<EventDispatcher, Reflection>(),
         "hasStat", &StatsComponent::hasStat,
         "getBool", sol::overload(
           (const bool(StatsComponent::*)(const std::string&))&StatsComponent::getStat<bool>,
@@ -239,6 +242,7 @@ namespace Gsage {
     );
 
     lua.new_usertype<ScriptComponent>("ScriptComponent",
+        sol::base_classes, sol::bases<Reflection>(),
         "state", sol::property(&ScriptComponent::getData)
     );
 
@@ -274,6 +278,7 @@ namespace Gsage {
       }
       return res;
     };
+    lua["Engine"]["getEntities"] = &Engine::getEntities;
 
     lua.new_usertype<GameDataManager>("DataManager",
         "createEntity", sol::overload(
@@ -358,6 +363,13 @@ namespace Gsage {
         "id", sol::readonly(&EntityEvent::mEntityId),
         "CREATE", sol::var(EntityEvent::CREATE),
         "DELETE", sol::var(EntityEvent::DELETE)
+    );
+
+    registerEvent<EngineEvent>("EngineEvent",
+        "onEngine",
+        sol::base_classes, sol::bases<Event>(),
+        "STOPPING", sol::var(EngineEvent::STOPPING),
+        "SHUTDOWN", sol::var(EngineEvent::SHUTDOWN)
     );
 
     lua.create_table("Keys");
@@ -523,6 +535,8 @@ namespace Gsage {
         "relZ", sol::readonly(&MouseEvent::relativeZ),
         "width", sol::readonly(&MouseEvent::width),
         "height", sol::readonly(&MouseEvent::height),
+        "dispatcher", sol::readonly(&MouseEvent::dispatcher),
+
         "MOUSE_DOWN", sol::var(MouseEvent::MOUSE_DOWN),
         "MOUSE_UP", sol::var(MouseEvent::MOUSE_UP),
         "MOUSE_MOVE", sol::var(MouseEvent::MOUSE_MOVE)

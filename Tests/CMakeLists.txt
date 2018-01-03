@@ -5,6 +5,7 @@ set(TEST_DEPENDENCIES
   GsageCore
   gtest
   jsoncpp
+  ImGUI
   ${LUAJIT_LIBRARIES}
 )
 
@@ -14,6 +15,8 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/googletest/googletest/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
+  ${gsage_SOURCE_DIR}/Vendor/imgui
+  ${gsage_SOURCE_DIR}/PlugIns/ImGUI/include
 
   ${LUAJIT_INCLUDE_DIR}
 )
@@ -28,6 +31,7 @@ set(TEST_FILES
   Core/TestDictionary.cpp
   Core/TestGsageFacade.cpp
   Core/TestFileLoader.cpp
+  Plugins/ImGUI/TestDockspace.cpp
 )
 
 if(APPLE)

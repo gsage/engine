@@ -33,42 +33,41 @@ THE SOFTWARE.
 namespace Gsage {
 
   RocketOgreWrapper::RocketOgreWrapper(Engine* engine)
-    : mEngine(engine)
+    : RenderSystemWrapper(engine)
     , mRenderInterface(0)
     , mSystemInterface(0)
   {
-    addEventListener(engine, RenderEvent::UPDATE_UI, &RocketOgreWrapper::render);
+    addEventListener(engine, RenderEvent::RENDER_QUEUE_STARTED, &RocketOgreWrapper::render);
     OgreRenderSystem* render = engine->getSystem<OgreRenderSystem>();
-
-    if(render)
-    {
-      setUp(render->getWidth(), render->getHeight());
-    }
   }
 
   RocketOgreWrapper::~RocketOgreWrapper()
   {
-    if(mContext)
-      mContext->RemoveReference();
-    Rocket::Core::Shutdown();
-
-    if(mRenderInterface)
-      delete mRenderInterface;
-
-    if(mSystemInterface)
-      delete mSystemInterface;
   }
 
   bool RocketOgreWrapper::render(EventDispatcher* sender, const Event& event)
   {
     RenderEvent e = static_cast<const RenderEvent&>(event);
-    if(!mRenderInterface || !mSystemInterface)
-      setUp(e.getRenderSystem()->getWidth(),
-            e.getRenderSystem()->getHeight());
+    if(e.queueID != Ogre::RENDER_QUEUE_OVERLAY) {
+      return true;
+    }
 
-    mContext->Update();
+    Rocket::Core::Context* ctx;
+
+    // init context for the render target
+    if(mContexts.count(e.renderTarget->getName()) == 0) {
+      ctx = createContext(e.renderTarget->getName(),
+          e.renderTarget->getWidth(),
+          e.renderTarget->getHeight());
+    } else {
+      ctx = getContext(e.renderTarget->getName());
+    }
+
+    ctx->SetDimensions(Rocket::Core::Vector2i(e.renderTarget->getWidth(), e.renderTarget->getHeight()));
+
+    ctx->Update();
     configureRenderSystem(e);
-    mContext->Render();
+    ctx->Render();
     return true;
   }
 
@@ -85,9 +84,9 @@ namespace Gsage {
     projectionMatrix = Ogre::Matrix4::ZERO;
 
     // Set up matrices.
-    projectionMatrix[0][0] = 2.0f / gsageRendering->getWidth();
+    projectionMatrix[0][0] = 2.0f / event.renderTarget->getWidth();
     projectionMatrix[0][3]= -1.0000000f;
-    projectionMatrix[1][1]= -2.0f / gsageRendering->getHeight();
+    projectionMatrix[1][1]= -2.0f / event.renderTarget->getHeight();
     projectionMatrix[1][3]= 1.0000000f;
     projectionMatrix[2][2]= -2.0f / (zFar - zNear);
     projectionMatrix[3][3]= 1.0000000f;
@@ -136,17 +135,23 @@ namespace Gsage {
     renderSystem->_setDepthBias(0, 0);
   }
 
-  void RocketOgreWrapper::setUp(unsigned int width, unsigned int height)
+  void RocketOgreWrapper::setUpInterfaces(unsigned int width, unsigned int height)
   {
     mRenderInterface = new RenderInterfaceOgre3D(width, height);
     mSystemInterface = new SystemInterfaceOgre3D();
 
     Rocket::Core::SetRenderInterface(mRenderInterface);
     Rocket::Core::SetSystemInterface(mSystemInterface);
-
-    Rocket::Core::Initialise();
-    Rocket::Controls::Initialise();
-    mContext = Rocket::Core::CreateContext("main", Rocket::Core::Vector2i(width, height));
   }
 
+  void RocketOgreWrapper::destroy()
+  {
+    RenderSystemWrapper::destroy();
+
+    if(mRenderInterface)
+      delete mRenderInterface;
+
+    if(mSystemInterface)
+      delete mSystemInterface;
+  }
 }

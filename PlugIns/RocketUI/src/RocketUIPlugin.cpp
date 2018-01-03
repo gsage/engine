@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #include "RocketUIPlugin.h"
 #include "GsageFacade.h"
+#include "RocketEvent.h"
+#include "lua/LuaHelpers.h"
 
 namespace Gsage {
 
@@ -54,6 +56,16 @@ namespace Gsage {
   void RocketUIPlugin::uninstallImpl()
   {
     mFacade->removeUIManager(mUIManagerHandle);
+  }
+
+  void RocketUIPlugin::setupLuaBindings()
+  {
+    mLuaInterface->registerEvent<RocketContextEvent>("RocketContextEvent",
+      "onRocketContext",
+      sol::base_classes, sol::bases<Event>(),
+      "CREATE", sol::var(RocketContextEvent::CREATE),
+      "name", sol::readonly(&RocketContextEvent::name)
+    );
   }
 }
 

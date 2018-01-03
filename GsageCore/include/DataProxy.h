@@ -486,6 +486,10 @@ namespace Gsage {
           wrapper = mDataWrapper;
         }
 
+        if(wrapper->getStoredType() != DataWrapper::Object) {
+          return false;
+        }
+
         if(!wrapper) {
           return false;
         }
@@ -503,6 +507,9 @@ namespace Gsage {
       template<typename T>
       bool read(const int& key, T& dest) const
       {
+        if(mDataWrapper->getStoredType() != DataWrapper::Array) {
+          return false;
+        }
         return readImpl(mDataWrapper, key, dest);
       }
 

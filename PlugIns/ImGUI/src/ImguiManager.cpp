@@ -28,6 +28,7 @@ THE SOFTWARE.
 
 #ifdef OGRE_INTERFACE
 #include "ogre/ImguiOgreWrapper.h"
+#include "ogre/OgreView.h"
 #include "ogre/Gizmo.h"
 #endif
 
@@ -37,10 +38,11 @@ THE SOFTWARE.
 #include "Engine.h"
 #include "EngineSystem.h"
 #include "EngineEvent.h"
+#include "ImGuiDockspaceState.h"
 
 namespace Gsage {
 
-  void ImguiRenderer::addView(const std::string& name, sol::object view)
+  bool ImguiRenderer::addView(const std::string& name, sol::object view, bool docked)
   {
     sol::protected_function callback;
     sol::table t = view.as<sol::table>();
@@ -49,29 +51,83 @@ namespace Gsage {
 
     if (call) {
       render = [t, call] () -> sol::protected_function_result { return call.value()(t); };
+      docked = t.get_or("docked", docked);
     } else if(view.is<sol::protected_function>()) {
       callback = view.as<sol::protected_function>();
       render = [callback] () -> sol::protected_function_result { return callback(); };
     } else {
       LOG(ERROR) << "Failed to add lua object as lua view " << name << ": must be either callable or function";
-      return;
-    }
-
-    mViews[name] = render;
-  }
-
-  bool ImguiRenderer::removeView(const std::string& name)
-  {
-    if(mViews.count(name) == 0) {
       return false;
     }
 
-    mViews.erase(name);
+    if(docked){
+      mDockedViews[name] = render;
+    } else {
+      mViews[name] = render;
+    }
+
+    return true;
+  }
+
+  bool ImguiRenderer::removeView(const std::string& name, sol::object view)
+  {
+    bool docked = false;
+    auto views = &mViews;
+    if(view != sol::lua_nil) {
+      sol::table t = view.as<sol::table>();
+      if(t.get_or("docked", docked)) {
+        views = &mDockedViews;
+      }
+    }
+
+    if(views->count(name) == 0) {
+      return false;
+    }
+
+    views->erase(name);
     return true;
   }
 
   void ImguiRenderer::renderViews()
   {
+    ImGuiIO& io = ImGui::GetIO();
+    if(mDockedViews.size() > 0) {
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetColorU32(ImGuiCol_Border));
+      ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+      ImVec2 size = io.DisplaySize;
+
+      ImGui::SetNextWindowSize(size);
+      ImGui::SetNextWindowPos(ImVec2(0, 0));
+      ImGui::Begin(
+          "###dockspace",
+          NULL,
+          ImGuiWindowFlags_NoTitleBar |
+          ImGuiWindowFlags_NoResize |
+          ImGuiWindowFlags_NoMove |
+          ImGuiWindowFlags_NoScrollbar |
+          ImGuiWindowFlags_NoScrollWithMouse |
+          ImGuiWindowFlags_NoBringToFrontOnFocus |
+          ImGuiWindowFlags_NoSavedSettings
+      );
+      ImGui::PopStyleVar();
+      mDockspace.beginWorkspace(ImVec2(5, 35), size - ImVec2(10, 40));
+      ImGui::PopStyleColor(2);
+      for(auto pair : mDockedViews) {
+        try {
+          auto res = pair.second();
+          if(!res.valid()) {
+            sol::error e = res;
+            LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
+          }
+        } catch(sol::error e) {
+          LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
+        }
+      }
+      mDockspace.endWorkspace();
+      ImGui::End();
+    }
+
     for(auto pair : mViews) {
       try {
         auto res = pair.second();
@@ -83,6 +139,11 @@ namespace Gsage {
         LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
       }
     }
+  }
+
+  void ImguiRenderer::setMousePosition(const std::string& name, ImVec2 position)
+  {
+    mMousePositions[name] = position;
   }
 
   ImguiManager::ImguiManager()
@@ -131,6 +192,65 @@ namespace Gsage {
   {
     if(mIsSetUp)
       return;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowTitleAlign = ImVec2(0.5f,0.5f);
+
+    style.Colors[ImGuiCol_Text]                  = ImVec4(0.73f, 0.73f, 0.73f, 1.00f);
+    style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+    style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.26f, 0.26f, 0.26f, 0.95f);
+    style.Colors[ImGuiCol_ChildWindowBg]         = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
+    style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
+    style.Colors[ImGuiCol_Border]                = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
+    style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
+    style.Colors[ImGuiCol_FrameBg]               = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+    style.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+    style.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+    style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.21f, 0.21f, 0.21f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    //style.Colors[ImGuiCol_ComboBg]               = ImVec4(0.32f, 0.32f, 0.32f, 1.00f);
+    style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
+    style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
+    style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
+    style.Colors[ImGuiCol_Button]                = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.43f, 0.43f, 0.43f, 0.90f);
+    style.Colors[ImGuiCol_ButtonActive]          = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
+    style.Colors[ImGuiCol_Header]                = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_HeaderActive]          = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_Column]                = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+    style.Colors[ImGuiCol_ColumnHovered]         = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    style.Colors[ImGuiCol_ColumnActive]          = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    style.Colors[ImGuiCol_ResizeGrip]            = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    style.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    style.Colors[ImGuiCol_CloseButton]           = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
+    style.Colors[ImGuiCol_CloseButtonHovered]    = ImVec4(0.98f, 0.39f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_CloseButtonActive]     = ImVec4(0.98f, 0.39f, 0.36f, 1.00f);
+    style.Colors[ImGuiCol_PlotLines]             = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+    style.Colors[ImGuiCol_PlotLinesHovered]      = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+    style.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+    style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+    style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.32f, 0.52f, 0.65f, 1.00f);
+    style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
+    style.WindowPadding            = ImVec2(15, 15);
+    style.WindowRounding           = 5.0f;
+    style.ChildRounding            = 5.0f;
+    style.FramePadding             = ImVec2(5, 5);
+    style.FrameRounding            = 4.0f;
+    style.ItemSpacing              = ImVec2(12, 8);
+    style.ItemInnerSpacing         = ImVec2(8, 6);
+    style.IndentSpacing            = 25.0f;
+    style.ScrollbarSize            = 15.0f;
+    style.ScrollbarRounding        = 10.0f;
+    style.GrabMinSize              = 20.0f;
+    style.GrabRounding             = 3.0f;
 
     EngineSystem* render = mEngine->getSystem("render");
     if(render == 0) {
@@ -199,7 +319,48 @@ namespace Gsage {
     mLuaState = L;
     sol::state_view lua(L);
     lua["imgui"]["render"] = mRenderer;
+    lua["imgui"]["dockspace"] = mRenderer->mDockspace;
+
+    lua["imgui"]["BeginDock"] = [this](std::string label, int flags) -> bool {
+      return mRenderer->mDockspace.begin(label.c_str(), NULL, flags);
+    };
+
+    lua["imgui"]["BeginDockOpen"] = [this](std::string label, bool opened, int flags) -> std::tuple<bool, bool> {
+      bool active = mRenderer->mDockspace.begin(label.c_str(), &opened, flags);
+      return std::make_tuple(active, opened);
+    };
+
+    lua["imgui"]["EndDock"] = [this]() {
+      return mRenderer->mDockspace.end();
+    };
+
+    lua["imgui"]["GetDockState"] = [this] () -> sol::table {
+      DataProxy p = dumpState(mRenderer->mDockspace.getState());
+      sol::state_view lua(mLuaState);
+      sol::table t = lua.create_table();
+      p.dump(t);
+      return t;
+    };
+
+    lua["imgui"]["SetDockState"] = [this] (sol::table t) {
+      DataProxy dp = DataProxy::wrap(t);
+      ImGuiDockspaceState state = loadState(dp);
+      mRenderer->mDockspace.setState(state);
+    };
+
 #ifdef OGRE_INTERFACE
+    lua["imgui"]["createOgreView"] = [this] () -> std::shared_ptr<OgreView>{
+      OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
+      if(render == 0) {
+        return std::shared_ptr<OgreView>(nullptr);
+      }
+      return std::shared_ptr<OgreView>(new OgreView(render));
+    };
+    lua.new_usertype<OgreView>("OgreView",
+        "setTextureID", &OgreView::setTextureID,
+        "render", &OgreView::render
+    );
+
     lua["imgui"]["createGizmo"] = [this] () -> std::shared_ptr<Gizmo>{
       OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
       if(render == 0) {
@@ -212,7 +373,8 @@ namespace Gsage {
         "enable", &Gizmo::enable,
         "render", &Gizmo::render,
         "operation", sol::property(&Gizmo::getOperation, &Gizmo::setOperation),
-        "mode", sol::property(&Gizmo::getMode, &Gizmo::setMode)
+        "mode", sol::property(&Gizmo::getMode, &Gizmo::setMode),
+        "drawCoordinatesEditor", &Gizmo::drawCoordinatesEditor
     );
 #endif
   }
@@ -223,10 +385,8 @@ namespace Gsage {
       return true;
 
     const MouseEvent& e = static_cast<const MouseEvent&>(event);
-
+    mRenderer->setMousePosition(e.dispatcher, ImVec2(e.mouseX, e.mouseY));
     ImGuiIO& io = ImGui::GetIO();
-    io.MousePos.x = e.mouseX;
-    io.MousePos.y = e.mouseY;
     io.MouseWheel += e.relativeZ / 100;
 
     io.MouseDown[e.button] = e.getType() == MouseEvent::MOUSE_DOWN;
@@ -272,6 +432,6 @@ namespace Gsage {
 
   bool ImguiManager::doCapture()
   {
-    return ImGui::IsMouseHoveringAnyWindow();
+    return ImGui::GetIO().WantCaptureMouse;
   }
 }

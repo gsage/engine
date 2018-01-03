@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2017 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,46 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "DataProxy.h"
+
+struct lua_State;
+
 namespace Gsage {
   class Editor
   {
     public:
       Editor();
       virtual ~Editor();
+
+      /**
+       * Start editor
+       *
+       * @param resourceFolder path
+       */
+      bool initialize(const std::string& resourceFolder);
+
+      /**
+       * Get global editor state (readonly)
+       */
+      const DataProxy& getGlobalState() const;
+
+      /**
+       * Set global editor state variable
+       *
+       * @param name variable name
+       * @param data payload
+       */
+      void putToGlobalState(const std::string& name, DataProxy data);
+
+      /**
+       * Dump global state to the file
+       *
+       * @returns true if succeed
+       */
+      bool saveGlobalState();
+    private:
+      DataProxy mGlobalEditorState;
+      std::string mResourcePath;
   };
 }
 

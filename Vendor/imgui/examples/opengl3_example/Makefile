@@ -1,12 +1,13 @@
 #
 # Cross Platform Makefile
-# Compatible with Ubuntu 14.04.1 and Mac OS X
+# Compatible with MSYS2/MINGW, Ubuntu 14.04.1 and Mac OS X
 #
 #
 # You will need GLFW (http://www.glfw.org)
 #
 #   apt-get install libglfw-dev  # Linux
 #   brew install glfw            # Mac OS X
+#   pacman -S --noconfirm --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-glfw # MSYS2
 #
 
 #CXX = g++
@@ -31,16 +32,15 @@ endif
 ifeq ($(UNAME_S), Darwin) #APPLE
 	ECHO_MESSAGE = "Mac OS X"
 	LIBS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
-	LIBS += -L/usr/local/lib -lglfw3
-	#LIBS += -L/usr/local/lib -lglfw
+	#LIBS += -L/usr/local/lib -lglfw3
+	LIBS += -L/usr/local/lib -lglfw
 
 	CXXFLAGS = -I../../ -I../libs/gl3w -I/usr/local/include
 	CXXFLAGS += -Wall -Wformat
-#	CXXFLAGS += -D__APPLE__
 	CFLAGS = $(CXXFLAGS)
 endif
 
-ifeq ($(UNAME_S), MINGW64_NT-6.3)
+ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
    ECHO_MESSAGE = "Windows"
    LIBS = -lglfw3 -lgdi32 -lopengl32 -limm32
 

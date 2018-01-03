@@ -231,4 +231,35 @@ namespace Gsage {
   {
     return std::to_string(value);
   }
+
+  // -----------------------------------------------------------------------------
+
+  bool RenderTargetTypeCaster::to(const RenderTargetTypeCaster::FromType& src, RenderTargetTypeCaster::Type& dst) const
+  {
+    if(src.empty())
+      return false;
+
+    if(src == "rtt") {
+      dst = RenderTarget::Rtt;
+    } else if(src == "window") {
+      dst = RenderTarget::Window;
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  const RenderTargetTypeCaster::FromType RenderTargetTypeCaster::from(const RenderTargetTypeCaster::Type& value) const
+  {
+    switch(value) {
+      case RenderTarget::Rtt:
+        return "rtt";
+      case RenderTarget::Window:
+        return "window";
+      default:
+        return "";
+    }
+    return "";
+  }
+
 }

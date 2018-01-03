@@ -31,7 +31,9 @@ namespace Gsage {
 
   const Event::Type EngineEvent::LUA_STATE_CHANGE = "luaStateChange";
 
-  const Event::Type EngineEvent::HALT = "halt";
+  const Event::Type EngineEvent::SHUTDOWN = "shutdown";
+
+  const Event::Type EngineEvent::STOPPING = "stopping";
 
   const Event::Type EntityEvent::CREATE = "entityCreated";
 

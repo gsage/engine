@@ -12,47 +12,63 @@ require 'factories.camera'
 require 'factories.emitters'
 
 if imgui then
-  require 'imgui.gizmo'
   require 'imgui.console'
   require 'imgui.stats'
+  require 'imgui.ogreView'
 end
 
 local event = require 'lib.event'
 local eal = require 'lib.eal.manager'
 local async = require "lib.async"
 
-function context()
-  return rocket.contexts["main"]
+local rocketInitialized = false
+
+function onRoll(e)
+  if e.type == OgreSelectEvent.ROLL_OVER then
+    local target = eal:getEntity(e.entity)
+    if e:hasFlags(OgreSceneNode.DYNAMIC) then
+      cursor:GetElementById("cursorIcon"):SetClass("attack", actions.attackable(player, target))
+    end
+  else
+    cursor:GetElementById("cursorIcon"):SetClass("attack", false)
+  end
 end
 
-function startup()
-  if rocket == nil then
-    return
+function initLibrocket(e)
+  local ctx = rocket.contexts[e.name]
+  if not rocketInitialized then
+    local fonts =
+    {
+      "Delicious-Roman.otf",
+      "Delicious-BoldItalic.otf",
+      "Delicious-Bold.otf",
+      "Delicious-Italic.otf",
+      "lucida.ttf"
+    }
+    for _, font in pairs(fonts) do
+      resource.loadFont(font)
+    end
   end
 
-  local fonts =
-  {
-    "Delicious-Roman.otf",
-    "Delicious-BoldItalic.otf",
-    "Delicious-Bold.otf",
-    "Delicious-Italic.otf",
-    "lucida.ttf"
-  }
-  for _, font in pairs(fonts) do
-    resource.loadFont(font)
-  end
+  main = resource.loadDocument(ctx, "minimal.rml")
+  console = resource.loadDocument(ctx, "console_document.rml")
+  healthbar = resource.loadDocument(ctx, "healthbar.rml")
 
-  main = resource.loadDocument(context(), "minimal.rml")
-  console = resource.loadDocument(context(), "console_document.rml")
-  healthbar = resource.loadDocument(context(), "healthbar.rml")
-
-  cursor = resource.loadCursor(context(), "cursor.rml")
+  cursor = resource.loadCursor(ctx, "cursor.rml")
 
   main:Show()
   healthbar:Show()
   main:AddEventListener('keydown', onKeyEvent, true)
 
   console:AddEventListener('keydown', onKeyEvent, true)
+
+  event:onOgreSelect(core, SelectEvent.ROLL_OVER, onRoll)
+  event:onOgreSelect(core, SelectEvent.ROLL_OUT, onRoll)
+end
+
+-- librocket initialization
+if event.onRocketContext ~= nil then
+  event:onRocketContext(core, RocketContextEvent.CREATE, initLibrocket)
 end
 
 function setOrbitalCam(id, cameraID)
@@ -70,10 +86,6 @@ function spawn()
 end
 
 function onKeyEvent(event)
-  if context() == nil then
-    return
-  end
-
   if event.parameters['key_identifier'] == rocket.key_identifier.F9 then
     if console_visible then
       console:Hide()
@@ -105,7 +117,7 @@ function onSelect(e)
   local target = eal:getEntity(e.entity)
 
   if selectTransform then
-    gizmo:setTarget(target)
+    ogreView:setGizmoTarget(target)
     return
   end
 
@@ -122,17 +134,6 @@ function onSelect(e)
   end
 end
 
-function onRoll(e)
-  if e.type == OgreSelectEvent.ROLL_OVER then
-    local target = eal:getEntity(e.entity)
-    if e:hasFlags(OgreSceneNode.DYNAMIC) then
-      cursor:GetElementById("cursorIcon"):SetClass("attack", actions.attackable(player, target))
-    end
-  else
-    cursor:GetElementById("cursorIcon"):SetClass("attack", false)
-  end
-end
-
 local initialized = false
 
 function onReady(e)
@@ -144,27 +145,19 @@ function onReady(e)
   player = eal:getEntity("sinbad")
   core:movement():setControlledEntity(player.id)
 
-  event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
-  if rocket ~= nil then
-    event:onOgreSelect(core, SelectEvent.ROLL_OVER, onRoll)
-    event:onOgreSelect(core, SelectEvent.ROLL_OUT, onRoll)
-  end
-
   spawn()
   spawnMore(10)
 end
 
+event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
 event:bind(core, Facade.LOAD, onReady)
 console_visible = false
-startup()
 game:loadSave('gameStart')
 
 if imgui then
-  gizmo = Gizmo()
-  imguiConsole = Console()
+  imguiConsole = Console(256)
   imguiConsole:setOpen(true)
-  imgui.render:addView("gizmo", gizmo)
   imgui.render:addView("console", imguiConsole)
-  stats = Stats()
+  stats = Stats("stats", false)
   imgui.render:addView("stats", stats)
 end

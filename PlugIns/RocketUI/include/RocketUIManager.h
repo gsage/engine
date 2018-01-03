@@ -45,17 +45,50 @@ namespace Gsage {
 
   class RenderSystemWrapper {
     public:
-      virtual ~RenderSystemWrapper() {};
+      typedef std::map<std::string, Rocket::Core::Context*> Contexts;
+
+      RenderSystemWrapper(Engine* engine) : mInitialized(false), mEngine(engine) {}
+
+      virtual ~RenderSystemWrapper();
+
       /**
-    addEventListener(engine, WindowEvent::RESIZE, &RocketUIManager::handleSystemChange);
        * Get context
+       *
+       * @param name Context name
        *
        * @returns rocket context
        */
-      virtual Rocket::Core::Context* getContext() {return mContext;}
+      virtual Rocket::Core::Context* getContext(const std::string& name);
 
+      /**
+       * Get all contexts
+       */
+      virtual Contexts getContexts();
+
+      /**
+       * Set lua state
+       */
+      virtual void setLuaState(lua_State* L);
+
+      /**
+       * Destroy render system wrapper
+       */
+      virtual void destroy();
     protected:
-      Rocket::Core::Context* mContext;
+      /**
+       * Create context
+       */
+      virtual Rocket::Core::Context* createContext(const std::string& name, unsigned int width, unsigned int height);
+
+      /**
+       * Set up interfaces
+       */
+      virtual void setUpInterfaces(unsigned int width, unsigned int height) = 0;
+
+      Contexts mContexts;
+      Engine* mEngine;
+      lua_State* mLuaState;
+      bool mInitialized;
   };
 
   class RocketUIManager : public UIManager, public EventSubscriber<RocketUIManager>
@@ -105,10 +138,6 @@ namespace Gsage {
        * Handle keyboard event from engine
        */
       bool handleInputEvent(EventDispatcher* sender, const Event& event);
-      /*
-       * Handle window resize event from the engine
-       */
-      bool handleWindowResize(EventDispatcher* sender, const Event& event);
       /**
        * Get key modifier state
        */
@@ -120,7 +149,7 @@ namespace Gsage {
       /**
        * Check if mouse event can be captured by any rocket element
        */
-      bool doCapture();
+      bool doCapture(Rocket::Core::Context* ctx);
 
       RenderSystemWrapper* mRenderSystemWrapper;
 

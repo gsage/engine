@@ -138,7 +138,7 @@ namespace Gsage {
       mergeInto(mConfig, *configOverride);
     }
 
-    addEventListener(&mEngine, EngineEvent::HALT, &GsageFacade::onEngineHalt);
+    addEventListener(&mEngine, EngineEvent::SHUTDOWN, &GsageFacade::onEngineShutdown);
 
     auto inputHandler = mConfig.get<std::string>("inputHandler");
     if(inputHandler.second) {
@@ -291,8 +291,9 @@ namespace Gsage {
     return mExitCode;
   }
 
-  void GsageFacade::halt(int exitCode)
+  void GsageFacade::shutdown(int exitCode)
   {
+    mEngine.fireEvent(EngineEvent(EngineEvent::STOPPING));
     mExitCode = exitCode;
     mStopped = true;
   }
@@ -356,9 +357,9 @@ namespace Gsage {
     return mWindowManagerFactory.removeWindowManager(id);
   }
 
-  bool GsageFacade::onEngineHalt(EventDispatcher* sender, const Event& event)
+  bool GsageFacade::onEngineShutdown(EventDispatcher* sender, const Event& event)
   {
-    halt();
+    shutdown();
     return true;
   }
 

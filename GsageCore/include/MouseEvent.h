@@ -46,7 +46,8 @@ namespace Gsage
       MouseEvent(Event::ConstType type,
                  const float& width,
                  const float& height,
-                 const ButtonType& button = None);
+                 const ButtonType& button = None,
+                 const std::string& dispatcher = "main");
       virtual ~MouseEvent();
 
       ButtonType button;
@@ -63,6 +64,8 @@ namespace Gsage
 
       float width;
       float height;
+
+      std::string dispatcher;
   };
 }
 

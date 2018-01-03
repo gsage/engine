@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include "Logger.h"
 
+INITIALIZE_EASYLOGGINGPP
+
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #include "CoreFoundation/CoreFoundation.h"
 #endif

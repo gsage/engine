@@ -25,6 +25,7 @@
   THE SOFTWARE.
  ******************************************************************************************/
 #include "CollisionTools.h"
+#include "Logger.h"
 
 namespace MOC {
 
@@ -73,16 +74,16 @@ namespace MOC {
       delete mTSMRaySceneQuery;
   }
 
-  bool CollisionTools::raycastFromCamera(Ogre::RenderWindow* rw, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask)
+  bool CollisionTools::raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask)
   {
-    return raycastFromCamera(rw, camera, mousecoords, result, (Ogre::MovableObject*&) target, closest_distance, queryMask);
+    return raycastFromCamera(width, height, camera, mousecoords, result, (Ogre::MovableObject*&) target, closest_distance, queryMask);
   }
 
-  bool CollisionTools::raycastFromCamera(Ogre::RenderWindow* rw, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::MovableObject* &target,float &closest_distance, const Ogre::uint32 queryMask)
+  bool CollisionTools::raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::MovableObject* &target,float &closest_distance, const Ogre::uint32 queryMask)
   {
     // Create the ray to test
-    Ogre::Real tx = mousecoords.x / (Ogre::Real) rw->getWidth();
-    Ogre::Real ty = mousecoords.y / (Ogre::Real) rw->getHeight();
+    Ogre::Real tx = mousecoords.x / (Ogre::Real) width;
+    Ogre::Real ty = mousecoords.y / (Ogre::Real) height;
     Ogre::Ray ray = camera->getCameraToViewportRay(tx, ty);
 
     return raycast(ray, result, target, closest_distance, queryMask);

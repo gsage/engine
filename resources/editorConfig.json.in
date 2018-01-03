@@ -10,10 +10,6 @@
     "templatesFolder": "../Resources/editor/projectTemplates"
   },
 
-  "systems": [
-    "lua"
-  ],
-
   "dataManager":
   {
     "extension": "json",
@@ -26,6 +22,7 @@
   "startupScript": "scripts/entrypoints/editor.lua",
   "inputHandler": "SDL",
   "systems": [
+    "ogre", "recast", "dynamicStats", "lua"
   ],
   "packager": {
     "deps": [
@@ -33,20 +30,73 @@
     ]
   },
 
-  "windowManager": {
-    "type": "SDL",
-    "windows": {
-      "Coming Soon!": {
-        "width": 1024,
-        "height": 768
+  "imgui": {
+    "fonts": {
+      "default": {
+        "file": "fonts/OpenSans-Regular.ttf",
+        "oversampleH": 3,
+        "oversampleV": 3,
+        "size": 20
       }
     }
+  },
+
+  "windowManager": {
+    "type": "SDL"
   },
 
   "plugins":
   [
     "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/ImGUI",
+    "@PLUGINS_DIRECTORY@/RocketUI",
     "@PLUGINS_DIRECTORY@/SDL"
-  ]
+  ],
+
+  "render":
+  {
+    "pluginsFile": "plugins.cfg",
+    "configFile": "ogreConfig.cfg",
+    "plugins": [
+      "RenderSystem_GL",
+      "OctreeSceneManager",
+      "ParticleFX"
+    ],
+    "globalResources":
+    {
+      "General":
+      [
+        "FileSystem:materials/",
+        "FileSystem:programs/",
+        "FileSystem:particles/PU",
+        "FileSystem:particles/Ogre"
+      ],
+      "Rocket":
+      [
+        "FileSystem:fonts/",
+        "FileSystem:ui/"
+      ]
+    },
+
+    "window":
+    {
+      "viewport": {
+        "renderQueueSequence": [{"id": 101, "suppressShadows": true}]
+      },
+      "name": "Editor",
+      "width": 1920,
+      "height": 1200,
+      "useWindowManager": true,
+      "resizable": true,
+      "params":
+      {
+        "FSAA": 0,
+        "displayFrequency": 50,
+        "vsync": false
+      },
+      "defaultCamera": {
+        "name": "main"
+      }
+    }
+  }
 }

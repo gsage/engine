@@ -1,8 +1,10 @@
 require 'lib.class'
 local time = require 'lib.time'
+require 'imgui.base'
 
 -- imgui engine stats view
-Stats = class(function(self)
+Stats = class(ImguiWindow, function(self, title, docked, open)
+  ImguiWindow.init(self, title, docked, open)
   self.fps = 0
   self.frames = 0
   self.elapsedTime = 0
@@ -25,8 +27,9 @@ end)
 
 -- render stats
 function Stats:__call()
-  imgui.Begin("Stats", true, ImGuiWindowFlags_NoResize + ImGuiWindowFlags_NoTitleBar)
-  imgui.Text("FPS:" .. self.fps)
-  imgui.Text("CPU:" .. math.floor(self.stats.lastCPU * 100))
-  imgui.End()
+  if self:imguiBegin() then
+    imgui.Text("FPS:" .. self.fps)
+    imgui.Text("CPU:" .. math.floor(self.stats.lastCPU * 100))
+    self:imguiEnd()
+  end
 end

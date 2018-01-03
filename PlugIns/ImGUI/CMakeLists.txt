@@ -2,6 +2,7 @@ set(LIB_NAME "ImGUI")
 
 include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
+  ${gsage_SOURCE_DIR}/Vendor/sole
 )
 
 set(LIBS

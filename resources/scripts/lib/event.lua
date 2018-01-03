@@ -19,6 +19,10 @@ end)
 -- @param type event type
 -- @param callback event listener
 function EventProxy:bind(target, type, callback, global, handlerName)
+  if not callback then
+    return
+  end
+
   local id = self.connection[handlerName or "bind"](self.connection, target, type)
   self:traverseSet(target, type, callback, id)
   self.handlers[id] = callback

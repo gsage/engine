@@ -28,6 +28,7 @@ THE SOFTWARE.
 */
 
 #include "ImGuizmo.h"
+#include <string>
 
 namespace Ogre {
   class Matrix4;
@@ -46,7 +47,7 @@ namespace Gsage {
       /**
        * Render gizmo UI
        */
-      void render();
+      void render(float x, float y, const std::string& rttName);
 
       /**
        * Enable/disable gizmo
@@ -77,6 +78,11 @@ namespace Gsage {
        * Get gizmo mode
        */
       ImGuizmo::MODE getMode() const;
+
+      /**
+       * Draw coordinates editor
+       */
+      bool drawCoordinatesEditor(float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f);
     private:
       OgreRenderSystem* mRenderSystem;
       SceneNodeWrapper* mTarget;

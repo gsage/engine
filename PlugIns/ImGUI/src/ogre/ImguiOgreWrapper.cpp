@@ -38,7 +38,6 @@ THE SOFTWARE.
 #include <OgreUnifiedHighLevelGpuProgram.h>
 #include <OgreRoot.h>
 #include <OgreTechnique.h>
-#include <OgreViewport.h>
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreRenderTarget.h>
 
@@ -47,13 +46,16 @@ THE SOFTWARE.
 #include "Engine.h"
 #include <imgui.h>
 
+#define RENDER_QUEUE_IMGUI 101
+
 namespace Gsage {
 
   ImguiOgreWrapper::ImguiOgreWrapper(Engine* engine)
     : mLastRenderedFrame(-1)
     , mEngine(engine)
+    , mFrameEnded(true)
   {
-    addEventListener(mEngine, RenderEvent::UPDATE_UI, &ImguiOgreWrapper::render);
+    addEventListener(mEngine, RenderEvent::RENDER_QUEUE_STARTED, &ImguiOgreWrapper::render);
     addEventListener(mEngine, RenderEvent::RENDER_QUEUE_ENDED, &ImguiOgreWrapper::renderQueueEnded);
     mSceneMgr = mEngine->getSystem<OgreRenderSystem>()->getSceneManager();
     if(!mSceneMgr)
@@ -118,7 +120,17 @@ namespace Gsage {
 
         //update their vertex buffers
         const ImDrawCmd *drawCmd = &drawList->CmdBuffer[i];
-        mRenderables[i]->updateVertexData(vtxBuf, &idxBuf[startIdx], drawList->VtxBuffer.Size, drawCmd->ElemCount);
+        Ogre::Renderable* renderable;
+
+        if (drawCmd->UserCallbackData != NULL){
+          renderable = static_cast<Ogre::Rectangle2D*>(drawCmd->UserCallbackData);
+          mSceneMgr->_injectRenderWithPass(renderable->getMaterial()->getTechnique(0)->getPass(0), renderable, false, false);
+          continue;
+        } else {
+          mRenderables[i]->updateVertexData(vtxBuf, &idxBuf[startIdx], drawList->VtxBuffer.Size, drawCmd->ElemCount);
+          renderable = mRenderables[i];
+        }
+
 
         //set scissoring
         int vpLeft, vpTop, vpWidth, vpHeight;
@@ -147,9 +159,9 @@ namespace Gsage {
 
         //render the object
 #if OGRE_VERSION_MAJOR == 1
-        mSceneMgr->_injectRenderWithPass(mPass, mRenderables[i], false, false);
+        mSceneMgr->_injectRenderWithPass(mPass, renderable, false, false);
 #elif OGRE_VERSION_MAJOR == 2
-        mSceneMgr->_injectRenderWithPass(mPass, mRenderables[i], 0, false, false);
+        mSceneMgr->_injectRenderWithPass(mPass, renderable, 0, false, false);
 #endif
 
         //increase start index of indexbuffer
@@ -179,13 +191,12 @@ namespace Gsage {
   bool ImguiOgreWrapper::renderQueueEnded(EventDispatcher* sender, const Event& e)
   {
     RenderEvent event = static_cast<const RenderEvent&>(e);
-    if(event.queueID != Ogre::RENDER_QUEUE_OVERLAY || event.invocation == "SHADOWS")
+    if(event.queueID != RENDER_QUEUE_IMGUI)
     {
       return true;
     }
 
-    OgreRenderSystem* render = event.getRenderSystem();
-    Ogre::Viewport* vp = render->getViewport();
+    Ogre::Viewport* vp = event.renderTarget->getViewport();
 
     if(vp == NULL || !vp->getTarget()->isPrimary() || !vp->getOverlaysEnabled())
       return true;
@@ -315,12 +326,12 @@ namespace Gsage {
         "attribute vec2 uv0;\n"
         "attribute vec4 colour;\n"
         "varying vec2 Texcoord;\n"
-        "varying vec4 ocol;\n"
+        "varying vec4 col;\n"
         "void main()\n"
         "{\n"
         "gl_Position = ProjectionMatrix* vec4(vertex.xy, 0.f, 1.f);\n"
         "Texcoord  = uv0;\n"
-        "ocol = colour;\n"
+        "col = colour;\n"
         "}"
     };
 
@@ -341,12 +352,12 @@ namespace Gsage {
     {
       "#version 120\n"
         "varying vec2 Texcoord;\n"
-        "varying vec4 ocol;\n"
+        "varying vec4 col;\n"
         "uniform sampler2D sampler0;\n"
         "varying vec4 out_col;\n"
         "void main()\n"
         "{\n"
-        "gl_FragColor = ocol * texture2D(sampler0, Texcoord); \n"
+        "gl_FragColor = col * texture2D(sampler0, Texcoord); \n"
         "}"
     };
 
@@ -505,79 +516,42 @@ namespace Gsage {
 
   void ImguiOgreWrapper::createFontTexture()
   {
+    std::string workdir = mEngine->env().get("workdir", ".");
+    auto additionalFonts = mEngine->settings().get<DataProxy>("imgui.fonts");
+
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
 
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ChildWindowRounding = 3.f;
-    style.GrabRounding = 0.f;
-    style.WindowRounding = 0.f;
-    style.ScrollbarRounding = 3.f;
-    style.FrameRounding = 3.f;
-    style.WindowTitleAlign = ImVec2(0.5f,0.5f);
-
-    style.Colors[ImGuiCol_Text]                  = ImVec4(0.73f, 0.73f, 0.73f, 1.00f);
-    style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.26f, 0.26f, 0.26f, 0.95f);
-    style.Colors[ImGuiCol_ChildWindowBg]         = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-    style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-    style.Colors[ImGuiCol_Border]                = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-    style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-    style.Colors[ImGuiCol_FrameBg]               = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-    style.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-    style.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-    style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.21f, 0.21f, 0.21f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ComboBg]               = ImVec4(0.32f, 0.32f, 0.32f, 1.00f);
-    style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
-    style.Colors[ImGuiCol_Button]                = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.43f, 0.43f, 0.43f, 1.00f);
-    style.Colors[ImGuiCol_ButtonActive]          = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
-    style.Colors[ImGuiCol_Header]                = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_HeaderActive]          = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_Column]                = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
-    style.Colors[ImGuiCol_ColumnHovered]         = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ColumnActive]          = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ResizeGrip]            = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_CloseButton]           = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
-    style.Colors[ImGuiCol_CloseButtonHovered]    = ImVec4(0.98f, 0.39f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_CloseButtonActive]     = ImVec4(0.98f, 0.39f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_PlotLines]             = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
-    style.Colors[ImGuiCol_PlotLinesHovered]      = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-    style.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.32f, 0.52f, 0.65f, 1.00f);
-    style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
-    style.WindowPadding            = ImVec2(15, 15);
-    style.WindowRounding           = 5.0f;
-    style.FramePadding             = ImVec2(5, 5);
-    style.FrameRounding            = 4.0f;
-    style.ItemSpacing              = ImVec2(12, 8);
-    style.ItemInnerSpacing         = ImVec2(8, 6);
-    style.IndentSpacing            = 25.0f;
-    style.ScrollbarSize            = 15.0f;
-    style.ScrollbarRounding        = 9.0f;
-    style.GrabMinSize              = 5.0f;
-    style.GrabRounding             = 3.0f;
-
     unsigned char* pixels;
     int width, height;
-    ImFontConfig config;
-    config.OversampleH = 3;
-    config.OversampleV = 3;
-    ImFont* pFont = io.Fonts->AddFontFromFileTTF("fonts/OpenSans-Regular.ttf", 20.0f, &config);
-    io.Fonts->AddFontDefault();
+    std::vector<ImFont*> fonts;
+
+    if(additionalFonts.second) {
+      for(auto pair : additionalFonts.first) {
+        auto file = pair.second.get<std::string>("file");
+        if(!file.second) {
+          LOG(ERROR) << "Malformed font syntax, \'file\' field is mandatory";
+          continue;
+        }
+
+        auto size = pair.second.get<float>("size");
+        if(!size.second) {
+          LOG(ERROR) << "Malformed font syntax, \'size\' field is mandatory";
+          continue;
+        }
+
+        ImFontConfig config;
+        config.OversampleH = pair.second.get("oversampleH", 0);
+        config.OversampleV = pair.second.get("oversampleV", 0);
+
+        ImFont* pFont = io.Fonts->AddFontFromFileTTF((workdir + GSAGE_PATH_SEPARATOR + file.first).c_str(), size.first, &config);
+        if(pair.first == "default") {
+          io.Fonts->AddFontDefault();
+        }
+        fonts.push_back(pFont);
+      }
+    }
+
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
     mFontTex = Ogre::TextureManager::getSingleton().createManual("ImguiFontTex",
@@ -600,14 +574,24 @@ namespace Gsage {
     OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
     io.DisplaySize = ImVec2((float)render->getWidth(), (float)render->getHeight());
     ImGui::NewFrame();
-    ImGui::PushFont(pFont);
   }
 
   bool ImguiOgreWrapper::render(EventDispatcher* sender, const Event& event)
   {
-    ImGuiIO& io = ImGui::GetIO();
-    mFrameEnded = false;
     RenderEvent e = static_cast<const RenderEvent&>(event);
+    if(e.queueID != RENDER_QUEUE_IMGUI)
+    {
+      return true;
+    }
+
+    ImGuiIO& io = ImGui::GetIO();
+    const std::string& name = e.renderTarget->getName();
+    if(mMousePositions.count(name) != 0) {
+      io.MousePos.x = mMousePositions[name].x;
+      io.MousePos.y = mMousePositions[name].y;
+    }
+
+    mFrameEnded = false;
     auto now = std::chrono::high_resolution_clock::now();
 
     double frameTime = std::chrono::duration_cast<std::chrono::duration<double>>(now - mPreviousUpdateTime).count();
@@ -615,7 +599,7 @@ namespace Gsage {
     OgreRenderSystem* render = e.getRenderSystem();
 
     // Setup display size (every frame to accommodate for window resizing)
-    io.DisplaySize = ImVec2((float)render->getWidth(), (float)render->getHeight());
+    io.DisplaySize = ImVec2((float)e.renderTarget->getWidth(), (float)e.renderTarget->getHeight());
 
     // Start the frame
     ImGui::NewFrame();

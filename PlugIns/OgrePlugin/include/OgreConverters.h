@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <OgreColourValue.h>
 #include <OgreQuaternion.h>
 #include "DataProxy.h"
+#include "RenderTarget.h"
 
 namespace Gsage {
   TYPE_CASTER(OgreDegreeCaster, Ogre::Degree, std::string);
@@ -40,6 +41,8 @@ namespace Gsage {
   TYPE_CASTER(OgreQuaternionCaster, Ogre::Quaternion, std::string);
   TYPE_CASTER(OgreFloatRectCaster, Ogre::FloatRect, std::string);
   TYPE_CASTER(OgrePixelFormatCaster, Ogre::PixelFormat, std::string);
+
+  TYPE_CASTER(RenderTargetTypeCaster, RenderTarget::Type, std::string);
 }
 
 #endif

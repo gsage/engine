@@ -114,6 +114,9 @@ namespace ImGuizmo
 	// call BeginFrame right after ImGui_XXXX_NewFrame();
 	IMGUI_API void BeginFrame();
 
+	// call EndFrame when ImGuizmo renderings is over
+	IMGUI_API void EndFrame();
+
 	// return true if mouse cursor is over any gizmo control (axis, plan or screen component)
 	IMGUI_API bool IsOver();
 

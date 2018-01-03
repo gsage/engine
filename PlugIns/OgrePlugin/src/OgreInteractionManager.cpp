@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
-
+/*
 #include "OgreInteractionManager.h"
 #include <OgreSceneManager.h>
 #include <OgreRenderWindow.h>
@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 #include "Engine.h"
 #include "OgreSelectEvent.h"
-#include "MouseEvent.h"
+#include "OgreInteractionEvent.h"
 #include "KeyboardEvent.h"
 #include "CollisionTools.h"
 
@@ -44,6 +44,9 @@ namespace Gsage {
     , mRenderSystem(0)
     , mCollisionTools(0)
     , mContinuousRaycast(false)
+    , mWidth(1)
+    , mHeight(1)
+    , mCamera(0)
   {
   }
 
@@ -58,17 +61,20 @@ namespace Gsage {
     mRenderSystem = renderSystem;
     mCollisionTools = new MOC::CollisionTools(mRenderSystem->getSceneManager());
 
-    addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &OgreInteractionManager::onMouseButton);
-    addEventListener(mEngine, MouseEvent::MOUSE_UP, &OgreInteractionManager::onMouseButton);
-    addEventListener(mEngine, MouseEvent::MOUSE_MOVE, &OgreInteractionManager::onMouseMove);
+    addEventListener(mEngine, OgreInteractionEvent::MOUSE_DOWN, &OgreInteractionManager::onMouseButton);
+    addEventListener(mEngine, OgreInteractionEvent::MOUSE_UP, &OgreInteractionManager::onMouseButton);
+    addEventListener(mEngine, OgreInteractionEvent::MOUSE_MOVE, &OgreInteractionManager::onMouseMove);
   }
 
   bool OgreInteractionManager::onMouseButton(EventDispatcher* sender, const Event& event)
   {
-    const MouseEvent& e = (MouseEvent&) event;
+    const OgreInteractionEvent& e = (OgreInteractionEvent&) event;
+    mWidth = e.width;
+    mHeight = e.height;
+    mCamera = e.camera;
     if(e.button == MouseEvent::Left)
     {
-      if(e.getType() == MouseEvent::MOUSE_DOWN)
+      if(e.getType() == OgreInteractionEvent::MOUSE_DOWN)
       {
         doRaycasting(e.mouseX, e.mouseY, 0xFFFF, true);
       }
@@ -82,10 +88,12 @@ namespace Gsage {
 
   bool OgreInteractionManager::onMouseMove(EventDispatcher* sender, const Event& event)
   {
-    const MouseEvent& e = (MouseEvent&) event;
-    Ogre::Vector3 delta;
+    const OgreInteractionEvent& e = (OgreInteractionEvent&) event;
 
-    mMousePosition = Ogre::Vector3(e.mouseX, e.mouseY, e.mouseZ);
+
+    mWidth = e.width;
+    mHeight = e.height;
+    mCamera = e.camera;
     return true;
   }
 
@@ -94,17 +102,13 @@ namespace Gsage {
     Ogre::MovableObject* target;
     Ogre::Vector3 result;
     float closestDistance = 0.1f;
-    Ogre::Viewport* viewport = mRenderSystem->getViewport();
 
-    Ogre::RenderWindow* window = mRenderSystem->getRenderWindow();
-    Ogre::Camera* camera = viewport->getCamera();
-    if(!camera || !window)
+    if(!mCamera)
     {
-      // camera or window can be not initialized
       return;
     }
 
-    bool hitObject = mCollisionTools->raycastFromCamera(window, camera, Ogre::Vector2(offsetX, offsetY), result, target, closestDistance, flags);
+    bool hitObject = mCollisionTools->raycastFromCamera(mWidth, mHeight, mCamera, Ogre::Vector2(offsetX, offsetY), result, target, closestDistance, flags);
 
     if(!hitObject)
     {
@@ -143,9 +147,5 @@ namespace Gsage {
       return;
     }
 
-    if(mContinuousRaycast)
-      doRaycasting(mMousePosition.x, mMousePosition.y, SceneNodeWrapper::STATIC, true);
-    else
-      doRaycasting(mMousePosition.x, mMousePosition.y);
   }
-}
+}*/
