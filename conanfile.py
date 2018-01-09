@@ -25,12 +25,14 @@ class GsageConan(ConanFile):
         ("luajit-rocks/2.0.5@gsage/master",),
         ("msgpack/2.1.3@gsage/master",),
         ("SDL2/2.0.5@gsage/master",),
+        ("gtest/1.8.0@lasote/stable",),
     )
 
     def source(self):
         self.run("git clone https://github.com/gsage/engine")
 
     def config_options(self):
+        self.options["gtest"].shared = False
         if self.settings.os == "Macos":
             self.options["SDL2"].x11_video = False
 

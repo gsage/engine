@@ -1,24 +1,25 @@
 set(APP_NAME "unit-tests")
 
+message("${GTEST_LIBRARIES}")
 set(TEST_DEPENDENCIES
   ${TEST_DEPENDENCIES}
   GsageCore
-  gtest
   jsoncpp
   ImGUI
   ${LUAJIT_LIBRARIES}
+  ${GTEST_LIBRARIES}
 )
 
 include_directories(
   include
   ${gsage_SOURCE_DIR}/GsageCore/include
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
-  ${gsage_SOURCE_DIR}/Vendor/googletest/googletest/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/PlugIns/ImGUI/include
 
   ${LUAJIT_INCLUDE_DIR}
+  ${GTEST_INCLUDE_DIRS}
 )
 
 add_subdirectory(TestPlugins)
