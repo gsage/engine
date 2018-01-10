@@ -154,6 +154,7 @@ namespace Gsage {
 
   Dock::~Dock()
   {
+    ImGui::MemFree(mLabel);
   }
 
   void Dock::reset()

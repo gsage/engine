@@ -287,7 +287,7 @@ namespace Gsage {
       friend class ImGuiDockspace;
       friend class ImGuiDockspaceRenderer;
 
-      const char* mLabel;
+      char* mLabel;
 
       ImVec2 mPos;
       ImVec2 mSize;
