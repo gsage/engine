@@ -44,7 +44,7 @@ EDITOR_CMD := $(EDITOR_CMD)$(POSTFIX)$(FILE_EXTENSION)
 	@touch .repo
 
 .deps: .repo conanfile.py
-	@conan install -g cmake -o gsage:with_ogre=$(OGRE_VERSION) -o gsage:with_input=$(INPUT) -o gsage:with_librocket=$(WITH_LIBROCKET) --build=outdated
+	@conan install -g cmake -o gsage:with_ogre=$(OGRE_VERSION) -o gsage:with_input=$(INPUT) -o gsage:with_librocket=$(WITH_LIBROCKET) --build=outdated .
 	@touch .deps
 
 upload-deps: .deps
