@@ -31,6 +31,8 @@ THE SOFTWARE.
 #include <SDL2/SDL.h>
 
 namespace Gsage {
+  class SDLWindowManager;
+
   class SDLWindow : public Window
   {
     public:
@@ -40,9 +42,16 @@ namespace Gsage {
       /**
        * Get window handle
        */
-      unsigned long getWindowHandle();
+      unsigned long long getWindowHandle();
+
+      /**
+       * Get GL context
+       */
+      void* getGLContext();
     private:
+      friend class SDLWindowManager;
       SDL_Window* mWindow;
+      SDL_GLContext mGLContext;
   };
 
   /**

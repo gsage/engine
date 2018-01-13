@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include "components/ScriptComponent.h"
+#include "sol.hpp"
 #include "Logger.h"
 #include "Entity.h"
 #include <iostream>

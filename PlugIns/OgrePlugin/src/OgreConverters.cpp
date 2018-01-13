@@ -60,7 +60,7 @@ namespace Gsage {
     if(src.empty())
       return false;
     Ogre::ColourValue res;
-    unsigned int value;
+    unsigned long value;
     try
     {
       value = std::stoul(src, nullptr, 16);

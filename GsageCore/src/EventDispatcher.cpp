@@ -36,14 +36,7 @@ namespace Gsage {
 
   EventDispatcher::~EventDispatcher()
   {
-    for(std::pair<Event::Type, EventSignal*> element : mSignals)
-    {
-      if (element.first == DispatcherEvent::FORCE_UNSUBSCRIBE)
-      {
-        (*element.second)(this, DispatcherEvent(DispatcherEvent::FORCE_UNSUBSCRIBE));
-        delete element.second;
-      }
-    }
+    removeAllListeners();
   }
 
   EventConnection EventDispatcher::addEventListener(Event::ConstType eventType, EventCallback callback, const int priority)
@@ -65,6 +58,19 @@ namespace Gsage {
       return;
 
     (*mSignals[event.getType()])(this, event);
+  }
+
+  void EventDispatcher::removeAllListeners()
+  {
+    for(std::pair<Event::Type, EventSignal*> element : mSignals)
+    {
+      if (element.first == DispatcherEvent::FORCE_UNSUBSCRIBE)
+      {
+        (*element.second)(this, DispatcherEvent(DispatcherEvent::FORCE_UNSUBSCRIBE));
+        delete element.second;
+      }
+    }
+    mSignals.clear();
   }
 
   EventSignal::EventSignal()
@@ -126,4 +132,3 @@ namespace Gsage {
     mSignal->disconnect(mPriority, mId);
   }
 }
-

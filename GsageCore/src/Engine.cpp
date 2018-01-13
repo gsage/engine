@@ -221,7 +221,7 @@ bool Engine::removeEntity(Entity* entity)
 {
   if(entity == 0 || mEntityMap.count(entity->getId()) == 0)
     return false;
-  fireEvent(EntityEvent(EntityEvent::DELETE, entity->getId()));
+  fireEvent(EntityEvent(EntityEvent::REMOVE, entity->getId()));
   for(auto& pair : entity->mComponents)
   {
     if(!hasSystem(pair.first))
@@ -231,8 +231,8 @@ bool Engine::removeEntity(Entity* entity)
       LOG(WARNING) << "Got false return value while removing " << pair.first << " component";
   }
 
-  mEntities.erase(entity);
   mEntityMap.erase(entity->getId());
+  mEntities.erase(entity);
   return true;
 }
 

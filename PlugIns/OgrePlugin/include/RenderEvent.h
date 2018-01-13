@@ -31,13 +31,14 @@ THE SOFTWARE.
 
 #include "EventDispatcher.h"
 #include "RenderTarget.h"
+#include "Definitions.h"
 
 namespace Gsage {
 
   /**
    * Event that is used to update any UI overlay system
    */
-  class RenderEvent : public Event
+  class GSAGE_OGRE_PLUGIN_API RenderEvent : public Event
   {
     public:
       static const Event::Type RENDER_QUEUE_STARTED;

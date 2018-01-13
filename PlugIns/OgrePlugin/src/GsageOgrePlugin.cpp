@@ -30,9 +30,6 @@ THE SOFTWARE.
 #include "OgreSelectEvent.h"
 #include "RenderTarget.h"
 
-#include "lua/LuaInterface.h"
-#include "lua/LuaHelpers.h"
-
 #include "components/MovementComponent.h"
 #include "components/RenderComponent.h"
 
@@ -46,29 +43,34 @@ THE SOFTWARE.
 #include "ogre/ParticleSystemWrapper.h"
 #include "ogre/CameraWrapper.h"
 
-#include "sol.hpp"
-
 namespace Gsage {
 
   const std::string PLUGIN_NAME = "OgreBundle";
 
-  OgrePlugin::OgrePlugin()
+  GsageOgrePlugin::GsageOgrePlugin()
   {
   }
 
-  OgrePlugin::~OgrePlugin()
+  GsageOgrePlugin::~GsageOgrePlugin()
   {
   }
 
-  const std::string& OgrePlugin::getName() const
+  const std::string& GsageOgrePlugin::getName() const
   {
     return PLUGIN_NAME;
   }
 
-  void OgrePlugin::setupLuaBindings() {
+  void GsageOgrePlugin::setupLuaBindings() {
     if (mLuaInterface && mLuaInterface->getState())
     {
-      sol::state_view lua = *mLuaInterface->getSolState();
+      // Override select event
+      mLuaInterface->registerEvent<OgreSelectEvent>("OgreSelectEvent",
+        "onOgreSelect",
+        sol::base_classes, sol::bases<Event, SelectEvent>(),
+        "intersection", sol::property(&OgreSelectEvent::getIntersection)
+      );
+
+      sol::state_view lua(mLuaInterface->getState());
 
       // Ogre Wrappers
 
@@ -78,7 +80,7 @@ namespace Gsage {
           "name", sol::property(&OgreObject::getObjectId)
       );
 
-      lua.new_simple_usertype<SceneNodeWrapper>(
+      lua.new_usertype<SceneNodeWrapper>(
           "OgreSceneNode",
           sol::base_classes, sol::bases<OgreObject>(),
           "orientation", sol::property(&SceneNodeWrapper::setOrientation, &SceneNodeWrapper::getOrientation),
@@ -124,7 +126,7 @@ namespace Gsage {
           "getCamera", (Ogre::Camera*(CameraWrapper::*)())&CameraWrapper::getCamera
       );
 
-      lua.new_simple_usertype<Ogre::Camera>("Camera");
+      lua.new_usertype<Ogre::Camera>("Camera");
 
       lua.new_usertype<RenderTarget>("RenderTarget",
           "setCamera", &RenderTarget::setCamera,
@@ -177,6 +179,7 @@ namespace Gsage {
 
       lua.new_usertype<RenderComponent>("RenderComponent",
           sol::base_classes, sol::bases<EventDispatcher, Reflection>(),
+          "props", sol::property(&RenderComponent::getProps, &RenderComponent::setProps),
           "position", sol::property((void(RenderComponent::*)(const Ogre::Vector3&))&RenderComponent::setPosition, &RenderComponent::getPosition),
           "root", sol::property(&RenderComponent::getRoot),
           "direction", sol::property(&RenderComponent::getDirection),
@@ -200,6 +203,7 @@ namespace Gsage {
 
       lua.new_usertype<MovementComponent>("MovementComponent",
           sol::base_classes, sol::bases<Reflection>(),
+          "props", sol::property(&MovementComponent::getProps, &MovementComponent::setProps),
           "go", sol::overload(
             (void(MovementComponent::*)(const Ogre::Vector3&))&MovementComponent::setTarget,
             (void(MovementComponent::*)(const float&, const float&, const float&))&MovementComponent::setTarget
@@ -282,13 +286,6 @@ namespace Gsage {
           }
       );
 
-      // Override select event
-      mLuaInterface->registerEvent<OgreSelectEvent>("OgreSelectEvent",
-        "onOgreSelect",
-        sol::base_classes, sol::bases<Event, SelectEvent>(),
-        "intersection", sol::property(&OgreSelectEvent::getIntersection)
-      );
-
       lua["Engine"]["render"] = &Engine::getSystem<OgreRenderSystem>;
       lua["Engine"]["movement"] = &Engine::getSystem<RecastMovementSystem>;
       lua["Entity"]["render"] = &Entity::getComponent<RenderComponent>;
@@ -301,18 +298,18 @@ namespace Gsage {
     }
   }
 
-  bool OgrePlugin::installImpl()
+  bool GsageOgrePlugin::installImpl()
   {
     mFacade->registerSystemFactory<OgreRenderSystem>();
     mFacade->registerSystemFactory<RecastMovementSystem>();
     return true;
   }
 
-  void OgrePlugin::uninstallImpl()
+  void GsageOgrePlugin::uninstallImpl()
   {
     if (mLuaInterface && mLuaInterface->getState())
     {
-      sol::state_view lua = *mLuaInterface->getSolState();
+      sol::state_view& lua = *mLuaInterface->getSolState();
 
       lua["Engine"]["render"] = sol::lua_nil;
       lua["Engine"]["movement"] = sol::lua_nil;
@@ -325,29 +322,29 @@ namespace Gsage {
     mFacade->removeSystemFactory<OgreRenderSystem>();
     mFacade->removeSystemFactory<RecastMovementSystem>();
   }
+}
 
-  OgrePlugin* ogrePlugin = NULL;
+Gsage::GsageOgrePlugin* ogrePlugin = NULL;
 
-  extern "C" bool PluginExport dllStartPlugin(GsageFacade* facade)
+extern "C" bool PluginExport dllStartPlugin(Gsage::GsageFacade* facade)
+{
+  if(ogrePlugin != NULL)
   {
-    if(ogrePlugin != NULL)
-    {
-      return false;
-    }
-    ogrePlugin = new OgrePlugin();
-    return facade->installPlugin(ogrePlugin);
+    return false;
   }
+  ogrePlugin = new Gsage::GsageOgrePlugin();
+  return facade->installPlugin(ogrePlugin);
+}
 
-  extern "C" bool PluginExport dllStopPlugin(GsageFacade* facade)
-  {
-    if(ogrePlugin == NULL)
-      return true;
-
-    bool res = facade->uninstallPlugin(ogrePlugin);
-    if(!res)
-      return false;
-    delete ogrePlugin;
-    ogrePlugin = NULL;
+extern "C" bool PluginExport dllStopPlugin(Gsage::GsageFacade* facade)
+{
+  if(ogrePlugin == NULL)
     return true;
-  }
+
+  bool res = facade->uninstallPlugin(ogrePlugin);
+  if(!res)
+    return false;
+  delete ogrePlugin;
+  ogrePlugin = NULL;
+  return true;
 }

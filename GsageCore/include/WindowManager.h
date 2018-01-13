@@ -40,7 +40,12 @@ namespace Gsage {
       /**
        * Get window handle
        */
-      virtual unsigned long getWindowHandle() = 0;
+      virtual unsigned long long getWindowHandle() = 0;
+
+      /**
+       *
+       */
+      virtual void* getGLContext() = 0;
   };
 
   /**

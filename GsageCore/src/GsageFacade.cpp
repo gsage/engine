@@ -84,6 +84,8 @@ namespace Gsage {
 
     mStopped = true;
     mEngine.removeSystems();
+    mEngine.removeAllListeners();
+
     mWindowManager = nullptr;
 
     for (PluginOrder::reverse_iterator rit = mPluginOrder.rbegin(); rit != mPluginOrder.rend(); ++rit)

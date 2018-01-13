@@ -458,7 +458,7 @@ namespace Gsage {
 
     Ogre::RenderSystem* render = Ogre::Root::getSingletonPtr()->getRenderSystem();
 
-    bool useGLSL120 = render->getDriverVersion().major < 3 or OGRE_VERSION_MAJOR == 1;
+    bool useGLSL120 = render->getDriverVersion().major < 3 || OGRE_VERSION_MAJOR == 1;
 
     if (vertexShaderGL.isNull())
     {

@@ -12,6 +12,9 @@ if(APPLE)
   find_package(GLEW REQUIRED)
 endif(APPLE)
 
+set(LUAJIT_INCLUDE_DIR ${CONAN_INCLUDE_DIRS_LUAJIT})
+set(MSGPACK_INCLUDE_DIR ${CONAN_INCLUDE_DIRS_MSGPACK})
+
 # core libraries
 set(LUAJIT_LIBRARIES ${CONAN_LIBS_LUAJIT-ROCKS})
 set(MSGPACK_LIBRARIES ${CONAN_LIBS_MSGPACK})
@@ -33,20 +36,21 @@ if(CONAN_LIBS_OGRE)
   set(OGRE_FOUND true)
 endif(CONAN_LIBS_OGRE)
 
+# adding plugins includes
+set(OGRE_INCLUDE_DIRS
+  ${CONAN_INCLUDE_DIRS_OGRE}/RenderSystems/GL
+  ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/OctreeSceneManager
+  ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/BSPSceneManager
+  ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/PCZSceneManager
+  ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/ParticleFX
+  ${CONAN_INCLUDE_DIRS_OGRE}/Overlay
+  ${GLEW_INCLUDE_DIRS}
+  ${OGRE_INCLUDE_DIRS}
+)
+
 # for static build
 if(CONAN_USER_OGRE_STATIC)
   add_definitions("-D OGRE_STATIC")
-
-  # adding plugins includes
-  set(OGRE_INCLUDE_DIRS
-    ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/OctreeSceneManager
-    ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/BSPSceneManager
-    ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/PCZSceneManager
-    ${CONAN_INCLUDE_DIRS_OGRE}/Plugins/ParticleFX
-    ${CONAN_INCLUDE_DIRS_OGRE}/Overlay/
-    ${GLEW_INCLUDE_DIRS}
-    ${OGRE_INCLUDE_DIRS}
-  )
 endif(CONAN_USER_OGRE_STATIC)
 
 # GTEST

@@ -111,13 +111,17 @@ namespace Gsage {
 
   OgreRenderSystem::~OgreRenderSystem()
   {
-    mRenderTargets.clear();
-
     if(mFontManager != 0)
       delete mFontManager;
 
     if(getRenderWindow() != 0 && mWindowEventListener != 0)
       mWindowEventListener->windowClosed(getRenderWindow());
+
+    for(auto pair : mRenderTargets) {
+      delete pair.second;
+    }
+    mRenderTargets.clear();
+
     if(mRoot != 0)
       delete mRoot;
     if(mManualMovableTextParticleFactory != 0)
@@ -194,7 +198,10 @@ namespace Gsage {
         return false;
       }
 
-      windowParams.put("windowHandle", Ogre::StringConverter::toString(window->getWindowHandle()));
+      windowParams.put("windowHandle", std::to_string(window->getWindowHandle()));
+      if(windowParams.get("openGL", false)) {
+        windowParams.put("glContext", Ogre::StringConverter::toString((size_t) window->getGLContext()));
+      }
     }
 
     if(!(mRoot->restoreConfig()))
@@ -453,7 +460,7 @@ namespace Gsage {
       return 0;
     }
 
-    const RttRenderTarget* rtt = static_cast<const RttRenderTarget*>(mRenderTargets.at(target).get());
+    const RttRenderTarget* rtt = static_cast<const RttRenderTarget*>(mRenderTargets.at(target));
     return rtt->getGLID();
   }
 

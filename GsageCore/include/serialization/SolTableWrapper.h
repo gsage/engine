@@ -58,11 +58,12 @@ namespace Gsage {
           virtual bool operator!=(const self_type& rhs);
         private:
 
-          sol::table::iterator mTableIterator;
+          sol::table::iterator* mTableIterator;
+
           sol::table& mTable;
 
           SolTableWrapper* mCurrentValue;
-          int mIndex;
+
       };
 
       SolTableWrapper(const sol::table& value);
@@ -139,12 +140,12 @@ namespace Gsage {
 
       iteratorPtr begin()
       {
-        return new iterator(mObject, iterator::BEGIN);
+        return new iterator(getObject(), iterator::BEGIN);
       }
 
       iteratorPtr end()
       {
-        return new iterator(mObject, iterator::END);
+        return new iterator(getObject(), iterator::END);
       }
 
       sol::table& getObject()

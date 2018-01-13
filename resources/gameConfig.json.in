@@ -26,9 +26,9 @@
   "plugins":
   [
     "@PLUGINS_DIRECTORY@/OgrePlugin",
-    "@PLUGINS_DIRECTORY@/ImGUI",
-    "@PLUGINS_DIRECTORY@/RocketUI",
-    "@PLUGINS_DIRECTORY@/SDL"
+    "@PLUGINS_DIRECTORY@/ImGUIPlugin",
+    "@PLUGINS_DIRECTORY@/RocketUIPlugin",
+    "@PLUGINS_DIRECTORY@/SDLPlugin"
   ],
 
   "imgui": {

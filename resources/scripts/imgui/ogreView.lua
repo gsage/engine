@@ -13,11 +13,12 @@ OgreView = class(ImguiWindow, function(self, textureID, title, docked, open)
   self.targetID = nil
   self.gizmoEnabled = false
   self.reset = function(event)
-    if Facade.BEFORE_RESET or (event.type == EntityEvent.DELETE and event.id == self.targetID) then
+    if Facade.BEFORE_RESET or (event.type == EntityEvent.REMOVE and event.id == self.targetID) then
       self:resetGizmoTarget()
     end
   end
-  event:onEntity(core, EntityEvent.DELETE, self.reset)
+
+  event:onEntity(core, EntityEvent.REMOVE, self.reset)
   event:bind(core, Facade.BEFORE_RESET, self.reset)
 end)
 

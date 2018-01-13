@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "Serializable.h"
 #include "EventDispatcher.h"
 #include <OgreNode.h>
+#include "Definitions.h"
 
 namespace Ogre
 {
@@ -46,7 +47,7 @@ namespace Gsage {
   /**
    * Ogre render system component
    */
-  class RenderComponent : public EntityComponent, public EventDispatcher
+  class GSAGE_OGRE_PLUGIN_API RenderComponent : public EntityComponent, public EventDispatcher
   {
     public:
       enum RotationAxis {

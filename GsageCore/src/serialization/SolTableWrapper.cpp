@@ -146,23 +146,24 @@ namespace Gsage {
   }
 
   SolTableWrapper::iterator::iterator(sol::table& table, SolTableWrapper::iterator::Type iterType)
-    : mTableIterator(iterType == BEGIN ? table.begin() : table.end())
-    , mCurrentValue(new SolTableWrapper())
+    : mCurrentValue(new SolTableWrapper())
     , mTable(table)
   {
+    mTableIterator = (iterType == BEGIN ? new sol::table::iterator(mTable) : new sol::table::iterator());
     DataWrapper::iterator::mCurrent = DataWrapper::iterator::value_type("", mCurrentValue);
     update();
   }
 
   SolTableWrapper::iterator::~iterator() {
     delete mCurrentValue;
+    delete mTableIterator;
   }
 
   void SolTableWrapper::iterator::update() {
-    if(mTableIterator == mTable.end()) {
+    if((*mTableIterator) == mTable.end()) {
       return;
     }
-    auto iter = *mTableIterator;
+    auto iter = **mTableIterator;
 
     if(mTable.size() > 0) {
       sol::optional<int> index = iter.first.as<int>();
@@ -180,18 +181,18 @@ namespace Gsage {
 
   void SolTableWrapper::iterator::increment()
   {
-    ++mTableIterator;
+    ++(*mTableIterator);
     update();
   }
 
   bool SolTableWrapper::iterator::operator==(const SolTableWrapper::iterator::self_type& rhs)
   {
-    return mTableIterator == ((const SolTableWrapper::iterator&)rhs).mTableIterator;
+    return (*mTableIterator) == (*((const SolTableWrapper::iterator&)rhs).mTableIterator);
   }
 
   bool SolTableWrapper::iterator::operator!=(const SolTableWrapper::iterator::self_type& rhs)
   {
-    return mTableIterator != ((const SolTableWrapper::iterator&)rhs).mTableIterator;
+    return (*mTableIterator) != (*((const SolTableWrapper::iterator&)rhs).mTableIterator);
   }
 
 }

@@ -36,6 +36,7 @@ namespace Gsage {
 
   SDLWindow::SDLWindow(SDL_Window* window)
     : mWindow(window)
+    , mGLContext(nullptr)
   {
   }
 
@@ -44,22 +45,34 @@ namespace Gsage {
     SDL_DestroyWindow(mWindow);
   }
 
-  unsigned long SDLWindow::getWindowHandle()
+  unsigned long long SDLWindow::getWindowHandle()
   {
     unsigned long handle = 0;
     SDL_SysWMinfo windowInfo;
     SDL_VERSION(&windowInfo.version);
-    if(SDL_GetWindowWMInfo(mWindow, &windowInfo) == SDL_FALSE)
+    if(SDL_GetWindowWMInfo(mWindow, &windowInfo) == SDL_FALSE) {
+      LOG(ERROR) << "Failed to get window info";
       return 0;
+    }
 #if GSAGE_PLATFORM == GSAGE_APPLE
     handle = WindowContentViewHandle(windowInfo);
 #elif GSAGE_PLATFORM == GSAGE_LINUX
-    handle = (unsigned long) windowInfo.info.x11.window;
-#elif GSAGE_PLATFORM == GSAGE_WINDOWS
-    handle = (unsigned long) windowInfo.info.win.window;
+    handle = (unsigned long long) windowInfo.info.x11.window;
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+    LOG(INFO) << "Win handle " << windowInfo.info.win.window;
+    handle = (unsigned long long) windowInfo.info.win.window;
 #endif
 
     return handle;
+  }
+
+  void* SDLWindow::getGLContext()
+  {
+    if(mGLContext == nullptr) {
+      return 0;
+    }
+
+    return (void*) mGLContext;
   }
 
   SDLWindowManager::SDLWindowManager(const std::string& type)
@@ -127,10 +140,11 @@ namespace Gsage {
       return nullptr;
     }
 
+    SDL_GLContext sdlContext = nullptr;
     if((flags & SDL_WINDOW_OPENGL) != 0) {
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-      SDL_GLContext sdlContext = SDL_GL_CreateContext(window);
+      sdlContext = SDL_GL_CreateContext(window);
       if(!sdlContext) {
         LOG(ERROR) << "Failed to create SDL GL context";
         SDL_DestroyWindow(window);
@@ -139,6 +153,10 @@ namespace Gsage {
     }
 
     SDLWindow* wrapper = new SDLWindow(window);
+    if(sdlContext) {
+      wrapper->mGLContext = sdlContext;
+    }
+
     fireWindowEvent(WindowEvent::CREATE, wrapper->getWindowHandle(), width, height);
     mWindows.push_back(WindowPtr(static_cast<Window*>(wrapper)));
     return mWindows[mWindows.size()-1];

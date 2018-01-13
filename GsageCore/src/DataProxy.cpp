@@ -227,7 +227,11 @@ namespace Gsage {
     if(mDataWrapper->getType() == dest.mDataWrapper->getType() && (flags & ForceCopy) == 0) {
       dest.mDataWrapper = mDataWrapper;
     } else {
-      for(auto pair : *this) {
+      for(auto iter = this->begin();
+          iter != this->end();
+          ++iter
+          ) {
+        auto pair = *iter;
         if(mDataWrapper->getStoredType() == DataWrapper::Array) {
           int index = std::atoi(pair.first.c_str());
           dest.mDataWrapper->makeArray();

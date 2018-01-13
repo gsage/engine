@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include "EventDispatcher.h"
 
 namespace Gsage {
-  class KeyboardEvent : public Event
+  class GSAGE_API KeyboardEvent : public Event
   {
     public:
       static const Event::Type KEY_DOWN;
@@ -229,7 +229,7 @@ namespace Gsage {
   /**
    * Event that is fired especially for the text input
    */
-  class TextInputEvent : public Event
+  class GSAGE_API TextInputEvent : public Event
   {
     public:
       static const Event::Type INPUT;

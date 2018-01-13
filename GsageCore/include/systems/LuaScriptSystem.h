@@ -28,10 +28,10 @@ THE SOFTWARE.
 #define _LuaScriptSystem_H_
 
 #include "ComponentStorage.h"
-#include <sol.hpp>
 #include "systems/SystemFactory.h"
 #include "lua/LuaInterface.h"
 #include "Engine.h"
+#include "sol_forward.hpp"
 
 struct lua_State;
 

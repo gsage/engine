@@ -1,3 +1,4 @@
+
 package.path =  TRESOURCES .. '/scripts/?.lua' ..
                                ';' .. getResourcePath('scripts/?.lua') ..
                                ';' .. getResourcePath('behaviors/trees/?.lua') ..
@@ -31,9 +32,18 @@ local timing = function(state, arguments)
 end
 
 local runTests = function()
-  local runner = require 'busted.runner'
-  local assert = require 'luassert'
-  local say = require 'say.init'
+  local runner, assert, say
+  local res, err = pcall(function()
+    runner = require 'busted.runner'
+    assert = require 'luassert'
+    say = require 'say.init'
+  end)
+
+  if err then
+    print("tests failed " .. tostring(err))
+    async.signal("TestsComplete")
+    return nil, 2
+  end
 
   say:set("assertion.timing.positive", "Expected function to execute faster than: %s")
   assert:register("assertion", "timing", timing, "assertion.timing.positive")
@@ -48,7 +58,7 @@ function main()
   if os.getenv("OGRE_ENABLED") ~= "0" then
     local hasOgre = game:loadPlugin(PLUGINS_DIR .. "/OgrePlugin")
     if hasOgre then
-      game:loadPlugin(PLUGINS_DIR .. "/ImGUI")
+      game:loadPlugin(PLUGINS_DIR .. "/ImGUIPlugin")
       game:createSystem("ogre")
     end
   else

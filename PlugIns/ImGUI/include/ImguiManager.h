@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include "KeyboardEvent.h"
 #include "ImGuiDockspace.h"
 
-#include "sol.hpp"
+#include "sol_forward.hpp"
 
 struct lua_State;
 

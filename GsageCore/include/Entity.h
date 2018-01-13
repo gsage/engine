@@ -107,13 +107,13 @@ namespace Gsage
       /**
        * Adds flag to flag list
        *
-       * @param flag String constant
+       * @param flag String
        */
       void setFlag(const std::string& flag);
       /**
        * Check if entity has flag
        *
-       * @param flag String constant
+       * @param flag String 
        */
       bool hasFlag(const std::string& flag);
 

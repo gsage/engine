@@ -1,5 +1,5 @@
 set(LIB_NAME "GsageCore")
-
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS true)
 FILE(GLOB headers include/*h include/*/*h)
 FILE(GLOB sources src/*.cpp src/*/*.cpp)
 
@@ -12,6 +12,7 @@ include_directories(
   include/
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
+  ${gsage_SOURCE_DIR}/Vendor/easylogging/include
 
   ${LUAJIT_INCLUDE_DIR}
   ${MSGPACK_INCLUDE_DIRS}
@@ -19,13 +20,13 @@ include_directories(
 
 add_library(${LIB_NAME} SHARED ${headers} ${sources})
 
-set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d)
+set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS -D_DLL_EXPORT)
 
 set(LIBS
   jsoncpp
+  easyloggingpp
   ${LUAJIT_LIBRARIES}
-  ${MSGPACK_LIBRARIES}
-)
+  ${MSGPACK_LIBRARIES})
 
 if(APPLE)
   set(LIBS ${LIBS}

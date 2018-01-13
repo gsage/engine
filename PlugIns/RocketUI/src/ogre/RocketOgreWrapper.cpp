@@ -30,6 +30,8 @@ THE SOFTWARE.
 #include "ogre/RenderInterfaceOgre3D.h"
 #include "ogre/SystemInterfaceOgre3D.h"
 
+#include "Logger.h"
+
 namespace Gsage {
 
   RocketOgreWrapper::RocketOgreWrapper(Engine* engine)

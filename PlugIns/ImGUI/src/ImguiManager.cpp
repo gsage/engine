@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "ogre/Gizmo.h"
 #endif
 
+#include "sol.hpp"
 #include <imgui.h>
 
 #include "MouseEvent.h"

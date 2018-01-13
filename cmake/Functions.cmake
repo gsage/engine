@@ -9,6 +9,13 @@ macro(configure)
     file(MAKE_DIRECTORY ${BINARY_OUTPUT_DIR})
   endif(NOT EXISTS BINARY_OUTPUT_DIR)
 
+  if(WIN32)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+  endif(WIN32)
 
   set(PLUGINS_PATH ${BINARY_OUTPUT_DIR}/PlugIns)
 
@@ -53,13 +60,11 @@ macro(configure)
 
   if(UNIX)
     set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_FLAGS "-fPIC -O0 ${CMAKE_CXX_FLAGS}")
-    set(CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
   endif(UNIX)
   if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
   endif(MSVC)
-  add_definitions(-DLUAJIT_INCLUDE_DIR="${LUAJIT_INCLUDE_DIR}")
   add_definitions(-DSOL_EXCEPTIONS_SAFE_PROPAGATION)
 endmacro()
 
@@ -70,12 +75,37 @@ macro(gsage_plugin plugin_name)
 
   gsage_includes()
   add_library(${plugin_name} SHARED ${ARGN})
-  add_definitions(-DPLUGIN_EXPORT -D_USRDLL)
-
   set_target_properties(${plugin_name}
     PROPERTIES
-    PREFIX ""
-    LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_PATH})
+    PREFIX "")
+
+  if(WIN32)
+    set_target_properties(${plugin_name}
+      PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PLUGINS_PATH}
+      RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PLUGINS_PATH}
+      RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PLUGINS_PATH}
+      COMPILE_FLAGS "-DPLUGIN_EXPORT -D_USRDLL")
+  endif(WIN32)
+
+  if(WIN32)
+    set(src_path "${PLUGINS_PATH}/${plugin_name}.dll")
+    set(dst_path "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    STRING(REGEX REPLACE "/" "\\\\" src_path "${src_path}")
+    STRING(REGEX REPLACE "/" "\\\\" dst_path "${dst_path}")
+
+    add_custom_command(TARGET ${plugin_name} POST_BUILD
+      COMMAND copy ${src_path} ${dst_path}
+    )
+
+  else(WIN32)
+  set_target_properties(${plugin_name}
+    PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_PATH}
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PLUGINS_PATH}
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PLUGINS_PATH})
+  endif(WIN32)
+
   if(APPLE)
     set_target_properties(${plugin_name}
       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
@@ -86,17 +116,13 @@ endmacro()
 
 macro(gsage_includes)
   include_directories(
+    ${LUAJIT_INCLUDE_DIR}
     ${gsage_SOURCE_DIR}/Vendor/Sol2/include
     ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
     ${gsage_SOURCE_DIR}/GsageCore/include
 
     ${MSGPACK_INCLUDE_DIR}
-    ${LUAJIT_INCLUDE_DIR}
   )
-endmacro()
-
-macro(gsage_libs libs)
-  set(${libs} GsageCore ${libs})
 endmacro()
 
 macro(gsage_executable executable_name)
@@ -135,16 +161,8 @@ macro(gsage_executable executable_name)
     set_target_properties(${executable_name} PROPERTIES DEBUG_POSTFIX _d)
   endif(WIN32)
 
-  # post-build copy for win32
-  if(WIN32 AND NOT MINGW)
-    add_custom_command( TARGET ${executable_name} PRE_BUILD
-      COMMAND if not exist ${BINARY_OUTPUT_DIR} mkdir ${BINARY_OUTPUT_DIR})
-    add_custom_command( TARGET ${executable_name} POST_BUILD
-      COMMAND copy \"$(TargetPath)\" ${BINARY_OUTPUT_DIR} )
-  endif(WIN32 AND NOT MINGW)
-
   if(MINGW OR UNIX)
-    set(EXECUTABLE_OUTPUT_PATH ${BINARY_OUTPUT_DIR})
+    set(EXECUTABLE_OUTPUT_PATH "${BINARY_OUTPUT_DIR}")
   endif(MINGW OR UNIX)
 endmacro()
 

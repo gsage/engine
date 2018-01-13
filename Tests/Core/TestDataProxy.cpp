@@ -75,6 +75,7 @@ TEST_F(TestDataProxy, TestLuaObject)
   ASSERT_EQ(strv, "abcd");
   ASSERT_EQ(intv, 1);
   ASSERT_DOUBLE_EQ(doublev, 1.1);
+
   ASSERT_EQ(obj.variable, "builds.from.string");
 
   auto pair = dw.get<DataProxy>("string");
@@ -111,10 +112,12 @@ TEST_F(TestDataProxy, TestLuaObject)
   ASSERT_EQ(dw.count("object_raw"), 1);
   ASSERT_EQ(dw.count("nokey"), 0);
 
+  int count = 0;
   for(auto pair : dw) {
+    count++;
     if(pair.first == "object_raw") {
       CustomObject objectRawIter;
-      pair.second.read(objectRawIter);
+      ASSERT_TRUE(pair.second.read(objectRawIter));
     } else {
       std::string actual_value;
       sol::object object = t[pair.first];
@@ -127,6 +130,7 @@ TEST_F(TestDataProxy, TestLuaObject)
       ASSERT_EQ(actual_value, expected_value);
     }
   }
+  ASSERT_NE(count, 0);
 }
 
 TEST_F(TestDataProxy, TestJsonObject)

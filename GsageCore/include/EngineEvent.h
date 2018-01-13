@@ -35,7 +35,7 @@ namespace Gsage {
   /**
    * Engine related event
    */
-  class EngineEvent : public Event
+  class GSAGE_API EngineEvent : public Event
   {
     public:
       /**
@@ -57,7 +57,7 @@ namespace Gsage {
   /**
    * Entity changes event
    */
-  class EntityEvent : public Event
+  class GSAGE_API EntityEvent : public Event
   {
     public:
       /**
@@ -68,7 +68,7 @@ namespace Gsage {
       /**
        * Entity removed event
        */
-      static const Event::Type DELETE;
+      static const Event::Type REMOVE;
 
       EntityEvent(Event::ConstType type, const std::string& entityId);
 
@@ -80,7 +80,7 @@ namespace Gsage {
   /**
    * Triggered when settings are changed
    */
-  class SettingsEvent : public Event
+  class GSAGE_API SettingsEvent : public Event
   {
     public:
       /**
@@ -96,7 +96,7 @@ namespace Gsage {
   /**
    * Event which is triggered when system added or removed in the engine
    */
-  class SystemChangeEvent : public Event
+  class GSAGE_API SystemChangeEvent : public Event
   {
     public:
       /**
@@ -115,7 +115,7 @@ namespace Gsage {
       EngineSystem* mSystem;
   };
 
-  class WindowEvent : public Event
+  class GSAGE_API WindowEvent : public Event
   {
     public:
       /**
@@ -142,7 +142,7 @@ namespace Gsage {
   /**
    * Some entity was selected
    */
-  class SelectEvent : public Event
+  class GSAGE_API SelectEvent : public Event
   {
     public:
       /**

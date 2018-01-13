@@ -76,8 +76,6 @@ event:onKeyboard(core, KeyboardEvent.KEY_UP, handleKeyEvent)
 
 local initialized = false
 
-event:bind(core, Facade.LOAD, onReady)
-
 local function saveDockState()
   local state = imgui.GetDockState()
   editor:putToGlobalState("dockState", state)
@@ -96,7 +94,7 @@ local function onSelect(e)
   ogreView:setGizmoTarget(target)
 end
 
-event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
+--event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
 
 if imguiInterface:available() then
   imguiConsole = Console(256, true)

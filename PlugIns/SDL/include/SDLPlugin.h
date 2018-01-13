@@ -40,7 +40,7 @@ namespace Gsage {
       /**
        * Get rocket UI plugin name
        *
-       * @returns RocketUI string
+       * @returns "SDL" string
        */
       virtual const std::string& getName() const;
       /**
