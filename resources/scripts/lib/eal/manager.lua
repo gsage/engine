@@ -41,7 +41,7 @@ local EALManager = class(function(self)
       log.trace("EAL: initialize lua extensions for entity " .. event.id)
       e = self:getEntity(event.id)
       e:__configure()
-    elseif event.type == EntityEvent.DELETE then
+    elseif event.type == EntityEvent.REMOVE then
       -- invalidate linked entity
       local e = self.entities[event.id]
       e:__destroy()
@@ -56,7 +56,7 @@ local EALManager = class(function(self)
   event:onSystemChange(core, SystemChangeEvent.SYSTEM_ADDED, self.systemUpdateHandler)
   event:onSystemChange(core, SystemChangeEvent.SYSTEM_REMOVED, self.systemUpdateHandler)
   event:onEntity(core, EntityEvent.CREATE, self.entityUpdateHandler)
-  event:onEntity(core, EntityEvent.DELETE, self.entityUpdateHandler)
+  event:onEntity(core, EntityEvent.REMOVE, self.entityUpdateHandler)
   event:bind(core, Facade.BEFORE_RESET, self.entityUpdateHandler)
 end)
 

@@ -8,7 +8,7 @@
 #  if !defined(NOMINMAX) && defined(_MSC_VER)
 #	define NOMINMAX // required to stop windows.h messing up std::min
 #  endif
-#  include <windows.h>
+#include "WIN32/WindowsIncludes.h"
 #    define DYNLIB_HANDLE hInstance
 #    define DYNLIB_LOAD( a ) LoadLibraryEx( a, NULL, 0 ) // we can not use LOAD_WITH_ALTERED_SEARCH_PATH with relative paths
 #    define DYNLIB_GETSYM( a, b ) GetProcAddress( a, b )

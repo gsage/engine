@@ -27,8 +27,6 @@ THE SOFTWARE.
 #include "ImGuiDockspace.h"
 #include "Logger.h"
 
-#include <stdio.h>
-
 #include "sole.hpp"
 
 namespace Gsage {

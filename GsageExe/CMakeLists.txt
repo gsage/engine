@@ -5,6 +5,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/GsageCore/include
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
+  ${gsage_SOURCE_DIR}/Vendor/easylogging/include
 
   ${LUAJIT_INCLUDE_DIR}
 )
@@ -17,7 +18,7 @@ gsage_executable(${APP_NAME} ${sources})
 
 set(LIBS
   GsageCore
-  ${LUAJIT_LIBRARIES})
+  easyloggingpp)
 
 if(APPLE)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/Main.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")

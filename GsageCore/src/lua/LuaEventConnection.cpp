@@ -24,6 +24,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "sol.hpp"
 #include "lua/LuaEventConnection.h"
 
 namespace Gsage {

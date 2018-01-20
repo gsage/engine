@@ -499,8 +499,8 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiCol_Text");
 
     sol::table imgui = lua["imgui"];
-
-    imgui["InputFloatN"] = [] (const std::string& label, sol::table t, int length, int decimal_precision, ImGuiInputTextFlags extra_flags) -> bool {
+/*
+    imgui["InputFloatN"] = [] (const std::string& label, sol::table t, const int length, int decimal_precision, ImGuiInputTextFlags extra_flags) -> bool {
       float values[length];
       for(int i = 0; i < length; i++) {
         values[i] = t[i + 1];
@@ -529,7 +529,7 @@ namespace Gsage {
       return ret;
     };
 
-    imgui["DragFloatN"] = [] (const std::string& label, sol::table t, int length, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f) -> bool {
+    imgui["DragFloatN"] = [] (const std::string& label, sol::table t, const int length, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f) -> bool {
       float values[length];
       for(int i = 0; i < length; i++) {
         values[i] = t[i + 1];
@@ -556,7 +556,7 @@ namespace Gsage {
       }
 
       return ret;
-    };
+    };*/
 
     imgui["TextBuffer"] = [] (int size) -> std::shared_ptr<ImguiTextBuffer> {
       return std::shared_ptr<ImguiTextBuffer>(new ImguiTextBuffer(size));

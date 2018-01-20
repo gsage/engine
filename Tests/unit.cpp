@@ -2,15 +2,13 @@
 #include <gtest/gtest.h>
 #include "Logger.h"
 
-INITIALIZE_EASYLOGGINGPP
-
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #include "CoreFoundation/CoreFoundation.h"
 #endif
 
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
-#include "windows.h"
+#include "WIN32/WindowsIncludes.h"
 #include <Shellapi.h>
 #include <string>
 INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
@@ -32,8 +30,8 @@ int main(int argc, char *argv[])
   chdir(p.str().c_str()); // error: expected constructor, destructor or type conversion before '(' token
 #endif
 #if GSAGE_PLATFORM == GSAGE_WIN32
-  int argc = 0;
-  char* argv[1] = {0};
+  int argc = 1;
+  char* argv[1] = {"unit-tests.exe\0"};
 #endif
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

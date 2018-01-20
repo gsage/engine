@@ -1,0 +1,15 @@
+set(LIB_NAME "easyloggingpp")
+
+include_directories(./include)
+FILE(GLOB sources src/easylogging++.cc)
+
+set(LIB_TYPE STATIC)
+
+if(WIN32)
+  set(LIB_TYPE SHARED)
+  set(LIB_COMPILE_FLAGS "-DELPP_AS_DLL -DELPP_EXPORT_SYMBOLS -DAUTO_INITIALIZE_EASYLOGGINGPP")
+endif(WIN32)
+
+add_library(${LIB_NAME} ${LIB_TYPE} ${sources})
+
+set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS "${LIB_COMPILE_FLAGS}")

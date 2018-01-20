@@ -31,7 +31,10 @@ THE SOFTWARE.
 #include "GsageDefinitions.h"
 #include "DataProxy.h"
 #include "Engine.h"
-#include "sol.hpp"
+#include "sol_forward.hpp"
+
+#include "lua/LuaEventProxy.h"
+#include "lua/LuaEventConnection.h"
 
 #include <stdexcept>
 
@@ -231,10 +234,46 @@ namespace Gsage
        * @param ut Bindings
        */
       template<class T>
-      void registerEvent(Event::ConstType name, const std::string& handler, sol::usertype<T> ut);
+      void registerEvent(Event::ConstType name, const std::string& handler, sol::usertype<T> ut)
+      {
+        if(!std::is_base_of<Event, T>::value)
+        {
+          LOG(ERROR) << "Event not registered: specified type is not derived from Event";
+          return;
+        }
+
+        if(!mStateView)
+        {
+          LOG(ERROR) << "Event not registered: no lua state";
+          return;
+        }
+
+        sol::state_view& lua = *mStateView;
+
+        lua.set_usertype(name, ut);
+        lua["LuaEventProxy"][handler] = &LuaEventProxy::addEventListener<T>;
+      }
 
       template<typename C, typename... Args>
-      void registerEvent(Event::ConstType name, const std::string& handler, Args&&... args);
+      void registerEvent(Event::ConstType name, const std::string& handler, Args&&... args)
+      {
+        if(!std::is_base_of<Event, C>::value)
+        {
+          LOG(ERROR) << "Event not registered: specified type is not derived from Event";
+          return;
+        }
+
+        if(!mStateView)
+        {
+          LOG(ERROR) << "Event not registered: no lua state";
+          return;
+        }
+
+        sol::state_view& lua = *mStateView;
+        lua.new_usertype<C>(name, std::forward<Args>(args)...);
+        lua["LuaEventConnection"][handler] = &LuaEventConnection::bind<C>;
+        lua["LuaEventProxy"][handler] = &LuaEventProxy::addEventListener<C>;
+      }
     private:
       void closeLuaState();
       GsageFacade* mInstance;

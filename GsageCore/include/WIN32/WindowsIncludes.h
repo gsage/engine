@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2018 Artem Chernyshev and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +24,6 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "systems/RenderSystem.h"
 
-namespace Gsage {
-
-  RenderSystem::RenderSystem()
-  {
-  }
-
-  RenderSystem::~RenderSystem()
-  {
-  }
-
-}
+#include <windows.h>
+#include <Winuser.h>

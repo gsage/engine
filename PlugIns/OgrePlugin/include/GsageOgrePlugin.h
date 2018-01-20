@@ -1,5 +1,5 @@
-#ifndef _OgrePlugin_H_
-#define _OgrePlugin_H_
+#ifndef _GsageOgrePlugin_H_
+#define _GsageOgrePlugin_H_
 
 /*
 -----------------------------------------------------------------------------
@@ -30,32 +30,31 @@ THE SOFTWARE.
 #include "IPlugin.h"
 
 namespace Gsage {
-  class GsageFacade;
-  class OgrePlugin : public IPlugin
+  class GsageOgrePlugin : public IPlugin
   {
     public:
-      OgrePlugin();
-      virtual ~OgrePlugin();
+      GsageOgrePlugin();
+      virtual ~GsageOgrePlugin();
 
       /**
        * Get ogre plugin name
        */
-      const std::string& getName() const;
+      virtual const std::string& getName() const;
 
       /**
        * Registers OgreRenderSystem and RecastNavigationSystem
        */
-      bool installImpl();
+      virtual bool installImpl();
 
       /**
        * Unregisters OgreRenderSystem and RecastNavigationSystem
        */
-      void uninstallImpl();
+      virtual void uninstallImpl();
 
       /**
        * Set up lua bindings
        */
-      void setupLuaBindings();
+      virtual void setupLuaBindings();
   };
 }
 

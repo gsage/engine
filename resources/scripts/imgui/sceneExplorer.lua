@@ -45,17 +45,27 @@ local function tableEditor(t, id)
     local keyID = id .. "." .. key
     if type(value) ~= "table" then
       imgui.PushID(keyID)
-      local buffer = imgui.TextBuffer(30)
-      buffer:write(value)
-      if imgui.InputText(key, buffer, ImGuiInputTextFlags_EnterReturnsTrue) then
-        diff[key] = buffer:read()
-      end
 
-      imgui.PopID()
-      local newVal = buffer:read()
-      if newVal ~= value then
-        diff[key] = newVal
+      local newValue
+      if type(value) == "boolean" then
+        newValue = imgui.Checkbox(key, value)
+      elseif type(value) == "number" then
+        changed, newValue = imgui.DragFloat(key, value, 1, 0, 0, "%.3f")
+        if changed then
+          diff[key] = newValue
+        end
+      else
+        local buffer = imgui.TextBuffer(30)
+        buffer:write(value)
+        if imgui.InputText(key, buffer, ImGuiInputTextFlags_EnterReturnsTrue) then
+          diff[key] = buffer:read()
+        end
+        newValue = buffer:read()
       end
+      if newValue ~= value then
+        diff[key] = newValue
+      end
+      imgui.PopID()
     else
       imgui.TextWrapped(key)
       diff[key] = tableEditor(value, keyID)

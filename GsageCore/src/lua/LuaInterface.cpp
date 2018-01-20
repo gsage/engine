@@ -25,7 +25,7 @@ THE SOFTWARE.
 */
 
 #include "lua/LuaInterface.h"
-#include "lua.hpp"
+#include "sol.hpp"
 
 #include "GsageFacade.h"
 
@@ -43,7 +43,6 @@ THE SOFTWARE.
 
 #include "lua/LuaEventProxy.h"
 #include "lua/LuaEventConnection.h"
-#include "lua/LuaHelpers.h"
 
 #if GSAGE_PLATFORM == GSAGE_LINUX || GSAGE_PLATFORM == GSAGE_APPLE
 #include <limits.h>
@@ -159,6 +158,11 @@ namespace Gsage {
     mStateView = new sol::state_view(mState);
     sol::state_view lua = *mStateView;
 
+    lua.new_usertype<EventDispatcher>("EventDispatcher",
+        "new", sol::no_constructor,
+        "id", [](EventDispatcher* instance) { return (unsigned long long)(instance); }
+    );
+
     lua.new_usertype<PropertyDescription>("PropertyDescription",
         "new", sol::constructors<sol::types<const std::string&, const std::string&>>(),
         "name", sol::property(&PropertyDescription::getName),
@@ -260,7 +264,7 @@ namespace Gsage {
     lua["Entity"]["stats"] = &Entity::getComponent<StatsComponent>;
     lua["Entity"]["getProps"] = &Entity::getProps;
 
-    lua.new_simple_usertype<Engine>("Engine",
+    lua.new_usertype<Engine>("Engine",
         sol::base_classes, sol::bases<EventDispatcher>(),
         "settings", sol::property(&Engine::settings)
     );
@@ -292,18 +296,13 @@ namespace Gsage {
         )
     );
 
-    lua.new_usertype<EventDispatcher>("EventDispatcher",
-        "new", sol::no_constructor,
-        "id", [](EventDispatcher* instance){ return (unsigned long long)(instance); }
-    );
-
-    lua.new_simple_usertype<LuaEventProxy>("LuaEventProxy",
-        "new", sol::constructors<>()
+    lua.new_usertype<LuaEventProxy>("LuaEventProxy",
+        "new", sol::constructors<void()>()
     );
     lua["LuaEventProxy"]["bind"] = (bool(LuaEventProxy::*)(EventDispatcher*, const std::string&, const sol::object&))&LuaEventProxy::addEventListener;
     lua["LuaEventProxy"]["unbind"] = &LuaEventProxy::removeEventListener;
 
-    lua.new_simple_usertype<LuaEventConnection>("LuaEventConnection",
+    lua.new_usertype<LuaEventConnection>("LuaEventConnection",
         "new", sol::constructors<sol::types<sol::protected_function>>()
     );
     lua["LuaEventConnection"]["bind"] = (long(LuaEventConnection::*)(EventDispatcher*, const std::string&))&LuaEventConnection::bind;
@@ -362,7 +361,7 @@ namespace Gsage {
         sol::base_classes, sol::bases<Event>(),
         "id", sol::readonly(&EntityEvent::mEntityId),
         "CREATE", sol::var(EntityEvent::CREATE),
-        "DELETE", sol::var(EntityEvent::DELETE)
+        "REMOVE", sol::var(EntityEvent::REMOVE)
     );
 
     registerEvent<EngineEvent>("EngineEvent",
@@ -598,6 +597,7 @@ namespace Gsage {
     lua["split"] = [](const std::string& s, char delim) -> std::vector<std::string> {
       return split(s, delim);
     };
+
     return true;
   }
 
@@ -625,15 +625,33 @@ namespace Gsage {
     luaL_openlibs(lua.lua_state());
     lua["dependencies"] = dependencies;
     lua["resourcePath"] = mResourcePath;
+
+    lua["log"] = lua.create_table();
+    lua["log"]["info"] = [] (const char* message) { LOG(INFO) << message; };
+    lua["log"]["error"] = [] (const char* message) { LOG(ERROR) << message; };
+    lua["log"]["debug"] = [] (const char* message) { LOG(DEBUG) << message; };
+    lua["log"]["warn"] = [] (const char* message) { LOG(WARNING) << message; };
+    lua["log"]["trace"] = [] (const char* message) { LOG(TRACE) << message; };
+
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    lua["gsage_platform"] = "apple";
+#elif GSAGE_PLATFORM == GSAGE_LINUX
+    lua["gsage_platform"] = "linux";
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+    lua["gsage_platform"] = "win32";
+#else
+    lua["gsage_platform"] = "other";
+#endif
     const std::string runPrefix = mResourcePath + GSAGE_PATH_SEPARATOR + "luarocks";
 #if GSAGE_PLATFORM == GSAGE_LINUX || GSAGE_PLATFORM == GSAGE_APPLE
     char *full_path = realpath(runPrefix.c_str(), NULL);
     lua["run_prefix"] = std::string(full_path);
     free(full_path);
+
 #elif GSAGE_PLATFORM == GSAGE_WIN32
     TCHAR full_path[200];
     GetFullPathName(_T(runPrefix.c_str()), 200, full_path, NULL);
-    lua["run_prefix"] = full_path;
+    lua["run_prefix"] = std::string(full_path);
 #else
     lua["run_prefix"] = runPrefix;
 #endif

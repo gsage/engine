@@ -1,26 +1,50 @@
 OGRE_VERSION ?= 1.9.0
+LUA_VERSION ?= luajit-2.0.5
 INPUT ?= OIS
 WITH_LIBROCKET ?= True
 UNAME_S := $(shell uname -s)
-UNIT_CMD :=  cd ./build/bin/ && ./unit-tests
-FUNCTIONAL_CMD := cd ./build/bin/ && ./functional-tests
-RUN_CMD := cd ./build/bin/ && ./GsageExe
-EDITOR_CMD := cd ./build/bin/ && ./GsageEditor
-LOGS := ./build/bin/test.log
-HEADERS := $(shell find ./ -name "*.h" -type f)
-CPP := $(shell find ./ -name "*.cpp" -type f)
-CMAKE := $(shell find ./ -name "*.txt" -type f)
+IS_WINDOWS := 0
 TEST_PARAMS ?=
 FILE_EXTENSION :=
 POSTFIX :=
+PREFIX := ./
 
 #using integration api_key/user by default
 API_KEY ?= 3d14168da7de2092522ed90f72e9b6bf20db89e5
 CONAN_USER ?= gsage-ci
 
-ifeq ($(OS),Windows_NT)
-FILE_EXTENSION := .exe
+ifeq ($(UNAME_S),MSYS_NT-10.0)
+IS_WINDOWS := 1
 endif
+
+ifeq ($(OS),Windows_NT)
+IS_WINDOWS := 1
+endif
+
+LOGS := ./build/bin/test.log
+CMAKE_FUNCTIONS :=
+ifeq ($(IS_WINDOWS),1)
+PREFIX :=
+SHELL = cmd
+HEADERS := $(shell where /r . *.h)
+CPP := $(shell where /r . *.cpp)
+CPP := $(shell where /r . *.cpp)
+CMAKE := $(shell where /r . CMakeLists.txt)
+CONFIGS := $(shell where /r ./resources *.in)
+CMAKE_FUNCTIONS := $(shell where /r . *.cmake)
+ADD_REPO_CMD = conan remote list | findstr /I "gsage" && if %errorlevel% == 1 (conan remote add gsage https://api.bintray.com/conan/gsage/main --insert && conan user -p $(API_KEY) -r gsage $(CONAN_USER))
+else
+HEADERS := $(shell find ./ -name "*.h" -o -name "*.hpp" -type f)
+CPP := $(shell find ./ -name "*.cpp" -o -name "*.cc" -type f)
+CMAKE := $(shell find ./ -name "*.txt" -o -name "*.cmake" -type f)
+CONFIGS := resources/*.in
+ADD_REPO_CMD := if ! conan remote list | grep gsage; then conan remote add gsage https://api.bintray.com/conan/gsage/main --insert; conan user -p $(API_KEY) -r gsage $(CONAN_USER);  fi
+endif
+
+UNIT_CMD :=  cd ./build/bin/ && $(PREFIX)unit-tests
+FUNCTIONAL_CMD := cd ./build/bin/ && $(PREFIX)functional-tests
+RUN_CMD := cd ./build/bin/ && $(PREFIX)GsageExe
+EDITOR_CMD := cd ./build/bin/ && $(PREFIX)GsageEditor
 
 ifeq ($(UNAME_S),Darwin)
 UNIT_CMD := ./build/bin/unit-tests.app/Contents/MacOS/unit-tests
@@ -40,17 +64,17 @@ RUN_CMD := $(RUN_CMD)$(POSTFIX)$(FILE_EXTENSION)
 EDITOR_CMD := $(EDITOR_CMD)$(POSTFIX)$(FILE_EXTENSION)
 
 .repo: conanfile.py
-	@if ! conan remote list | grep gsage; then conan remote add gsage https://api.bintray.com/conan/gsage/main --insert; conan user -p $(API_KEY) -r gsage $(CONAN_USER);	fi
+	@$(ADD_REPO_CMD)
 	@touch .repo
 
 .deps: .repo conanfile.py
-	@conan install -g cmake -o gsage:with_ogre=$(OGRE_VERSION) -o gsage:with_input=$(INPUT) -o gsage:with_librocket=$(WITH_LIBROCKET) --build=outdated .
+	@conan install -g cmake -o gsage:with_ogre=$(OGRE_VERSION) -o gsage:with_input=$(INPUT) -o gsage:with_librocket=$(WITH_LIBROCKET) -o with_lua_version=$(LUA_VERSION) --build=outdated .
 	@touch .deps
 
 upload-deps: .deps
 	@conan upload "*" --all -r gsage -c
 
-build: $(HEADERS) $(CPP) .deps resources/*.in $(CMAKE)
+build: $(HEADERS) $(CPP) $(CMAKE) .deps $(CONFIGS) $(CMAKE_FUNCTIONS)
 	@conan build .
 
 unit: build
@@ -74,5 +98,6 @@ all: build unit
 
 clean:
 	@rm -rf build
+	@rm .deps
 
 .PHONY: unit functional ci

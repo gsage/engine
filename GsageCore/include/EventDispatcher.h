@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <vector>
 #include <string>
 #include <functional>
+#include "GsageDefinitions.h"
 
 namespace Gsage {
   class EventDispatcher;
@@ -102,7 +103,7 @@ namespace Gsage {
   /**
    * Abstract event class
    */
-  class Event
+  class GSAGE_API Event
   {
     public:
       typedef std::string Type;
@@ -123,7 +124,7 @@ namespace Gsage {
   class DispatcherEvent : public Event
   {
     public:
-      static const Event::Type FORCE_UNSUBSCRIBE;
+      GSAGE_API static const Event::Type FORCE_UNSUBSCRIBE;
 
       DispatcherEvent(ConstType type) : Event(type) {}
       virtual ~DispatcherEvent() {};
@@ -146,6 +147,11 @@ namespace Gsage {
        * @param event Abstract event
        */
       void fireEvent(const Event& event);
+
+      /**
+       * Remove all listeners from this event dispatcher
+       */
+      void removeAllListeners();
     private:
       template<class C>
       friend class EventSubscriber;

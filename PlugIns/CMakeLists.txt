@@ -2,10 +2,6 @@
 #  add_subdirectory(ParticleUniverse)
 #endif(${OGRE_Plugin_ParticleUniverse_FOUND})
 
-if(${OGRE_FOUND})
-  add_subdirectory(OgrePlugin)
-endif(${OGRE_FOUND})
-
 if(${LIBROCKET_FOUND})
   add_subdirectory(RocketUI)
 endif(${LIBROCKET_FOUND})
@@ -17,5 +13,9 @@ endif(${OIS_FOUND})
 if(${SDL_FOUND})
   add_subdirectory(SDL)
 endif(${SDL_FOUND})
+
+if(${OGRE_FOUND})
+  add_subdirectory(OgrePlugin)
+endif(${OGRE_FOUND})
 
 add_subdirectory(ImGUI)

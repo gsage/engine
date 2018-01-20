@@ -3,6 +3,7 @@ set(PLUGIN_NAME "OgrePlugin")
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include
+  ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Overlay_INCLUDE_DIR}
   ${OGRE_Terrain_INCLUDE_DIR}
@@ -14,6 +15,7 @@ file(GLOB sources src/*.cpp src/*/*.cpp )
 set(LIBS
   OgreCrowd
   GsageCore
+  easyloggingpp
   ${OGRE_Terrain_LIBRARY}
   ${OGRE_Overlay_LIBRARY}
 )
@@ -29,6 +31,15 @@ if(APPLE)
     ${OPENGL_glu_LIBRARY}
   )
 endif(APPLE)
+
+if(WIN32)
+  find_package(OpenGL)
+  set(LIBS
+    ${OPENGL_LIBRARIES}
+    ${CONAN_LIBS_OGRE}
+    ${LIBS}
+  )
+endif(WIN32)
 
 # Linux specific
 if(UNIX AND NOT APPLE)
@@ -72,4 +83,4 @@ set(OGRE_PLUGIN_VERSION_MINOR 9)
 set(OGRE_PLUGIN_VERSION_PATCH 0)
 set(OGRE_PLUGIN_VERSION_STRING ${OGRE_PLUGIN_VERSION_MAJOR}.${OGRE_PLUGIN_VERSION_MINOR}.${OGRE_PLUGIN_VERSION_PATCH})
 
-set_target_properties(${PLUGIN_NAME} PROPERTIES VERSION ${OGRE_PLUGIN_VERSION_STRING})
+set_target_properties(${PLUGIN_NAME} PROPERTIES VERSION ${OGRE_PLUGIN_VERSION_STRING} COMPILE_FLAGS -D_OGRE_PLUGIN_EXPORT)

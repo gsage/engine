@@ -9,7 +9,7 @@ local EventProxy = class(function(self)
   -- initializing C++ connection
   self.connection = LuaEventConnection.new(self.handler)
   -- direct handler subscriber
-  --self.direct = LuaEventProxy.new()
+  self.direct = LuaEventProxy.new()
   self.handlers = {__mode = 'v'}
   self.routes = {}
 end)
@@ -19,7 +19,23 @@ end)
 -- @param type event type
 -- @param callback event listener
 function EventProxy:bind(target, type, callback, global, handlerName)
+  if type == nil or type == "" then
+    error("Tried to bind nil event type")
+  end
+
   if not callback then
+    return
+  end
+
+  local co, isRoot = coroutine.running()
+  -- if called from root coroutine, then we can register the handler
+  -- directly in the script system
+  if not co or isRoot then
+    if handlerName == "onOgreSelect" then
+      self.direct:onOgreSelect(target, type, callback)
+      return
+    end
+    self.direct[handlerName or "bind"](self.direct, target, type, callback)
     return
   end
 

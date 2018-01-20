@@ -145,8 +145,9 @@ namespace Gsage {
           return false;
         }
 
-        h.erase(iterator);
         (*iterator).disconnect();
+        h.erase(iterator);
+
         if(h.size() == 0)
         {
           mConnections.erase(subscription);

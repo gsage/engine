@@ -43,8 +43,8 @@ THE SOFTWARE.
 #include "ogre/OgreObjectManager.h"
 #include "EventDispatcher.h"
 
-#include "RenderSystem.h"
 #include "RenderTarget.h"
+#include "Definitions.h"
 
 static const std::string OGRE_SECTION        = "OgreRenderer";
 static const std::string OGRE_PLUGINS_PATH   = "PluginsPath";
@@ -84,7 +84,7 @@ namespace Gsage
               );
   };
 
-  class OgreRenderSystem : public ComponentStorage<RenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public RenderSystem, public EventSubscriber<OgreRenderSystem>
+  class GSAGE_OGRE_PLUGIN_API OgreRenderSystem : public ComponentStorage<RenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public EventSubscriber<OgreRenderSystem>
   {
     public:
       static const std::string ID;
@@ -282,6 +282,8 @@ namespace Gsage
        * @param event WindowEvent
        */
       bool handleWindowResized(EventDispatcher* sender, const Event& event);
+
+      void removeAllRenderTargets();
 
       Ogre::Root* mRoot;
       Ogre::SceneManager* mSceneManager;

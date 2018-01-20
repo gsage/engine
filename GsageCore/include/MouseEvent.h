@@ -34,7 +34,7 @@ namespace Gsage
   /**
    * Mouse event that is not specific to any input library
    */
-  class MouseEvent : public Event
+  class GSAGE_API MouseEvent : public Event
   {
     public:
       static const Event::Type MOUSE_DOWN;

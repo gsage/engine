@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _LuaEventProxy_H_
 
 #include "EventSubscriber.h"
+
 #include "sol.hpp"
 
 namespace Gsage {
@@ -98,7 +99,7 @@ namespace Gsage {
            * Calls underlying lua callback
            *
            * @param event Event to process (will be cast to the particular templated event).
-           * @returnds sol::protected_function_result
+           * @returns sol::protected_function_result
            */
           virtual sol::protected_function_result operator()(const Event& event)
           {

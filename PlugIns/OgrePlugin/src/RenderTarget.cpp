@@ -218,7 +218,7 @@ namespace Gsage {
     }
 
     mSceneManager = sceneManager;
-    mCollisionTools = std::shared_ptr<MOC::CollisionTools>(new MOC::CollisionTools(mSceneManager));
+    mCollisionTools = std::make_shared<MOC::CollisionTools>(mSceneManager);
   }
 
   int RenderTarget::getWidth() const
@@ -445,10 +445,18 @@ namespace Gsage {
 #endif
     if(parameters.get("useWindowManager", false)) {
       std::string handle = parameters.get<std::string>("windowHandle", "");
+      std::string glContext = parameters.get<std::string>("glContext", "");
 #if GSAGE_PLATFORM == GSAGE_APPLE
       params["macAPICocoaUseNSView"] = "true";
       params["externalWindowHandle"] = handle;
 #else
+#if GSAGE_PLATFORM == GSAGE_WIN32
+      if(!glContext.empty()) {
+        params["externalGLContext"] = glContext;
+        params["externalGLControl"] = "True";
+      }
+      params["externalWindowHandle"] = handle;
+#endif
       params["parentWindowHandle"] = handle;
 #endif
     }
@@ -499,11 +507,11 @@ namespace Gsage {
         break;
     }
 
-    return RenderTargetPtr(target);
+    return target;
   }
 
   RenderTargetPtr wrap(Ogre::RenderTarget* renderTarget, const std::string& name, const DataProxy& parameters, Engine* engine)
   {
-    return RenderTargetPtr(new RenderTarget(name, renderTarget, parameters, engine));
+    return new RenderTarget(name, renderTarget, parameters, engine);
   }
 }

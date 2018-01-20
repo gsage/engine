@@ -242,7 +242,7 @@ namespace Gsage
       class Property : public AbstractProperty
       {
         public:
-          Property(std::string name, T* propertyPtr, int flags = 0x00) 
+          Property(std::string name, T* propertyPtr, int flags = 0x00)
             : mPropertyPtr(propertyPtr)
             , AbstractProperty(name, flags)
           {

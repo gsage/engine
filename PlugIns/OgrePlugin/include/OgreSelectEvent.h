@@ -30,9 +30,10 @@ THE SOFTWARE.
 #include <OgreVector3.h>
 
 #include "EngineEvent.h"
+#include "Definitions.h"
 
 namespace Gsage {
-  class OgreSelectEvent : public SelectEvent
+  class GSAGE_OGRE_PLUGIN_API OgreSelectEvent : public SelectEvent
   {
     public:
       OgreSelectEvent(Event::ConstType type, const unsigned int& flags, const std::string& entityId, const Ogre::Vector3& intersection);

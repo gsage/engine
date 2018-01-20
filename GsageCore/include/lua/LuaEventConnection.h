@@ -27,7 +27,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "sol.hpp"
+#include "sol_forward.hpp"
 #include "EventSubscriber.h"
 
 namespace Gsage {

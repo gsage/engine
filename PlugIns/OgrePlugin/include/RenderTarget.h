@@ -233,7 +233,7 @@ namespace Gsage {
       void setDimensions(int width, int height);
   };
 
-  typedef std::shared_ptr<RenderTarget> RenderTargetPtr;
+  typedef RenderTarget* RenderTargetPtr;
 
   /**
    * Factory creates Ogre::RenderTarget wrapped into Gsage wrapper

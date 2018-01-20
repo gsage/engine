@@ -1,12 +1,14 @@
-set(LIB_NAME "SDL")
+set(LIB_NAME "SDLPlugin")
 
 include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
+  ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${SDL_INCLUDE_DIRS}
 )
 
 set(LIBS
   GsageCore
+  easyloggingpp
   ${SDL_LIBRARIES}
 )
 

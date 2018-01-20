@@ -133,7 +133,7 @@ namespace std {
 #include <vector>
 
 #if defined(_WIN32)
-#   include <winsock2.h>
+#   include <winsock.h>
 #   include <process.h>
 #   include <iphlpapi.h>
 #   ifdef _MSC_VER
@@ -899,4 +899,3 @@ int main() {
 }
 
 #endif
-

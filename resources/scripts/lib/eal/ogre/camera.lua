@@ -213,8 +213,8 @@ local function orbitCamera(cls)
     self.minDistance = self.props.minDistance or 1
     self.maxAngle = self.props.maxAngle or 80
     self.minAngle = self.props.minAngle or 10
-    self.zoomStepMultiplier = self.props.zoomStepMultiplier or 0.01
-    self.mouseSensivity = self.props.mouseSensivity or 0.005
+    self.zoomStepMultiplier = self.props.zoomStepMultiplier or 0.1
+    self.mouseSensivity = self.props.mouseSensivity or 0.5
     if type(self.props.cameraOffset) == "string" then
       self.cameraOffset, _ = Vector3.parse(self.props.cameraOffset or "0,0,0")
     elseif self.props.cameraOffset then
@@ -266,8 +266,8 @@ local function orbitCamera(cls)
         delta.x = event.x - self.mousePosition.x
         delta.y = event.y - self.mousePosition.y
         if self.moveCamera then
-          self.uAngle = self.uAngle - delta.y
-          self.vAngle = self.vAngle + delta.x
+          self.uAngle = self.uAngle - delta.y * self.mouseSensivity
+          self.vAngle = self.vAngle + delta.x * self.mouseSensivity
 
           self.mousePosition.x = event.x
           self.mousePosition.y = event.y

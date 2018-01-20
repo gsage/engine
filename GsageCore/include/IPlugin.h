@@ -36,12 +36,11 @@ THE SOFTWARE.
 #ifdef PLUGIN_EXPORT
 #define PluginExport __declspec (dllexport)
 #else
-#define PluginExport __declspec (dllimport)
+#define PluginExport
 #endif
 #else
 #define PluginExport
 #endif
-
 
 namespace Gsage {
 

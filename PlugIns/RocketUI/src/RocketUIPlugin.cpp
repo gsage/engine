@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include "RocketUIPlugin.h"
 #include "GsageFacade.h"
 #include "RocketEvent.h"
-#include "lua/LuaHelpers.h"
 
 namespace Gsage {
 

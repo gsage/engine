@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
-#include "windows.h"
+#include "WIN32/WindowsIncludes.h"
 #endif
 
 #ifndef RESOURCES_FOLDER
@@ -62,6 +62,9 @@ extern "C" {
       }
       CFRelease(resourcesURL); // error: expected constructor, destructor or type conversion before '(' token
       chdir(path); // error: expected constructor, destructor or type conversion before '(' token
+#endif
+#if GSAGE_PLATFORM == GSAGE_WIN32
+      SetProcessDPIAware();
 #endif
       int retVal = 0;
       Gsage::GsageFacade facade;

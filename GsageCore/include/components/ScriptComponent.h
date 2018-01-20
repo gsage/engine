@@ -27,7 +27,7 @@ THE SOFTWARE.
 #ifndef _ScriptComponent_H_
 #define _ScriptComponent_H_
 
-#include <sol.hpp>
+#include "sol_forward.hpp"
 #include "Component.h"
 
 struct lua_State;

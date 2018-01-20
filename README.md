@@ -1,7 +1,9 @@
 Graphics System Agnostic Game Engine
 ====================================
 
-[![Documentation Status](https://readthedocs.org/projects/engine/badge/?version=latest)](https://engine.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/gsage/engine.svg?branch=master)](https://travis-ci.org/gsage/engine)
+[![Documentation Status](https://readthedocs.org/projects/engine/badge/?version=latest)](https://engine.readthedocs.io/en/latest/?badge=latest)
+[![Build status](https://ci.appveyor.com/api/projects/status/vf3oobbg4ofld3of?svg=true)](https://ci.appveyor.com/project/Unix4ever/engine)
+[![Build Status](https://travis-ci.org/gsage/engine.svg?branch=master)](https://travis-ci.org/gsage/engine)
 [![Gitter](https://badges.gitter.im/gsage/engine.svg)](https://gitter.im/gsage/engine?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 # The Purpose

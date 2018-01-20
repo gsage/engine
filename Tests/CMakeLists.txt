@@ -1,11 +1,11 @@
 set(APP_NAME "unit-tests")
 
-message("${GTEST_LIBRARIES}")
 set(TEST_DEPENDENCIES
   ${TEST_DEPENDENCIES}
   GsageCore
   jsoncpp
-  ImGUI
+  ImGUIPlugin
+  easyloggingpp
   ${LUAJIT_LIBRARIES}
   ${GTEST_LIBRARIES}
 )
@@ -16,6 +16,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/imgui
+  ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/PlugIns/ImGUI/include
 
   ${LUAJIT_INCLUDE_DIR}
@@ -29,7 +30,6 @@ set(TEST_FILES
   Core/TestEventDispatcher.cpp
   Core/TestSerializable.cpp
   Core/TestDataProxy.cpp
-  Core/TestDictionary.cpp
   Core/TestGsageFacade.cpp
   Core/TestFileLoader.cpp
   Plugins/ImGUI/TestDockspace.cpp
@@ -73,16 +73,6 @@ macro(test_runner app_name main test_files)
 
   target_link_libraries(${app_name} ${LIBS})
 
-  # post-build copy for win32
-  if(WIN32 AND NOT MINGW)
-    add_custom_command( TARGET ${app_name} PRE_BUILD
-      COMMAND if not exist .\\bin mkdir .\\bin )
-    add_custom_command( TARGET ${app_name} POST_BUILD
-      COMMAND copy \"$(TargetPath)\" .\\bin )
-    add_custom_command( TARGET ${app_name} POST_BUILD
-      COMMAND copy \"${gsage_SOURCE_DIR}\\Tests\\resources\" .\\bin )
-  endif(WIN32 AND NOT MINGW)
-
   # symlink resources for mac and linux
   if(MINGW OR UNIX)
     if(APPLE)
@@ -95,6 +85,18 @@ macro(test_runner app_name main test_files)
       COMMAND [ -L ${TEST_RESOURCES} ] || ln -s ${gsage_SOURCE_DIR}/Tests/resources ${TEST_RESOURCES}
     )
   endif(MINGW OR UNIX)
+
+  # post-build copy for win32
+  if(WIN32)
+    set(resource_path \"${gsage_SOURCE_DIR}\\Tests\\resources\")
+    set(runtime_path "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\resources")
+
+    STRING(REGEX REPLACE "/" "\\\\" resource_path "${resource_path}")
+    STRING(REGEX REPLACE "/" "\\\\" runtime_path "${runtime_path}")
+
+    add_custom_command( TARGET ${app_name} POST_BUILD
+      COMMAND xcopy "${resource_path}" "${runtime_path}" /s /e /h /i /y)
+  endif(WIN32)
 endmacro()
 
 test_runner("unit-tests" "unit.cpp" "${TEST_FILES}")

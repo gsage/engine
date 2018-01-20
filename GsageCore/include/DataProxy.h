@@ -48,7 +48,7 @@ namespace Gsage
 std::ostream & operator<<(std::ostream & os, Gsage::DataProxy const & dict);
 
 namespace Gsage {
-  class DataProxyException : public std::exception 
+  class DataProxyException : public std::exception
   {
     public:
       DataProxyException(const std::string& message, const std::string& detail) {
