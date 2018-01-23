@@ -21,10 +21,13 @@ build_script:
   - conan build .
   - cd build && cmake ..
 
-
 # scripts to run after build
 test_script:
-  - cd ./build/bin/ && unit-tests.exe
+  - |
+   cd ./build/bin/
+   unit-tests.exe --gtest_output="xml:unit.xml"
+# functional test do not work in appveyor yet
+# functional-tests.exe -o junit --exclude-tags benchmark --no-auto-insulate
 
 # scripts to run after build
 after_build:
@@ -33,5 +36,16 @@ after_build:
   - cd c:\projects\gsage
 
 artifacts:
-  - path: gsage.zip
+  - path: .
     name: gsage.zip
+
+  - path: build/bin
+    name: test.log
+
+after_test:
+  - ps: |
+        $wc = New-Object 'System.Net.WebClient'
+        Get-ChildItem . -Name -Recurse 'build\bin\*.xml'  |
+        Foreach-Object {
+            $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $_))
+        }
