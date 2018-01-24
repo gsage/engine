@@ -32,7 +32,7 @@ const Event::Type MouseEvent::MOUSE_DOWN = "mouseDown";
 const Event::Type MouseEvent::MOUSE_UP = "mouseUp";
 const Event::Type MouseEvent::MOUSE_MOVE = "mouseMove";
 
-MouseEvent::MouseEvent(Event::ConstType type, const float& w, const float& h, const ButtonType& b, const std::string& dispatcher) 
+MouseEvent::MouseEvent(Event::ConstType type, double w, double h, ButtonType b, const std::string& dispatcher) 
   : Event(type)
   , width(w)
   , height(h)
@@ -45,14 +45,14 @@ MouseEvent::~MouseEvent()
 {
 }
 
-void MouseEvent::setRelativePosition(const float& x, const float& y, const float& z)
+void MouseEvent::setRelativePosition(double x, double y, double z)
 {
   relativeX = x;
   relativeY = y;
   relativeZ = z;
 }
 
-void MouseEvent::setAbsolutePosition(const float& x, const float& y, const float& z)
+void MouseEvent::setAbsolutePosition(double x, double y, double z)
 {
   mouseX = x;
   mouseY = y;

@@ -71,34 +71,46 @@ namespace Gsage {
       mRootNode->rotate(rotation, Ogre::Node::TransformSpace::TS_LOCAL);
   }
 
-  void RenderComponent::lookAt(const Ogre::Vector3& position, const RotationAxis rotationAxis, Ogre::Node::TransformSpace transformSpace)
+  void RenderComponent::lookAt(const Ogre::Vector3& position, const Geometry::RotationAxis rotationAxis, Geometry::TransformSpace transformSpace)
   {
     if(!mRootNode)
       return;
 
     Ogre::Vector3 axis = Ogre::Vector3::ZERO;
+    Ogre::Node::TransformSpace tSpace;
+
+    switch(transformSpace) {
+      case Geometry::TS_LOCAL:
+        tSpace = Ogre::Node::TS_LOCAL;
+        break;
+      case Geometry::TS_WORLD:
+        tSpace = Ogre::Node::TS_WORLD;
+        break;
+      default:
+        tSpace = Ogre::Node::TS_WORLD;
+    }
 
     switch(rotationAxis) {
-      case X_AXIS:
+      case Geometry::X_AXIS:
         axis.x = 1;
         break;
-      case Y_AXIS:
+      case Geometry::Y_AXIS:
         axis.y = 1;
         break;
-      case Z_AXIS:
+      case Geometry::Z_AXIS:
         axis.z = 1;
         break;
       default:
-        mRootNode->lookAt(position, transformSpace);
+        mRootNode->lookAt(position, tSpace);
         return;
     }
 
-    mRootNode->lookAt(position * (Ogre::Vector3::UNIT_SCALE - axis) + (mRootNode->getPositionWithoutOffset() * axis), transformSpace);
+    mRootNode->lookAt(position * (Ogre::Vector3::UNIT_SCALE - axis) + (mRootNode->getPositionWithoutOffset() * axis), tSpace);
   }
 
   void RenderComponent::lookAt(const Ogre::Vector3& position)
   {
-    lookAt(position, NONE);
+    lookAt(position, Geometry::NONE);
   }
 
   DataProxy RenderComponent::getAnimations()
@@ -122,32 +134,32 @@ namespace Gsage {
     return mRootNode;
   }
 
-  const Ogre::Vector3 RenderComponent::getPosition()
+  const Ogre::Vector3 RenderComponent::getOgrePosition()
   {
     return mRootNode->getPosition();
   }
 
-  const Ogre::Vector3 RenderComponent::getScale()
+  const Ogre::Vector3 RenderComponent::getOgreScale()
   {
     return mRootNode->getScale();
   }
 
-  const Ogre::Quaternion RenderComponent::getOrientation()
+  const Ogre::Quaternion RenderComponent::getOgreOrientation()
   {
     return mRootNode->getOrientation();
   }
 
-  const Ogre::Quaternion RenderComponent::getFaceOrientation()
+  const Ogre::Quaternion RenderComponent::getOgreFaceOrientation()
   {
-    return (getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z).getRotationTo(mRootNode->getOrientationVector());
+    return (getOgreOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z).getRotationTo(mRootNode->getOrientationVector());
   }
 
-  const Ogre::Vector3 RenderComponent::getDirection()
+  const Ogre::Vector3 RenderComponent::getOgreDirection()
   {
-    return getOrientation() * mRootNode->getOrientationVector();
+    return getOgreOrientation() * mRootNode->getOrientationVector();
   }
 
-  bool RenderComponent::adjustAnimationStateSpeed(const std::string& name, const float& speed)
+  bool RenderComponent::adjustAnimationStateSpeed(const std::string& name, double speed)
   {
     return mAnimationScheduler.adjustSpeed(name, speed);
   }
@@ -157,7 +169,7 @@ namespace Gsage {
     return mAnimationScheduler.play(name);
   }
 
-  bool RenderComponent::playAnimation(const std::string& name, const float& times, const float& speed, const float& offset, bool reset)
+  bool RenderComponent::playAnimation(const std::string& name, int times, double speed, double offset, bool reset)
   {
     return mAnimationScheduler.play(name, times, speed, offset, reset);
   }
@@ -176,5 +188,55 @@ namespace Gsage {
   const DataProxy& RenderComponent::getResources() const
   {
     return mResources;
+  }
+
+  void RenderComponent::setPosition(const Gsage::Vector3& position)
+  {
+    setPosition(GsageVector3ToOgreVector3(position));
+  }
+
+  void RenderComponent::setOrientation(const Gsage::Quaternion& orientation)
+  {
+    setOrientation(GsageQuaternionToOgreQuaternion(orientation));
+  }
+
+  void RenderComponent::rotate(const Gsage::Quaternion& rotation)
+  {
+    rotate(GsageQuaternionToOgreQuaternion(rotation));
+  }
+
+  void RenderComponent::lookAt(const Gsage::Vector3& position, const Geometry::RotationAxis rotationAxis, Geometry::TransformSpace transformSpace)
+  {
+    lookAt(GsageVector3ToOgreVector3(position), rotationAxis, transformSpace);
+  }
+
+  void RenderComponent::lookAt(const Gsage::Vector3& position)
+  {
+    lookAt(GsageVector3ToOgreVector3(position));
+  }
+
+  const Gsage::Vector3 RenderComponent::getPosition()
+  {
+    return OgreVector3ToGsageVector3(getOgrePosition());
+  }
+
+  const Gsage::Vector3 RenderComponent::getScale()
+  {
+    return OgreVector3ToGsageVector3(getOgreScale());
+  }
+
+  const Gsage::Quaternion RenderComponent::getOrientation()
+  {
+    return OgreQuaternionToGsageQuaternion(getOgreOrientation());
+  }
+
+  const Gsage::Quaternion RenderComponent::getFaceOrientation()
+  {
+    return OgreQuaternionToGsageQuaternion(getOgreFaceOrientation());
+  }
+
+  const Gsage::Vector3 RenderComponent::getDirection()
+  {
+    return OgreVector3ToGsageVector3(getOgreDirection());
   }
 }

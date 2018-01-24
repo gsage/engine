@@ -64,19 +64,19 @@ namespace Gsage {
        *
        * @param time Time in seconds
        */
-      void update(const float& time);
+      void update(double time);
       /**
        * Enables animation
        *
        * @param time Time to fade in
        */
-      void enable(const float& time = DEFAULT_FADE_SPEED);
+      void enable(double time = DEFAULT_FADE_SPEED);
       /**
        * Disables animation
        *
        * @param time Time to fade out
        */
-      void disable(const float& time = DEFAULT_FADE_SPEED);
+      void disable(double time = DEFAULT_FADE_SPEED);
       /**
        * Gets current time position of anim
        */
@@ -86,7 +86,7 @@ namespace Gsage {
        * 
        * @param value Time in seconds
        */
-      void setTimePosition(const float& value);
+      void setTimePosition(double value);
       /**
        * Gets animation length
        */
@@ -118,11 +118,11 @@ namespace Gsage {
       /**
        * Gets animation speed
        */
-      const float& getSpeed();
+      double getSpeed();
       /**
        * Sets animation speed
        */
-      void setSpeed(const float& speed);
+      void setSpeed(double speed);
       /**
        * Animation has anim state
        */
@@ -139,7 +139,7 @@ namespace Gsage {
        * Rewind animation to the beginning, depends on direction
        * @param offset If speed >= 0: 0 + offset, else: length - offset
        */
-      void rewind(const float& offset = 0);
+      void rewind(double offset = 0);
     private:
       friend class AnimationScheduler;
       Ogre::AnimationState* mAnimationState;
@@ -165,13 +165,13 @@ namespace Gsage {
       /**
        * Gets animations speed
        */
-      const float& getSpeed();
+      double getSpeed();
       /**
        * Sets animations speed
        *
        * @param value 1 is normal speed
        */
-      void setSpeed(const float& value);
+      void setSpeed(double value);
       /**
        * Checks that all animations ended
        */
@@ -193,7 +193,7 @@ namespace Gsage {
   class AnimationController
   {
     public:
-      AnimationController(Animation& animation, const float& speed = 0, const float& offset = 0);
+      AnimationController(Animation& animation, double speed = 0, double offset = 0);
       AnimationController(const AnimationController& other);
       virtual ~AnimationController();
 
@@ -245,7 +245,7 @@ namespace Gsage {
        * @param speed Animation speed, 1 -- is normal speed
        * @returns true if animation group exists
        */
-      bool adjustSpeed(const std::string& name, const float& speed);
+      bool adjustSpeed(const std::string& name, double speed);
       /**
        * Play animations from animations group
        *
@@ -257,7 +257,7 @@ namespace Gsage {
        *
        * @returns true if animation group exists
        */
-      bool play(const std::string& name, const int& times = LOOP, const float& speed = 0, const float& offset = 0, bool reset = false);
+      bool play(const std::string& name, int times = LOOP, double speed = 0, double offset = 0, bool reset = false);
       /**
        * Reset animation state
        */
@@ -267,7 +267,7 @@ namespace Gsage {
        *
        * @param time Time delta in seconds
        */
-      void update(const float& time);
+      void update(double time);
 
     private:
       /**
@@ -281,7 +281,7 @@ namespace Gsage {
        * @param offset Animation offset
        * @param reset interrupt current animation
        */
-      bool queueAnimation(AnimationGroup& animation, const float& speed, const float& offset, bool reset);
+      bool queueAnimation(AnimationGroup& animation, double speed, double offset, bool reset);
       /**
        * Check that animation is in queue
        * @param group Animation group, queue name

@@ -24,6 +24,10 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 """
 
+# TODO: this .scene converter to internal engine format generates outdated file format
+# TODO: implement in in lua and embed into the editor instead, so that it would allow importing .scene files
+# from blender and ogitor
+
 #!/usr/bin/python
 import json
 import xml.etree.ElementTree as ET

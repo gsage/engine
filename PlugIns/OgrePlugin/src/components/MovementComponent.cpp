@@ -46,7 +46,7 @@ namespace Gsage {
   {
   }
 
-  void MovementComponent::setTarget(const float& x, const float& y, const float& z)
+  void MovementComponent::setTarget(float x, float y, float z)
   {
     setTarget(Ogre::Vector3(x, y, z));
   }
@@ -97,12 +97,12 @@ namespace Gsage {
     return ++mCurrentPoint < mPath.size();
   }
 
-  const float& MovementComponent::getLastMovementDistance()
+  float MovementComponent::getLastMovementDistance()
   {
     return mLastMovementDistance;
   }
 
-  void MovementComponent::setLastMovementDistance(const float& value)
+  void MovementComponent::setLastMovementDistance(float value)
   {
     mLastMovementDistance = value;
   }

@@ -1,6 +1,7 @@
 set(LIB_NAME "RocketUIPlugin")
 
 include_directories(
+    ${gsage_SOURCE_DIR}/Vendor/gmath/src
     ${gsage_SOURCE_DIR}/Vendor/easylogging/include
     ${LIBROCKET_INCLUDE_DIRS}
 )

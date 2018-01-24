@@ -13,6 +13,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
+  ${gsage_SOURCE_DIR}/Vendor/gmath/src
 
   ${LUAJIT_INCLUDE_DIR}
   ${MSGPACK_INCLUDE_DIRS}

@@ -10,7 +10,7 @@ return function(self)
 
   model:attachToBone('Handle.R', 's1', sword)
   model:attachToBone('Handle.L', 's2', sword)
-  self:render():playAnimation('closeHands', 1, 0, 0, false)
+  self:render():playAnimation('closeHands', 1, 1, 0, false)
   if rocket ~= nil then
     function initStatusBar()
       statusBar.setMaximumHP(self:stats():getNumber('maxHP', 1))

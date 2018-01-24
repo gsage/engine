@@ -55,7 +55,7 @@ namespace Gsage {
        * Update stats
        * @param time elapsed time
        */
-      void update(const float& time);
+      void update(double time);
 
       /**
        * Get gathered stats

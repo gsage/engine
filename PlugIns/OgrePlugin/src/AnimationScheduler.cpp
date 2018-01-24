@@ -59,7 +59,7 @@ namespace Gsage {
     mAnimationState->setWeight(0);
   }
 
-  void Animation::update(const float& time)
+  void Animation::update(double time)
   {
     if(!isInitialized() || !mAnimationState->getEnabled())
       return;
@@ -70,7 +70,7 @@ namespace Gsage {
     // TODO: Add ability to customize fade out speed
     if(!getLoop())
     {
-      const float& delta = len * 0.1f;
+      double delta = len * 0.1f;
       if(mSpeed > 0 && getTimePosition() > (len - delta))
         disable();
       else if(mSpeed < 0 && getTimePosition() < delta)
@@ -97,7 +97,7 @@ namespace Gsage {
     }
   }
 
-  void Animation::enable(const float& time)
+  void Animation::enable(double time)
   {
     mFadeIn = true;
     mFadeOut = false;
@@ -107,7 +107,7 @@ namespace Gsage {
     setEnabled(true);
   }
 
-  void Animation::disable(const float& time)
+  void Animation::disable(double time)
   {
     mFadeIn = false;
     mFadeOut = true;
@@ -120,7 +120,7 @@ namespace Gsage {
     return mAnimationState->getTimePosition();
   }
 
-  void Animation::setTimePosition(const float& value)
+  void Animation::setTimePosition(double value)
   {
     mAnimationState->setTimePosition(value);
   }
@@ -159,12 +159,12 @@ namespace Gsage {
 
   }
 
-  const float& Animation::getSpeed()
+  double Animation::getSpeed()
   {
     return mSpeed;
   }
 
-  void Animation::setSpeed(const float& value)
+  void Animation::setSpeed(double value)
   {
     mSpeed = value;
   }
@@ -184,7 +184,7 @@ namespace Gsage {
     return mFadeOut;
   }
 
-  void Animation::rewind(const float& offset)
+  void Animation::rewind(double offset)
   {
     setTimePosition(mSpeed > 0 ? offset : getLength() - offset);
   }
@@ -257,12 +257,12 @@ namespace Gsage {
     return true;
   }
 
-  const float& AnimationGroup::getSpeed()
+  double AnimationGroup::getSpeed()
   {
     return mSpeed;
   }
 
-  void AnimationGroup::setSpeed(const float& value)
+  void AnimationGroup::setSpeed(double value)
   {
     for(auto& pair : mAnimations)
     {
@@ -285,7 +285,7 @@ namespace Gsage {
   // AnimationController
   // --------------------------------------------------------------------------------
 
-  AnimationController::AnimationController(Animation& animation, const float& speed, const float& offset)
+  AnimationController::AnimationController(Animation& animation, double speed, double offset)
     : mAnimation(animation)
     , mOffset(offset)
     , mSpeed(speed)
@@ -360,7 +360,7 @@ namespace Gsage {
     return mInitialized = mAnimationGroups.size() > 0;
   }
 
-  bool AnimationScheduler::adjustSpeed(const std::string& name, const float& speed)
+  bool AnimationScheduler::adjustSpeed(const std::string& name, double speed)
   {
     if(mAnimationGroups.count(name) == 0)
     {
@@ -372,7 +372,7 @@ namespace Gsage {
     return true;
   }
 
-  bool AnimationScheduler::play(const std::string& name, const int& times, const float& speed, const float& offset, bool reset)
+  bool AnimationScheduler::play(const std::string& name, int times, double speed, double offset, bool reset)
   {
     if(times == 0)
       return false;
@@ -425,7 +425,7 @@ namespace Gsage {
     return true;
   }
 
-  bool AnimationScheduler::queueAnimation(AnimationGroup& group, const float& speed, const float& offset, bool reset = false)
+  bool AnimationScheduler::queueAnimation(AnimationGroup& group, double speed, double offset, bool reset = false)
   {
     for(auto& pair : group.mAnimations)
     {
@@ -466,7 +466,7 @@ namespace Gsage {
     playDefaultAnimation();
   }
 
-  void AnimationScheduler::update(const float& time)
+  void AnimationScheduler::update(double time)
   {
     for(auto& pair : mAnimationGroups)
     {

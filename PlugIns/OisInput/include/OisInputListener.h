@@ -90,7 +90,7 @@ namespace Gsage {
       OisInputListener(size_t handle, Engine* eventRedirect = 0);
       ~OisInputListener();
 
-      void update(const float& time);
+      void update(double time);
       // Gsage::InputHandler
       virtual void handleResize(unsigned int width, unsigned int height);
       virtual void handleClose();

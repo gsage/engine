@@ -156,7 +156,7 @@ namespace Gsage {
 
       bool handleMouseEvent(EventDispatcher* sender, const Event& event);
 
-      void doRaycasting(const float& x, const float& y, unsigned int flags = 0xFFFF, bool select = false);
+      void doRaycasting(float x, float y, unsigned int flags = 0xFFFF, bool select = false);
     protected:
       virtual void updateCameraAspectRatio();
 

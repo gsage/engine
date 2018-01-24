@@ -1,18 +1,18 @@
 // ImGui Allegro 5 bindings
-// In this binding, ImTextureID is used to store a 'ALLEGRO_BITMAP*' texture identifier. Read the FAQ about ImTextureID in imgui.cpp.
 
-// TODO:
-// - Clipboard is not supported.
+// Implemented features:
+//  [X] User texture binding. Use 'ALLEGRO_BITMAP*' as ImTextureID. Read the FAQ about ImTextureID in imgui.cpp.
+// Missing features:
+//  [ ] Clipboard support via al_set_clipboard_text/al_clipboard_has_text.
 
 // You can copy and use unmodified imgui_impl_* files in your project. See main.cpp for an example of using this.
 // If you use this binding you'll need to call 4 functions: ImGui_ImplXXXX_Init(), ImGui_ImplXXXX_NewFrame(), ImGui::Render() and ImGui_ImplXXXX_Shutdown().
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
-// https://github.com/ocornut/imgui
-// by @birthggd
+// https://github.com/ocornut/imgui, Original code by @birthggd
 
 #include <stdint.h>     // uint64_t
 #include <cstring>      // memcpy
-#include <imgui.h>
+#include "imgui.h"
 #include "imgui_impl_a5.h"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
@@ -27,8 +27,6 @@ static ALLEGRO_BITMAP*          g_Texture = NULL;
 static double                   g_Time = 0.0;
 static ALLEGRO_MOUSE_CURSOR*    g_MouseCursorInvisible = NULL;
 static ALLEGRO_VERTEX_DECL*     g_VertexDecl = NULL;
-
-#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
 struct ImDrawVertAllegro
 {
@@ -162,9 +160,9 @@ bool ImGui_ImplA5_Init(ALLEGRO_DISPLAY* display)
     // We still use a custom declaration to use 'ALLEGRO_PRIM_TEX_COORD' instead of 'ALLEGRO_PRIM_TEX_COORD_PIXEL' else we can't do a reliable conversion.
     ALLEGRO_VERTEX_ELEMENT elems[] =
     {
-        { ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_2, OFFSETOF(ImDrawVertAllegro, pos) },
-        { ALLEGRO_PRIM_TEX_COORD, ALLEGRO_PRIM_FLOAT_2, OFFSETOF(ImDrawVertAllegro, uv) },
-        { ALLEGRO_PRIM_COLOR_ATTR, 0, OFFSETOF(ImDrawVertAllegro, col) },
+        { ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_2, IM_OFFSETOF(ImDrawVertAllegro, pos) },
+        { ALLEGRO_PRIM_TEX_COORD, ALLEGRO_PRIM_FLOAT_2, IM_OFFSETOF(ImDrawVertAllegro, uv) },
+        { ALLEGRO_PRIM_COLOR_ATTR, 0, IM_OFFSETOF(ImDrawVertAllegro, col) },
         { 0, 0, 0 }
     };
     g_VertexDecl = al_create_vertex_decl(elems, sizeof(ImDrawVertAllegro));
@@ -179,8 +177,10 @@ bool ImGui_ImplA5_Init(ALLEGRO_DISPLAY* display)
     io.KeyMap[ImGuiKey_PageDown] = ALLEGRO_KEY_PGDN;
     io.KeyMap[ImGuiKey_Home] = ALLEGRO_KEY_HOME;
     io.KeyMap[ImGuiKey_End] = ALLEGRO_KEY_END;
+    io.KeyMap[ImGuiKey_Insert] = ALLEGRO_KEY_INSERT;
     io.KeyMap[ImGuiKey_Delete] = ALLEGRO_KEY_DELETE;
     io.KeyMap[ImGuiKey_Backspace] = ALLEGRO_KEY_BACKSPACE;
+    io.KeyMap[ImGuiKey_Space] = ALLEGRO_KEY_SPACE;
     io.KeyMap[ImGuiKey_Enter] = ALLEGRO_KEY_ENTER;
     io.KeyMap[ImGuiKey_Escape] = ALLEGRO_KEY_ESCAPE;
     io.KeyMap[ImGuiKey_A] = ALLEGRO_KEY_A;
@@ -201,7 +201,6 @@ bool ImGui_ImplA5_Init(ALLEGRO_DISPLAY* display)
 void ImGui_ImplA5_Shutdown()
 {
     ImGui_ImplA5_InvalidateDeviceObjects();
-    ImGui::Shutdown();
 }
 
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -216,6 +215,7 @@ bool ImGui_ImplA5_ProcessEvent(ALLEGRO_EVENT *ev)
     {
     case ALLEGRO_EVENT_MOUSE_AXES:
         io.MouseWheel += ev->mouse.dz;
+        io.MouseWheelH += ev->mouse.dw;
         return true;
     case ALLEGRO_EVENT_KEY_CHAR:
         if (ev->keyboard.display == g_Display)

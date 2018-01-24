@@ -101,6 +101,7 @@ Bind Events
 ^^^^^^^^^^^
 
 Events can be handled in Lua script in two ways: 
+
 * :code:`event:bind(...)` will bind generic callback. You can use it if you do not need upcasting from :cpp:class:`Gsage::Event` to derived event type.
 * :code:`event:<handlerID>(...)` will bind callback specifically for some concrete type of event.
 
@@ -109,15 +110,14 @@ If you use bind, you will not be able to access derived class methods or variabl
 .. code-block:: lua
 
   local onSelect = function(event)
-    -- then you will be able to access derived class methods
     print(e.hasFlags) -- prints nil
   end
 
   event:bind(core, "objectSelected", onSelect)
 
-:code:`handlerID` is defined when binding a new event type:
+To listen for any specific event type use `event:<handlerID>`.
 
-Example:
+:code:`handlerID` is defined when binding a new event type:
 
 .. code-block:: cpp
 

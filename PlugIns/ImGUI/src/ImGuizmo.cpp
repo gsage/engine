@@ -879,7 +879,7 @@ namespace ImGuizmo
             vec_t pos = makeVect(axisPos[axis], axisPos[(axis+1)%3], axisPos[(axis+2)%3]) * gContext.mScreenFactor;
             circlePos[i] = worldToPos(pos, gContext.mMVP);
          }
-         drawList->AddPolyline(circlePos, halfCircleSegmentCount, colors[3 - axis], false, 2, true);
+         drawList->AddPolyline(circlePos, halfCircleSegmentCount, colors[3 - axis], false, 2);
       }
       drawList->AddCircle(worldToPos(gContext.mModel.v.position, gContext.mViewProjection), screenRotateSize * gContext.mHeight, colors[0], 64);
 
@@ -898,8 +898,8 @@ namespace ImGuizmo
             pos *= gContext.mScreenFactor;
             circlePos[i] = worldToPos(pos + gContext.mModel.v.position, gContext.mViewProjection);
          }
-         drawList->AddConvexPolyFilled(circlePos, halfCircleSegmentCount, 0x801080FF, true);
-         drawList->AddPolyline(circlePos, halfCircleSegmentCount, 0xFF1080FF, true, 2, true);
+         drawList->AddConvexPolyFilled(circlePos, halfCircleSegmentCount, 0x801080FF);
+         drawList->AddPolyline(circlePos, halfCircleSegmentCount, 0xFF1080FF, true, 2);
 
          ImVec2 destinationPosOnScreen = circlePos[1];
          char tmps[512];
@@ -1025,7 +1025,7 @@ namespace ImGuizmo
                vec_t cornerWorldPos = (dirPlaneX * quadUV[j * 2] + dirPlaneY  * quadUV[j * 2 + 1]) * gContext.mScreenFactor;
                screenQuadPts[j] = worldToPos(cornerWorldPos, gContext.mMVP);
             }
-            drawList->AddConvexPolyFilled(screenQuadPts, 4, colors[i + 4], true);
+            drawList->AddConvexPolyFilled(screenQuadPts, 4, colors[i + 4]);
          }
       }
 
@@ -1721,7 +1721,7 @@ namespace ImGuizmo
 
 
          // draw face with lighter color
-         gContext.mDrawList->AddConvexPolyFilled(faceCoordsScreen, 4, directionColor[normalIndex] | 0x808080, true);
+         gContext.mDrawList->AddConvexPolyFilled(faceCoordsScreen, 4, directionColor[normalIndex] | 0x808080);
       }
    }
 };

@@ -27,12 +27,12 @@ THE SOFTWARE.
 #include "OgreConverters.h"
 
 namespace Gsage {
-  inline float fromHex(const unsigned int& value, const int& offset)
+  inline float fromHex(unsigned int value, int offset)
   {
     return (value >> offset & 0xFF) / 255.0f;
   }
 
-  inline int toHex(const float& value, const int& offset)
+  inline int toHex(float value, int offset)
   {
     return (int)(value * 0xFF) << offset;
   }

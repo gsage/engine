@@ -180,24 +180,27 @@ namespace Gsage {
       lua.new_usertype<RenderComponent>("RenderComponent",
           sol::base_classes, sol::bases<EventDispatcher, Reflection>(),
           "props", sol::property(&RenderComponent::getProps, &RenderComponent::setProps),
-          "position", sol::property((void(RenderComponent::*)(const Ogre::Vector3&))&RenderComponent::setPosition, &RenderComponent::getPosition),
+          "position", sol::property((void(RenderComponent::*)(const Ogre::Vector3&))&RenderComponent::setPosition, &RenderComponent::getOgrePosition),
           "root", sol::property(&RenderComponent::getRoot),
-          "direction", sol::property(&RenderComponent::getDirection),
-          "orientation", sol::property(&RenderComponent::setOrientation, &RenderComponent::getOrientation),
-          "facingOrientation", sol::property(&RenderComponent::getFaceOrientation),
+          "direction", sol::property(&RenderComponent::getOgreDirection),
+          "orientation", sol::property(
+            (void(RenderComponent::*)(const Ogre::Quaternion&))&RenderComponent::setOrientation,
+            &RenderComponent::getOgreOrientation
+          ),
+          "facingOrientation", sol::property(&RenderComponent::getOgreFaceOrientation),
           "lookAt", sol::overload(
-            (void(RenderComponent::*)(const Ogre::Vector3&, const RenderComponent::RotationAxis, Ogre::Node::TransformSpace))&RenderComponent::lookAt,
+            (void(RenderComponent::*)(const Ogre::Vector3&, const Geometry::RotationAxis, Geometry::TransformSpace))&RenderComponent::lookAt,
             (void(RenderComponent::*)(const Ogre::Vector3&))&RenderComponent::lookAt
           ),
-          "rotate", &RenderComponent::rotate,
+          "rotate", sol::overload(
+            (void(RenderComponent::*)(const Ogre::Quaternion&))&RenderComponent::rotate,
+            (void(RenderComponent::*)(const Gsage::Quaternion&))&RenderComponent::rotate
+          ),
           "playAnimation", &RenderComponent::playAnimation,
           "resetAnimation", &RenderComponent::resetAnimationState,
           "setAnimationState", &RenderComponent::setAnimationState,
           "adjustAnimationSpeed", &RenderComponent::adjustAnimationStateSpeed,
 
-          "X_AXIS", sol::var(RenderComponent::X_AXIS),
-          "Y_AXIS", sol::var(RenderComponent::Y_AXIS),
-          "Z_AXIS", sol::var(RenderComponent::Z_AXIS),
           "POSITION_CHANGE", sol::var(RenderComponent::POSITION_CHANGE)
       );
 
@@ -206,7 +209,7 @@ namespace Gsage {
           "props", sol::property(&MovementComponent::getProps, &MovementComponent::setProps),
           "go", sol::overload(
             (void(MovementComponent::*)(const Ogre::Vector3&))&MovementComponent::setTarget,
-            (void(MovementComponent::*)(const float&, const float&, const float&))&MovementComponent::setTarget
+            (void(MovementComponent::*)(float, float, float))&MovementComponent::setTarget
           ),
           "stop", &MovementComponent::resetTarget,
           "speed", sol::property(&MovementComponent::getSpeed, &MovementComponent::setSpeed),
@@ -236,8 +239,8 @@ namespace Gsage {
           "UNIT_Z", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::UNIT_Z; }),
           "NEGATIVE_UNIT_X", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::NEGATIVE_UNIT_X; }),
           "NEGATIVE_UNIT_Y", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::NEGATIVE_UNIT_Y; }),
-          "NEGATIVE_UNIT_Z", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::UNIT_SCALE; }),
-          "UNIT_SCALE", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::NEGATIVE_UNIT_Z; }),
+          "NEGATIVE_UNIT_Z", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::NEGATIVE_UNIT_Z; }),
+          "UNIT_SCALE", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::UNIT_SCALE; }),
           sol::meta_function::multiplication, sol::overload(
             (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Vector3&)const)&Ogre::Vector3::operator*,
             (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Real)const)&Ogre::Vector3::operator*

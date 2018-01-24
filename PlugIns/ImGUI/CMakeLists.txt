@@ -4,6 +4,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/sole
+  ${gsage_SOURCE_DIR}/Vendor/gmath/src
 )
 
 set(LIBS

@@ -51,7 +51,7 @@ namespace Gsage {
   {
   }
 
-  void ResourceMonitor::update(const float& time)
+  void ResourceMonitor::update(double time)
   {
     mElapsed += time;
     if(mElapsed < mUpdateInterval) {

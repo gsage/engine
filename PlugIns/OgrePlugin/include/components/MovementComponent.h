@@ -54,7 +54,7 @@ namespace Gsage {
        * @param y Y coordinate
        * @param z Z coordinate
        */
-      void setTarget(const float& x, const float& y, const float& z);
+      void setTarget(float x, float y, float z);
       /**
        * Set entity destination
        * @param position Vector3 position of target
@@ -93,7 +93,7 @@ namespace Gsage {
       /**
        * Get last movement distance
        */
-      const float& getLastMovementDistance();
+      float getLastMovementDistance();
       /**
        * Set component movement speed
        *
@@ -109,7 +109,7 @@ namespace Gsage {
       /**
        * Set last movement distance
        */
-      void setLastMovementDistance(const float& distance);
+      void setLastMovementDistance(float distance);
 
       double mSpeed;
       std::string mMoveAnimationState;

@@ -1,10 +1,7 @@
 Internals
 ===========
 
-.. image:: ../../images/gsage_overview.svg
-
-.. note::
-  This diagram is outdated a bit.
+.. image:: ../../images/gsage_overview.png
 
 Terminology
 ^^^^^^^^^^^
