@@ -1,7 +1,7 @@
 local rocksPath = 'luarocks/lua/5.1/?.lua'
 
 if gsage_platform == "win32" then
-  rocksPath = 'luarocks/lua/?.lua'
+  rocksPath = 'luarocks/share/lua/5.1/?.lua'
 end
 
 package.path = ';' .. getResourcePath(rocksPath) .. ';' .. package.path
@@ -22,11 +22,27 @@ local fs = require("luarocks.fs")
 
 -- activating build environment for Windows
 if gsage_platform == "win32" then
-  local probe_versions = {"14.0", "15.0"}
-  local ms_build_version = nil
+  local probe_paths = {}
+  local ms_comntools_version = nil
+  local try_get_env_variable = function(name)
+    local value = os.getenv(name)
+    if value then
+      probe_paths[#probe_paths + 1] = {path = "\"" .. value .. "..\\..\\VC\\vcvarsall.bat\" x64", version = name}
+    end
+  end
 
-  for _, version in ipairs(probe_versions) do
-    local vcvarsall = "\"C:\\Program Files (x86)\\Microsoft Visual Studio " .. version .. "\\VC\\vcvarsall.bat\" x64"
+  local value = os.getenv("VCVARSALL_PATH")
+  if value then
+    probe_paths[#probe_paths + 1] = {path = "\"" .. value .. "\"", version = "set manually"}
+  else
+    try_get_env_variable("VS150COMNTOOLS")
+    try_get_env_variable("VS140COMNTOOLS")
+    try_get_env_variable("VS130COMNTOOLS")
+  end
+
+  -- TODO we definetely need vswhere there
+  for _, tools in ipairs(probe_paths) do
+    local vcvarsall = tools.path
     local success = fs.execute_string(vcvarsall)
     if success then
       local props = {"CC", "LD", "MT", "RC"}
@@ -36,14 +52,14 @@ if gsage_platform == "win32" then
         log.info("Monkey patch " .. prop .. " with vcvarsall")
       end
 
-      log.info("Using MSBuild version " .. version)
-      ms_build_version = version
+      log.info("Using VS Common Tools version " .. tools.version)
+      ms_comntools_version = tools.version
       break
     end
   end
 
-  if not ms_build_version then
-    log.warn("Failed to find MSBuild utils, binary packages assembly won't work")
+  if not ms_comntools_version then
+    log.warn("Failed to find VS Common Tools utils, binary packages assembly won't work")
   end
 end
 

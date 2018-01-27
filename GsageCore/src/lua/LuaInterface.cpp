@@ -654,6 +654,7 @@ namespace Gsage {
     lua["run_prefix"] = std::string(full_path);
 #else
     lua["run_prefix"] = runPrefix;
+    lua["gsage_platform"] = "other";
 #endif
     lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
     return runScript(path, &lua);

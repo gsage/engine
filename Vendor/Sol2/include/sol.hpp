@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-29 23:58:19.191868 UTC
-// This header was generated with sol v2.19.0 (revision d8b2da2)
+// Generated 2018-01-23 21:17:54.182180 UTC
+// This header was generated with sol v2.19.0 (revision 63ec47b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3553,7 +3553,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3562,7 +3562,7 @@ namespace sol {
 		OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
 			return initialized() ? contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3573,7 +3573,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : std::move(*(T*)nullptr);
+							 : std::move(*static_cast<T*>(nullptr));
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3600,7 +3600,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3611,7 +3611,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can abort here
 							 // but the others are constexpr, so we can't...
-							 : (std::abort(), *(T*)nullptr);
+							 : (std::abort(), *static_cast<T*>(nullptr));
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -4277,6 +4277,12 @@ namespace sol {
 			template <typename T>
 			void operator()(T* p) const {
 				delete p;
+			}
+		};
+
+		struct state_deleter {
+			void operator()(lua_State* L) const {
+				lua_close(L);
 			}
 		};
 
@@ -6066,6 +6072,9 @@ namespace sol {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
+			if (top < 1) {
+				return;
+			}
 			if (rawindex == -count || top == rawindex) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));
@@ -7487,8 +7496,6 @@ namespace sol {
 
 // beginning of sol/inheritance.hpp
 
-#include <atomic>
-
 namespace sol {
 	template <typename... Args>
 	struct base_list {};
@@ -7507,19 +7514,6 @@ namespace sol {
 
 		template <typename T>
 		bool has_derived<T>::value = false;
-
-		inline std::size_t unique_id() {
-			static std::atomic<std::size_t> x(0);
-			return ++x;
-		}
-
-		template <typename T>
-		struct id_for {
-			static const std::size_t value;
-		};
-
-		template <typename T>
-		const std::size_t id_for<T>::value = unique_id();
 
 		inline decltype(auto) base_class_check_key() {
 			static const auto& key = "class_check";
@@ -7543,32 +7537,32 @@ namespace sol {
 
 		template <typename T, typename... Bases>
 		struct inheritance {
-			static bool type_check_bases(types<>, std::size_t) {
+			static bool type_check_bases(types<>, const std::string& ti) {
 				return false;
 			}
 
 			template <typename Base, typename... Args>
-			static bool type_check_bases(types<Base, Args...>, std::size_t ti) {
-				return ti == id_for<Base>::value || type_check_bases(types<Args...>(), ti);
+			static bool type_check_bases(types<Base, Args...>, const std::string& ti) {
+				return ti == usertype_traits<Base>::qualified_name() || type_check_bases(types<Args...>(), ti);
 			}
 
-			static bool type_check(std::size_t ti) {
-				return ti == id_for<T>::value || type_check_bases(types<Bases...>(), ti);
+			static bool type_check(const std::string& ti) {
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
 			}
 
-			static void* type_cast_bases(types<>, T*, std::size_t) {
+			static void* type_cast_bases(types<>, T*, const std::string&) {
 				return nullptr;
 			}
 
 			template <typename Base, typename... Args>
-			static void* type_cast_bases(types<Base, Args...>, T* data, std::size_t ti) {
+			static void* type_cast_bases(types<Base, Args...>, T* data, const std::string& ti) {
 				// Make sure to convert to T first, and then dynamic cast to the proper type
-				return ti != id_for<Base>::value ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
+				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
 			}
 
-			static void* type_cast(void* voiddata, std::size_t ti) {
+			static void* type_cast(void* voiddata, const std::string& ti) {
 				T* data = static_cast<T*>(voiddata);
-				return static_cast<void*>(ti != id_for<T>::value ? type_cast_bases(types<Bases...>(), data, ti) : data);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
 			}
 		};
 
@@ -8004,8 +7998,8 @@ namespace stack {
 				lua_rawget(L, metatableindex);
 				if (type_of(L, -1) != type::lua_nil) {
 					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-					success = ic(detail::id_for<T>::value);
+					detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
+					success = ic(usertype_traits<T>::qualified_name());
 				}
 			}
 			if (!success) {
@@ -8617,7 +8611,7 @@ namespace stack {
 				thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 				std::wstring r = convert.from_bytes(str, str + len);
 #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 7
-				// Fuck you, MinGW, and fuck you libstdc++ for introducing this absolutely asinine bug
+				// Thanks, MinGW and libstdc++, for introducing this absolutely asinine bug
 				// https://sourceforge.net/p/mingw-w64/bugs/538/
 				// http://chat.stackoverflow.com/transcript/message/32271369#32271369
 				for (auto& c : r) {
@@ -8812,9 +8806,9 @@ namespace stack {
 		static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
 			if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 				void* basecastdata = lua_touserdata(L, -1);
-				detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
+				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 				// use the casting function to properly adjust the pointer for the desired T
-				udata = ic(udata, detail::id_for<T>::value);
+				udata = ic(udata, usertype_traits<T>::qualified_name());
 				lua_pop(L, 1);
 			}
 			T* obj = static_cast<T*>(udata);
@@ -13981,7 +13975,7 @@ namespace sol {
 			template <typename... Args, typename... Ret>
 			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
 				unsafe_function f(L, index);
-				auto fx = [ f = std::move(f), L, index ](Args && ... args) -> meta::return_type_t<Ret...> {
+				auto fx = [ f = std::move(f) ](Args && ... args) -> meta::return_type_t<Ret...> {
 					return f.call<Ret...>(std::forward<Args>(args)...);
 				};
 				return std::move(fx);
@@ -13990,7 +13984,7 @@ namespace sol {
 			template <typename... FxArgs>
 			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
 				unsafe_function f(L, index);
-				auto fx = [f = std::move(f), L, index](FxArgs&&... args) -> void {
+				auto fx = [f = std::move(f)](FxArgs&&... args) -> void {
 					f(std::forward<FxArgs>(args)...);
 				};
 				return std::move(fx);
@@ -16643,6 +16637,7 @@ namespace sol {
 // end of sol/usertype_core.hpp
 
 #include <cstdio>
+#include <bitset>
 
 namespace sol {
 	namespace usertype_detail {
@@ -17002,7 +16997,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 32> properties;
+		std::bitset<32> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -17067,12 +17062,11 @@ namespace sol {
 			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
 			for (std::size_t i = 0; i < properties.size(); ++i) {
 				meta_function mf = static_cast<meta_function>(i);
-				bool& prop = properties[i];
 				const std::string& mfname = to_string(mf);
 				if (mfname == reg.name) {
 					switch (mf) {
 					case meta_function::construct:
-						if (prop) {
+						if (properties[i]) {
 #ifndef SOL_NO_EXCEPTIONS
 							throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #else
@@ -17093,17 +17087,17 @@ namespace sol {
 					case meta_function::index:
 						indexfunc = reg.func;
 						mustindex = true;
-						prop = true;
+						properties.set(i);
 						return;
 					case meta_function::new_index:
 						newindexfunc = reg.func;
 						mustindex = true;
-						prop = true;
+						properties.set(i);
 						return;
 					default:
 						break;
 					}
-					prop = true;
+					properties.set(i);
 					break;
 				}
 			}
@@ -17114,7 +17108,7 @@ namespace sol {
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args)
 		: usertype_metatable_core(&usertype_detail::indexing_fail<T, true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(), functions(std::forward<Args>(args)...), destructfunc(nullptr), callconstructfunc(nullptr), indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>), indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(usertype_detail::walk_all_bases<false>), baseclasscheck(nullptr), baseclasscast(nullptr), secondarymeta(contains_variable()), properties() {
-			properties.fill(false);
+			properties.reset();
 			std::initializer_list<typename usertype_detail::mapping_t::value_type> ilist{{std::pair<std::string, usertype_detail::call_information>(usertype_detail::make_string(std::get<I * 2>(functions)),
 				usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>,
 					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>))}...};
@@ -17701,8 +17695,8 @@ namespace sol {
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
+			baseclasscheck = reinterpret_cast<void*>(&detail::inheritance<T, Bases...>::type_check);
+			baseclasscast = reinterpret_cast<void*>(&detail::inheritance<T, Bases...>::type_cast);
 			indexbaseclasspropogation = usertype_detail::walk_all_bases<true, Bases...>;
 			newindexbaseclasspropogation = usertype_detail::walk_all_bases<false, Bases...>;
 		}
@@ -20014,13 +20008,13 @@ namespace sol {
 		}
 	} // namespace detail
 
-	class state : private std::unique_ptr<lua_State, void (*)(lua_State*)>, public state_view {
+	class state : private std::unique_ptr<lua_State, detail::state_deleter>, public state_view {
 	private:
-		typedef std::unique_ptr<lua_State, void (*)(lua_State*)> unique_base;
+		typedef std::unique_ptr<lua_State, detail::state_deleter> unique_base;
 
 	public:
 		state(lua_CFunction panic = detail::default_at_panic)
-		: unique_base(luaL_newstate(), lua_close), state_view(unique_base::get()) {
+		: unique_base(luaL_newstate()), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(object(lua_state(), in_place, f));
@@ -20029,7 +20023,7 @@ namespace sol {
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
-		: unique_base(lua_newstate(alfunc, alpointer), lua_close), state_view(unique_base::get()) {
+		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(object(lua_state(), in_place, f));

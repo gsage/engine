@@ -104,7 +104,7 @@ static inline std::string join(const std::vector<std::string>& vector, const cha
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define GSAGE_PATH_SEPARATOR '\\'
 #define ELPP_AS_DLL
-#ifdef _DLL_EXPORT
+#ifdef GSAGE_DLL_EXPORT
 #define GSAGE_API __declspec(dllexport)
 #else
 #define GSAGE_API __declspec(dllimport)

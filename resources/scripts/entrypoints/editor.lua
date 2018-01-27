@@ -94,7 +94,7 @@ local function onSelect(e)
   ogreView:setGizmoTarget(target)
 end
 
---event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
+event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
 
 if imguiInterface:available() then
   imguiConsole = Console(256, true)

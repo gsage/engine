@@ -7,7 +7,8 @@ package.path =  TRESOURCES .. '/scripts/?.lua' ..
 local version = _VERSION:match("%d+%.%d+")
 package.path = ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?.lua') ..
                ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?/init.lua') .. ';' .. package.path
-package.cpath = getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.so') .. ';' .. package.cpath
+package.cpath = getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.so') .. ';' ..
+                getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.dll') .. ';' .. package.cpath
 
 local async = require 'lib.async'
 

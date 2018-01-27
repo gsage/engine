@@ -20,7 +20,7 @@ include_directories(
 
 add_library(${LIB_NAME} SHARED ${headers} ${sources})
 
-set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS -D_DLL_EXPORT)
+set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS -DGSAGE_DLL_EXPORT)
 
 set(LIBS
   jsoncpp
