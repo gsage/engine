@@ -90,18 +90,6 @@ namespace Gsage {
     gizmo["LOCAL"] = ImGuizmo::MODE::LOCAL;
 
     lua["imgui"]["gizmo"] = gizmo;
-/*    lua["imgui"]["BeginDock"] = [](std::string label, int flags) -> bool {
-      return igBeginDock(label.c_str(), NULL, flags);
-    };
-    lua["imgui"]["BeginDockOpen"] = [](std::string label, bool opened, int flags) -> bool {
-      igBeginDock(label.c_str(), &opened, flags);
-      return opened;
-    };
-    lua["imgui"]["EndDock"] = igEndDock;
-    lua["imgui"]["SetDockActive"] = igSetDockActive;
-    lua["imgui"]["ShutdownDock"] = igShutdownDock;
-    lua["imgui"]["GetDockState"] = getDockState;
-    lua["imgui"]["SetDockState"] = setDockState;*/
   }
 }
 

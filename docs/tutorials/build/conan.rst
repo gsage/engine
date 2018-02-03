@@ -15,3 +15,12 @@ There are also other build targets:
 1. :code:`make run` starts the game.
 2. :code:`make unit` runs unit tests.
 3. :code:`make function` runs lua functional tests.
+
+On Windows you can install Anaconda https://anaconda.org/anaconda/python .
+Then you can open Anaconda promnt and install conan:
+
+.. code-block:: bash
+   
+   conda install conan
+
+Then set up VC environment using :code:`vcvarsall.bat`.

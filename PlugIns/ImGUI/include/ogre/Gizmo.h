@@ -38,6 +38,42 @@ namespace Gsage {
   class OgreRenderSystem;
   class SceneNodeWrapper;
 
+  /**
+   * Transformation Gizmo, supports move, scale and rotate operations.
+   *
+   * \verbatim embed:rst:leading-asterisk
+   *
+   * Lua usage example:
+   *
+   * .. code-block:: lua
+   *
+   *  -- create gizmo
+   *  gizmo = imgui.createGizmo()
+   *
+   *  -- setting target
+   *  local render = eal:getEntity("test").render
+   *  if render == nil then
+   *    exit(1)
+   *  end
+   *  gizmo:setTarget(render.root)
+   *
+   *  -- enable
+   *  gizmo:enable(true)
+   *
+   *  -- render on each ImGUI cycle
+   *  gizmo:render(0, 0, 320, 240)
+   *
+   *  -- changing mode
+   *  gizmo.mode = imgui.gizmo.WORLD
+   *
+   *  -- changing operation
+   *  gizmo.operation = imgui.gizmo.ROTATE
+   *
+   *  -- draw coordinates editor for this gizmo
+   *  -- it is separate to make it possible to draw it in the separate window
+   *  gizmo:drawCoordinatesEditor()
+   * \endverbatim
+   */
   class Gizmo
   {
     public:

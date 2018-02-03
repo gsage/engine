@@ -126,6 +126,8 @@ namespace Gsage {
         return Null;
       case sol::type::none:
         return Null;
+      default:
+        return Null;
     }
     return Null;
   }

@@ -6,11 +6,10 @@ Entity
 Entity Format
 -------------
 
-As Gsage uses ECS architecture, it operates entites.
 Each entity consists of several components.
 
 Each component can communicate with adjacent component through entity.
-Each component belongs to the separate system and stores state of the
+Each component belongs to one system and stores state of the
 entity for that system.
 
 For example, for render system:
@@ -74,7 +73,7 @@ Lifecycle
 ---------
 
 On each update, each component state can be updated.
-Engine iterates and updates all the systems and each system iterates and updates all it's components.
+Engine iterates and updates all the systems and each system iterates and updates each component it owns.
 
 Each component can be altered during engine operation.
 For example, render component can update it's position or change model.
@@ -90,7 +89,7 @@ Entity Add Flow
 2. Engine iterates through the list of keys of :cpp:class:`Gsage::Entity`,
    finds appropriate system by string :code:`id` and allocates a component there.
 3. Each system allocates the component in the pool and configures created component
-   with :cpp:class:`Gsage::Dictionary` that came from :cpp:class:`Gsage::Engine`.
+   with :cpp:class:`Gsage::DataProxy` that came from :cpp:class:`Gsage::Engine`.
 
 .. image:: ../../images/add_flow.svg
 

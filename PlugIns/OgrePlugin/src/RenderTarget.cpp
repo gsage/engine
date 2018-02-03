@@ -413,6 +413,10 @@ namespace Gsage {
       // reattach camera to the new render target
       setCamera(mCurrentCamera);
     }
+#if GSAGE_PLATFORM != GSAGE_WIN32
+    // for some reason it does not play well on Windows
+    mWrappedTarget->update();
+#endif
 
     LOG(DEBUG) << "Created RTT texture \"" << name << "\", size: " << width << "x" << height << ", samples: " << samples << ", pixel format: " << pixelFormat;
   }

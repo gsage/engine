@@ -3,9 +3,8 @@
 Engine Abstraction Layer
 ========================
 
-Gsage engine is designed to be as flexible as possible, thus it supports plugins.
 As systems, that are installed from plugins most definetely will have different set of Lua bindings,
-there is a Lua abstraction layer, that can be used to unify interfaces for different kind of systems.
+Gsage Engine has Lua abstraction layer, that can be used to unify interfaces for different kind of systems.
 
 EAL helps to tie Lua code to the engine entities.
 Besides that EAL allows extensive code reuse between different objects.
@@ -27,7 +26,7 @@ Extension is a function that accepts a class prototype as a first parameter.
 
   end
 
-Then in that function it is possible any amount of additional methods.
+Then it is possible any amount of additional methods in that function.
 
 .. code-block:: lua
 
@@ -38,7 +37,7 @@ Then in that function it is possible any amount of additional methods.
   end
 
 Besides defining custom methods, it is also possible to define :code:`setup` and :code:`teardown` methods.
-They are pretty similar to constructor methods, but there can be more than one :code:`setup` and :code:`teardown`.
+They are pretty similar to constructor/destructor methods, but there can be more than one :code:`setup` and :code:`teardown`.
 
 .. code-block:: lua
 
@@ -115,6 +114,7 @@ Supported Types of Extensions
 System
 ``````
 
+System wide extensions.
 Allows applying extension for all entities that have a component of a system :code:`system` with subtype :code:`type`.
 
 Extending EAL:

@@ -1,16 +1,13 @@
 .. _custom-systems-label:
+
 Custom Systems
 ==============
 
 Writing a Component
 -----------------
 
-It is better to start from defining a component.
-Defining a component is a really simple task. You should create new class, which is derived from
-:cpp:class:`Gsage::EntityComponent`, then define static :code:`SYSTEM` field in the created component class. This field will
+You should create a new class, which is derived from :cpp:class:`Gsage::EntityComponent`, then define static :code:`SYSTEM` field in the created component class. This field will
 define the id which will be used for this component and the system.
-
-Then you are free to define all kinds of properties, methods and other stuff.
 
 The component is derived from the :cpp:class:`Gsage::Serializable`, so it can be easily configured to
 read and write it's state into :code:`json/mspack`. More information about serialization :ref:`serializable-label`.

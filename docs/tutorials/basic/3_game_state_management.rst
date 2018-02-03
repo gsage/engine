@@ -4,13 +4,9 @@ Saving and Loading Game State
 Level File Format
 ---------------------
 
-As Gsage engine operates entities, level also consists of them.
-The only difference is that all level entities are marked as static.
-But each of them can have any components.
-
-For example it is possible to add script component to the door, or make some
-scene elements rotate. It is possible to attach sound component to some
-entity on the scene to make it source of 3d sound.
+Static scene objects are defined by :code:`render` component of an entity.
+Only difference for static object is the **static** flag, defined in the entity.
+Static scene object can have any other components defined as well, such as script or sound.
 
 Level is described by simple json or msgpack:
 
@@ -26,24 +22,12 @@ Level is described by simple json or msgpack:
          },
          "colourBackground": "0xc0c0c",
          "colourAmbient": "0x7F7F7F",
-         "colourDiffuse": "0xc0c0c",
-         "camera": {
-           "type": "isometric",
-           "id": "main",
-           "bgColour": "0x000000",
-
-           "maxDistance": 100,
-           "minDistance": 20,
-           "maxAngle": 190,
-           "minAngle": 10,
-
-           "target": "player",
-           "uAngle": 45,
-           "vAngle": 290,
-           "distance": 30,
-           "clipDistance": 0.01,
-           "cameraOffset": "0,4,0",
-           "zoomStepMultiplier": 0.015
+         "colourDiffuse": "0xc0c0c"
+       },
+       "script": {
+         "hooks": {
+           "camera": "setOrbitalCam()",
+           "damageEmitter": "emitter.create('damage')"
          }
        }
      },
@@ -67,18 +51,16 @@ Level is described by simple json or msgpack:
    }
 
 :code:`"settings"` section is used to reconfigure all engine systems
-for the particular level.
-In this example, :code:`"render"` system is configured, and has the following settings:
+for the particular level. It works in the similar way as the global config.
+In this example, :code:`"render"` and :code:`script` systems are configured, and have the following settings:
 
 * :code:`"resources"` contains list of resources, that are required for
   the level. Each resource list is identified by unique id to make shared
   resources reusable between different levels.
 
-* :code:`"camera"` has camera related settings (likely to be changed when lua controlled
-  cameras will be used).
+* :code:`"script"` has some level startup script hooks defined.
 
-
-Then :code:`"entities"` describes entity list to be used as static scene elements.
+:code:`"entities"` section describes entity list to be used as static scene elements.
 
 Loading Levels
 ------------------
@@ -86,18 +68,19 @@ Loading Levels
 All levels are stored in the same folder. Level can be loaded by calling :cpp:func:`Gsage::GameDataManager::loadArea`.
 This will initialize all static entities and reconfigure systems.
 
+By default, level folder path is :code:`resources/levels`.
 Game data manager is configured in the `gameConfig.json` file, see :ref:`game-datamanager-settings-label` for more information.
 
 Levels information should be considered as constant. Game data loader is designed with thoughts that
 levels information will be stored in the single archive, which won't be changed.
 
-To provide ability to modify levels information and save dynamic entities states, another process is used.
-`Save files` are used to store all changes.
+To provide ability to modify levels information and save dynamic entities states, save files are used.
 
-Dynamic entities are player, enemies and any movable scene elements.
+.. node::
+    Dynamic entities are player, enemies and any movable scene elements.
 
 .. note::
-    Currently save file copies the whole level information. There is plan to save only difference between initial
+    Currently save file copies the whole level information. There is plan to save only difference between initial data
     and save
 
 To load save file :cpp:func:`Gsage::GameDataManager::loadSave` function can be used.
