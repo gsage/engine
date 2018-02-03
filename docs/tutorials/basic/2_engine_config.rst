@@ -27,6 +27,16 @@ It can be encoded in json and msgpack and can look like this:
       "PlugIns/Plugin_ParticleUniverseFactory"
     ],
 
+    "packager": {
+      "deps": [
+        "tween"
+      ]
+    },
+
+    "windowManager": {
+      "type": "SDL"
+    },
+
     "render":
     {
       "pluginsFile": "plugins.cfg",
@@ -67,8 +77,8 @@ It can be encoded in json and msgpack and can look like this:
 :cpp:class:`Gsage::GameDataManager` Config
 --------------------------------------------
 
-All settings are in :code:`"dataManager"` section.
-It has 4 types of parameters:
+:cpp:class:`Gsage::GameDataManager` settings are stored in :code:`"dataManager"` section.
+There can be 4 kinds of variables:
 
 * :code:`"extension"` extension of all data files. :code:`"json"` is recommended.
 * :code:`"charactersFolder"` folder where to search characters construction data.
@@ -82,7 +92,7 @@ Plugins List
 Plugins are c++ dynamic libraries: :code:`*.so/*.dylib/*.dll`.
 
 .. note::
-    Should be specified without extension. Engine will add appropriate extension for each platform itself.
+    Plugin should be specified without extension. Engine will add appropriate extension for each platform itself.
 
 Each defined plugin will be installed in the order defined in the list.
 
@@ -90,9 +100,9 @@ Systems Configs
 ---------------
 
 Systems can be either registered statically, by calling :cpp:func:`Gsage::GsageFacade::addSystem` or
-they can be constructed by :code:`GsageFacade` during :code:`initialize`, if the factory was registered for the system.
+they can be created by :code:`SystemFactory` in the runtime in :code:`GsageFacade::initialize` function.
 
-To construct systems using factory :code:`systems` field is used. For example:
+:code:`SystemFactory` reads :code:`systems` array in the configration file. For example:
 
 .. code-block:: javascript
 
@@ -103,10 +113,19 @@ To construct systems using factory :code:`systems` field is used. For example:
 * :code:`lua` and :code:`dynamicStats` are preinstalled systems.
 * :code:`ogre` and :code:`recast` are registered by the OgrePlugin.
 
-Each system has it's own unique id (:code:`render`, :code:`movement`, etc...).
-It is possible to configure the system in the global config and in the level config.
+Each system has two identifiers:
+* **implementation** id.
+* **functional** id.
 
-System config should be placed under it's id in the root of the configuration object.
+**Implementation** id is used by :code:`SystemFactory` to create a system.
+**Functional** id defines system purpose and is used to identify it's components.
+
+For example, there is :code:`render` system that is using :code:`ogre` underneath.
+
+When the system is added to the engine it can read the configuration from the global configuration file.
+System configuration must be stored on the root level of global configuration file or scene file under
+**functional** id.
+
 For example:
 
 .. code-block:: javascript
@@ -122,9 +141,8 @@ For example:
   ...
   }
 
-When the engine starts or if the system with id :code:`coolSystem` is added to the already running engine
-it will be configured. It will get all configs as a :cpp:class:`Gsage::Dictionary` object, then it will be it's
-responsibility to read all configs from that object.
+Engine will inject each system configuration placed under system **functional** id.
+The system will get a :cpp:class:`Gsage::DataProxy` object and will get all system specific parameters from it.
 
 See :ref:`custom-systems-label` for more information how to add new types of systems into Gsage engine.
 
@@ -134,6 +152,38 @@ Input
 Input is configured by :code:`inputHandler` field.
 It should have string identifier of input factory, which is installed into the Gsage Facade.
 
-Currently the only supported input handler type is :code:`ois`.
+Currently it supports two kinds of inputHandlers:
+* :code:`SDL` (preferred).
+* :code:`ois` (may be removed in future releases).
+
 You can implement your own input handler and install it into the Gsage Facade.
 See :ref:`custom-input-handler-label` to get more info how to implement your own input handler.
+
+Window Management
+-----------------
+
+:code:`windowManager` section can be used to configure window management system.
+It has one mandatory field and one optional:
+
+:code:`"type"` is mandatory and defines window manager type to use.
+:code:`"windows"` is optional and may contain the list of windows that should be created by the window manager.
+
+Elements of this list should be objects and may vary depending on the implementation fo the window manager.
+
+Log Config
+----------
+
+:code:`logConfig` can be used to define path to log configuration file.
+Refer to `easylogging++ documentation <https://github.com/muflihun/easyloggingpp#using-configuration-file>`_ for more details.
+
+Packager
+--------
+
+This packager can install any lua dependencies using luarocks.
+:code:`deps` array should contain the list of dependencies.
+Each entry of this array support version pinning and version query operators.
+
+Plug-Ins
+--------
+
+Global config file can contain any additional configuration, which are relevant to installed plugins.

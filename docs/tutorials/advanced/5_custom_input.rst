@@ -6,7 +6,7 @@ Custom Input Handler
 New handler should be registered in the :cpp:class:`Gsage::GsageFacade` by calling :cpp:func:`Gsage::GsageFacade::registerInputFactory`.
 As you can get from the method specialization, you should pass class which implements interface :cpp:class:`Gsage::AbstractInputFactory`.
 
-Any concrete factory should create input handlers which implement interface :cpp:class:`Gsage::InputHandler`.
+Any concrete factory should create input handlers that implement interface :cpp:class:`Gsage::InputHandler`.
 
 Input factory will requested to create new handler for each created window. After creation, this handler will receive all resize and close events.
 
@@ -18,8 +18,3 @@ Input factory will requested to create new handler for each created window. Afte
   {
     return new OisInputListener(windowHandle, engine);
   }
-
-.. warning::
-  Due to the fact that only ois system is supported at the moment, interfaces can be unfitting for other input
-  handlers, feel free to extend this interface
-

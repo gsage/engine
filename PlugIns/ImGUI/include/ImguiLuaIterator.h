@@ -4,6 +4,10 @@
 
 //namespace ImGui
 
+/**
+ * NewFrame
+ */
+
 //    IMGUI_API ImGuiIO&      GetIO();
 // Unsupported return type ImGuiIO&
 //    IMGUI_API ImGuiStyle&   GetStyle();

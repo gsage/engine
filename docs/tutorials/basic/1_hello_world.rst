@@ -1,42 +1,38 @@
 Introduction
 ============
 
-This tutorial will teach you to create some basic scene using Gsage engine.
+This tutorial will teach you how to create some basic scene using Gsage engine.
 
-If you haven't built engine yet, check out these build tutorials:
+If you have not built the engine yet, check out these build tutorials:
 
-| :ref:`linux-build`
-| :ref:`mac-build`
-| :ref:`windows-build`
+| :ref:`conan-build`
 |
 
-If you've managed to get engine built, then you should have the following:
+After you build the engine you will have the following file structure:
 
 * :code:`GsageExe`/:code:`GsageExe.app`/:code:`GsageExe.exe` executable file should be
-  in the **<your-cmake-build-folder>/bin** folder. This file is the main game executable.
+  in the **build/bin** folder. This file is the main game executable.
 
-* All resources are located in **./resources** folder. They are symlinked to **GsageExe.app/Contents/Resources**
+* All resources are located in **./resources** folder. This folder is symlinked to **GsageExe.app/Contents/Resources**
   on the Mac OS X systems.
 
-* :code:`editor`/:code:`editor.app`/:code:`editor.exe` should also be in the game folder.
+* :code:`GsageEditor`/:code:`GsageEditor.app`/:code:`GsageEditor.exe` should also be in the game folder.
 
-By running :code:`GsageExe` executable, you can start the engine, which is configured in isometric rpg mode by default.
+By running :code:`GsageExe` executable, you can start the simple isometric RPG example.
 
 .. image:: ../../images/game.png
 
-This will change in the future, when the **editor** project will become mature enough. Now the only
-useful thing it can do is to create a project:
+Editor is not very usefull at the moment, however it can show some realtime scene state.
 
 .. image:: ../../images/editor.png
 
 Modifying Level
 ---------------
 
-Now you can open resources folder and find **levels** folder there.
+If you open **resources/levels** folder, you will find named **exampleLevel.json** there.
+This file provides some basic level example, you can change it in any way.
 
-There should be file named **exampleLevel.json**. This file is a basic level example, you can change it in any way.
-
-For example:
+You can try to:
 
 1. Add some model to **resources/models** folder (:code:`world.mesh`).
 2. Change entities list, and add this model to position :code:`"x: 0, y: 0, z:0"`:
@@ -62,8 +58,9 @@ For example:
   }
   ...
 
-When you run the **GsageExe** again, you should see the model on the scene.
-Also if it's placed close enough to the existing walkable area, you will be able to walk on it.
+
+If you run **GsageExe**, you should see your model on the scene.
+MovementSystem should automatically calculate walkable areas for this mesh.
 
 For more information about entities format see :ref:`entity-format-label`.
 
@@ -76,15 +73,12 @@ Modifying level demo:
 Creating Characters
 -------------------
 
-It's also possible to create dynamic level characters.
-All characters can be found in characters folder.
-
-There should be 2 characters in that folder:
+If you open **resources/characters** folder, you will see couple entities defined there:
 
 * **sinbad.json** which is controlled by player.
 * **ninja.json** which are hostile NPC.
 
-You can create another one.
+You can use these characters as a reference and create a new character:
 
 1. Grab model with some animations and add it to models folder.
 2. Create new :code:`json` file in the **resources/characters** folder.
@@ -166,8 +160,8 @@ You can create another one.
    Create script file **characters/scripts/mob.lua**.
    This file will be used as a setup script.
 
-   It is better to return function in startup script.
-   This function should accept :code:`self` parameter.
+   Startup script should return a function that accepts one parameter.
+   This way the function will get subject entity as the first parameter.
 
    .. code-block:: lua
 

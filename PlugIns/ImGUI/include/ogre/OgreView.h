@@ -40,7 +40,31 @@ namespace Gsage {
   class ImguiOgreWrapper;
   class ImguiManager;
   /**
-   * Allows displaying ogre camera into imgui window
+   * Allows displaying ogre camera into imgui window.
+   *
+   * \verbatim embed:rst:leading-asterisk
+   *
+   * Lua usage example:
+   *
+   * .. code-block:: lua
+   *
+   *  -- create ogre viewport
+   *  viewport = imgui.createOgreView()
+   *
+   *  local textureID = "myOgreView"
+   *
+   *  -- render camera to texture
+   *  local cam = camera:create("free")
+   *  cam:renderToTexture(textureID, {
+   *    autoUpdated = false
+   *  })
+   *
+   *  -- set ogre view texture
+   *  viewport:setTextureID(textureID)
+   *  -- update on each imgui render call
+   *  viewport:render(320, 240)
+   *
+   * \endverbatim
    */
   class OgreView
   {

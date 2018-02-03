@@ -1,14 +1,13 @@
 .. _plugins-label:
 
-Plugins
-=======
+Plugin System
+=============
 
 Gsage Engine supports plugins, which can be installed at the runtime.
 Each plugin can be wrapped into dynamically linked library or shared library (.so/.dynlib/.dll)
 
 Plugin loader is borrowed from the Ogre project :code:`DynLib.h`.
 
-It is also possible to install plugins if they are build statically.
 All plugins installed into the system should have unique id.
 
 * :cpp:func:`Gsage::GsageFacade::loadPlugin` can be used to install plugin from a shared library.
@@ -27,17 +26,16 @@ Abstract Methods
 
 * :cpp:func:`Gsage::IPlugin::getName` - this method should return unique string id of the plugin.
 * :cpp:func:`Gsage::IPlugin::installImpl` - should contain plugin initialization logic.
-* :cpp:func:`Gsage::IPlugin::uninstallImpl` - should contain plugin deinitialization logic.
+* :cpp:func:`Gsage::IPlugin::uninstallImpl` - should contain plugin destruction logic.
 
-:code:`installImpl` can manipulate facade in any way as a :code:`IPlugin` has pointer to it.
-:code:`uninstallImpl` should properly uninstall plugin from the facade, for example remove the system.
+:code:`installImpl` can register UI/Window manager factories, add new SystemFactories or add a system to the Engine.
+:code:`uninstallImpl` should properly uninstall plugin from the facade: remove the system, unregister lua bindings or unregister UI/Window manager.
 
 .. important::
   Though it is possible to define bindings in the :code:`installImpl` method, there is another method for this: :cpp:func:`Gsage::IPlugin::setupLuaBindings`.
   Bindings may work properly if defined in :code:`installImpl`, but if Lua state will be recreated by the :cpp:class:`LuaInterface`, bindings will be lost.
 
-While implementing a plugin, you should also add :code:`extern "C"` methods, which will be called from the :code:`GsageFacade` after plugin
-is loaded:
+While implementing a plugin, you should also add couple :code:`extern "C"` methods, which will be called from the :code:`GsageFacade` after plugin dynamic library was loaded:
 
 * :code:`dllStartPlugin`.
 * :code:`dllStopPlugin`.
@@ -110,7 +108,8 @@ Example:
 Set Up Lua Bindings
 ^^^^^^^^^^^^^^^^^^^
 
-* :cpp:func:`Gsage::IPlugin::setupLuaBindings` - should contain all Lua bindings. This method will be called again if :code:`lua_State` will be recreated.
+* :cpp:func:`Gsage::IPlugin::setupLuaBindings` - should contain all Lua bindings.
+This method will be called again if :code:`lua_State` was recreated.
 
 Example:
 

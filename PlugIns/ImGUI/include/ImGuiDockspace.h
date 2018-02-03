@@ -459,6 +459,36 @@ namespace Gsage {
       DockPtr mRootDock;
   };
 
+  /**
+   * Dockspace for ImGUI.
+   *
+   * \verbatim embed:rst:leading-asterisk
+   * Provides alternate methods for :code:`Begin` and :code:`End`.
+   * Docked view should be surrounded by :code:`BeginDock` and :code:`EndDock` methods.
+   *
+   * .. code-block:: lua
+   *
+   *    local flags = 0
+   *    local active, open = imgui.BeginDockOpen("test", true, flags)
+   *    if active and open then
+   *      -- render some view here
+   *      imgui.TextWrapped("Hello World!")
+   *    end
+   *    imgui.EndDock()
+   *
+   * Saving and loading dockspace state:
+   *
+   * .. code-block:: lua
+   *
+   *    -- save dock state (will get lua table)
+   *    local savedState = imgui.GetDockState()
+   *
+   *    ...
+   *
+   *    -- restore dock state
+   *    imgui.SetDockState(savedState)
+   * \endverbatim
+   */
   class ImGuiDockspaceRenderer
   {
     public:

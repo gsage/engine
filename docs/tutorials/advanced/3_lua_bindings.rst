@@ -6,35 +6,35 @@ Lua Bindings
 :cpp:func:`Gsage::GsageFacade::initialize` initializes Lua state in the engine.
 This is a single global Lua state for the whole engine (At least for now it's single).
 
-To handle Lua related logic there is :cpp:class:`Gsage::LuaInterface` class, that handles some initial Lua bindings, like:
+:cpp:class:`Gsage::LuaInterface` binds the Core bindings:
 
 * bindings for entity and engine wrappers.
-* :cpp:class:`Gsage::GsageFacade` bindings like :cpp:func:`Gsage::GsageFacade::halt`.
+* :cpp:class:`Gsage::GsageFacade` bindings like :cpp:func:`Gsage::GsageFacade::shutdown`.
 * :cpp:class:`Gsage::GameDataManager` bindings.
 * and others.
 
 `Sol2 <http://sol2.readthedocs.io/en/latest/>`_ library is used for Lua bindings.
 
-Besides bindings, this class creates :code:`lua_State` and initializes global variables:
+Besides bindings, :code:`LuaInterface` initializes global variables:
 
 * :code:`core` - :cpp:class:`Gsage::Engine` instance.
 * :code:`game` - :cpp:class:`Gsage::GsageFacade` instance.
 * :code:`data` - :cpp:class:`Gsage::GameDataManager` instance.
-* :code:`event` - :cpp:class:`Gsage::LuaEventProxy` instance.
+* :code:`log`  - provides easylogging++ API to lua.
 
-Then any script can be executed by calling :cpp:func:`Gsage::LuaInterface::runScript`.
-If :code:`startupScript` is defined in the game config :cpp:class:`Gsage::GsageFacade` will call
-:cpp:func:`Gsage::LuaInterface::runScript` using it in the :code:`initialize` method.
+Any script can be executed by calling :cpp:func:`Gsage::LuaInterface::runScript`.
+:code:`startupScript` configuration variable can be used to define script which will be executed after
+:cpp:class:`Gsage::GsageFacade` initialization.
+
+:code:`LuaInterface` also runs packager script.
 
 Bindings Guidelines
 -------------------
 
-There are several guidelines for bindings to keep Gsage Lua API consistent.
-
-Before you start manipulating Lua state, you should get it.
-If it's plugin, then you should have :code:`LuaInterface` pointer there.
-
-Then, there is method :cpp:func:`Gsage::LuaInterface::getSolState`, which will return pointer to Sol2 :code:`state_view`.
+All Core bindings are located in the :code:`LuaInterface` file.
+If any plug-in needs to add some Lua bindings, it should override :cpp:class:`Gsage::IPlugin::setupLuaBindings` method.
+Plug-in can access Lua state by using :code:`mLuaInterface->getSolState()` function. It will return pointer to
+:code:`sol::state_view`.
 
 .. note::
 
@@ -46,17 +46,14 @@ Bind Engine Systems
 ^^^^^^^^^^^^^^^^^^^
 
 If you create a new engine system, you may want to access it from Lua.
-Systems can be added dynamically at any point, so Lua state has :cpp:class:`Gsage::Engine` defined
-as `simple usertype <http://sol2.readthedocs.io/en/latest/api/simple_usertype.html>`_.
-
-This allows extending this binding at the runtime, like this:
+Systems can be added dynamically at any point and :cpp:class:`Gsage::Engine` functions should be updated in the runtime:
 
 .. code-block:: cpp
 
-    lua["Engine"]["removeEntity"] = (bool(Engine::*)(const std::string& id))&Engine::removeEntity;
-    lua["Engine"]["getEntity"] = &Engine::getEntity;
-    lua["Engine"]["getSystem"] = (EngineSystem*(Engine::*)(const std::string& name))&Engine::getSystem;
     lua["Engine"]["script"] = &Engine::getSystem<LuaScriptSystem>;
+
+This way, when a plugin registers a new system, it will also update :cpp:class:`Gsage::Engine` to have getter 
+for this system: :code:`core:script()`.
 
 So, if you add a new system, you will need to create a new binding like this:
 
@@ -70,7 +67,7 @@ So, if you add a new system, you will need to create a new binding like this:
 
 
 
-After you make this binding, you will be able to work with the system like this:
+After you make this binding, you will be able to get the system instance:
 
 .. code-block:: lua
 
@@ -82,8 +79,8 @@ After you make this binding, you will be able to work with the system like this:
 Bind Entity Components
 ^^^^^^^^^^^^^^^^^^^^^^
 
-It's very likely that you will want to access system components.
-It's almost the same as for the system, but instead of :code:`Engine` binding, you should use :code:`Entity`:
+When registering a new Component, you should also update :cpp:class:`Gsage::Entity` functions
+and add the getter for the new Component in the same way as for the new System, but instead of :code:`Engine` binding, you should use :code:`Entity`:
 
 .. code-block:: cpp
 
@@ -93,7 +90,7 @@ It's almost the same as for the system, but instead of :code:`Engine` binding, y
 
     lua["Entity"]["kitty"] = &Entity::getComponent<KittyComponent>;
 
-And then you will be able to work with this component from Lua:
+After that it will be possible to get Component from Entity instance by using newly registered getter:
 
 .. code-block:: lua
 
@@ -103,38 +100,41 @@ And then you will be able to work with this component from Lua:
 Bind Events
 ^^^^^^^^^^^
 
-As Sol2 does not support upcasting out of the box, when you bind an event, you
-should also implement :code:`cast` method there.
+Events can be handled in Lua script in two ways: 
+* :code:`event:bind(...)` will bind generic callback. You can use it if you do not need upcasting from :cpp:class:`Gsage::Event` to derived event type.
+* :code:`event:<handlerID>(...)` will bind callback specifically for some concrete type of event.
 
-As :cpp:class:`Gsage::LuaEventProxy` passes all events to the callback as :cpp:class:`Gsage::Event` base class,
-it is required to cast it to any particular at runtime.
+If you use bind, you will not be able to access derived class methods or variables:
+
+.. code-block:: lua
+
+  local onSelect = function(event)
+    -- then you will be able to access derived class methods
+    print(e.hasFlags) -- prints nil
+  end
+
+  event:bind(core, "objectSelected", onSelect)
+
+:code:`handlerID` is defined when binding a new event type:
 
 Example:
 
 .. code-block:: cpp
 
-    static To cast(From f) {
-      return static_cast<To>(f);
-    }
-...
-
-    lua.new_usertype<SelectEvent>("SelectEvent",
+    registerEvent<SelectEvent>("SelectEvent",
+        "onSelect", // <-- handlerID
         sol::base_classes, sol::bases<Event>(),
         "hasFlags", &SelectEvent::hasFlags,
         "entity", sol::property(&SelectEvent::getEntityId),
-        "cast", cast<const Event&, const SelectEvent&>
     );
 
-:cpp:func:`Gsage::cast` is used in this example.
-
-Then in Lua event should be handled like this:
+To handle :cpp:class:`Gsage::SelectEvent` in Lua:
 
 .. code-block:: lua
 
   local onSelect = function(event)
-    local e = SelectEvent.cast(event)
-    -- then you will be able to access derived class methods
+    -- you will be able to access derived class methods
     print(e:hasFlags(OgreSceneNode.DYNAMIC))
   end
 
-  event:bind(core, "objectSelected", onSelect)
+  event:onSelect(core, "objectSelected", onSelect)

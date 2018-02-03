@@ -11,13 +11,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
 Tutorials
@@ -43,6 +36,20 @@ Tutorials
    :maxdepth: 2
 
    tutorials/advanced/*
+
+.. toctree::
+   :glob:
+   :caption: Expert Topics
+   :maxdepth: 2
+
+   tutorials/expert/*
+
+.. toctree::
+   :glob:
+   :caption: Plugins
+   :maxdepth: 2
+
+   tutorials/plugins/*
 
 .. toctree::
    :maxdepth: 1
