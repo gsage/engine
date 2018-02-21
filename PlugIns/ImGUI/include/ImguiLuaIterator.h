@@ -22,9 +22,9 @@ END_IMGUI_FUNC
 IMGUI_FUNCTION(Render)
 CALL_FUNCTION_NO_RET(Render)
 END_IMGUI_FUNC
-//    IMGUI_API void          Shutdown();
-IMGUI_FUNCTION(Shutdown)
-CALL_FUNCTION_NO_RET(Shutdown)
+//    IMGUI_API void          DestroyContext();
+IMGUI_FUNCTION(DestroyContext)
+CALL_FUNCTION_NO_RET(DestroyContext)
 END_IMGUI_FUNC
 //    IMGUI_API void          ShowUserGuide();                            // help block
 IMGUI_FUNCTION(ShowUserGuide)
@@ -32,11 +32,9 @@ CALL_FUNCTION_NO_RET(ShowUserGuide)
 END_IMGUI_FUNC
 //    IMGUI_API void          ShowStyleEditor(ImGuiStyle* ref = NULL);    // style editor block. you can pass in a reference ImGuiStyle structure to compare to, revert to and save to (else it uses the default style)
 // Unsupported arg type ImGuiStyle* ref = NULL
-//    IMGUI_API void          ShowTestWindow(bool* p_open = NULL);        // test window demonstrating ImGui features
+//    IMGUI_API void          ShowTestWindow();        // test window demonstrating ImGui features
 IMGUI_FUNCTION(ShowTestWindow)
-OPTIONAL_BOOL_POINTER_ARG(p_open)
-CALL_FUNCTION_NO_RET(ShowTestWindow, p_open)
-END_BOOL_POINTER(p_open)
+CALL_FUNCTION_NO_RET(ShowTestWindow)
 END_IMGUI_FUNC
 //    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // metrics window for debugging ImGui
 IMGUI_FUNCTION(ShowMetricsWindow)

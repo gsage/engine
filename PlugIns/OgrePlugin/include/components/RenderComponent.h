@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include "EventDispatcher.h"
 #include <OgreNode.h>
 #include "Definitions.h"
+#include "GeometryPrimitives.h"
+#include "components/BaseRenderComponent.h"
 
 namespace Ogre
 {
@@ -47,7 +49,7 @@ namespace Gsage {
   /**
    * Ogre render system component
    */
-  class GSAGE_OGRE_PLUGIN_API RenderComponent : public EntityComponent, public EventDispatcher
+  class GSAGE_OGRE_PLUGIN_API RenderComponent : public EntityComponent, public EventDispatcher, public BaseRenderComponent
   {
     public:
       enum RotationAxis {
@@ -61,13 +63,6 @@ namespace Gsage {
 
       RenderComponent();
       virtual ~RenderComponent();
-      /**
-       * Set render component position
-       * @param x X coordinate
-       * @param y Y coordinate
-       * @param z Z coordinate
-       */
-      void setPosition(const float& x, const float& y, const float& z);
       /**
        * Set render component position
        * @param position New position
@@ -89,8 +84,7 @@ namespace Gsage {
        * @param rotationAxis rotate only in one axis
        * @param transformSpace ogre transform space
        */
-      void lookAt(const Ogre::Vector3& position, const RotationAxis rotationAxis, Ogre::Node::TransformSpace transformSpace = Ogre::Node::TS_WORLD);
-
+      void lookAt(const Ogre::Vector3& position, const Geometry::RotationAxis rotationAxis, Geometry::TransformSpace transformSpace = Geometry::TS_WORLD);
       /**
        * Equalient to Ogre::Node lookAt
        * @param position Position to look at
@@ -99,29 +93,79 @@ namespace Gsage {
       /**
        * Get current position
        */
-      const Ogre::Vector3 getPosition();
+      const Ogre::Vector3 getOgrePosition();
       /**
        * Get current scale
        */
-      const Ogre::Vector3 getScale();
+      const Ogre::Vector3 getOgreScale();
       /**
        * Get current direction vector, uses orientationVector from config to detect front of the object
        */
-      const Ogre::Vector3 getDirection();
+      const Ogre::Vector3 getOgreDirection();
       /**
        * Get object orientation
        */
-      const Ogre::Quaternion getOrientation();
+      const Ogre::Quaternion getOgreOrientation();
       /**
        * Get object orientation with respect to the direction vector
        */
-      const Ogre::Quaternion getFaceOrientation();
+      const Ogre::Quaternion getOgreFaceOrientation();
+
+      // BaseRenderComponent implementation
+
+      /**
+       * Rotates render component using Gsage::Quaternion
+       * @param rotation Rotation quaternion (relative)
+       */
+      void rotate(const Gsage::Quaternion& rotation);
+      /**
+       * Equalient to Ogre::Node lookAt
+       * @param position Position to look at
+       * @param rotationAxis rotate only in one axis
+       * @param transformSpace ogre transform space
+       */
+      void lookAt(const Gsage::Vector3& position, const Geometry::RotationAxis rotationAxis, Geometry::TransformSpace transformSpace = Geometry::TS_WORLD);
+      /**
+       * @param position Position to look at
+       */
+      void lookAt(const Gsage::Vector3& position);
+      /**
+       * Set position by using Gsage::Vector
+       * @param position New position
+       */
+      void setPosition(const Gsage::Vector3& position);
+      /**
+       * Set orientation using Gsage::Quaternion
+       * @param orientation Orientation quaternion (absolute)
+       */
+      void setOrientation(const Gsage::Quaternion& orientation);
+      /**
+       * Get current position
+       */
+      const Gsage::Vector3 getPosition();
+      /**
+       * Get current scale
+       */
+      const Gsage::Vector3 getScale();
+      /**
+       * Get current direction vector, uses orientationVector from config to detect front of the object
+       */
+      const Gsage::Vector3 getDirection();
+      /**
+       * Get object orientation
+       */
+      const Gsage::Quaternion getOrientation();
+      /**
+       * Get object orientation with respect to the direction vector
+       */
+      const Gsage::Quaternion getFaceOrientation();
+
       /**
        * Adjusts animation speed for state
        * @param name Animation state name
        * @param speed animation speed
        */
-      bool adjustAnimationStateSpeed(const std::string& name, const float& speed);
+      bool adjustAnimationStateSpeed(const std::string& name, double speed);
       /**
        * Sets animation state
        * @param name Animation name
@@ -139,7 +183,7 @@ namespace Gsage {
        *
        * @returns true if animation group exists
        */
-      bool playAnimation(const std::string& name, const float& speed = 1, const float& times = -1, const float& offset = 0, bool reset = false);
+      bool playAnimation(const std::string& name, int times = -1, double speed = 1, double offset = 0, bool reset = false);
       /**
        * Resets animation state to default
        */

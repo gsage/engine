@@ -3,7 +3,7 @@
 Custom Window Manager
 =====================
 
-| Gsage Engine allows to implement new windowing managers.
+| Gsage Engine allows you to implement new windowing managers.
 | Current main windowing system is SDL.
 | :code:`WindowManager` is optional, it is possible to let render system create windows on it's own.
 |

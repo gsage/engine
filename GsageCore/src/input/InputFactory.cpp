@@ -106,7 +106,7 @@ namespace Gsage {
     mCurrentFactoryId = id;
   }
 
-  void InputManager::update(const float& time)
+  void InputManager::update(double time)
   {
     for(auto pair : mInputHandlers) {
       pair.second->update(time);

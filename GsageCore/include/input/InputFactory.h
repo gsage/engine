@@ -144,7 +144,7 @@ namespace Gsage {
        *
        * @param time Elapsed time
        */
-      void update(const float& time);
+      void update(double time);
     private:
       bool handleWindowEvent(EventDispatcher* sender, const Event& e);
       Engine* mEngine;

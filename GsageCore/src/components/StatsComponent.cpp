@@ -75,7 +75,7 @@ namespace Gsage {
     return true;
   }
 
-  const float StatsComponent::increase(const std::string& key, const float& n)
+  const float StatsComponent::increase(const std::string& key, double n)
   {
     float newVal = getStat(key, 0.0f) + n;
     setStat(key, newVal);

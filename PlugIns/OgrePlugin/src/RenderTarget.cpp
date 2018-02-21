@@ -150,7 +150,7 @@ namespace Gsage {
     return true;
   }
 
-  void RenderTarget::doRaycasting(const float& offsetX, const float& offsetY, unsigned int flags, bool select)
+  void RenderTarget::doRaycasting(float offsetX, float offsetY, unsigned int flags, bool select)
   {
     Ogre::MovableObject* target;
     Ogre::Vector3 result;
@@ -466,8 +466,8 @@ namespace Gsage {
     }
     Ogre::RenderWindow* window = Ogre::Root::getSingletonPtr()->createRenderWindow(
         parameters.get("name", "default"),
-        parameters.get("width", 1024),
-        parameters.get("height", 786),
+        parameters.get("width", 1024) * parameters.get("scale", 1),
+        parameters.get("height", 786) * parameters.get("scale", 1),
         parameters.get("fullscreen", false),
         &params);
 

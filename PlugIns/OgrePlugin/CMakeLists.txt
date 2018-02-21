@@ -4,6 +4,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
+  ${gsage_SOURCE_DIR}/Vendor/gmath/src
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Overlay_INCLUDE_DIR}
   ${OGRE_Terrain_INCLUDE_DIR}

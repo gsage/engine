@@ -114,6 +114,7 @@ they can be created by :code:`SystemFactory` in the runtime in :code:`GsageFacad
 * :code:`ogre` and :code:`recast` are registered by the OgrePlugin.
 
 Each system has two identifiers:
+
 * **implementation** id.
 * **functional** id.
 
@@ -153,6 +154,7 @@ Input is configured by :code:`inputHandler` field.
 It should have string identifier of input factory, which is installed into the Gsage Facade.
 
 Currently it supports two kinds of inputHandlers:
+
 * :code:`SDL` (preferred).
 * :code:`ois` (may be removed in future releases).
 

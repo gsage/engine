@@ -4,7 +4,7 @@ Engine Abstraction Layer
 ========================
 
 As systems, that are installed from plugins most definetely will have different set of Lua bindings,
-Gsage Engine has Lua abstraction layer, that can be used to unify interfaces for different kind of systems.
+Gsage Engine has Lua abstraction layer, that can be used to unify interfaces for different kinds of systems.
 
 EAL helps to tie Lua code to the engine entities.
 Besides that EAL allows extensive code reuse between different objects.

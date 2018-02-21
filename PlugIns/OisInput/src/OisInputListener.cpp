@@ -269,7 +269,7 @@ namespace Gsage {
     handleClose();
   }
 
-  void OisInputListener::update(const float& time)
+  void OisInputListener::update(double time)
   {
     //Need to capture/update each device
     mKeyboard->capture();

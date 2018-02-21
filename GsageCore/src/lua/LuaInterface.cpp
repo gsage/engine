@@ -37,6 +37,7 @@ THE SOFTWARE.
 
 #include "components/StatsComponent.h"
 #include "components/ScriptComponent.h"
+#include "components/BaseRenderComponent.h"
 
 #include "systems/CombatSystem.h"
 #include "systems/LuaScriptSystem.h"
@@ -205,6 +206,75 @@ namespace Gsage {
         "props", sol::property(&Reflection::getProps, &Reflection::setProps)
     );
 
+    auto vector3 = sol::usertype<Vector3>(
+        sol::constructors<sol::types<double, double, double>>(),
+        "x", &Vector3::X,
+        "y", &Vector3::Y,
+        "z", &Vector3::Z,
+        "squaredDistance", [](Vector3 rhs, const Vector3 lhs) { 
+          double distance = Vector3::Distance(rhs, lhs);
+          return distance * distance;
+        },
+        "crossProduct", [](Vector3 rhs, const Vector3 lhs) { return Vector3::Cross(rhs, lhs); },
+        "ZERO", sol::property([] () { return Vector3(0, 0, 0); }),
+        "UNIT_X", sol::property([] () { return Vector3(1, 0, 0); }),
+        "UNIT_Y", sol::property([] () { return Vector3(0, 1, 0); }),
+        "UNIT_Z", sol::property([] () { return Vector3(0, 0, 1); }),
+        "NEGATIVE_UNIT_X", sol::property([] () { return Vector3(-1, 0, 0); }),
+        "NEGATIVE_UNIT_Y", sol::property([] () { return Vector3(0, -1, 0); }),
+        "NEGATIVE_UNIT_Z", sol::property([] () { return Vector3(0, 0, -1); }),
+        "UNIT_SCALE", sol::property([] () { return Vector3(1, 1, 1); }),
+        sol::meta_function::multiplication, sol::overload(
+          [](Vector3 rhs, const Vector3 lhs) { return rhs *= lhs; },
+          [](Vector3 rhs, const double lhs) { return rhs * lhs; }
+        ),
+        sol::meta_function::addition, [](Vector3 rhs, const Vector3 lhs) { return rhs + lhs; },
+        sol::meta_function::equal_to, [](const Vector3& rhs, const Vector3& lhs) { return rhs == lhs; }
+    );
+
+    auto radian = sol::usertype<Radian>(
+        "degrees", sol::property(&Radian::valueDegrees),
+        "radians", sol::property(&Radian::valueRadians)
+    );
+
+    auto quaternion = sol::usertype<Quaternion>(
+        "new", sol::factories(
+          [](double w, double x, double y, double z) { return std::make_shared<Quaternion>(x, y, z, w); },
+          [](double scalar, Vector3 vector) {return std::make_shared<Quaternion>(vector, scalar); }
+        ),
+        "w", &Quaternion::W,
+        "x", &Quaternion::X,
+        "y", &Quaternion::Y,
+        "z", &Quaternion::Z,
+        sol::meta_function::equal_to, [](const Quaternion& rhs, const Quaternion& lhs) { return rhs == lhs; },
+        sol::meta_function::multiplication, sol::overload(
+          [](Quaternion rhs, const Quaternion lhs) { return rhs *= lhs; },
+          [](Quaternion rhs, const Vector3 lhs) { return rhs * lhs; }
+        ),
+        "getPitch", &Gsage::Quaternion::getPitch,
+        "getYaw", &Gsage::Quaternion::getYaw,
+        "getRoll", &Gsage::Quaternion::getRoll
+    );
+
+    auto geometry = lua.create_table();
+
+    // shortcuts (can be overwritten in 3D library)
+    lua["Quaternion"] = lua.create_table_with("new", [](double w, double x, double y, double z) { return std::make_shared<Quaternion>(x, y, z, w); });
+    lua["Vector3"] = lua.create_table_with("new", [](double x, double y, double z){ return std::make_shared<Gsage::Vector3>(x, y, z); });
+    lua["Radian"] = lua.create_table_with("new", [](double value){ return std::make_shared<Gsage::Radian>(value); });
+
+    geometry["X_AXIS"] = Geometry::X_AXIS;
+    geometry["Y_AXIS"] = Geometry::Y_AXIS;
+    geometry["Z_AXIS"] = Geometry::Z_AXIS;
+    geometry["TS_WORLD"] = Geometry::TransformSpace::TS_WORLD;
+    geometry["TS_LOCAL"] = Geometry::TransformSpace::TS_LOCAL;
+
+    lua["geometry"] = geometry;
+
+    geometry.set_usertype("Vector3", vector3);
+    geometry.set_usertype("Quaternion", quaternion);
+    geometry.set_usertype("Radian", radian);
+
     // --------------------------------------------------------------------------------
     // Systems
 
@@ -233,14 +303,14 @@ namespace Gsage {
           (const std::string(StatsComponent::*)(const std::string&, const std::string&))&StatsComponent::getStat<std::string>
         ),
         "getNumber", sol::overload(
-          (const float(StatsComponent::*)(const std::string&)) &StatsComponent::getStat<float>,
-          (const float(StatsComponent::*)(const std::string&, const float&)) &StatsComponent::getStat<float>
+          (const double(StatsComponent::*)(const std::string&)) &StatsComponent::getStat<double>,
+          (const double(StatsComponent::*)(const std::string&, const double&)) &StatsComponent::getStat<double>
         ),
         "data", sol::property(&StatsComponent::data),
         "set", sol::overload(
           &StatsComponent::setStat<bool>,
           &StatsComponent::setStat<std::string>,
-          &StatsComponent::setStat<float>
+          &StatsComponent::setStat<double>
         ),
         "increase", &StatsComponent::increase
     );
@@ -248,6 +318,32 @@ namespace Gsage {
     lua.new_usertype<ScriptComponent>("ScriptComponent",
         sol::base_classes, sol::bases<Reflection>(),
         "state", sol::property(&ScriptComponent::getData)
+    );
+
+    lua.new_usertype<BaseRenderComponent>("BaseRenderComponent",
+        "new", sol::no_constructor,
+        "setPosition", (void(BaseRenderComponent::*)(float, float, float))&BaseRenderComponent::setPosition,
+        "getPosition", [](BaseRenderComponent* self) {
+          Gsage::Vector3 position = self->getPosition();
+          return std::make_tuple(position.X, position.Y, position.Z);
+        },
+
+        "position", sol::property((void(BaseRenderComponent::*)(const Gsage::Vector3&))&BaseRenderComponent::setPosition, &BaseRenderComponent::getPosition),
+        "direction", sol::property(&BaseRenderComponent::getDirection),
+        "orientation", sol::property(
+          &BaseRenderComponent::setOrientation,
+          &BaseRenderComponent::getOrientation
+        ),
+        "facingOrientation", sol::property(&BaseRenderComponent::getFaceOrientation),
+        "lookAt", sol::overload(
+          (void(BaseRenderComponent::*)(const Gsage::Vector3&, const Geometry::RotationAxis, Geometry::TransformSpace))&BaseRenderComponent::lookAt,
+          (void(BaseRenderComponent::*)(const Gsage::Vector3&))&BaseRenderComponent::lookAt
+        ),
+        "rotate", &BaseRenderComponent::rotate,
+        "playAnimation", &BaseRenderComponent::playAnimation,
+        "resetAnimation", &BaseRenderComponent::resetAnimationState,
+        "setAnimationState", &BaseRenderComponent::setAnimationState,
+        "adjustAnimationSpeed", &BaseRenderComponent::adjustAnimationStateSpeed
     );
 
     lua.new_usertype<Entity>("Entity",

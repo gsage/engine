@@ -54,7 +54,7 @@ namespace Gsage {
       /**
        * Update is called on each engine loop
        */
-      void update(const float& time);
+      void update(double time);
 
       /**
        * Add SDL event listener

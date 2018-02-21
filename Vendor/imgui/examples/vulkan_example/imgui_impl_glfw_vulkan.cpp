@@ -1,12 +1,15 @@
 // ImGui GLFW binding with Vulkan + shaders
-// FIXME: Changes of ImTextureID aren't supported by this binding! Please, someone add it!
+
+// Missing features:
+//  [ ] User texture binding. Changes of ImTextureID aren't supported by this binding! See https://github.com/ocornut/imgui/pull/914
 
 // You can copy and use unmodified imgui_impl_* files in your project. See main.cpp for an example of using this.
 // If you use this binding you'll need to call 5 functions: ImGui_ImplXXXX_Init(), ImGui_ImplXXX_CreateFontsTexture(), ImGui_ImplXXXX_NewFrame(), ImGui_ImplXXXX_Render() and ImGui_ImplXXXX_Shutdown().
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#include <imgui.h>
+#include "imgui.h"
+#include "imgui_impl_glfw_vulkan.h"
 
 // GLFW
 #define GLFW_INCLUDE_NONE
@@ -19,13 +22,10 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include "imgui_impl_glfw_vulkan.h"
-
 // GLFW Data
 static GLFWwindow*  g_Window = NULL;
 static double       g_Time = 0.0f;
-static bool         g_MousePressed[3] = { false, false, false };
-static float        g_MouseWheel = 0.0f;
+static bool         g_MouseJustPressed[3] = { false, false, false };
 
 // Vulkan Data
 static VkAllocationCallbacks* g_Allocator = NULL;
@@ -37,7 +37,7 @@ static VkDescriptorPool       g_DescriptorPool = VK_NULL_HANDLE;
 static void (*g_CheckVkResult)(VkResult err) = NULL;
 
 static VkCommandBuffer        g_CommandBuffer = VK_NULL_HANDLE;
-static size_t                 g_BufferMemoryAlignment = 256;
+static VkDeviceSize           g_BufferMemoryAlignment = 256;
 static VkPipelineCreateFlags  g_PipelineCreateFlags = 0;
 static int                    g_FrameIndex = 0;
 
@@ -53,8 +53,8 @@ static VkImageView            g_FontView = VK_NULL_HANDLE;
 
 static VkDeviceMemory         g_VertexBufferMemory[IMGUI_VK_QUEUED_FRAMES] = {};
 static VkDeviceMemory         g_IndexBufferMemory[IMGUI_VK_QUEUED_FRAMES] = {};
-static size_t                 g_VertexBufferSize[IMGUI_VK_QUEUED_FRAMES] = {};
-static size_t                 g_IndexBufferSize[IMGUI_VK_QUEUED_FRAMES] = {};
+static VkDeviceSize           g_VertexBufferSize[IMGUI_VK_QUEUED_FRAMES] = {};
+static VkDeviceSize           g_IndexBufferSize[IMGUI_VK_QUEUED_FRAMES] = {};
 static VkBuffer               g_VertexBuffer[IMGUI_VK_QUEUED_FRAMES] = {};
 static VkBuffer               g_IndexBuffer[IMGUI_VK_QUEUED_FRAMES] = {};
 
@@ -165,7 +165,7 @@ void ImGui_ImplGlfwVulkan_RenderDrawLists(ImDrawData* draw_data)
             vkDestroyBuffer(g_Device, g_VertexBuffer[g_FrameIndex], g_Allocator);
         if (g_VertexBufferMemory[g_FrameIndex])
             vkFreeMemory(g_Device, g_VertexBufferMemory[g_FrameIndex], g_Allocator);
-        size_t vertex_buffer_size = ((vertex_size-1) / g_BufferMemoryAlignment+1) * g_BufferMemoryAlignment;
+        VkDeviceSize vertex_buffer_size = ((vertex_size-1) / g_BufferMemoryAlignment+1) * g_BufferMemoryAlignment;
         VkBufferCreateInfo buffer_info = {};
         buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         buffer_info.size = vertex_buffer_size;
@@ -195,7 +195,7 @@ void ImGui_ImplGlfwVulkan_RenderDrawLists(ImDrawData* draw_data)
             vkDestroyBuffer(g_Device, g_IndexBuffer[g_FrameIndex], g_Allocator);
         if (g_IndexBufferMemory[g_FrameIndex])
             vkFreeMemory(g_Device, g_IndexBufferMemory[g_FrameIndex], g_Allocator);
-        size_t index_buffer_size = ((index_size-1) / g_BufferMemoryAlignment+1) * g_BufferMemoryAlignment;
+        VkDeviceSize index_buffer_size = ((index_size-1) / g_BufferMemoryAlignment+1) * g_BufferMemoryAlignment;
         VkBufferCreateInfo buffer_info = {};
         buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         buffer_info.size = index_buffer_size;
@@ -327,12 +327,14 @@ static void ImGui_ImplGlfwVulkan_SetClipboardText(void* user_data, const char* t
 void ImGui_ImplGlfwVulkan_MouseButtonCallback(GLFWwindow*, int button, int action, int /*mods*/)
 {
     if (action == GLFW_PRESS && button >= 0 && button < 3)
-        g_MousePressed[button] = true;
+        g_MouseJustPressed[button] = true;
 }
 
-void ImGui_ImplGlfwVulkan_ScrollCallback(GLFWwindow*, double /*xoffset*/, double yoffset)
+void ImGui_ImplGlfwVulkan_ScrollCallback(GLFWwindow*, double xoffset, double yoffset)
 {
-    g_MouseWheel += (float)yoffset; // Use fractional mouse wheel.
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseWheelH += (float)xoffset;
+    io.MouseWheel += (float)yoffset;
 }
 
 void ImGui_ImplGlfwVulkan_KeyCallback(GLFWwindow*, int key, int, int action, int mods)
@@ -750,8 +752,10 @@ bool    ImGui_ImplGlfwVulkan_Init(GLFWwindow* window, bool install_callbacks, Im
     io.KeyMap[ImGuiKey_PageDown] = GLFW_KEY_PAGE_DOWN;
     io.KeyMap[ImGuiKey_Home] = GLFW_KEY_HOME;
     io.KeyMap[ImGuiKey_End] = GLFW_KEY_END;
+    io.KeyMap[ImGuiKey_Insert] = GLFW_KEY_INSERT;
     io.KeyMap[ImGuiKey_Delete] = GLFW_KEY_DELETE;
     io.KeyMap[ImGuiKey_Backspace] = GLFW_KEY_BACKSPACE;
+    io.KeyMap[ImGuiKey_Space] = GLFW_KEY_SPACE;
     io.KeyMap[ImGuiKey_Enter] = GLFW_KEY_ENTER;
     io.KeyMap[ImGuiKey_Escape] = GLFW_KEY_ESCAPE;
     io.KeyMap[ImGuiKey_A] = GLFW_KEY_A;
@@ -785,7 +789,6 @@ bool    ImGui_ImplGlfwVulkan_Init(GLFWwindow* window, bool install_callbacks, Im
 void ImGui_ImplGlfwVulkan_Shutdown()
 {
     ImGui_ImplGlfwVulkan_InvalidateDeviceObjects();
-    ImGui::Shutdown();
 }
 
 void ImGui_ImplGlfwVulkan_NewFrame()
@@ -811,7 +814,7 @@ void ImGui_ImplGlfwVulkan_NewFrame()
     {
         double mouse_x, mouse_y;
         glfwGetCursorPos(g_Window, &mouse_x, &mouse_y);
-        io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);   // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
+        io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);
     }
     else
     {
@@ -820,12 +823,9 @@ void ImGui_ImplGlfwVulkan_NewFrame()
 
     for (int i = 0; i < 3; i++)
     {
-        io.MouseDown[i] = g_MousePressed[i] || glfwGetMouseButton(g_Window, i) != 0;    // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-        g_MousePressed[i] = false;
+        io.MouseDown[i] = g_MouseJustPressed[i] || glfwGetMouseButton(g_Window, i) != 0;    // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+        g_MouseJustPressed[i] = false;
     }
-
-    io.MouseWheel = g_MouseWheel;
-    g_MouseWheel = 0.0f;
 
     // Hide OS mouse cursor if ImGui is drawing it
     glfwSetInputMode(g_Window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);

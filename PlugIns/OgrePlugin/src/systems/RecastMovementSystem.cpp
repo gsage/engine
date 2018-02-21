@@ -94,7 +94,7 @@ namespace Gsage {
       if(renderComponent)
       {
         Ogre::Vector3 p;
-        mRecast->findNearestPointOnNavmesh(renderComponent->getPosition(), p);
+        mRecast->findNearestPointOnNavmesh(renderComponent->getOgrePosition(), p);
         renderComponent->setPosition(p);
         component->mAligned = true;
       }
@@ -132,7 +132,7 @@ namespace Gsage {
 
     if(!component->hasPath())
     {
-      int res = mRecast->FindPath(renderComponent->getPosition(), component->getFinalTarget(), component->mAgentId, 0);
+      int res = mRecast->FindPath(renderComponent->getOgrePosition(), component->getFinalTarget(), component->mAgentId, 0);
       if(res > 0)
       {
         component->setPath(mRecast->getPath(component->mAgentId));
@@ -154,7 +154,7 @@ namespace Gsage {
     Ogre::Vector3 currentTarget;
     mRecast->findNearestPointOnNavmesh(component->getCurrentTarget(), currentTarget);
     // Update position
-    const Ogre::Vector3& currentPosition = renderComponent->getPosition();
+    const Ogre::Vector3& currentPosition = renderComponent->getOgrePosition();
 
     float speed = (component->mSpeed * time);
     Ogre::Vector3 delta = currentTarget - currentPosition;
@@ -171,7 +171,7 @@ namespace Gsage {
     component->setLastMovementDistance((alignedPosition - currentPosition).length());
 
     // Rotate object
-    const Ogre::Vector3& direction = renderComponent->getDirection() * flattener;
+    const Ogre::Vector3& direction = renderComponent->getOgreDirection() * flattener;
     delta *= flattener;
     renderComponent->rotate(direction.getRotationTo(delta, Ogre::Vector3::UNIT_Y));
 

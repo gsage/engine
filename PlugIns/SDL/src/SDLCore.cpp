@@ -51,7 +51,7 @@ namespace Gsage {
     return true;
   }
 
-  void SDLCore::update(const float& time)
+  void SDLCore::update(double time)
   {
     SDL_Event event;
     SDL_PumpEvents();

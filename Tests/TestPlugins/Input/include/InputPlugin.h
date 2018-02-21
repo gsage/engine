@@ -42,7 +42,7 @@ namespace Gsage {
     virtual ~FakeInputHandler() {};
     virtual void handleResize(unsigned int width, unsigned int height) {}
     virtual void handleClose() {};
-    virtual void update(const float& time) {}
+    virtual void update(double time) {}
   };
 
   /**

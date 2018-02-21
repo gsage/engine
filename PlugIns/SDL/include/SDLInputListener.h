@@ -71,7 +71,7 @@ namespace Gsage {
        * @param event SDL event
        */
       void handleEvent(SDL_Event* event);
-      virtual void update(const float& time) {};
+      virtual void update(double time) {};
       virtual void handleResize(unsigned int width, unsigned int height) {};
       virtual void handleClose() {};
     private:

@@ -182,6 +182,7 @@ namespace Gsage {
     if(e.getType() == SystemChangeEvent::SYSTEM_REMOVED && mRenderer != 0)
     {
       mIsSetUp = false;
+      ImGui::DestroyContext();
       delete mRenderer;
       LOG(INFO) << "Render system was removed, system wrapper was destroyed";
       mRenderer = 0;
@@ -193,6 +194,9 @@ namespace Gsage {
   {
     if(mIsSetUp)
       return;
+
+    LOG(INFO) << "Creating ImGui context";
+    ImGui::CreateContext();
 
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowTitleAlign = ImVec2(0.5f,0.5f);
@@ -215,7 +219,6 @@ namespace Gsage {
     style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
     style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
     style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    //style.Colors[ImGuiCol_ComboBg]               = ImVec4(0.32f, 0.32f, 0.32f, 1.00f);
     style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
     style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
     style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
@@ -240,10 +243,12 @@ namespace Gsage {
     style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
     style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.32f, 0.52f, 0.65f, 1.00f);
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
+    style.Colors[ImGuiCol_NavHighlight]          = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     style.WindowPadding            = ImVec2(15, 15);
     style.WindowRounding           = 5.0f;
     style.ChildRounding            = 5.0f;
     style.FramePadding             = ImVec2(5, 5);
+    style.ButtonTextAlign          = ImVec2(0.5f, 0.3f);
     style.FrameRounding            = 4.0f;
     style.ItemSpacing              = ImVec2(12, 8);
     style.ItemInnerSpacing         = ImVec2(8, 6);
@@ -298,6 +303,9 @@ namespace Gsage {
     io.KeyMap[ImGuiKey_X] = KeyboardEvent::KC_X;
     io.KeyMap[ImGuiKey_Y] = KeyboardEvent::KC_Y;
     io.KeyMap[ImGuiKey_Z] = KeyboardEvent::KC_Z;
+    io.KeyMap[ImGuiKey_Space] = KeyboardEvent::KC_SPACE;
+
+    io.NavFlags |= ImGuiNavFlags_EnableKeyboard;
     // mouse events
     addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &ImguiManager::handleMouseEvent, -100);
     addEventListener(mEngine, MouseEvent::MOUSE_UP, &ImguiManager::handleMouseEvent, -100);

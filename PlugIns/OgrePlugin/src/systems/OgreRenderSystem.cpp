@@ -417,7 +417,7 @@ namespace Gsage {
     return res;
   }
 
-  OgreRenderSystem::Entities OgreRenderSystem::getObjectsInRadius(const Ogre::Vector3& center, const float& distance, const unsigned int flags, const std::string& id)
+  OgreRenderSystem::Entities OgreRenderSystem::getObjectsInRadius(const Ogre::Vector3& center, float distance, const unsigned int flags, const std::string& id)
   {
     Ogre::Sphere sphere(center, distance);
     Ogre::SphereSceneQuery* query = mSceneManager->createSphereQuery(sphere, flags);

@@ -425,8 +425,6 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiWindowFlags_NoBringToFrontOnFocus");
     lua_pushnumber(L, ImGuiWindowFlags_ChildWindow);
     lua_setglobal(L, "ImGuiWindowFlags_ChildWindow");
-    lua_pushnumber(L, ImGuiWindowFlags_ComboBox);
-    lua_setglobal(L, "ImGuiWindowFlags_ComboBox");
     lua_pushnumber(L, ImGuiWindowFlags_Tooltip);
     lua_setglobal(L, "ImGuiWindowFlags_Tooltip");
     lua_pushnumber(L, ImGuiWindowFlags_Popup);

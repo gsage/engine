@@ -204,7 +204,7 @@ namespace Gsage
        * @param distance Radius of the sphere query
        * @returns list of entities
        */
-      Entities getObjectsInRadius(const Ogre::Vector3& center, const float& distance, const unsigned int flags = 0xFF, const std::string& id = "");
+      Entities getObjectsInRadius(const Ogre::Vector3& center, float distance, const unsigned int flags = 0xFF, const std::string& id = "");
 
       virtual unsigned int getFBOID(const std::string& target = "") const;
 

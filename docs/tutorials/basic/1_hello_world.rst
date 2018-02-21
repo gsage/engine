@@ -29,10 +29,10 @@ Editor is not very usefull at the moment, however it can show some realtime scen
 Modifying Level
 ---------------
 
-If you open **resources/levels** folder, you will find named **exampleLevel.json** there.
-This file provides some basic level example, you can change it in any way.
+If you open **resources/levels** folder, you will find the file named **exampleLevel.json** there.
+This file provides some basic level example.
 
-You can try to:
+You can modify it the way you want:
 
 1. Add some model to **resources/models** folder (:code:`world.mesh`).
 2. Change entities list, and add this model to position :code:`"x: 0, y: 0, z:0"`:
@@ -62,7 +62,7 @@ You can try to:
 If you run **GsageExe**, you should see your model on the scene.
 MovementSystem should automatically calculate walkable areas for this mesh.
 
-For more information about entities format see :ref:`entity-format-label`.
+For more information about entities format refer to :ref:`entity-format-label`.
 
 Modifying level demo:
 

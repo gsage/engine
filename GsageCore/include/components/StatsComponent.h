@@ -120,7 +120,7 @@ namespace Gsage {
        * @param n Value to increase
        * @returns Modified value
        */
-      const float increase(const std::string& key, const float& n);
+      const float increase(const std::string& key, double n);
 
       /**
        * Get data

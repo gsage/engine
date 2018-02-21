@@ -38,7 +38,7 @@ namespace Gsage {
        * Abstract update method that should be implemented in descendants
        * @param time Time in seconds
        */
-      virtual void update(const float& time) = 0;
+      virtual void update(double time) = 0;
   };
 }
 #endif // _UpdateListener_H_

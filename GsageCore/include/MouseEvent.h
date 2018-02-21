@@ -44,16 +44,16 @@ namespace Gsage
       enum ButtonType { Left = 0, Right, Middle, Button3, Button4, Button5, Button6, Button7, None };
 
       MouseEvent(Event::ConstType type,
-                 const float& width,
-                 const float& height,
-                 const ButtonType& button = None,
+                 double width,
+                 double height,
+                 ButtonType button = None,
                  const std::string& dispatcher = "main");
       virtual ~MouseEvent();
 
       ButtonType button;
 
-      void setRelativePosition(const float& x, const float& y, const float& z);
-      void setAbsolutePosition(const float& x, const float& y, const float& z);
+      void setRelativePosition(double x, double y, double z);
+      void setAbsolutePosition(double x, double y, double z);
       float mouseX;
       float mouseY;
       float mouseZ;
