@@ -31,8 +31,37 @@ THE SOFTWARE.
 #include "Vector3.hpp"
 #include "Matrix3x3.hpp"
 #include "Quaternion.hpp"
+#include "Converters.h"
 
 namespace Gsage {
+
+  struct BoundingBox {
+    enum Extent {
+      EXTENT_NULL,
+      EXTENT_FINITE,
+      EXTENT_INFINITE
+    };
+
+    BoundingBox(Extent e)
+      : extent(e)
+    {
+    }
+
+    BoundingBox(Vector3 min, Vector3 max)
+      : min(min), max(max)
+      , extent(EXTENT_FINITE)
+    {
+    }
+
+    bool contains(float x, float y, float z)
+    {
+      return x >= min.X && y >= min.Y && z >= min.Z && x <= max.X && y <= max.Y && z <= max.Z;
+    }
+
+    Extent extent;
+    Vector3 min;
+    Vector3 max;
+  };
 
   namespace Geometry {
       enum RotationAxis {
@@ -47,6 +76,9 @@ namespace Gsage {
         TS_LOCAL
       };
   }
+
+  TYPE_CASTER(GsageVector2Caster, Gsage::Vector2, std::string)
+  TYPE_CASTER(GsageVector3Caster, Gsage::Vector3, std::string)
 
 }
 

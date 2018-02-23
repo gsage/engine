@@ -5,7 +5,7 @@
 #include "OgrePrerequisites.h"
 #include "OgreRenderable.h"
 #include <OgreRenderOperation.h>
-#include <imgui.h>
+#include "imgui.h"
 
 struct ImDrawData;
 namespace Gsage

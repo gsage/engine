@@ -2,6 +2,7 @@ require 'lib.class'
 local time = require 'lib.time'
 require 'imgui.base'
 local eal = require 'lib.eal.manager'
+local lm = require 'lib.locales'
 
 -- allows browsing scene objects
 SceneExplorer = class(ImguiWindow, function(self, title, docked, open)
@@ -11,7 +12,7 @@ end)
 -- render
 function SceneExplorer:__call()
   if self:imguiBegin() then
-    imgui.Text("Entities")
+    imgui.Text(lm("sceneExplorer.entities"))
     imgui.Separator()
     local entities = core:getEntities()
     for i = 1, #entities do
@@ -46,9 +47,9 @@ local function tableEditor(t, id)
     if type(value) ~= "table" then
       imgui.PushID(keyID)
 
-      local newValue
+      local newValue, changed = nil
       if type(value) == "boolean" then
-        newValue = imgui.Checkbox(key, value)
+        changed, newValue = imgui.Checkbox(key, value)
       elseif type(value) == "number" then
         changed, newValue = imgui.DragFloat(key, value, 1, 0, 0, "%.3f")
         if changed then
@@ -80,32 +81,32 @@ local function tableEditor(t, id)
 end
 
 -- render component editor
-function SceneExplorer:renderComponentEditor(id, component)
+function SceneExplorer:renderComponentEditor(id, componentName)
   local entity = eal:getEntity(id)
   local type = "generic"
 
-  if core[component] then
-    local info = core[component](core).info
+  if core[componentName] then
+    local info = core[componentName](core).info
     if info then
       type = info.type
     end
   end
 
   local function defaultRenderer()
-    local component = entity[component]
+    local component = entity[componentName]
     if component.props then
       component.props = tableEditor(component.props, id)
     else
-      imgui.TextWrapped("No editor defined for component " .. component .. ": " .. type)
+      imgui.TextWrapped(lm("sceneExplorer.no_editor", {component = componentName, type = type}))
     end
   end
 
-  if not renderers[component] then
+  if not renderers[componentName] then
     defaultRenderer()
     return
   end
 
-  callback = renderers[component][type]
+  callback = renderers[componentName][type]
   if not callback then
     defaultRenderer()
     return

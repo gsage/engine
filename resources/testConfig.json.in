@@ -7,9 +7,64 @@
     "levelsFolder": "levels",
     "savesFolder": "templates"
   },
+  "imgui": {
+    "theme": {
+      "colors": {
+        "text": "0xff000000",
+        "textDisabled": "0xff444444",
+        "windowBg": "0xffa0a0a0",
+        "childWindowBg": "0xffa0a0a0",
+        "popupBg": "0xffa0a0a0",
+        "border": "0x33000000",
+        "borderShadow": "0x00000000",
+        "frameBg": "0xaa2D3A48",
+        "frameBgHovered": "0xdd2D3A48",
+        "frameBgHovered": "0xdd2D3A48",
+        "titleBg": "0xffa5a5a5",
+        "titleBgActive": "0xffa6a6a6",
+        "titleBgCollapsed": "0xaaa5a5a5",
+        "menuBarBg": "0xffa0a0a0",
+        "scrollbarBg": "0xff2D3A48",
+        "scrollbarGrab": "0xffaaaaaa",
+        "scrollbarGrabHovered": "0xff4F8FD4",
+        "scrollbarGrabActive": "0xff417BBA",
+        "sliderGrab": "0xffaaaaaa",
+        "sliderGrabHovered": "0xff4F8FD4",
+        "sliderGrabActive": "0xff417BBA",
+        "button": "0xff4F8FD4",
+        "buttonHovered": "0xff4F91D8",
+        "buttonActive": "0xff4F8FD4",
+        "header": "0xff4F8FD4",
+        "headerHovered": "0xff4F91D8",
+        "headerActive": "0xff4F8FD4"
+      },
+      "windowTitleAlign": "0.5,0.5",
+      "windowPadding": "15,15",
+      "windowRounding": 5,
+      "childRounding": 5,
+      "framePadding": "5,5",
+      "buttonTextAlign": "0.5,0.5",
+      "frameRounding": 4,
+      "itemSpacing": "12,8",
+      "itemInnerSpacing": "8,6",
+      "indentSpacing": 25,
+      "scrollbarRounding": 2,
+      "scrollbarSize": 20,
+      "grabMinSize": 20,
+      "grabRounding": 3.0
+    },
+    "fonts": {
+      "default": {
+        "file": "fonts/OpenSans-Regular.ttf",
+        "oversampleH": 3,
+        "oversampleV": 3,
+        "size": 20
+      }
+    }
+  },
 
   "startLuaInterface": false,
-  "inputHandler": "fakeInput",
+  "inputHandler": "SDL",
   "systems": [
     "testSystem",
     "dynamicStats",
@@ -20,11 +75,15 @@
       "busted"
     ]
   },
+  "windowManager": {
+    "type": "SDL"
+  },
 
   "plugins":
   [
     "@PLUGINS_DIRECTORY@/System",
-    "@PLUGINS_DIRECTORY@/UI"
+    "@PLUGINS_DIRECTORY@/UI",
+    "@PLUGINS_DIRECTORY@/SDLPlugin"
   ],
   "render": {
     "pluginsFile": "plugins.cfg",
@@ -41,10 +100,16 @@
     },
     "window":
     {
+      "autoUpdated": false,
+      "viewport": {
+        "renderQueueSequence": [0, 5, 25, 50, 100, {"id": 101, "suppressShadows": true}],
+        "backgroundColor": "#000000"
+      },
+      "resizable": true,
+      "useWindowManager": true,
       "name": "functional-tests",
-      "width": 320,
-      "height": 240,
-      "visible": false,
+      "width": 1024,
+      "height": 768,
       "params":
       {
         "FSAA": 16,

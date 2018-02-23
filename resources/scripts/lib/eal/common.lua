@@ -17,8 +17,7 @@ function common.base()
 
   function CoreEntity:__index(key)
     if key == "entity" then
-      local entity = core:getEntity(self.id)
-      return entity
+      return core:getEntity(self.id)
     end
 
     if key == "valid" then

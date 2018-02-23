@@ -27,12 +27,34 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "IPlugin.h"
+
 namespace Gsage {
-  class RecastNavigationPlugin
+  class RecastNavigationPlugin : public IPlugin
   {
     public:
       RecastNavigationPlugin();
       virtual ~RecastNavigationPlugin();
+
+      /**
+       * Get plugin name
+       */
+      virtual const std::string& getName() const;
+
+      /**
+       * Registers RecastNavigationSystem factory
+       */
+      virtual bool installImpl();
+
+      /**
+       * Unregisters RecastNavigationSystem factory
+       */
+      virtual void uninstallImpl();
+
+      /**
+       * Set up lua bindings
+       */
+      virtual void setupLuaBindings();
   };
 }
 

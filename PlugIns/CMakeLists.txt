@@ -18,4 +18,8 @@ if(${OGRE_FOUND})
   add_subdirectory(OgrePlugin)
 endif(${OGRE_FOUND})
 
+if(${RECAST_FOUND})
+  add_subdirectory(RecastNavigation)
+endif(${RECAST_FOUND})
+
 add_subdirectory(ImGUI)

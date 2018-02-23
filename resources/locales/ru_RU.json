@@ -1,0 +1,92 @@
+{
+  "views": "Окна",
+  "language": "Русский",
+  "lang.select": "Язык",
+  "window_title": {
+    "debug": "Временная хрень",
+    "lua console": "Lua консоль",
+    "transform": "Трансформации",
+    "stats": "Статистика",
+    "assets": "Ассеты",
+    "scene explorer": "Дерево объектов",
+    "recast": "Recast навигация",
+    "settings": "Настройки",
+    "viewport": "Сцена"
+  },
+
+  "console": {
+    "welcome": "Добро пожаловать в консоль",
+    "version": "Версия движка: %{version}",
+    "clear": "Очистить",
+    "scroll_to_bottom": "Последние логи",
+    "autocomplete": "Используйте TAB для авто-дополнения.",
+    "autoscroll": "авто-прокрутка",
+    "input": "Ввод",
+    "failed_to_parse": "Синтаксическая ошибка в скрипте: %{err}"
+  },
+
+  "sceneExplorer": {
+    "entities": "Объекты",
+    "no_editor": "Редактор для компонента %{component}: %{type} не найден"
+  },
+
+  "transform": {
+    "mode": "Режим",
+    "op": {
+      "translate": "Перемещение",
+      "rotate": "Вращение",
+      "scale": "Масштабирование"
+    },
+    "local": "Локальное",
+    "world": "Глобальное",
+    "dimensions": "Размеры",
+    "no_target": "Объект не выбран",
+    "position": "Позиция",
+    "rotation": "Вращение",
+    "scale": "Размер"
+  },
+
+  "recast": {
+    "rebuild_settings": "Настройки генератора 3D навигации",
+    "rebuild": "Сгенерировать",
+    "cell_dimensions": "Размеры ячейки",
+    "group": {
+      "walkable": "Фильтр",
+      "area": "Зоны",
+      "misc": "Разное",
+      "flags": "Флаги",
+      "visualize": "Отображение",
+      "filter": "Отсеять полигоны"
+    },
+    "walkable": {
+      "slope": "Угол наклона",
+      "height": "Высота агента",
+      "climb": "Максимальный подъем",
+      "radius": "Радиус агента"
+    },
+    "area": {
+      "merge_region": "Слияние регионов",
+      "min_region": "Мин. размер региона"
+    },
+    "misc": {
+      "max_edge_len": "Макс. длина ребра",
+      "max_simplification_error": "Макс. ошибка упрощения",
+      "max_verts_per_poly": "Макс. число вершин на полигон",
+      "detail_sample_dist": "Глубина выборки",
+      "detail_sample_max_error": "Макс. ошибка выборки",
+      "tile_size": "Размер ячейки сетки",
+      "tris_per_chunk": "Кол-во полигонов на кусок"
+    },
+    "flags": {
+      "low_hanging_obstacles": "Низко висящие препятствия",
+      "ledge_spans": "Выступы",
+      "walkable_low_height_spans": "Выступы низкой высоты (?)",
+      "dynamic_rebuild": "Динамическая генерация",
+      "merge": "Совместить с существующей нав. картой"
+    },
+    "visualize": {
+      "show_navmesh": "Показывать нав. карту",
+      "show_path": "Показывать пути навигации"
+    }
+  }
+}

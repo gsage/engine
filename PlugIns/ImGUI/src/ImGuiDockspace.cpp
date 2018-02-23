@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "ImGuiDockspace.h"
 #include "Logger.h"
+#include "imgui_extensions.h"
 
 #include "sole.hpp"
 
@@ -93,7 +94,7 @@ namespace Gsage {
   ImGuiDockspaceStyle getDefaultStyle()
   {
     ImGuiDockspaceStyle style;
-    style.splitterThickness = 3.0f;
+    style.splitterThickness = 4.0f;
     style.tabbarHeight = 35.0f;
     style.tabbarTextMargin = 15.0f;
     style.tabbarPadding = 1.0f;
@@ -144,6 +145,7 @@ namespace Gsage {
   Dock::Dock(const char* label, const ImGuiDockspaceStyle& style)
     : mLayout(Dock::Layout::None)
     , mLabel(ImStrdup(label))
+    , mTitle(nullptr)
     , mRatio(0.5f)
     , mStyle(style)
   {
@@ -153,6 +155,9 @@ namespace Gsage {
   Dock::~Dock()
   {
     ImGui::MemFree(mLabel);
+    if(mTitle != nullptr) {
+      ImGui::MemFree(mTitle);
+    }
   }
 
   void Dock::reset()
@@ -861,6 +866,11 @@ namespace Gsage {
 
   bool ImGuiDockspaceRenderer::begin(const char* label, bool* opened, ImGuiWindowFlags windowFlags)
   {
+    return begin(label, nullptr, opened, windowFlags);
+  }
+
+  bool ImGuiDockspaceRenderer::begin(const char* label, const char* title, bool* opened, ImGuiWindowFlags windowFlags)
+  {
     if(mPopClipRect) {
       ImGui::PopClipRect();
       mPopClipRect = false;
@@ -876,6 +886,7 @@ namespace Gsage {
     bool drawWindow = false;
 
     if(dock) {
+      dock->mTitle = ImStrdup(title);
       if(mStateWasUpdated || dock->mDirty) {
         if(opened) {
           *opened = dock->getOpened();
@@ -1008,9 +1019,10 @@ namespace Gsage {
           dockTab = dockTab->getNextTab();
           continue;
         }
-        const char* textEnd = ImGui::FindRenderedTextEnd(dockTab->getLabel());
+        const char* title = dockTab->getTitle();
+        const char* textEnd = ImGui::FindRenderedTextEnd(title);
         ImVec2 pos = ImGui::GetCursorScreenPos();
-        float textSizeX = ImGui::CalcTextSize(dockTab->getLabel(), textEnd).x;
+        float textSizeX = ImGui::CalcTextSize(title, textEnd).x;
 
         float sizeX = fullWidth ? dock->getSize().x : textSizeX + mStyle.tabbarTextMargin * 4;
 
@@ -1059,14 +1071,30 @@ namespace Gsage {
               10);
         }
         drawList->PathLineTo(pos + ImVec2(size.x, size.y));
-        drawList->PathFillConvex(
-            hovered ? mStyle.tabHoveredColor : (dockTab->getActive() ? mStyle.tabActiveColor : mStyle.tabInactiveColor));
+        ImU32 colorBase = hovered ? mStyle.tabHoveredColor : (dockTab->getActive() ? mStyle.tabActiveColor : mStyle.tabInactiveColor);
+        ImVec4 bottom = ImGui::ColorConvertU32ToFloat4(colorBase);
+        ImVec4 top = colorSum(bottom, ImVec4(0.1f, 0.1f, 0.1f, 0.0f));
+
+        if(dockTab->getActive()) {
+          ImGui::VerticalGradient gradient(pos, pos + ImVec2(0, size.y), top, bottom);
+
+          ImGui::PathFillConvex(drawList, gradient);
+        } else {
+
+          drawList->PathFillConvex(colorBase);
+        }
+
+        ImU32 black = ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 0.5f));
+        drawList->PathClear();
+        drawList->PathLineTo(pos + ImVec2(0, size.y));
+        drawList->PathLineTo(pos + size);
+        drawList->PathStroke(black, false, 1.0f);
 
         ImVec2 textPos;
 
         textPos.x = pos.x + (fullWidth ? size.x : tabButtonSize.x)/2 - textSizeX/2;
         textPos.y = pos.y + size.y/2 - ImGui::GetTextLineHeight()/2;
-        drawList->AddText(textPos, mStyle.textColor, dockTab->getLabel(), textEnd);
+        drawList->AddText(textPos, mStyle.textColor, title, textEnd);
 
         ImGui::SetCursorScreenPos(pos + ImVec2(tabButtonSize.x, 0));
         std::stringstream ss;
@@ -1077,13 +1105,21 @@ namespace Gsage {
         }
 
         ImU32 color = mStyle.textColor;
-        if (ImGui::IsItemHovered()) {
-          color = mStyle.tabHoveredColor;
-        }
         ImVec2 center = (ImGui::GetItemRectMin() + ImGui::GetItemRectMax()) * 0.5f;
-        ImVec2 crossSize = ImVec2(4.0f, 4.0f);
 
         center.y += 1;
+
+        ImVec2 crossSize = ImVec2(5.0f, 5.0f);
+
+        if (ImGui::IsItemHovered()) {
+          drawList->PathClear();
+          drawList->AddLine(
+              center + ImVec2(-crossSize.x, -crossSize.y), center + ImVec2(crossSize.x, crossSize.y), black, 5);
+          drawList->AddLine(
+              center + ImVec2(crossSize.x, -crossSize.y), center + ImVec2(-crossSize.x, crossSize.y), black, 5);
+        }
+
+        crossSize = ImVec2(4.0f, 4.0f);
 
         drawList->PathClear();
         drawList->AddLine(
@@ -1148,6 +1184,11 @@ namespace Gsage {
             10);
       }
       drawList->PathFillConvex(mStyle.windowBGColor);
+      ImU32 col = ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 0.5f));
+      drawList->PathClear();
+      drawList->PathLineTo(pos + ImVec2(0.0f, 0.5f));
+      drawList->PathLineTo(pos + ImVec2(size.x, 0.5f));
+      drawList->PathStroke(mStyle.tabHoveredColor, false, 0.5f);
     }
   }
 
@@ -1174,12 +1215,15 @@ namespace Gsage {
       ImGuiMouseCursor cursor;
 
       ImGuiIO& io = ImGui::GetIO();
+      float rounding = ImGui::GetStyle().WindowRounding;
+      ImVec2 margin(rounding, rounding);
 
       switch(dock->getLayout()) {
         case Dock::Horizontal:
           if(dock->mResized) {
             dratio = io.MouseDelta.x / dock->getSize().x;
           }
+          margin.x = 1.0f;
 
           pos.x += child->getSize().x;
           size = ImVec2(mStyle.splitterThickness, dock->getSize().y);
@@ -1189,6 +1233,7 @@ namespace Gsage {
           if(dock->mResized) {
             dratio = io.MouseDelta.y / dock->getSize().y;
           }
+          margin.y = 1.0f;
 
           pos.y += child->getSize().y;
           size = ImVec2(dock->getSize().x, mStyle.splitterThickness);
@@ -1222,7 +1267,7 @@ namespace Gsage {
       }
 
       canvas->AddRectFilled(
-          ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), over ? mStyle.splitterHoveredColor : mStyle.splitterNormalColor);
+          ImGui::GetItemRectMin() + margin, ImGui::GetItemRectMax() - margin, over ? mStyle.splitterHoveredColor : mStyle.splitterNormalColor);
       ImGui::PopID();
       ImGui::SetCursorScreenPos(screenPos);
     }

@@ -30,6 +30,8 @@ THE SOFTWARE.
 #include "Entity.h"
 #include "Component.h"
 #include "FileLoader.h"
+#include "components/RenderComponent.h"
+#include "GeometryPrimitives.h"
 
 #include "Logger.h"
 
@@ -130,14 +132,14 @@ namespace Gsage {
       entityNode.put("props", entity->getProps());
       entitiesNode.put(entity->getId(), entityNode);
 
-      // TODO figure out more flexible way to do it
-      EntityComponent* render = mEngine->getComponent(entity, "render");
+      RenderComponent* render = mEngine->getComponent<RenderComponent>(entity);
 
       if(render)
       {
-        DataProxy renderData;
-        render->dump(renderData);
-        placementNode.put(entity->getId() + ".position", renderData.get("root.position", "0,0,0"));
+        Gsage::Vector3 position = render->getPosition();
+        std::stringstream ss;
+        ss << position.X << "," << position.Y << "," << position.Z;
+        placementNode.put(entity->getId() + ".position", ss.str());
       }
     }
 

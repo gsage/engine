@@ -40,6 +40,7 @@ THE SOFTWARE.
 #include "EngineSystem.h"
 #include "EngineEvent.h"
 #include "ImGuiDockspaceState.h"
+#include "ImGuiConverters.h"
 
 namespace Gsage {
 
@@ -198,65 +199,68 @@ namespace Gsage {
     LOG(INFO) << "Creating ImGui context";
     ImGui::CreateContext();
 
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.WindowTitleAlign = ImVec2(0.5f,0.5f);
+    DataProxy theme = mEngine->settings().get("imgui.theme", DataProxy::create(DataWrapper::JSON_OBJECT));
 
-    style.Colors[ImGuiCol_Text]                  = ImVec4(0.73f, 0.73f, 0.73f, 1.00f);
-    style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.26f, 0.26f, 0.26f, 0.95f);
-    style.Colors[ImGuiCol_ChildWindowBg]         = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-    style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-    style.Colors[ImGuiCol_Border]                = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
-    style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
-    style.Colors[ImGuiCol_FrameBg]               = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-    style.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-    style.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-    style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.21f, 0.21f, 0.21f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
-    style.Colors[ImGuiCol_Button]                = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.43f, 0.43f, 0.43f, 0.90f);
-    style.Colors[ImGuiCol_ButtonActive]          = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
-    style.Colors[ImGuiCol_Header]                = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_HeaderActive]          = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_Column]                = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
-    style.Colors[ImGuiCol_ColumnHovered]         = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ColumnActive]          = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ResizeGrip]            = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_CloseButton]           = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
-    style.Colors[ImGuiCol_CloseButtonHovered]    = ImVec4(0.98f, 0.39f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_CloseButtonActive]     = ImVec4(0.98f, 0.39f, 0.36f, 1.00f);
-    style.Colors[ImGuiCol_PlotLines]             = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
-    style.Colors[ImGuiCol_PlotLinesHovered]      = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-    style.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.32f, 0.52f, 0.65f, 1.00f);
-    style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
-    style.Colors[ImGuiCol_NavHighlight]          = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-    style.WindowPadding            = ImVec2(15, 15);
-    style.WindowRounding           = 5.0f;
-    style.ChildRounding            = 5.0f;
-    style.FramePadding             = ImVec2(5, 5);
-    style.ButtonTextAlign          = ImVec2(0.5f, 0.3f);
-    style.FrameRounding            = 4.0f;
-    style.ItemSpacing              = ImVec2(12, 8);
-    style.ItemInnerSpacing         = ImVec2(8, 6);
-    style.IndentSpacing            = 25.0f;
-    style.ScrollbarSize            = 15.0f;
-    style.ScrollbarRounding        = 10.0f;
-    style.GrabMinSize              = 20.0f;
-    style.GrabRounding             = 3.0f;
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    DataProxy colors = theme.get("colors", DataProxy::create(DataWrapper::JSON_OBJECT));
+
+    style.Colors[ImGuiCol_Text]                  = colors.get("text", ImVec4(0.73f, 0.73f, 0.73f, 1.00f));
+    style.Colors[ImGuiCol_TextDisabled]          = colors.get("textDisabled", ImVec4(0.50f, 0.50f, 0.50f, 1.00f));
+    style.Colors[ImGuiCol_WindowBg]              = colors.get("windowBg", ImVec4(0.26f, 0.26f, 0.26f, 0.95f));
+    style.Colors[ImGuiCol_ChildWindowBg]         = colors.get("childWindowBg", ImVec4(0.28f, 0.28f, 0.28f, 1.00f));
+    style.Colors[ImGuiCol_PopupBg]               = colors.get("popupBg", ImVec4(0.26f, 0.26f, 0.26f, 1.00f));
+    style.Colors[ImGuiCol_Border]                = colors.get("border", ImVec4(0.11f, 0.11f, 0.11f, 1.00f));
+    style.Colors[ImGuiCol_BorderShadow]          = colors.get("borderShadow", ImVec4(0.11f, 0.11f, 0.11f, 1.00f));
+    style.Colors[ImGuiCol_FrameBg]               = colors.get("frameBg", ImVec4(0.16f, 0.16f, 0.16f, 1.00f));
+    style.Colors[ImGuiCol_FrameBgHovered]        = colors.get("frameBgHovered", ImVec4(0.16f, 0.16f, 0.16f, 1.00f));
+    style.Colors[ImGuiCol_FrameBgActive]         = colors.get("frameBgActive", ImVec4(0.16f, 0.16f, 0.16f, 1.00f));
+    style.Colors[ImGuiCol_TitleBg]               = colors.get("titleBg", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_TitleBgCollapsed]      = colors.get("titleBgCollapsed", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_TitleBgActive]         = colors.get("titleBgActive", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_MenuBarBg]             = colors.get("menuBarBg", ImVec4(0.26f, 0.26f, 0.26f, 1.00f));
+    style.Colors[ImGuiCol_ScrollbarBg]           = colors.get("scrollbarBg", ImVec4(0.21f, 0.21f, 0.21f, 1.00f));
+    style.Colors[ImGuiCol_ScrollbarGrab]         = colors.get("scrollbarGrab", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_ScrollbarGrabHovered]  = colors.get("scrollbarGrabHovered", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_ScrollbarGrabActive]   = colors.get("scrollbarGrabActive", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_CheckMark]             = colors.get("checkMark", ImVec4(0.78f, 0.78f, 0.78f, 1.00f));
+    style.Colors[ImGuiCol_SliderGrab]            = colors.get("sliderGrab", ImVec4(0.74f, 0.74f, 0.74f, 1.00f));
+    style.Colors[ImGuiCol_SliderGrabActive]      = colors.get("sliderGrabActive", ImVec4(0.74f, 0.74f, 0.74f, 1.00f));
+    style.Colors[ImGuiCol_Button]                = colors.get("button", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_ButtonHovered]         = colors.get("buttonHovered", ImVec4(0.43f, 0.43f, 0.43f, 0.90f));
+    style.Colors[ImGuiCol_ButtonActive]          = colors.get("buttonActive", ImVec4(0.11f, 0.11f, 0.11f, 1.00f));
+    style.Colors[ImGuiCol_Header]                = colors.get("header", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_HeaderHovered]         = colors.get("headerHovered", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_HeaderActive]          = colors.get("headerActive", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_Column]                = colors.get("column", ImVec4(0.39f, 0.39f, 0.39f, 1.00f));
+    style.Colors[ImGuiCol_ColumnHovered]         = colors.get("columnHovered", ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+    style.Colors[ImGuiCol_ColumnActive]          = colors.get("columnActive", ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+    style.Colors[ImGuiCol_ResizeGrip]            = colors.get("resizeGrip", ImVec4(0.36f, 0.36f, 0.36f, 1.00f));
+    style.Colors[ImGuiCol_ResizeGripHovered]     = colors.get("resizeGripHovered", ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+    style.Colors[ImGuiCol_ResizeGripActive]      = colors.get("resizeGripActive", ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+    style.Colors[ImGuiCol_PlotLines]             = colors.get("plotLines", ImVec4(0.39f, 0.39f, 0.39f, 1.00f));
+    style.Colors[ImGuiCol_PlotLinesHovered]      = colors.get("plotLinesHovered", ImVec4(1.00f, 0.43f, 0.35f, 1.00f));
+    style.Colors[ImGuiCol_PlotHistogram]         = colors.get("plotHistogram", ImVec4(0.90f, 0.70f, 0.00f, 1.00f));
+    style.Colors[ImGuiCol_PlotHistogramHovered]  = colors.get("plotHistogramHovered", ImVec4(1.00f, 0.60f, 0.00f, 1.00f));
+    style.Colors[ImGuiCol_TextSelectedBg]        = colors.get("textSelectedBg", ImVec4(0.32f, 0.52f, 0.65f, 1.00f));
+    style.Colors[ImGuiCol_ModalWindowDarkening]  = colors.get("modalWindowDarkening", ImVec4(0.20f, 0.20f, 0.20f, 0.50f));
+    style.Colors[ImGuiCol_NavHighlight]          = colors.get("navHighlight", ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+
+    style.WindowTitleAlign      = theme.get("windowTitleAlign", ImVec2(0.5f,0.5f));
+    style.WindowPadding         = theme.get("windowPadding", ImVec2(15, 15));
+    style.WindowRounding        = theme.get("windowRounding", 5.0f);
+    style.ChildRounding         = theme.get("childRounding", 5.0f);
+    style.FramePadding          = theme.get("framePadding", ImVec2(5.0f, 5.0f));
+    style.ButtonTextAlign       = theme.get("buttonTextAlign", ImVec2(0.5f,0.3f));
+    style.FrameRounding         = theme.get("frameRounding", 4.0f);
+    style.ItemSpacing           = theme.get("itemSpacing", ImVec2(12.0f, 8.0f));
+    style.ItemInnerSpacing      = theme.get("itemInnerSpacing", ImVec2(8.0f, 6.0f));
+    style.IndentSpacing         = theme.get("indentSpacing", 25.0f);
+    style.ScrollbarSize         = theme.get("scrollbarSize", 15.0f);
+    style.ScrollbarRounding     = theme.get("scrollbarRounding", 10.0f);
+    style.GrabMinSize           = theme.get("grabMinSize", 20.0f);
+    style.GrabRounding          = theme.get("grabRounding", 3.0f);
+    style.CurveTessellationTol  = theme.get("curveTessellationTol", 1.25f);
 
     EngineSystem* render = mEngine->getSystem("render");
     if(render == 0) {
@@ -305,7 +309,6 @@ namespace Gsage {
     io.KeyMap[ImGuiKey_Z] = KeyboardEvent::KC_Z;
     io.KeyMap[ImGuiKey_Space] = KeyboardEvent::KC_SPACE;
 
-    io.NavFlags |= ImGuiNavFlags_EnableKeyboard;
     // mouse events
     addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &ImguiManager::handleMouseEvent, -100);
     addEventListener(mEngine, MouseEvent::MOUSE_UP, &ImguiManager::handleMouseEvent, -100);
@@ -336,6 +339,11 @@ namespace Gsage {
 
     lua["imgui"]["BeginDockOpen"] = [this](std::string label, bool opened, int flags) -> std::tuple<bool, bool> {
       bool active = mRenderer->mDockspace.begin(label.c_str(), &opened, flags);
+      return std::make_tuple(active, opened);
+    };
+
+    lua["imgui"]["BeginDockTitleOpen"] = [this](std::string label, std::string title, bool opened, int flags) -> std::tuple<bool, bool> {
+      bool active = mRenderer->mDockspace.begin(label.c_str(), title.c_str(), &opened, flags);
       return std::make_tuple(active, opened);
     };
 

@@ -1,4 +1,5 @@
 require 'imgui.base'
+local lm = require 'lib.locales'
 
 List = class(function(self, text, items)
   self.text = text
@@ -6,13 +7,13 @@ List = class(function(self, text, items)
 end)
 
 function List:render()
-  if imgui.BeginMenu(self.text) then
+  if imgui.BeginMenu(lm(self.text)) then
     for _, item in pairs(self.items) do
       local selected = nil
       if item.selected then
         selected = item.selected()
       end
-      if imgui.MenuItem(item.text, self.shortcut, selected) then
+      if imgui.MenuItem(lm(item.text), self.shortcut, selected) then
         item.action()
       end
     end

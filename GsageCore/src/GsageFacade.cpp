@@ -37,6 +37,8 @@ THE SOFTWARE.
 #include "components/ScriptComponent.h"
 #include "systems/LuaScriptSystem.h"
 #include "systems/CombatSystem.h"
+#include "systems/MovementSystem.h"
+
 #include "EngineEvent.h"
 
 
@@ -73,6 +75,7 @@ namespace Gsage {
 
     // Register core system factories
     registerSystemFactory<CombatSystem>();
+    registerSystemFactory<MovementSystem>();
     mSystemManager.registerFactory(LuaScriptSystem::ID, new LuaScriptSystemFactory(mLuaInterface));
   }
 

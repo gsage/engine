@@ -1,4 +1,5 @@
 require 'lib.class'
+local lm = require 'lib.locales'
 
 -- table.filter({"a", "b", "c", "d"}, function(o, k, i) return o >= "c" end)  --> {"c","d"}
 --
@@ -61,6 +62,7 @@ end
 -- lua/logs console
 Console = class(ImguiWindow, function(self, maxInput, docked)
   ImguiWindow.init(self, "lua console", docked)
+  self.flags = ImGuiWindowFlags_NoScrollbar + ImGuiWindowFlags_NoScrollWithMouse
   self.history = {}
   self.historyPos = 0
   self.prevHistoryPos = 0
@@ -74,8 +76,8 @@ Console = class(ImguiWindow, function(self, maxInput, docked)
   end
 
   self.log = {}
-  self:info("Welcome to lua console")
-  self:info("Engine Version: " .. (game.version or "unknown"))
+  self:info(lm("console.welcome"))
+  self:info(lm("console.version", {version = game.version or "unknown"}))
 
   log.proxy:subscribe("console", function(message)
     local level = LogEntry.LEVEL_MAP[message:level()] or "UNKNOWN"
@@ -162,33 +164,35 @@ function Console:__call()
     return
   end
 
-  imgui.TextWrapped("press TAB to use text completion.")
-  if imgui.SmallButton("Clear") then
+  imgui.TextWrapped(lm("console.autocomplete"))
+  if imgui.SmallButton(lm("console.clear")) then
     self:clear()
   end
   imgui.SameLine()
 
   local scrollToBottom = false
-  if imgui.SmallButton("Scroll to bottom") then
+  if imgui.SmallButton(lm("console.scroll_to_bottom")) then
     scrollToBottom = true
   end
 
   imgui.SameLine()
   imgui.PushStyleVar_2(ImGuiStyleVar_FramePadding, 0, 0)
-  local _, enabled = imgui.Checkbox("Autoscroll", self.scrollToBottom)
+  local _, enabled = imgui.Checkbox(lm("console.autoscroll"), self.scrollToBottom)
   self.scrollToBottom = enabled
   imgui.PopStyleVar()
 
   imgui.Separator()
 
   --self.filter = imgui.ImGuiTextFilter()
+  imgui.PushStyleColor_U32(ImGuiCol_ChildWindowBg, imgui.GetColorU32(ImGuiCol_FrameBg, 1))
   imgui.BeginChild("ScrollingRegion", 0, -imgui.GetItemsLineHeightWithSpacing(), false, ImGuiWindowFlags_HorizontalScrollbar)
   if imgui.BeginPopupContextWindow() then
-    if imgui.Selectable("Clear") then
+    if imgui.Selectable(lm("console.clear")) then
       self:clear()
     end
     imgui.EndPopup()
   end
+  imgui.PopStyleColor()
 
   imgui.PushStyleVar_2(ImGuiStyleVar_ItemSpacing, 4, 1)
   for _, item in pairs(self.log) do
@@ -204,7 +208,7 @@ function Console:__call()
   imgui.EndChild()
   imgui.Separator()
 
-  if imgui.InputTextWithCallback("input", self.commandLine, ImGuiInputTextFlags_EnterReturnsTrue+ImGuiInputTextFlags_CallbackCompletion+ImGuiInputTextFlags_CallbackHistory, self.commandLineCallback) then
+  if imgui.InputTextWithCallback(lm("console.input"), self.commandLine, ImGuiInputTextFlags_EnterReturnsTrue+ImGuiInputTextFlags_CallbackCompletion+ImGuiInputTextFlags_CallbackHistory, self.commandLineCallback) then
     local text = self.commandLine:read()
     if text ~= "" then
       self:debug(text)
@@ -232,7 +236,7 @@ end
 function Console:executeLua(script)
   local script, err = loadstring(script)
   if script == nil or script == "" then
-    error("Failed to parse script " .. err)
+    error(lm("console.failed_to_parse", {err = tostring(err)}))
   else
     return script()
   end

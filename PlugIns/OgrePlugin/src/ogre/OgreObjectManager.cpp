@@ -42,7 +42,7 @@ namespace Gsage {
   {
   }
 
-  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity )
+  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity)
   {
     std::string type = dict.get("type", "no_type_defined!");
     if(mObjects.count(type) == 0)

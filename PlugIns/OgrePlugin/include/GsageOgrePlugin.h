@@ -27,6 +27,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "OgreConverters.h"
 #include "IPlugin.h"
 
 namespace Gsage {

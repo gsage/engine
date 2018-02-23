@@ -52,6 +52,9 @@
     "moveAnimation": "run",
     "animSpeedRatio": "0.1"
   },
+  "navigation": {
+    "align": true
+  },
   "stats":
   {
     "level": 1,

@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <OgreSceneManager.h>
 
 namespace Gsage {
+
   static long counter = 0;
 
   OgreObject::OgreObject()
@@ -87,7 +88,7 @@ namespace Gsage {
     auto objectId = dict.get<std::string>("name");
     if (!objectId.second && mObjectId.empty()) {
       std::stringstream ss("");
-      ss << "object" << counter++;
+      ss << mType << counter++;
       mObjectId = ss.str();
     }
 

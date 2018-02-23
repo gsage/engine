@@ -2,7 +2,6 @@ set(PLUGIN_NAME "OgrePlugin")
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
   ${OGRE_INCLUDE_DIRS}
@@ -14,11 +13,11 @@ include_directories(
 file(GLOB sources src/*.cpp src/*/*.cpp )
 
 set(LIBS
-  OgreCrowd
   GsageCore
   easyloggingpp
   ${OGRE_Terrain_LIBRARY}
   ${OGRE_Overlay_LIBRARY}
+  ${OGRE_LIBRARIES}
 )
 
 if(APPLE)
@@ -37,7 +36,6 @@ if(WIN32)
   find_package(OpenGL)
   set(LIBS
     ${OPENGL_LIBRARIES}
-    ${CONAN_LIBS_OGRE}
     ${LIBS}
   )
 endif(WIN32)
@@ -58,9 +56,9 @@ if(UNIX AND NOT APPLE)
     ${CMAKE_DL_LIBS}
     ${X11_Xrandr_LIB}
     ${X11_Xext_LIB}
+    ${X11_Xt_LIB}
     ${Xaw}
     Threads::Threads
-    ${CONAN_LIBS_OGRE}
     -Wl,--no-whole-archive
     ${LIBS})
 endif(UNIX AND NOT APPLE)

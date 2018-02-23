@@ -22,18 +22,65 @@
   "startupScript": "scripts/entrypoints/editor.lua",
   "inputHandler": "SDL",
   "systems": [
-    "ogre", "recast", "dynamicStats", "lua"
+    "ogre", "3dmovement", "recast", "dynamicStats", "lua"
   ],
   "packager": {
     "deps": [
-      "tween"
+      "tween",
+      "i18n",
+      "luafilesystem"
     ]
   },
 
   "imgui": {
+    "theme": {
+      "colors": {
+        "text": "0xff000000",
+        "textDisabled": "0xff444444",
+        "windowBg": "0xffa0a0a0",
+        "childWindowBg": "0xffa0a0a0",
+        "popupBg": "0xffa0a0a0",
+        "border": "0x33000000",
+        "borderShadow": "0x00000000",
+        "frameBg": "0xaa2D3A48",
+        "frameBgHovered": "0xdd2D3A48",
+        "frameBgHovered": "0xdd2D3A48",
+        "titleBg": "0xffa5a5a5",
+        "titleBgActive": "0xffa6a6a6",
+        "titleBgCollapsed": "0xaaa5a5a5",
+        "menuBarBg": "0xffa0a0a0",
+        "scrollbarBg": "0xff2D3A48",
+        "scrollbarGrab": "0xffaaaaaa",
+        "scrollbarGrabHovered": "0xff4F8FD4",
+        "scrollbarGrabActive": "0xff417BBA",
+        "sliderGrab": "0xffaaaaaa",
+        "sliderGrabHovered": "0xff4F8FD4",
+        "sliderGrabActive": "0xff417BBA",
+        "button": "0xff4F8FD4",
+        "buttonHovered": "0xff4F91D8",
+        "buttonActive": "0xff4F8FD4",
+        "header": "0xff4F8FD4",
+        "headerHovered": "0xff4F91D8",
+        "headerActive": "0xff4F8FD4"
+      },
+      "windowTitleAlign": "0.5,0.5",
+      "windowPadding": "15,15",
+      "windowRounding": 5,
+      "childRounding": 5,
+      "framePadding": "5,5",
+      "buttonTextAlign": "0.5,0.5",
+      "frameRounding": 4,
+      "itemSpacing": "12,8",
+      "itemInnerSpacing": "8,6",
+      "indentSpacing": 25,
+      "scrollbarRounding": 2,
+      "scrollbarSize": 20,
+      "grabMinSize": 20,
+      "grabRounding": 3.0
+    },
     "fonts": {
       "default": {
-        "file": "fonts/OpenSans-Regular.ttf",
+        "file": "fonts/Koruri-Regular.ttf",
         "oversampleH": 3,
         "oversampleV": 3,
         "size": 20
@@ -50,7 +97,8 @@
     "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/ImGUIPlugin",
     "@PLUGINS_DIRECTORY@/RocketUIPlugin",
-    "@PLUGINS_DIRECTORY@/SDLPlugin"
+    "@PLUGINS_DIRECTORY@/SDLPlugin",
+    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin"
   ],
 
   "render":
@@ -81,6 +129,7 @@
     "window":
     {
       "viewport": {
+        "backgroundColor": "0xff0a1f2c",
         "renderQueueSequence": [{"id": 101, "suppressShadows": true}]
       },
       "name": "Editor",

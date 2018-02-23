@@ -45,7 +45,7 @@ namespace Ogre
 namespace Gsage {
   class AnimationScheduler;
   class AnimationGroup;
-  class RenderComponent;
+  class OgreRenderComponent;
 
   /**
    * Class that wraps ogre animation state, adds speed definition
@@ -156,7 +156,7 @@ namespace Gsage {
   {
     public:
       AnimationGroup() : mRenderComponent(0) {};
-      AnimationGroup(RenderComponent* c);
+      AnimationGroup(OgreRenderComponent* c);
       virtual ~AnimationGroup();
       /**
        * Initialize animation groups
@@ -182,7 +182,7 @@ namespace Gsage {
       typedef std::map<std::string, Animation> Animations;
       Animations mAnimations;
 
-      RenderComponent* mRenderComponent;
+      OgreRenderComponent* mRenderComponent;
 
       float mSpeed;
   };
@@ -228,7 +228,7 @@ namespace Gsage {
       AnimationScheduler();
       virtual ~AnimationScheduler();
 
-      void setRenderComponent(RenderComponent* c);
+      void setRenderComponent(OgreRenderComponent* c);
       /**
        * Read dict and configure groups, read anim states from entities
        *
@@ -236,7 +236,7 @@ namespace Gsage {
        * @param sceneManager Ogre::SceneManager to get entities from
        * @param renderComponent target render component
        */
-      bool initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager, RenderComponent* renderComponent);
+      bool initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager, OgreRenderComponent* renderComponent);
 
       /**
        * Adjust animation speed
@@ -321,7 +321,7 @@ namespace Gsage {
 
       DataProxy mAnimationStatesDict;
 
-      RenderComponent* mRenderComponent;
+      OgreRenderComponent* mRenderComponent;
 
       bool mInitialized;
   };

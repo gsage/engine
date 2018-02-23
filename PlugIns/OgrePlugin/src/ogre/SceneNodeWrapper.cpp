@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "Logger.h"
 
 namespace Gsage {
+  static long counter = 0;
 
   const std::string SceneNodeWrapper::TYPE = "node";
 
@@ -130,26 +131,60 @@ namespace Gsage {
 
   void SceneNodeWrapper::readChildren(const DataProxy& dict)
   {
+    std::map<std::pair<std::string, std::string>, bool> visited;
     for(auto& pair : dict)
     {
-      LOG(TRACE) << "Creating child " << pair.second.get("type", "unknown");
-      OgreObject* child = mObjectManager->create(pair.second, mOwnerId, mSceneManager, mNode);
-      if(!child)
+      const std::string& type = pair.second.get("type", "");
+
+      if(type == "")
+      {
+        LOG(ERROR) << "Skipped malformed child definition: no type defined";
         continue;
-      const std::string& type = child->getType();
+      }
+
+      // autogenerate object id if it's not defined
+      auto objectId = pair.second.get<std::string>("name");
+      std::string id = objectId.first;
+      if (!objectId.second) {
+        std::stringstream ss("");
+        ss << type << counter++;
+        id = ss.str();
+        pair.second.put("name", id);
+      }
+
       if(mChildren.count(type) == 0)
       {
         mChildren[type] = ObjectCollection();
       }
 
-      const std::string& id = child->getObjectId();
+      visited[std::make_pair(type, id)] = true;
       if(mChildren[type].count(id) != 0)
       {
-        LOG(ERROR) << "Failed to create child of type \"" << type << "\", another object with id \"" << id << "\" already exists";
-        child->destroy();
+        mChildren[type][id]->read(pair.second);
         continue;
       }
+      LOG(TRACE) << "Creating child " << type << " \"" << id << "\"";
+      OgreObject* child = mObjectManager->create(pair.second, mOwnerId, mSceneManager, mNode);
+      if(!child) {
+        LOG(ERROR) << "Failed to create child " << type << " \"" << id << "\"";
+        continue;
+      }
+
       mChildren[type][id] = child;
+    }
+
+    for(auto pair : mChildren) {
+      for(auto childsOfType : pair.second) {
+        auto key = std::make_pair(pair.first, childsOfType.first);
+        if(visited.count(key) == 0) {
+          mChildren[key.first][key.second]->destroy();
+          mChildren[key.first].erase(childsOfType.first);
+
+          if(mChildren[key.first].size() == 0) {
+            mChildren.erase(key.first);
+          }
+        }
+      }
     }
   }
 

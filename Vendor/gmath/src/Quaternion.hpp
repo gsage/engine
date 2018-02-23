@@ -35,6 +35,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <iostream>
+#include <type_traits>
 
 #define SMALL_DOUBLE 0.0000000001
 
@@ -151,6 +152,14 @@ namespace Gsage {
     inline Quaternion(double data[]);
     inline Quaternion(Vector3 vector, double scalar);
     inline Quaternion(double x, double y, double z, double w);
+
+    template<class T, std::enable_if_t<std::is_integral<T>::value>>
+    inline Quaternion(T vals[]) {
+      data[0] = (double)vals[0];
+      data[1] = (double)vals[1];
+      data[2] = (double)vals[2];
+      data[3] = (double)vals[3];
+    };
 
 
     /**
@@ -347,6 +356,12 @@ namespace Gsage {
     inline struct Quaternion& operator+=(const Quaternion rhs);
     inline struct Quaternion& operator-=(const Quaternion rhs);
     inline struct Quaternion& operator*=(const Quaternion rhs);
+
+    /**
+     * Get Quaternion data as array of T
+     */
+    template<class T, std::enable_if_t<std::is_integral<T>::value>>
+    T* as() const { return {(T)data[0], (T)data[1], (T)data[2], (T)data[3]}; };
   };
 
   inline Quaternion operator-(Quaternion rhs);

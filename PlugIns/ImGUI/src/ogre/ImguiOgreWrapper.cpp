@@ -205,6 +205,8 @@ namespace Gsage {
       return true;
     }
 
+    ImGui::EndFrame();
+
     mFrameEnded = true;
     updateVertexData(vp);
     return true;
@@ -544,7 +546,13 @@ namespace Gsage {
         config.OversampleH = pair.second.get("oversampleH", 0);
         config.OversampleV = pair.second.get("oversampleV", 0);
 
-        ImFont* pFont = io.Fonts->AddFontFromFileTTF((workdir + GSAGE_PATH_SEPARATOR + file.first).c_str(), size.first, &config);
+        ImVector<ImWchar> ranges;
+        ImFontAtlas::GlyphRangesBuilder builder;
+        builder.AddRanges(io.Fonts->GetGlyphRangesCyrillic());
+        builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
+        builder.BuildRanges(&ranges);
+
+        ImFont* pFont = io.Fonts->AddFontFromFileTTF((workdir + GSAGE_PATH_SEPARATOR + file.first).c_str(), size.first, &config, ranges.Data);
         if(pair.first == "default") {
           io.Fonts->AddFontDefault();
         }
@@ -574,6 +582,7 @@ namespace Gsage {
     OgreRenderSystem* render = mEngine->getSystem<OgreRenderSystem>();
     io.DisplaySize = ImVec2((float)render->getWidth(), (float)render->getHeight());
     ImGui::NewFrame();
+    ImGui::EndFrame();
   }
 
   bool ImguiOgreWrapper::render(EventDispatcher* sender, const Event& event)

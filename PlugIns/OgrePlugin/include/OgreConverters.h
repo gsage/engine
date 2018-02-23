@@ -31,23 +31,16 @@ THE SOFTWARE.
 #include <OgreVector3.h>
 #include <OgreColourValue.h>
 #include <OgreQuaternion.h>
+#include <OgreAxisAlignedBox.h>
+#include <OgreRenderOperation.h>
 #include "DataProxy.h"
-#include "RenderTarget.h"
+#include "RenderTargetTypes.h"
 #include "GeometryPrimitives.h"
 
 namespace Gsage {
-  TYPE_CASTER(OgreDegreeCaster, Ogre::Degree, std::string);
-  TYPE_CASTER(OgreColourValueCaster, Ogre::ColourValue, std::string);
-  TYPE_CASTER(OgreVector3Caster, Ogre::Vector3, std::string);
-  TYPE_CASTER(OgreQuaternionCaster, Ogre::Quaternion, std::string);
-  TYPE_CASTER(OgreFloatRectCaster, Ogre::FloatRect, std::string);
-  TYPE_CASTER(OgrePixelFormatCaster, Ogre::PixelFormat, std::string);
-
-  TYPE_CASTER(RenderTargetTypeCaster, RenderTarget::Type, std::string);
-
   static inline const Ogre::Vector3 GsageVector3ToOgreVector3(const Gsage::Vector3& vector)
   {
-    return Ogre::Vector3(vector.X, vector.Y, vector.Z);
+    return Ogre::Vector3((Ogre::Real)vector.X, (Ogre::Real)vector.Y, (Ogre::Real)vector.Z);
   }
 
   static inline const Gsage::Vector3 OgreVector3ToGsageVector3(const Ogre::Vector3& vector)
@@ -57,13 +50,31 @@ namespace Gsage {
 
   static inline const Ogre::Quaternion GsageQuaternionToOgreQuaternion(const Gsage::Quaternion& quaternion)
   {
-    return Ogre::Quaternion(quaternion.W, quaternion.X, quaternion.Y, quaternion.Z);
+    return Ogre::Quaternion((Ogre::Real)quaternion.W, (Ogre::Real)quaternion.X, (Ogre::Real)quaternion.Y, (Ogre::Real)quaternion.Z);
   }
 
   static inline const Gsage::Quaternion OgreQuaternionToGsageQuaternion(const Ogre::Quaternion& quaternion)
   {
     return Gsage::Quaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
   }
+
+  static inline const Ogre::AxisAlignedBox BoundingBoxToAxisAlignedBox(const BoundingBox& bbox)
+  {
+    Ogre::Vector3 min = GsageVector3ToOgreVector3(bbox.min);
+    Ogre::Vector3 max = GsageVector3ToOgreVector3(bbox.max);
+    return Ogre::AxisAlignedBox(min, max);
+  }
+
+
+  TYPE_CASTER(OgreDegreeCaster, Ogre::Degree, std::string);
+  TYPE_CASTER(OgreColourValueCaster, Ogre::ColourValue, std::string);
+  TYPE_CASTER(OgreVector3Caster, Ogre::Vector3, std::string);
+  TYPE_CASTER(OgreQuaternionCaster, Ogre::Quaternion, std::string);
+  TYPE_CASTER(OgreFloatRectCaster, Ogre::FloatRect, std::string);
+  TYPE_CASTER(OgrePixelFormatCaster, Ogre::PixelFormat, std::string);
+  TYPE_CASTER(RenderOperationTypeCaster, Ogre::RenderOperation::OperationType, std::string);
+
+  TYPE_CASTER(RenderTargetTypeCaster, RenderTargetType::Type, std::string);
 }
 
 #endif

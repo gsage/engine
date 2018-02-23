@@ -1,0 +1,88 @@
+{
+  "props": {
+    "mixins": ["mortal"],
+    "type": "npc",
+    "hostile": true
+  },
+  "flags": ["dynamic"],
+  "render":
+  {
+    "resources":
+    {
+      "Gunspider":
+      [
+        "Zip:models/packs/gunspider.zip"
+      ]
+    },
+    "root":
+    {
+      "position": "-100,0,10",
+      "rotation":"1,0,0.5,0",
+      "orientationVector": "1,0,0",
+      "children":
+      [
+        {
+          "type": "model",
+          "name": "model",
+          "mesh": "gunspider.mesh",
+          "castShadows": true,
+          "query": "dynamic"
+        },
+        {
+          "name": "e1",
+          "position": "0,2.5,0.2",
+          "type": "node",
+          "children": [
+            {
+              "type": "particleSystem",
+              "template": "Exhaust"
+            }]
+        },
+        {
+          "name": "e2",
+          "type": "node",
+          "position": "0,2.5,-0.2",
+          "children": [
+          {
+            "type": "particleSystem",
+            "template": "Exhaust"
+          }]
+        }
+      ]
+    },
+    "animations":
+    {
+      "states":
+      {
+        "idle": {"top": "model.idle"},
+        "walk": {"top": "model.walk"}
+      },
+      "defaultState": "idle",
+      "defaultSpeed": 1
+    }
+  },
+  "movement":
+  {
+    "speed": 10,
+    "moveAnimation": "walk",
+    "animSpeedRatio": 0.2
+  },
+  "navigation":
+  {
+    "align": true
+  },
+  "stats":
+  {
+    "atk": 500,
+    "attackDistance": 5,
+    "aggroDistance": 20,
+    "followDistance": 30,
+    "enemy": "sinbad",
+    "hp": 12000
+  },
+  "script":
+  {
+    "behavior": "dumbMonster"
+  }
+}
+

@@ -24,7 +24,7 @@ function EventProxy:bind(target, type, callback, global, handlerName)
   end
 
   if not callback then
-    return
+    error("Tried to bind to nil callback")
   end
 
   local co, isRoot = coroutine.running()
@@ -36,11 +36,12 @@ function EventProxy:bind(target, type, callback, global, handlerName)
       return
     end
     self.direct[handlerName or "bind"](self.direct, target, type, callback)
+    self:traverseSet(target, type, callback, tostring(target:id()) .. tostring(callback) .. type, true)
     return
   end
 
   local id = self.connection[handlerName or "bind"](self.connection, target, type)
-  self:traverseSet(target, type, callback, id)
+  self:traverseSet(target, type, callback, id, false)
   self.handlers[id] = callback
 end
 
@@ -55,9 +56,13 @@ function EventProxy:unbind(target, type, callback, all)
   end
 
   local removed = false
-  for id in pairs(ids) do
+  for id, info in pairs(ids) do
     self.handlers[id] = nil
-    removed = self.connection:unbind(id)
+    if info.direct then
+      removed = self.direct:unbind(target, type, callback)
+    else
+      removed = self.connection:unbind(id)
+    end
     ids[id] = nil
     if not all then
       break
@@ -89,7 +94,7 @@ function EventProxy:handle(id, event, target)
   handler(event, target)
 end
 
-function EventProxy:traverseSet(target, type, callback, id)
+function EventProxy:traverseSet(target, type, callback, id, direct)
   local targetID = target:id()
   if not self.routes[targetID] then
     self.routes[targetID] = {}
@@ -104,7 +109,9 @@ function EventProxy:traverseSet(target, type, callback, id)
     self.routes[targetID][type][callback] = {}
     ids = self.routes[targetID][type][callback]
   end
-  ids[id] = true
+  ids[id] = {
+    direct = direct
+  }
 end
 
 function EventProxy:traverseGet(target, type, callback)

@@ -271,6 +271,11 @@ namespace Gsage {
       const char* getLabel() const;
 
       /**
+       * Get dock title
+       */
+      inline const char* getTitle() const { return mTitle == nullptr ? getLabel() : mTitle; }
+
+      /**
        * Get bounding rect
        */
       const ImRect& getBoundingRect() const;
@@ -288,6 +293,7 @@ namespace Gsage {
       friend class ImGuiDockspaceRenderer;
 
       char* mLabel;
+      char* mTitle;
 
       ImVec2 mPos;
       ImVec2 mSize;
@@ -509,6 +515,16 @@ namespace Gsage {
        * @param windowFlags additional window flags
        */
       bool begin(const char* label, bool* opened, ImGuiWindowFlags windowFlags);
+
+      /**
+       * Begin rendering
+       *
+       * @param label Window label
+       * @param title Actual window name
+       * @param opened Pointer to bool
+       * @param windowFlags additional window flags
+       */
+      bool begin(const char* label, const char* title, bool* opened, ImGuiWindowFlags windowFlags);
 
       /**
        * End rendering

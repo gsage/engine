@@ -253,10 +253,11 @@ namespace Gsage
            */
           bool read(const DataProxy& dict)
           {
-            if(AbstractProperty::isFlagSet(Readonly) || AbstractProperty::isFlagSet(Optional))
+            if(AbstractProperty::isFlagSet(Readonly))
               return true;
 
-            return get(dict, AbstractProperty::mName, *mPropertyPtr);
+            bool success = get(dict, AbstractProperty::mName, *mPropertyPtr);
+            return AbstractProperty::isFlagSet(Optional) ? true : success;
           }
 
           /**
