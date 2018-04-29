@@ -93,6 +93,8 @@ namespace Gsage {
     return mContexts[name];
   }
 
+  const std::string RocketUIManager::TYPE = "rocket";
+
   RocketUIManager::RocketUIManager()
     : mRenderSystemWrapper(0)
     , mIsSetUp(false)
@@ -186,6 +188,11 @@ namespace Gsage {
   {
     mLuaState = L;
     mRenderSystemWrapper->setLuaState(L);
+  }
+
+  const std::string& RocketUIManager::getType()
+  {
+    return RocketUIManager::TYPE;
   }
 
   bool RocketUIManager::handleMouseEvent(EventDispatcher* sender, const Event& event)

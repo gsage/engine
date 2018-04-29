@@ -28,7 +28,10 @@
 
   "sceneExplorer": {
     "entities": "オブジェクト",
-    "no_editor": "%{component}:%{type}システム用にエディタが定義されていない"
+    "no_editor": "%{component}:%{type}システム用にエディタが定義されていない",
+    "entity": {
+      "reload": "リロード"
+    }
   },
 
   "transform": {

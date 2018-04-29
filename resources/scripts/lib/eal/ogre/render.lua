@@ -8,7 +8,7 @@ local function decorate(cls)
   -- translate root node
   -- @param vector Ogre::Vector3
   function cls:translate(vector)
-    self.render.root:translate(vector)
+    self.render.root:translate(vector, OgreNode.TS_LOCAL)
   end
 
   -- get node from root node

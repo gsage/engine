@@ -58,7 +58,7 @@ namespace Gsage {
           const std::string& type,
           Ogre::SceneManager* sceneManager,
           const std::string& boneId,
-          Ogre::Entity* parentEntity)
+          OgreV1::Entity* parentEntity)
   {
     mBoneId = boneId;
     mParentEntity = parentEntity;
@@ -113,6 +113,10 @@ namespace Gsage {
 
   void OgreObject::attachObject(Ogre::MovableObject* object)
   {
+    if(object->getParentNode()) {
+      object->detachFromParent();
+    }
+
     if(mParentNode != 0)
       mParentNode->attachObject(object);
     else if(!mBoneId.empty() && mParentEntity != 0)

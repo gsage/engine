@@ -52,26 +52,26 @@ namespace Gsage {
     for(auto entity : mSrcEntities) {
       addedShared = false;
 
-      Ogre::MeshPtr mesh = entity->getMesh();
+      OgreV1::MeshPtr mesh = entity->getMesh();
 
       // Calculate how many vertices and indices we're going to need
       for(unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i) {
-        Ogre::SubMesh* submesh = mesh->getSubMesh(i);
+        OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
         // We only need to add the shared vertices once
         if(submesh->useSharedVertices)
         {
           if( !addedShared )
           {
-            vertexCount += mesh->sharedVertexData->vertexCount;
+            vertexCount += GET_IV_DATA(mesh->sharedVertexData)->vertexCount;
             addedShared = true;
           }
         }
         else
         {
-          vertexCount += submesh->vertexData->vertexCount;
+          vertexCount += GET_IV_DATA(submesh->vertexData)->vertexCount;
         }
         // Add the indices
-        indexCount += submesh->indexData->indexCount;
+        indexCount += GET_IV_DATA(submesh->indexData)->indexCount;
       }
     }
 
@@ -84,16 +84,16 @@ namespace Gsage {
     normals = new float[vertexCount];
 
     for(auto entity : mSrcEntities) {
-      Ogre::MeshPtr mesh = entity->getMesh();
+      OgreV1::MeshPtr mesh = entity->getMesh();
 
       addedShared = false;
 
       // Run through the submeshes again, adding the data into the arrays
       for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
       {
-        Ogre::SubMesh* submesh = mesh->getSubMesh(i);
+        OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
 
-        Ogre::VertexData* vertexData = submesh->useSharedVertices ? mesh->sharedVertexData : submesh->vertexData;
+        OgreV1::VertexData* vertexData = submesh->useSharedVertices ? GET_IV_DATA(mesh->sharedVertexData) : GET_IV_DATA(submesh->vertexData);
 
         if ((!submesh->useSharedVertices) || (submesh->useSharedVertices && !addedShared))
         {
@@ -103,16 +103,16 @@ namespace Gsage {
             sharedOffset = currentOffset;
           }
 
-          const Ogre::VertexElement* posElem =
+          const OgreV1::VertexElement* posElem =
             vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
 
-          Ogre::HardwareVertexBufferSharedPtr vbuf =
+          OgreV1::HardwareVertexBufferSharedPtr vbuf =
             vertexData->vertexBufferBinding->getBuffer(posElem->getSource());
 
           unsigned char* vertex =
-            static_cast<unsigned char*>(vbuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+            static_cast<unsigned char*>(vbuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
 
-          const Ogre::VertexElement* normElem =
+          const OgreV1::VertexElement* normElem =
             vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL);
 
           float* pReal;
@@ -144,13 +144,13 @@ namespace Gsage {
           nextOffset += vertexData->vertexCount;
         }
 
-        Ogre::IndexData* indexData = submesh->indexData;
+        OgreV1::IndexData* indexData = GET_IV_DATA(submesh->indexData);
         size_t numTris = indexData->indexCount;
-        Ogre::HardwareIndexBufferSharedPtr ibuf = indexData->indexBuffer;
+        OgreV1::HardwareIndexBufferSharedPtr ibuf = indexData->indexBuffer;
 
-        bool use32bitindexes = (ibuf->getType() == Ogre::HardwareIndexBuffer::IT_32BIT);
+        bool use32bitindexes = (ibuf->getType() == OgreV1::HardwareIndexBuffer::IT_32BIT);
 
-        unsigned long* pLong = static_cast<unsigned long*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+        unsigned long* pLong = static_cast<unsigned long*>(ibuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
         unsigned short* pShort = reinterpret_cast<unsigned short*>(pLong);
 
         size_t offset = (submesh->useSharedVertices)? sharedOffset : currentOffset;

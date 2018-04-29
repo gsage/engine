@@ -74,7 +74,7 @@ namespace MOC {
       delete mTSMRaySceneQuery;
   }
 
-  bool CollisionTools::raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask)
+  bool CollisionTools::raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, OgreV1::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask)
   {
     return raycastFromCamera(width, height, camera, mousecoords, result, (Ogre::MovableObject*&) target, closest_distance, queryMask);
   }
@@ -189,14 +189,14 @@ namespace MOC {
   // raycast from a point in to the scene.
   // returns success or failure.
   // on success the point is returned in the result.
-  bool CollisionTools::raycastFromPoint(const Ogre::Vector3 &point, 
+  bool CollisionTools::raycastFromPoint(const Ogre::Vector3 &point,
       const Ogre::Vector3 &normal,
-      Ogre::Vector3 &result,Ogre::Entity* &target,
+      Ogre::Vector3 &result,OgreV1::Entity* &target,
       float &closest_distance,
-      const Ogre::uint32 queryMask) 
+      const Ogre::uint32 queryMask)
   {
     return raycastFromPoint(point, normal, result,(Ogre::MovableObject*&) target, closest_distance, queryMask);
-  }		
+  }
 
   bool CollisionTools::raycastFromPoint(const Ogre::Vector3 &point,
       const Ogre::Vector3 &normal,
@@ -212,7 +212,7 @@ namespace MOC {
     return raycast(ray, result, target, closest_distance, queryMask);
   }
 
-  bool CollisionTools::raycast(const Ogre::Ray &ray, Ogre::Vector3 &result,Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask) 
+  bool CollisionTools::raycast(const Ogre::Ray &ray, Ogre::Vector3 &result,OgreV1::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask)
   {
     return raycast(ray, result, (Ogre::MovableObject*&)target, closest_distance, queryMask);
   }
@@ -274,7 +274,7 @@ namespace MOC {
         Ogre::uint32 *indices;
 
         // get the mesh information
-        GetMeshInformation(((Ogre::Entity*)pentity)->getMesh(), vertex_count, vertices, index_count, indices,
+        GetMeshInformation(((OgreV1::Entity*)pentity)->getMesh(), vertex_count, vertices, index_count, indices,
             pentity->getParentNode()->_getDerivedPosition(),
             pentity->getParentNode()->_getDerivedOrientation(),
             pentity->getParentNode()->_getDerivedScale());
@@ -331,7 +331,7 @@ namespace MOC {
 
   // Get the mesh information for the given mesh.
   // Code found on this forum link: http://www.ogre3d.org/wiki/index.php/RetrieveVertexData
-  void CollisionTools::GetMeshInformation(const Ogre::MeshPtr mesh,
+  void CollisionTools::GetMeshInformation(const OgreV1::MeshPtr mesh,
       size_t &vertex_count,
       Ogre::Vector3* &vertices,
       size_t &index_count,
@@ -351,24 +351,24 @@ namespace MOC {
     // Calculate how many vertices and indices we're going to need
     for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
     {
-      Ogre::SubMesh* submesh = mesh->getSubMesh( i );
+      OgreV1::SubMesh* submesh = mesh->getSubMesh( i );
 
       // We only need to add the shared vertices once
       if(submesh->useSharedVertices)
       {
         if( !added_shared )
         {
-          vertex_count += mesh->sharedVertexData->vertexCount;
+          vertex_count += GET_IV_DATA(mesh->sharedVertexData)->vertexCount;
           added_shared = true;
         }
       }
       else
       {
-        vertex_count += submesh->vertexData->vertexCount;
+        vertex_count += GET_IV_DATA(submesh->vertexData)->vertexCount;
       }
 
       // Add the indices
-      index_count += submesh->indexData->indexCount;
+      index_count += GET_IV_DATA(submesh->indexData)->indexCount;
     }
 
 
@@ -381,9 +381,9 @@ namespace MOC {
     // Run through the submeshes again, adding the data into the arrays
     for ( unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
     {
-      Ogre::SubMesh* submesh = mesh->getSubMesh(i);
+      OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
 
-      Ogre::VertexData* vertex_data = submesh->useSharedVertices ? mesh->sharedVertexData : submesh->vertexData;
+      OgreV1::VertexData* vertex_data = submesh->useSharedVertices ? GET_IV_DATA(mesh->sharedVertexData) : GET_IV_DATA(submesh->vertexData);
 
       if((!submesh->useSharedVertices)||(submesh->useSharedVertices && !added_shared))
       {
@@ -393,14 +393,14 @@ namespace MOC {
           shared_offset = current_offset;
         }
 
-        const Ogre::VertexElement* posElem =
+        const OgreV1::VertexElement* posElem =
           vertex_data->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
 
-        Ogre::HardwareVertexBufferSharedPtr vbuf =
+        OgreV1::HardwareVertexBufferSharedPtr vbuf =
           vertex_data->vertexBufferBinding->getBuffer(posElem->getSource());
 
         unsigned char* vertex =
-          static_cast<unsigned char*>(vbuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+          static_cast<unsigned char*>(vbuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
 
         // There is _no_ baseVertexPointerToElement() which takes an Ogre::Ogre::Real or a double
         //  as second argument. So make it float, to avoid trouble when Ogre::Ogre::Real will
@@ -422,13 +422,13 @@ namespace MOC {
       }
 
 
-      Ogre::IndexData* index_data = submesh->indexData;
+      OgreV1::IndexData* index_data = GET_IV_DATA(submesh->indexData);
       size_t numTris = index_data->indexCount / 3;
-      Ogre::HardwareIndexBufferSharedPtr ibuf = index_data->indexBuffer;
+      OgreV1::HardwareIndexBufferSharedPtr ibuf = index_data->indexBuffer;
 
-      bool use32bitindexes = (ibuf->getType() == Ogre::HardwareIndexBuffer::IT_32BIT);
+      bool use32bitindexes = (ibuf->getType() == OgreV1::HardwareIndexBuffer::IT_32BIT);
 
-      Ogre::uint32*  pLong = static_cast<Ogre::uint32*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+      Ogre::uint32*  pLong = static_cast<Ogre::uint32*>(ibuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
       unsigned short* pShort = reinterpret_cast<unsigned short*>(pLong);
 
 

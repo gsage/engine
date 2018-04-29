@@ -28,6 +28,12 @@ THE SOFTWARE.
 #include <OgreConfigFile.h>
 
 #include "DataProxy.h"
+#if OGRE_VERSION >= 0x020100
+#include <OgreHlmsUnlit.h>
+#include <OgreHlmsPbs.h>
+#include <OgreHlmsManager.h>
+#include <OgreArchiveManager.h>
+#endif
 
 namespace Gsage {
   class ResourceManager
@@ -59,8 +65,59 @@ namespace Gsage {
        * @param resources Resource groups DataProxy
        */
       void unload(const DataProxy& resources);
+
+#if OGRE_VERSION >= 0x020100
+      /**
+       * Register and load Hlms data
+       *
+       * @param resourcePath Hlms data folder
+       */
+      template<class T>
+      void registerHlms(const std::string& resourcePath)
+      {
+        if(!std::is_base_of<Ogre::Hlms, T>::value) {
+          OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
+                      "Failed to register Hlms",
+                      "Provided type should inherit Ogre::Hlms"
+                      "ResourceManager::registerHlms" );
+        }
+        std::string type;
+        std::string path;
+
+        Ogre::Root& root = Ogre::Root::getSingleton();
+
+        std::tie(path, type) = processPath(mCommonFolder);
+        std::vector<std::string> folders;
+        //Fill the library folder paths with the relevant folders
+        folders.push_back(path + "/" + mShaderSyntax);
+        folders.push_back(path + "/Any");
+
+        auto archiveManager = Ogre::ArchiveManager::getSingletonPtr();
+        auto loadArchive = [&] (const std::string& p, const std::string& t) -> Ogre::Archive* {
+          LOG(INFO) << "[Hlms] Loading archive " << p << " type: " << t;
+          return archiveManager->load(p, t, p.find(".zip") != std::string::npos);
+        };
+
+        Ogre::ArchiveVec library;
+        for(auto folder : folders) {
+          library.push_back(loadArchive(folder, type));
+        }
+        std::tie(path, type) = processPath(resourcePath);
+        library.push_back(loadArchive(path + "/Any", type));
+        Ogre::Archive *archive = loadArchive(path + "/" + mShaderSyntax, type);
+        T *hlms = OGRE_NEW T(archive, &library);
+        root.getHlmsManager()->registerHlms(hlms, true);
+      }
+#endif
+
+      std::tuple<std::string, std::string> processPath(const std::string& line);
     private:
       std::string mWorkdir;
+      bool mHlmsLoaded;
+#if OGRE_VERSION >= 0x020100
+      std::string mShaderSyntax;
+      std::string mCommonFolder;
+#endif
   };
 }
 

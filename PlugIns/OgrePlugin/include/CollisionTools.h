@@ -29,6 +29,7 @@
 
 #include <Ogre.h>
 
+#include "Definitions.h"
 // uncomment if you want to use ETM as terrainmanager
 //#define ETM_TERRAIN
 
@@ -55,7 +56,7 @@ namespace MOC {
 
       bool raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::MovableObject* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
       // convenience wrapper with Ogre::Entity to it:
-      bool raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
+      bool raycastFromCamera(int width, int height, Ogre::Camera* camera, const Ogre::Vector2 &mousecoords, Ogre::Vector3 &result, OgreV1::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
 
       bool collidesWithEntity(const Ogre::Vector3& fromPoint, const Ogre::Vector3& toPoint, const float collisionRadius = 2.5f, const float rayHeightLevel = 0.0f, const Ogre::uint32 queryMask = 0xFFFFFFFF);
 
@@ -65,11 +66,11 @@ namespace MOC {
 
       bool raycastFromPoint(const Ogre::Vector3 &point, const Ogre::Vector3 &normal, Ogre::Vector3 &result,Ogre::MovableObject* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
       // convenience wrapper with Ogre::Entity to it:
-      bool raycastFromPoint(const Ogre::Vector3 &point, const Ogre::Vector3 &normal, Ogre::Vector3 &result,Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
+      bool raycastFromPoint(const Ogre::Vector3 &point, const Ogre::Vector3 &normal, Ogre::Vector3 &result,OgreV1::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
 
       bool raycast(const Ogre::Ray &ray, Ogre::Vector3 &result, Ogre::MovableObject* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
       // convenience wrapper with Ogre::Entity to it:
-      bool raycast(const Ogre::Ray &ray, Ogre::Vector3 &result, Ogre::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
+      bool raycast(const Ogre::Ray &ray, Ogre::Vector3 &result, OgreV1::Entity* &target,float &closest_distance, const Ogre::uint32 queryMask = 0xFFFFFFFF);
 
       void setHeightAdjust(const float heightadjust);
       float getHeightAdjust(void);
@@ -78,7 +79,7 @@ namespace MOC {
 
       float _heightAdjust;
 
-      void GetMeshInformation(const Ogre::MeshPtr mesh,
+      void GetMeshInformation(const OgreV1::MeshPtr mesh,
           size_t &vertex_count,
           Ogre::Vector3* &vertices,
           size_t &index_count,

@@ -36,7 +36,11 @@ namespace Gsage {
   {
     BIND_ACCESSOR("name", &LightWrapper::create, &LightWrapper::getName);
     BIND_ACCESSOR("lightType", &LightWrapper::setType, &LightWrapper::getType);
+#if OGRE_VERSION < 0x020100
     BIND_ACCESSOR("position", &LightWrapper::setPosition, &LightWrapper::getPosition);
+#else
+    BIND_ACCESSOR("powerScale", &LightWrapper::setPowerScale, &LightWrapper::getPowerScale);
+#endif
     BIND_ACCESSOR("colourSpecular", &LightWrapper::setSpecularColour, &LightWrapper::getSpecularColour);
     BIND_ACCESSOR("colourDiffuse", &LightWrapper::setDiffuseColour, &LightWrapper::getDiffuseColour);
     BIND_ACCESSOR("direction", &LightWrapper::setDirection, &LightWrapper::getDirection);
@@ -45,7 +49,11 @@ namespace Gsage {
 
   void LightWrapper::create(const std::string& name)
   {
-    mLight = mSceneManager->createLight(name);
+    mLight = mSceneManager->createLight(
+#if OGRE_VERSION_MAJOR == 1
+    name
+#endif
+    );
     mParentNode->attachObject(mLight);
   }
 
@@ -66,13 +74,34 @@ namespace Gsage {
 
   void LightWrapper::setPosition(const Ogre::Vector3& position)
   {
+#if OGRE_VERSION < 0x020100
     mLight->setPosition(position);
+#else
+    LOG(WARNING) << "Setting light position is deprecated";
+#endif
   }
 
-  const Ogre::Vector3& LightWrapper::getPosition() const
+  Ogre::Vector3 LightWrapper::getPosition()
   {
+#if OGRE_VERSION < 0x020100
     return mLight->getPosition();
+#else
+    LOG(WARNING) << "Getting light position is deprecated";
+    return Ogre::Vector3(0, 0, 0);
+#endif
   }
+
+#if OGRE_VERSION >= 0x020100
+  void LightWrapper::setPowerScale(const Ogre::Real& value)
+  {
+    mLight->setPowerScale(value);
+  }
+
+  Ogre::Real LightWrapper::getPowerScale()
+  {
+    return mLight->getPowerScale();
+  }
+#endif
 
   void LightWrapper::setDiffuseColour(const Ogre::ColourValue& value)
   {
@@ -99,7 +128,7 @@ namespace Gsage {
     mLight->setDirection(value);
   }
 
-  const Ogre::Vector3& LightWrapper::getDirection() const
+  Ogre::Vector3 LightWrapper::getDirection()
   {
     return mLight->getDirection();
   }

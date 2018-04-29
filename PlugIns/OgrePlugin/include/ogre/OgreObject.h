@@ -55,7 +55,7 @@ namespace Gsage {
           const std::string& type,
           Ogre::SceneManager* sceneManager,
           const std::string& boneId,
-          Ogre::Entity* parentEntity);
+          OgreV1::Entity* parentEntity);
       /**
        * Initialize element from the node with values
        * @param factory OgreObjectManager to enable child class creation
@@ -104,7 +104,7 @@ namespace Gsage {
       std::string mType;
       std::string mBoneId;
 
-      Ogre::Entity* mParentEntity;
+      OgreV1::Entity* mParentEntity;
       OgreObjectManager* mObjectManager;
 
       Ogre::SceneManager* mSceneManager;

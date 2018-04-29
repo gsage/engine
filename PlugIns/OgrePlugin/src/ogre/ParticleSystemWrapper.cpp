@@ -61,7 +61,12 @@ namespace Gsage {
       mSceneManager->destroyParticleSystem(mParticleSystem);
 
     mTemplate = templateName;
-    mParticleSystem = mSceneManager->createParticleSystem(mObjectId, mTemplate);
+    mParticleSystem = mSceneManager->createParticleSystem(
+#if OGRE_VERSION_MAJOR == 1
+        mObjectId,
+#endif
+        mTemplate
+    );
     mParentNode->attachObject(mParticleSystem);
   }
 
@@ -70,22 +75,22 @@ namespace Gsage {
     return mTemplate;
   }
 
-  void ParticleSystemWrapper::createParticle(unsigned short index, const std::string& nodeId, const std::string& value)
+  void ParticleSystemWrapper::createParticle(unsigned short index, __NODE_ID_TYPE nodeId, const std::string& value)
   {
     createParticle(index, new Ogre::MovableTextValue(value, mSceneManager->getRootSceneNode()), nodeId, Ogre::Quaternion::ZERO);
   }
 
-  void ParticleSystemWrapper::createParticle(unsigned short index, const std::string& nodeId, const std::string& value, const Ogre::Quaternion& rotation)
+  void ParticleSystemWrapper::createParticle(unsigned short index, __NODE_ID_TYPE nodeId, const std::string& value, const Ogre::Quaternion& rotation)
   {
     createParticle(index, new Ogre::MovableTextValue(value, mSceneManager->getRootSceneNode()), nodeId, rotation);
   }
 
-  void ParticleSystemWrapper::createParticle(unsigned short index, const std::string& nodeId)
+  void ParticleSystemWrapper::createParticle(unsigned short index, __NODE_ID_TYPE nodeId)
   {
     createParticle(index, 0, nodeId, Ogre::Quaternion::ZERO);
   }
 
-  void ParticleSystemWrapper::createParticle(unsigned short index, Ogre::ParticleVisualData* data, const std::string& nodeId, const Ogre::Quaternion& rotation)
+  void ParticleSystemWrapper::createParticle(unsigned short index, Ogre::ParticleVisualData* data, __NODE_ID_TYPE nodeId, const Ogre::Quaternion& rotation)
   {
     if(mParticleSystem->getNumEmitters() < index)
       return;
@@ -103,6 +108,7 @@ namespace Gsage {
       p->_notifyVisualData(data);
 
     emitter->_initParticle(p);
+#if OGRE_VERSION_MAJOR == 1
     p->position  = 
       (node->_getDerivedOrientation() *
        (node->_getDerivedScale() * p->position))
@@ -111,5 +117,15 @@ namespace Gsage {
     p->direction = rotation == Ogre::Quaternion::ZERO ?
       node->_getDerivedOrientation() * p->direction :
       rotation * p->direction;
+#else
+    p->mPosition  = 
+      (node->_getDerivedOrientation() *
+       (node->_getDerivedScale() * p->mPosition))
+      + node->_getDerivedPosition();
+
+    p->mDirection = rotation == Ogre::Quaternion::ZERO ?
+      node->_getDerivedOrientation() * p->mDirection :
+      rotation * p->mDirection;
+#endif
   }
 }

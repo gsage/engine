@@ -20,9 +20,16 @@ end
 -- @param handler that listens for the update
 -- @param global don't remove handler on facade reset
 function time.addHandler(id, handler, global)
+  if global == nil then
+    global = false
+  end
+
   local co, isRoot = coroutine.running()
   -- if called from root coroutine, then we can register the handler
   -- directly in the script system
+  if global == nil then
+    global = false
+  end
   if not co or isRoot and core:script() then
     core:script():addUpdateListener(handler, global)
     time.rawHandlers[id] = {

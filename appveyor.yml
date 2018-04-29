@@ -14,7 +14,7 @@ install:
 
 # scripts to run before build
 before_build:
-  - conan install -g cmake -o gsage:with_ogre=1.9.0 -o gsage:with_input=OIS -o gsage:with_librocket=True -o with_lua_version=luajit-2.0.5 --build=outdated .
+  - conan install -g cmake -o gsage:with_ogre=1.9.0 -o gsage:with_librocket=True -o with_lua_version=luajit-2.0.5 --build=outdated .
   - conan upload "*" --all -r gsage -c
 
 build_script:
@@ -25,8 +25,8 @@ build_script:
 test_script:
   - |
    cd ./build/bin/
-   unit-tests.exe --gtest_output="xml:unit.xml"
-# functional test do not work in appveyor yet
+   unit-tests.exe --gtest_output=xml:unit.xml
+# functional tests do not work in appveyor yet
 # functional-tests.exe -o junit --exclude-tags benchmark --no-auto-insulate
 
 # scripts to run after build

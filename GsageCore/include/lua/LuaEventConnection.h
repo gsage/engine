@@ -37,7 +37,7 @@ namespace Gsage {
   class LuaEventConnection : public EventSubscriber<LuaEventConnection>
   {
     public:
-      LuaEventConnection(sol::protected_function handler);
+      LuaEventConnection(sol::function handler);
       virtual ~LuaEventConnection();
 
       /**
@@ -117,7 +117,7 @@ namespace Gsage {
       typedef std::map<EventSubscriber::EventSubscription, Listeners> Router;
       Router mRouter;
 
-      sol::protected_function mHandler;
+      sol::function mHandler;
       long mNextID;
   };
 }

@@ -68,7 +68,7 @@ namespace Gsage {
       /**
        * Get light position
        */
-      const Ogre::Vector3& getPosition() const;
+      Ogre::Vector3 getPosition();
 
       /**
        * Set light diffuse colour
@@ -101,7 +101,7 @@ namespace Gsage {
       /**
        * Get light direction
        */
-      const Ogre::Vector3& getDirection() const;
+      Ogre::Vector3 getDirection();
 
       /**
        * Cast shadows from this light
@@ -113,6 +113,11 @@ namespace Gsage {
        * Get cast shadows
        */
       bool getCastShadows();
+#if OGRE_VERSION >= 0x020100
+      void setPowerScale(const Ogre::Real& value);
+
+      Ogre::Real getPowerScale();
+#endif
     private:
       Ogre::Light* mLight;
 

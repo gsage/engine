@@ -24,9 +24,10 @@ end)
 
 -- create camera
 function OgreView:createCamera(type, settings)
-  self.camera = camera:create(type, settings)
+  self.camera = camera:create(type, nil, settings)
   self.camera:renderToTexture(self.textureID, {
-    autoUpdated = false,
+    autoUpdated = true,
+    workspaceName = "ogreview",
     viewport = {
       renderQueueSequence = {
         ogre.RENDER_QUEUE_BACKGROUND,

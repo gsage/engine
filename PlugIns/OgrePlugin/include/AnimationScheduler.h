@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <queue>
 
+#include "Definitions.h"
 #include "OgreConverters.h"
 #include "Serializable.h"
 
@@ -38,7 +39,9 @@ THE SOFTWARE.
 namespace Ogre
 {
   class SceneManager;
+#if OGRE_VERSION_MAJOR == 1
   class Entity;
+#endif
   class AnimationState;
 }
 
@@ -58,7 +61,7 @@ namespace Gsage {
       /**
        *
        */
-      void initialize(Ogre::AnimationState* state);
+      void initialize(OgreV1::AnimationState* state);
       /**
        * Calls Ogre::AnimationState addTime with adjusted speed
        *
@@ -142,7 +145,7 @@ namespace Gsage {
       void rewind(double offset = 0);
     private:
       friend class AnimationScheduler;
-      Ogre::AnimationState* mAnimationState;
+      OgreV1::AnimationState* mAnimationState;
       bool mFadeIn;
       bool mFadeOut;
       float mFadeTime;

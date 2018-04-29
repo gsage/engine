@@ -6,7 +6,7 @@ particle_system Space/Sun
     cull_each       false
     quota           100
     billboard_type  point
- 
+
     // Area emitter
     emitter Ellipsoid
     {
@@ -21,7 +21,7 @@ particle_system Space/Sun
         height          5
         depth           5
     }
- 
+
     // Fader
     affector ColourFader
     {
@@ -40,7 +40,7 @@ particle_system Engine
     cull_each       false
     quota           300
     billboard_type  point
- 
+
     // Area emitter
     emitter Ellipsoid
     {
@@ -55,7 +55,7 @@ particle_system Engine
         height          1
         depth           5
     }
- 
+
     // Fader
     affector ColourFader
     {
@@ -74,7 +74,7 @@ particle_system Exhaust
 	quota           	500
 	billboard_type  	point
 	sorted				true
-    
+
 	// Area emitter
 	emitter Point
 	{

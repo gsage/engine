@@ -26,14 +26,30 @@ THE SOFTWARE.
 
 #include "RenderTarget.h"
 #include <OgreRoot.h>
-#include <OgreRenderQueueInvocation.h>
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreMovableObject.h>
 #include <OgreVector3.h>
+#include "RenderEvent.h"
 
+#if OGRE_VERSION_MAJOR == 1
+#include <OgreRenderQueueInvocation.h>
 #include <RenderSystems/GL/OgreGLTexture.h>
 #include <RenderSystems/GL/OgreGLFrameBufferObject.h>
 #include <RenderSystems/GL/OgreGLFBORenderTexture.h>
+#else
+#include <RenderSystems/GL3Plus/OgreGL3PlusTexture.h>
+#include <RenderSystems/GL3Plus/OgreGL3PlusFrameBufferObject.h>
+#include <RenderSystems/GL3Plus/OgreGL3PlusFBORenderTexture.h>
+
+#include <Compositor/OgreCompositorManager2.h>
+#include <Compositor/OgreCompositorWorkspace.h>
+
+#include <OgreHlmsUnlitDatablock.h>
+#include <OgreHlmsUnlit.h>
+#include <OgreHlmsPbs.h>
+#include <OgreHlmsManager.h>
+#include <OgreHlmsTextureManager.h>
+#endif
 
 #include "OgreSelectEvent.h"
 #include "MouseEvent.h"
@@ -53,7 +69,9 @@ namespace Gsage {
     , mY(0)
     , mWidth(parameters.get("width", 320))
     , mHeight(parameters.get("height", 240))
+#if OGRE_VERSION_MAJOR == 1
     , mRenderQueueSequenceCreated(false)
+#endif
     , mSamples(parameters.get("samples", 0))
     , mHasQueueSequence(false)
     , mEngine(engine)
@@ -61,6 +79,9 @@ namespace Gsage {
     , mContinuousRaycast(false)
     , mMousePosition(Ogre::Vector2(0, 0))
     , mMouseOver(false)
+#if OGRE_VERSION_MAJOR == 2
+    , mWorkspace(nullptr)
+#endif
   {
     subscribe();
   }
@@ -77,7 +98,9 @@ namespace Gsage {
     , mY(0)
     , mWidth(parameters.get("width", 320))
     , mHeight(parameters.get("height", 240))
+#if OGRE_VERSION_MAJOR == 1
     , mRenderQueueSequenceCreated(false)
+#endif
     , mSamples(parameters.get("samples", 0))
     , mWrappedTarget(wrapped)
     , mHasQueueSequence(false)
@@ -86,6 +109,9 @@ namespace Gsage {
     , mContinuousRaycast(false)
     , mMousePosition(Ogre::Vector2(0, 0))
     , mMouseOver(false)
+#if OGRE_VERSION_MAJOR == 2
+    , mWorkspace(nullptr)
+#endif
   {
     subscribe();
   }
@@ -210,6 +236,7 @@ namespace Gsage {
       return;
     }
 
+    mSceneManager = sceneManager;
     // create default camera
     auto name = mParameters.get("defaultCamera.name", "");
     if(!name.empty()) {
@@ -217,7 +244,6 @@ namespace Gsage {
       LOG(INFO) << "[" << mName << "] " << "Created default camera " << name;
     }
 
-    mSceneManager = sceneManager;
     mCollisionTools = std::make_shared<MOC::CollisionTools>(mSceneManager);
   }
 
@@ -262,6 +288,7 @@ namespace Gsage {
   void RenderTarget::setCamera(Ogre::Camera* camera)
   {
     mCurrentCamera = camera;
+#if OGRE_VERSION_MAJOR == 1
     mWrappedTarget->removeAllViewports();
     if(!camera) {
       return;
@@ -269,6 +296,32 @@ namespace Gsage {
 
     Ogre::Viewport* vp = mWrappedTarget->addViewport(mCurrentCamera);
     configureViewport(vp);
+#else
+    Ogre::CompositorManager2 *compositorManager = Ogre::Root::getSingletonPtr()->getCompositorManager2();
+    const Ogre::String workspaceName(mParameters.get("workspaceName", "basic"));
+
+    if(mWorkspace) {
+      compositorManager->removeWorkspace(mWorkspace);
+    }
+    LOG(INFO) << "Delete workspace " << workspaceName;
+
+    if(!camera) {
+      return;
+    }
+
+    auto backgroundColor = mParameters.get<Ogre::ColourValue>("viewport.backgroundColor", Ogre::ColourValue::Black);
+
+    LOG(INFO) << "Create workspace " << workspaceName;
+    if(!compositorManager->hasWorkspaceDefinition(workspaceName)) {
+      compositorManager->createBasicWorkspaceDef(workspaceName, backgroundColor, Ogre::IdString());
+    }
+
+    Ogre::CompositorWorkspace* workspace = compositorManager->addWorkspace(mSceneManager, mWrappedTarget, mCurrentCamera,
+        workspaceName, true );
+
+    mWorkspace = workspace;
+    configureWorkspace(workspace);
+#endif
     updateCameraAspectRatio();
   }
 
@@ -287,7 +340,13 @@ namespace Gsage {
   void RenderTarget::update()
   {
     if(mWrappedTarget) {
+#if OGRE_VERSION_MAJOR == 1
       mWrappedTarget->update();
+#else
+      if(mWorkspace) {
+        mWorkspace->_update();
+      }
+#endif
     }
 
     if(mContinuousRaycast)
@@ -296,9 +355,9 @@ namespace Gsage {
       doRaycasting(mMousePosition.x, mMousePosition.y);
   }
 
+#if OGRE_VERSION_MAJOR == 1
   void RenderTarget::configureViewport(Ogre::Viewport* vp)
   {
-
     if(!mRenderQueueSequenceCreated) {
       mRenderQueueSequenceCreated = true;
       auto pair = mParameters.get<DataProxy>("viewport.renderQueueSequence");
@@ -340,6 +399,11 @@ namespace Gsage {
     vp->setBackgroundColour(mParameters.get<Ogre::ColourValue>("viewport.backgroundColor", Ogre::ColourValue::Black));
     mWrappedTarget->setAutoUpdated(mAutoUpdate);
   }
+#else
+  void RenderTarget::configureWorkspace(Ogre::CompositorWorkspace* workspace)
+  {
+  }
+#endif
 
   Ogre::RenderTarget* RenderTarget::getOgreRenderTarget()
   {
@@ -382,8 +446,14 @@ namespace Gsage {
   }
 
   unsigned int RttRenderTarget::getGLID() const {
+#if OGRE_VERSION_MAJOR == 1
     Ogre::GLTexture *nativeTexture = static_cast<Ogre::GLTexture*>(mTexture.get());
     return nativeTexture->getGLID();
+#else
+    Ogre::GL3PlusTexture *nativeTexture = static_cast<Ogre::GL3PlusTexture*>(mTexture.get());
+    bool outIsFsaa = false;
+    return nativeTexture->getGLID(outIsFsaa);
+#endif
   }
 
   void RttRenderTarget::createTexture(const std::string& name,
@@ -393,6 +463,7 @@ namespace Gsage {
       Ogre::PixelFormat pixelFormat) {
 
     Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
+
     if(texManager.resourceExists(name)) {
       texManager.remove(name);
     }
@@ -408,15 +479,27 @@ namespace Gsage {
         0,
         false,
         samples);
+#if OGRE_VERSION >= 0x020100
+    // additionally set up Hlms for 2.1
+    Ogre::HlmsManager *hlmsManager = Ogre::Root::getSingletonPtr()->getHlmsManager();
+    Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
+    Ogre::HlmsUnlitDatablock *datablock = static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->getDatablock(name));
+    if(!datablock) {
+      datablock = static_cast<Ogre::HlmsUnlitDatablock*>(
+        hlmsUnlit->createDatablock(name,
+          name,
+          Ogre::HlmsMacroblock(),
+          Ogre::HlmsBlendblock(),
+          Ogre::HlmsParamVec()));
+    }
+
+    datablock->setTexture(Ogre::PBSM_DIFFUSE, 0, mTexture);
+#endif
     mWrappedTarget = mTexture->getBuffer()->getRenderTarget();
     if(mCurrentCamera) {
       // reattach camera to the new render target
       setCamera(mCurrentCamera);
     }
-#if GSAGE_PLATFORM == GSAGE_APPLE
-    // it works well only on OSX
-    mWrappedTarget->update();
-#endif
 
     LOG(DEBUG) << "Created RTT texture \"" << name << "\", size: " << width << "x" << height << ", samples: " << samples << ", pixel format: " << pixelFormat;
   }
@@ -452,7 +535,11 @@ namespace Gsage {
       std::string glContext = parameters.get<std::string>("glContext", "");
 #if GSAGE_PLATFORM == GSAGE_APPLE
       params["macAPICocoaUseNSView"] = "true";
+#if OGRE_VERSION_MAJOR == 1
       params["externalWindowHandle"] = handle;
+#else
+      params["parentWindowHandle"] = handle;
+#endif
 #else
 #if GSAGE_PLATFORM == GSAGE_WIN32
       if(!glContext.empty()) {

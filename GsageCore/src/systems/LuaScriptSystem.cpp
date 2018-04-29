@@ -149,7 +149,7 @@ namespace Gsage {
     bool stopped = true;
     if(mState && component->hasBehavior())
     {
-      sol::function stopBtree = (*mState)["btree"]["deinitialize"].get<sol::protected_function>();
+      sol::function stopBtree = (*mState)["btree"]["deinitialize"].get<sol::function>();
       auto res = stopBtree(id);
       if(!res.valid()) {
         sol::error err = res;
@@ -168,7 +168,7 @@ namespace Gsage {
     return res && stopped;
   }
 
-  bool LuaScriptSystem::runFunction(ScriptComponent* component, sol::protected_function func)
+  bool LuaScriptSystem::runFunction(ScriptComponent* component, sol::function func)
   {
     if(func.valid()) {
       std::string id = component->getOwner()->getId();
@@ -202,7 +202,7 @@ namespace Gsage {
 
       // If script returns a function, it means that it wants to have a sandbox
 
-      sol::protected_function callback = r;
+      sol::function callback = r;
       auto callResult = callback(component->getOwner());
       if(!callResult.valid()) {
         sol::error err = callResult;
@@ -278,7 +278,7 @@ namespace Gsage {
       return true;
 
     if(function.get_type() == sol::type::function) {
-      mUpdateListeners.emplace_back(function.as<sol::protected_function>(), global);
+      mUpdateListeners.emplace_back(function.as<sol::function>(), global);
     } else {
       LOG(WARNING) << "Tried to add update listener object of unsupported type";
       return false;
@@ -289,7 +289,7 @@ namespace Gsage {
 
   bool LuaScriptSystem::removeUpdateListener(const sol::object& object)
   {
-    sol::protected_function function = object.as<sol::protected_function>();
+    sol::function function = object.as<sol::function>();
 
     UpdateListeners::iterator element = std::find_if(mUpdateListeners.begin(), mUpdateListeners.end(), [function] (Listener l) { return l.function == function; } );
     if(element == mUpdateListeners.end())

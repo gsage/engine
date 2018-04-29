@@ -31,6 +31,7 @@ THE SOFTWARE.
 
 #include <OgreBillboardSet.h>
 #include <OgreBillboard.h>
+#include "Definitions.h"
 
 #define BBT_POINT_ID                  "BBT_POINT"
 #define BBT_ORIENTED_COMMON_ID        "BBT_ORIENTED_COMMON"
@@ -52,7 +53,7 @@ namespace Gsage {
          * @param billboardSet Ogre::BillboardSet to create billboard into
          * @returns false if fails
          */
-        bool initialize(const DataProxy& dict, Ogre::BillboardSet* billboardSet);
+        bool initialize(const DataProxy& dict, OgreV1::BillboardSet* billboardSet);
 
         /**
          * Set billboard position
@@ -129,14 +130,14 @@ namespace Gsage {
          */
         unsigned int getTexcoordIndex();
       private:
-        Ogre::BillboardSet* mBillboardSet;
-        Ogre::Billboard* mBillboard;
+        OgreV1::BillboardSet* mBillboardSet;
+        OgreV1::Billboard* mBillboard;
 
         float mWidth;
         float mHeight;
     };
 
-    class BillboardSetWrapper : public MovableObjectWrapper<Ogre::BillboardSet>
+    class BillboardSetWrapper : public MovableObjectWrapper<OgreV1::BillboardSet>
     {
       public:
         static const std::string TYPE;
@@ -209,17 +210,21 @@ namespace Gsage {
          * Convert ogre type enum to string
          * @param type Enum value of the type
          */
-        static std::string mapBillboardType(const Ogre::BillboardType type);
+        static std::string mapBillboardType(const OgreV1::BillboardType type);
         /**
          * Convert string type id to ogre type enum
          * @param type String id
          */
-        static Ogre::BillboardType mapBillboardType(const std::string& type);
+        static OgreV1::BillboardType mapBillboardType(const std::string& type);
 
-        Ogre::BillboardSet* mBillboardSet;
+        OgreV1::BillboardSet* mBillboardSet;
 
         typedef std::vector<BillboardWrapper> Billboards;
         Billboards mBillboards;
+
+#if OGRE_VERSION_MAJOR == 2
+        std::string mMaterialName;
+#endif
     };
 }
 

@@ -27,24 +27,37 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "Definitions.h"
 #include "systems/RenderSystem.h"
 
+
+#if OGRE_VERSION_MAJOR == 2
+namespace Ogre {
+  class Item;
+  class SceneNode;
+}
+
+namespace Ogre {
+  namespace v1 {
+    class Entity;
+  }
+}
+#else
 namespace Ogre {
   class Entity;
   class SceneNode;
 }
+#endif
 
 namespace Gsage {
   class OgreGeom : public Geom
   {
     public:
-      typedef std::vector<Ogre::Entity*> OgreEntities;
+      typedef std::vector<OgreV1::Entity*> OgreEntities;
       OgreGeom(OgreEntities src, Ogre::SceneNode* referenceNode);
       virtual ~OgreGeom();
     private:
       OgreEntities mSrcEntities;
-
-
   };
 }
 

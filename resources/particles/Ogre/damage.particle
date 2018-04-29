@@ -5,7 +5,7 @@ particle_system Damage/Hit
     particle_height 2
     cull_each       false
     quota           1000
- 
+
     // Area emitter
     emitter Ellipsoid
     {
@@ -46,7 +46,7 @@ particle_system Damage/Miss
     font_name       Damage
     particle_height 0.5
     quota           1000
- 
+
     // Area emitter
     emitter Ellipsoid
     {
@@ -82,7 +82,7 @@ particle_system Damage/Enemy
     particle_height 2
     cull_each       false
     quota           1000
- 
+
     // Area emitter
     emitter Ellipsoid
     {
@@ -115,4 +115,3 @@ particle_system Damage/Enemy
         rate -1
     }
  }
-

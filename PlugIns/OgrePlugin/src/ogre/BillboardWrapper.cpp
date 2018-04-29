@@ -46,7 +46,7 @@ namespace Gsage {
     BIND_ACCESSOR_OPTIONAL("index", &BillboardWrapper::setTexcoordIndex, &BillboardWrapper::getTexcoordIndex);
   }
 
-  bool BillboardWrapper::initialize(const DataProxy& dict, Ogre::BillboardSet* billboardSet)
+  bool BillboardWrapper::initialize(const DataProxy& dict, OgreV1::BillboardSet* billboardSet)
   {
     mBillboardSet = billboardSet;
     return Serializable<BillboardWrapper>::read(dict);
@@ -126,42 +126,42 @@ namespace Gsage {
 
   const std::string BillboardSetWrapper::TYPE = "billboard";
 
-  Ogre::BillboardType BillboardSetWrapper::mapBillboardType(const std::string& type)
+  OgreV1::BillboardType BillboardSetWrapper::mapBillboardType(const std::string& type)
   {
-    Ogre::BillboardType res;
+    OgreV1::BillboardType res;
     if(type == BBT_POINT_ID)
-      res = Ogre::BillboardType::BBT_POINT;
+      res = OgreV1::BillboardType::BBT_POINT;
     else if(type == BBT_ORIENTED_COMMON_ID)
-      res = Ogre::BillboardType::BBT_ORIENTED_COMMON;
+      res = OgreV1::BillboardType::BBT_ORIENTED_COMMON;
     else if(type == BBT_ORIENTED_SELF_ID)
-      res = Ogre::BillboardType::BBT_ORIENTED_SELF;
+      res = OgreV1::BillboardType::BBT_ORIENTED_SELF;
     else if(type == BBT_PERPENDICULAR_COMMON_ID)
-      res = Ogre::BillboardType::BBT_PERPENDICULAR_COMMON;
+      res = OgreV1::BillboardType::BBT_PERPENDICULAR_COMMON;
     else if(type == BBT_PERPENDICULAR_SELF_ID)
-      res = Ogre::BillboardType::BBT_PERPENDICULAR_SELF;
+      res = OgreV1::BillboardType::BBT_PERPENDICULAR_SELF;
     else
-      res = Ogre::BillboardType::BBT_POINT;
+      res = OgreV1::BillboardType::BBT_POINT;
     return res;
   }
 
-  std::string BillboardSetWrapper::mapBillboardType(const Ogre::BillboardType type)
+  std::string BillboardSetWrapper::mapBillboardType(const OgreV1::BillboardType type)
   {
     std::string res;
     switch(type)
     {
-      case Ogre::BillboardType::BBT_POINT:
+      case OgreV1::BillboardType::BBT_POINT:
         res = BBT_POINT_ID;
         break;
-      case Ogre::BillboardType::BBT_ORIENTED_COMMON:
+      case OgreV1::BillboardType::BBT_ORIENTED_COMMON:
         res = BBT_ORIENTED_COMMON_ID;
         break;
-      case Ogre::BillboardType::BBT_ORIENTED_SELF:
+      case OgreV1::BillboardType::BBT_ORIENTED_SELF:
         res = BBT_ORIENTED_SELF_ID;
         break;
-      case Ogre::BillboardType::BBT_PERPENDICULAR_SELF:
+      case OgreV1::BillboardType::BBT_PERPENDICULAR_SELF:
         res = BBT_PERPENDICULAR_SELF_ID;
         break;
-      case Ogre::BillboardType::BBT_PERPENDICULAR_COMMON:
+      case OgreV1::BillboardType::BBT_PERPENDICULAR_COMMON:
         res = BBT_PERPENDICULAR_COMMON_ID;
         break;
     }
@@ -222,12 +222,27 @@ namespace Gsage {
 
   void BillboardSetWrapper::setMaterialName(const std::string& id)
   {
+#if OGRE_VERSION_MAJOR == 1
     mObject->setMaterialName(id);
+#else
+    auto parts = split(id, '.');
+    if(parts.size() == 2) {
+      mObject->setMaterialName(parts[1], parts[0]);
+      mMaterialName = id;
+    } else {
+      mObject->setMaterialName(id, "General");
+      mMaterialName = std::string("General.") + id;
+    }
+#endif
   }
 
   const std::string& BillboardSetWrapper::getMaterialName() const
   {
+#if OGRE_VERSION_MAJOR == 1
     return mObject->getMaterialName();
+#else
+    return mMaterialName;
+#endif
   }
 
   void BillboardSetWrapper::setBillboards(const DataProxy& dict)

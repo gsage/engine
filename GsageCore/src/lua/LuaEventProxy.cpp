@@ -46,7 +46,7 @@ namespace Gsage  {
 
     Callbacks* cb = getCallbacks(dispatcher, eventType);
     Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);
-    callbacks.push_back(GenericCallbackPtr(new GenericCallback(callback.as<sol::protected_function>())));
+    callbacks.push_back(GenericCallbackPtr(new GenericCallback(callback.as<sol::function>())));
     return true;
   }
 
@@ -59,7 +59,7 @@ namespace Gsage  {
     if(!callbacks)
       return false;
 
-    sol::protected_function listener = callback.as<sol::protected_function>();
+    sol::function listener = callback.as<sol::function>();
     Callbacks::iterator iter = std::find_if(callbacks->begin(), callbacks->end(), [listener](GenericCallbackPtr e){
       return e->func() == listener;
     });

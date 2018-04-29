@@ -67,6 +67,10 @@ int main(int argc, char *argv[])
   int argc = 0;
   char** argv;
   fetchCmdArgs(&argc, &argv);
+  if(AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()){
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stderr);
+  }
 #endif
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

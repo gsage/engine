@@ -53,7 +53,7 @@ namespace Gsage {
 
   }
 
-  void Animation::initialize(Ogre::AnimationState* state)
+  void Animation::initialize(OgreV1::AnimationState* state)
   {
     mAnimationState = state;
     mAnimationState->setWeight(0);
@@ -235,7 +235,7 @@ namespace Gsage {
 
       EntityWrapper* w = containerNode->getChildOfType<EntityWrapper>(id[i]);
 
-      Ogre::Entity* e = w->getEntity();
+      OgreV1::Entity* e = w->getEntity();
 
       // no entity was found with such id
       if(e == 0)

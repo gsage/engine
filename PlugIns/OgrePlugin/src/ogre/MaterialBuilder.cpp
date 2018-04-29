@@ -50,8 +50,10 @@ namespace Gsage {
     int techniqueIndex = 0;
     for(auto t : data.get("techniques", DataProxy::create(DataWrapper::JSON_OBJECT))) {
       Ogre::Technique* tech = material->getTechnique(techniqueIndex);
+#if OGRE_VERSION_MAJOR == 1
       tech->setLightingEnabled(t.second.get("lightingEnabled", true));
       tech->setDepthCheckEnabled(t.second.get("depthCheckEnabled", true));
+#endif
       int passIndex = 0;
       for(auto p : t.second.get("passes", DataProxy::create(DataWrapper::JSON_OBJECT))) {
         Ogre::Pass* pass = tech->getPass(passIndex++);

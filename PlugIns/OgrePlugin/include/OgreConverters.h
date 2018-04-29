@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "DataProxy.h"
 #include "RenderTargetTypes.h"
 #include "GeometryPrimitives.h"
+#include "Definitions.h"
 
 namespace Gsage {
   static inline const Ogre::Vector3 GsageVector3ToOgreVector3(const Gsage::Vector3& vector)
@@ -72,7 +73,11 @@ namespace Gsage {
   TYPE_CASTER(OgreQuaternionCaster, Ogre::Quaternion, std::string);
   TYPE_CASTER(OgreFloatRectCaster, Ogre::FloatRect, std::string);
   TYPE_CASTER(OgrePixelFormatCaster, Ogre::PixelFormat, std::string);
+#if OGRE_VERSION_MAJOR == 2
+  TYPE_CASTER(RenderOperationTypeCaster, Ogre::OperationType, std::string);
+#else
   TYPE_CASTER(RenderOperationTypeCaster, Ogre::RenderOperation::OperationType, std::string);
+#endif
 
   TYPE_CASTER(RenderTargetTypeCaster, RenderTargetType::Type, std::string);
 }

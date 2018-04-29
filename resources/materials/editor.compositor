@@ -1,0 +1,24 @@
+compositor_node editor_node
+{
+    in 0 renderwindow
+    target renderwindow
+    {
+        pass clear
+        {
+            colour_value 0.1 0.11 0.17 1
+        }
+        pass render_scene
+        {
+            rq_first    101
+            rq_last     102
+        }
+        pass custom overlay
+        {
+        }
+    }
+}
+
+workspace editor
+{
+    connect_output editor_node 0
+}

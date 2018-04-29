@@ -33,6 +33,9 @@
   },
 
   "imgui": {
+    "renderTargetWhitelist": [
+      "Editor"
+    ],
     "theme": {
       "colors": {
         "text": "0xff000000",
@@ -56,7 +59,7 @@
         "sliderGrab": "0xffaaaaaa",
         "sliderGrabHovered": "0xff4F8FD4",
         "sliderGrabActive": "0xff417BBA",
-        "button": "0xff4F8FD4",
+        "button": "0xffbbbbbb",
         "buttonHovered": "0xff4F91D8",
         "buttonActive": "0xff4F8FD4",
         "header": "0xff4F8FD4",
@@ -64,7 +67,7 @@
         "headerActive": "0xff4F8FD4"
       },
       "windowTitleAlign": "0.5,0.5",
-      "windowPadding": "15,15",
+      "windowPadding": "5,5",
       "windowRounding": 5,
       "childRounding": 5,
       "framePadding": "5,5",
@@ -76,14 +79,31 @@
       "scrollbarRounding": 2,
       "scrollbarSize": 20,
       "grabMinSize": 20,
-      "grabRounding": 3.0
+      "grabRounding": 3.0,
+      "frameBorderSize": 1
     },
     "fonts": {
       "default": {
         "file": "fonts/Koruri-Regular.ttf",
+        "size": 20,
         "oversampleH": 3,
         "oversampleV": 3,
-        "size": 20
+        "glyphRanges": [
+          [57344, 60239]
+        ]
+      },
+      "glyph": {
+        "merge": true,
+        "file": "fonts/MaterialIcons-Regular.ttf",
+        "size": 20,
+        "oversampleH": 3,
+        "oversampleV": 3,
+        "noDefaultRanges": true,
+        "glyphRanges": [
+          [57344, 60239]
+        ],
+        "glyphOffset": "0,5",
+        "pixelSnapH": true
       }
     }
   },
@@ -96,17 +116,31 @@
   [
     "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/ImGUIPlugin",
-    "@PLUGINS_DIRECTORY@/RocketUIPlugin",
+    "@PLUGINS_DIRECTORY@/ImGUIOgreRenderer",
     "@PLUGINS_DIRECTORY@/SDLPlugin",
     "@PLUGINS_DIRECTORY@/RecastNavigationPlugin"
   ],
 
   "render":
   {
-    "pluginsFile": "plugins.cfg",
-    "configFile": "ogreConfig.cfg",
+    "renderSystems": [
+      {"id": "Metal Rendering Subsystem"},
+      {"id": "OpenGL 3+ Rendering Subsystem"},
+      {"id": "OpenGL Rendering Subsystem",
+        "Fixed Pipeline Enabled": "Yes",
+        "RTT Preferred Mode": "FBO"
+      }
+    ],
+    "forward3D": {
+      "width": 4,
+      "height": 4,
+      "numSlices": 5
+    },
     "plugins": [
+      "RenderSystem_Direct3D11",
       "RenderSystem_GL",
+      "RenderSystem_GL3Plus",
+      "RenderSystem_Metal",
       "OctreeSceneManager",
       "ParticleFX"
     ],
@@ -115,9 +149,7 @@
       "General":
       [
         "FileSystem:materials/",
-        "FileSystem:programs/",
-        "FileSystem:particles/PU",
-        "FileSystem:particles/Ogre"
+        "FileSystem:programs/"
       ],
       "Rocket":
       [
@@ -132,6 +164,7 @@
         "backgroundColor": "0xff0a1f2c",
         "renderQueueSequence": [{"id": 101, "suppressShadows": true}]
       },
+      "workspaceName": "editor",
       "name": "Editor",
       "width": 1920,
       "height": 1200,
@@ -141,7 +174,8 @@
       {
         "FSAA": 0,
         "displayFrequency": 50,
-        "vsync": false
+        "vsync": false,
+        "gamma": "true"
       },
       "defaultCamera": {
         "name": "main"

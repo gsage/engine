@@ -118,19 +118,7 @@ namespace Gsage {
       if(!entity->hasFlag("dynamic"))
         continue;
 
-      DataProxy entityNode;
-      for(auto pair : entity->mComponents)
-      {
-        EntityComponent* c = mEngine->getComponent(entity, pair.first);
-        if(c)
-        {
-          entityNode.put(pair.first, c->getNode());
-        }
-      }
-      entityNode.put("id", entity->getId());
-      entityNode.put("class", entity->getClass());
-      entityNode.put("props", entity->getProps());
-      entitiesNode.put(entity->getId(), entityNode);
+      entitiesNode.put(entity->getId(), getEntityData(entity->getId()));
 
       RenderComponent* render = mEngine->getComponent<RenderComponent>(entity);
 
@@ -159,6 +147,33 @@ namespace Gsage {
     saveData.put("placement." + currentArea, placementNode);
     FileLoader::getSingletonPtr()->dump(saveFile + "." + mFileExtension, saveData);
     return true;
+  }
+
+  bool GameDataManager::removeEntity(const std::string& id)
+  {
+    return mEngine->removeEntity(id);
+  }
+
+  DataProxy GameDataManager::getEntityData(const std::string& id)
+  {
+    DataProxy entityNode;
+    Entity* entity = mEngine->getEntity(id);
+    if(!entity) {
+      return entityNode;
+    }
+
+    for(auto pair : entity->mComponents)
+    {
+      EntityComponent* c = mEngine->getComponent(entity, pair.first);
+      if(c)
+      {
+        entityNode.put(pair.first, c->getNode());
+      }
+    }
+    entityNode.put("id", entity->getId());
+    entityNode.put("class", entity->getClass());
+    entityNode.put("props", entity->getProps());
+    return entityNode;
   }
 
   Entity* GameDataManager::createEntity(const std::string& json)

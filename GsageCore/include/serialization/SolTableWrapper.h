@@ -66,7 +66,7 @@ namespace Gsage {
 
       };
 
-      SolTableWrapper(const sol::table& value);
+      SolTableWrapper(const sol::object& value);
 
       SolTableWrapper();
 
@@ -75,7 +75,7 @@ namespace Gsage {
       template<typename K, typename T>
       void put(const K& key, const T& value)
       {
-        mObject[correctIndex(key)] = value;
+        getTable()[correctIndex(key)] = value;
       }
 
       template<typename T>
@@ -90,7 +90,7 @@ namespace Gsage {
       template<typename T>
       bool readExact(const std::string& key, T& dest) const
       {
-        sol::optional<T> res = mObject[key];
+        sol::optional<T> res = getTable()[key];
         if (res) {
           dest = res.value();
           return true;
@@ -100,11 +100,11 @@ namespace Gsage {
       }
 
       int size() const {
-        return mObject.size();
+        return mObject.get_type() == sol::type::table ? getTable().size() : 0;
       }
 
       int count(const std::string& key) const {
-        if(mObject[key] == sol::lua_nil) {
+        if(getTable()[key] == sol::lua_nil) {
           return 0;
         }
 
@@ -135,20 +135,43 @@ namespace Gsage {
       template<typename T>
       void set(const T& value)
       {
-        mObject.set(sol::make_object(mObject.lua_state(), value));
+        lua_State* L = mObject.lua_state();
+        mObject = sol::make_object(mObject.lua_state(), value);
+        mObject.push(L);
+        tableUpdate();
+        //mObject.set(sol::make_object(mObject.lua_state(), value));
+      }
+
+      void tableUpdate()
+      {
+        if(mObject.get_type() == sol::type::table) {
+          mTable = mObject.as<sol::table>();
+        } else {
+          //mTable = sol::lua_nil;
+        }
       }
 
       iteratorPtr begin()
       {
-        return new iterator(getObject(), iterator::BEGIN);
+        return new iterator(getTable(), iterator::BEGIN);
       }
 
       iteratorPtr end()
       {
-        return new iterator(getObject(), iterator::END);
+        return new iterator(getTable(), iterator::END);
       }
 
-      sol::table& getObject()
+      const sol::table& getTable() const
+      {
+        return mTable;
+      }
+
+      sol::table& getTable()
+      {
+        return mTable;
+      }
+
+      sol::object& getObject()
       {
         return mObject;
       }
@@ -176,7 +199,8 @@ namespace Gsage {
        */
       typedef std::map<sol::type, Type> TypeMap;
 
-      sol::table mObject;
+      sol::object mObject;
+      sol::table mTable;
 
       template<class K>
       K correctIndex(const K& index) const

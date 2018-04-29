@@ -78,7 +78,8 @@ if event.onRocketContext ~= nil then
 end
 
 function setOrbitalCam(id, cameraID)
-  camera:createAndAttach('orbit', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
+  --camera:createAndAttach('orbit', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
+  --camera:createAndAttach('free', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
 end
 
 function spawnMore(count)
@@ -150,8 +151,9 @@ function onReady(e)
   initialized = true
   player = eal:getEntity("sinbad")
 
-  spawn()
-  spawnMore(10)
+  --spawn()
+  --spawnMore(10)
+  camera:createAndAttach('free', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
 end
 
 event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
@@ -162,10 +164,10 @@ game:loadSave('gameStart')
 if imgui then
   imguiConsole = Console(256)
   imguiConsole:setOpen(true)
-  imgui.render:addView("console", imguiConsole)
+  imgui.render:addView("console", imguiConsole, false)
   stats = Stats("stats", false)
-  imgui.render:addView("stats", stats)
+  imgui.render:addView("stats", stats, false)
 
   local recastEditor = require 'imgui.systems.recast'
-  imgui.render:addView("recast", recastEditor(true, false))
+  imgui.render:addView("recast", recastEditor(true, false), false)
 end

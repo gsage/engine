@@ -1,10 +1,12 @@
 require 'lib.class'
 require 'imgui.base'
 local lm = require 'lib.locales'
+local icons = require 'imgui.icons'
 
 -- imgui view for editor settings
 SettingsView = class(ImguiWindow, function(self, open)
   ImguiWindow.init(self, "settings", true, open)
+  self.icon = icons.tune
   self.settings = editor:getGlobalState().settings or {}
 end)
 

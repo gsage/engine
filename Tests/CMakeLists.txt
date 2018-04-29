@@ -18,7 +18,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
-  ${gsage_SOURCE_DIR}/PlugIns/ImGUI/include
+  ${gsage_SOURCE_DIR}/PlugIns/ImGUI/Common/include
 
   ${LUAJIT_INCLUDE_DIR}
   ${GTEST_INCLUDE_DIRS}

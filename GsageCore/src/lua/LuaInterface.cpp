@@ -193,7 +193,10 @@ namespace Gsage {
     lua.new_usertype<GsageFacade>("Facade",
         "new", sol::no_constructor,
         "shutdown", &GsageFacade::shutdown,
-        "reset", &GsageFacade::reset,
+        "reset", sol::overload(
+          (void(GsageFacade::*)()) &GsageFacade::reset,
+          (void(GsageFacade::*)(sol::function))&GsageFacade::reset
+        ),
         "loadSave", &GsageFacade::loadSave,
         "dumpSave", &GsageFacade::dumpSave,
         "loadArea", &GsageFacade::loadArea,
@@ -215,7 +218,7 @@ namespace Gsage {
         "x", &Vector3::X,
         "y", &Vector3::Y,
         "z", &Vector3::Z,
-        "squaredDistance", [](Vector3 rhs, const Vector3 lhs) { 
+        "squaredDistance", [](Vector3 rhs, const Vector3 lhs) {
           double distance = Vector3::Distance(rhs, lhs);
           return distance * distance;
         },
@@ -480,6 +483,8 @@ namespace Gsage {
     lua["Engine"]["movement"] = &Engine::getSystem<MovementSystem>;
 
     lua.new_usertype<GameDataManager>("DataManager",
+        "getEntityData", &GameDataManager::getEntityData,
+        "removeEntity", &GameDataManager::removeEntity,
         "createEntity", sol::overload(
           (Entity*(GameDataManager::*)(const std::string&))&GameDataManager::createEntity,
           (Entity*(GameDataManager::*)(const std::string&, const DataProxy&))&GameDataManager::createEntity,
@@ -793,6 +798,8 @@ namespace Gsage {
     lua["split"] = [](const std::string& s, char delim) -> std::vector<std::string> {
       return split(s, delim);
     };
+
+    lua["utf8_char"] = [](unsigned short code) -> std::string { char s[1] = {(char)code}; return std::string(s); };
 
     // serialization
     lua["json"] = lua.create_table_with(

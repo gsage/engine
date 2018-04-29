@@ -27,6 +27,7 @@ THE SOFTWARE.
 #ifndef _EntityWrapper_H_
 #define _EntityWrapper_H_
 
+#include "Definitions.h"
 #include "ogre/MovableObjectWrapper.h"
 #include "DataProxy.h"
 #include <OgreSkeleton.h>
@@ -38,7 +39,7 @@ namespace Ogre
 
 namespace Gsage {
 
-  class EntityWrapper : public MovableObjectWrapper<Ogre::Entity>
+  class EntityWrapper : public MovableObjectWrapper<OgreV1::Entity>
   {
     public:
       static const std::string TYPE;
@@ -91,11 +92,11 @@ namespace Gsage {
       /**
        * Get underlying entity
        */
-      Ogre::Entity* getEntity() {
+      OgreV1::Entity* getEntity() {
         return mObject;
       }
     private:
-      Ogre::SkeletonAnimationBlendMode mAnimBlendMode;
+      OgreV1::SkeletonAnimationBlendMode mAnimBlendMode;
 
       std::string mMeshName;
       std::string mQueryString;

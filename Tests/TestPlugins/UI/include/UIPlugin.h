@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2018 Artem Chernyshev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,11 @@ namespace Gsage {
   {
     public:
       virtual ~FakeUIManager() {}
+
+      const std::string& getType() {
+        static const std::string type = "fake";
+        return type;
+      }
   };
 
   class UIPlugin : public IPlugin

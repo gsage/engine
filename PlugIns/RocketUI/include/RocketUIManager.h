@@ -94,6 +94,7 @@ namespace Gsage {
   class RocketUIManager : public UIManager, public EventSubscriber<RocketUIManager>
   {
     public:
+      static const std::string TYPE;
       RocketUIManager();
       virtual ~RocketUIManager();
       /**
@@ -123,6 +124,8 @@ namespace Gsage {
        * SystemChangeEvent::SYSTEM_ADDED and SystemChangeEvent::SYSTEM_REMOVED handler
        */
       bool handleSystemChange(EventDispatcher* sender, const Event& event);
+
+      const std::string& getType();
     private:
       /**
        * Handle mouse event from engine

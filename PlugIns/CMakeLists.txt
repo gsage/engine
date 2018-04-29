@@ -2,13 +2,13 @@
 #  add_subdirectory(ParticleUniverse)
 #endif(${OGRE_Plugin_ParticleUniverse_FOUND})
 
-if(${LIBROCKET_FOUND})
+if(${LIBROCKET_FOUND} AND "${OGRE_VERSION_MAJOR}" STREQUAL "1")
   add_subdirectory(RocketUI)
-endif(${LIBROCKET_FOUND})
+endif(${LIBROCKET_FOUND} AND "${OGRE_VERSION_MAJOR}" STREQUAL "1")
 
-if(${OIS_FOUND})
+if(OIS_FOUND AND "${WITH_OIS}" STREQUAL "True")
   add_subdirectory(OisInput)
-endif(${OIS_FOUND})
+endif(OIS_FOUND AND "${WITH_OIS}" STREQUAL "True")
 
 if(${SDL_FOUND})
   add_subdirectory(SDL)

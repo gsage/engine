@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <map>
 
+#include "Definitions.h"
 #include "GsageDefinitions.h"
 #include "DataProxy.h"
 #include "ObjectPool.h"
@@ -74,7 +75,7 @@ namespace Gsage {
       OgreObjectManager();
       virtual ~OgreObjectManager();
 
-      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, Ogre::Entity* parentEntity);
+      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, OgreV1::Entity* parentEntity);
 
       /**
        * Create object from the DataProxy

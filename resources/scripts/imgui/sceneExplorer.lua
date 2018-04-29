@@ -3,10 +3,12 @@ local time = require 'lib.time'
 require 'imgui.base'
 local eal = require 'lib.eal.manager'
 local lm = require 'lib.locales'
+local icons = require 'imgui.icons'
 
 -- allows browsing scene objects
 SceneExplorer = class(ImguiWindow, function(self, title, docked, open)
   ImguiWindow.init(self, title, docked, open)
+  self.icon = icons.list
 end)
 
 -- render
@@ -17,19 +19,30 @@ function SceneExplorer:__call()
     local entities = core:getEntities()
     for i = 1, #entities do
       local entity = entities[i]
-      if imgui.TreeNode(entity.id) then
-        local components = entity.componentNames
-        for j = 1, #components do
-          local component = components[j]
-          if imgui.TreeNode(component) then
-            imgui.Separator()
-            self:renderComponentEditor(entity.id, component)
-            imgui.Separator()
-            imgui.TreePop()
-          end
-        end
+      if not entity.props.utility then
 
-        imgui.TreePop()
+        if imgui.TreeNode(entity.id) then
+          local components = entity.componentNames
+          if imgui.Button(lm("sceneExplorer.entity.reload")) then
+
+            local d = data:getEntityData(entity.id)
+            data:removeEntity(entity.id)
+            data:createEntity(d)
+          end
+
+          for j = 1, #components do
+            local component = components[j]
+            if imgui.TreeNode(component) then
+
+              imgui.Separator()
+              self:renderComponentEditor(entity.id, component)
+              imgui.Separator()
+              imgui.TreePop()
+            end
+          end
+
+          imgui.TreePop()
+        end
       end
     end
 

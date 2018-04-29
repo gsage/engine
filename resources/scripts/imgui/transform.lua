@@ -2,10 +2,12 @@ require 'lib.class'
 local time = require 'lib.time'
 require 'imgui.base'
 local lm = require 'lib.locales'
+local icons = require 'imgui.icons'
 
 -- node transform settings
 Transform = class(ImguiWindow, function(self, ogreView, title, docked, open)
   ImguiWindow.init(self, title, docked, open)
+  self.icon = icons.rotation_3d
   self.ogreView = ogreView
   self.gizmo = ogreView.gizmo
 end)

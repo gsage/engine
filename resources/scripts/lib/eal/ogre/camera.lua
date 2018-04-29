@@ -3,12 +3,14 @@ local event = require 'lib.event'
 
 currentCamera = currentCamera or nil
 
+local defaultMouseSensivity = 0.4
+
 -- base camera decorator
 -- attach requires cameraPath to be set
 -- mixin can add update method
 local function decorate(cls)
   cls.onCreate(function(self)
-    self.mouseSensivity = self.props.mouseSensivity or 0.003
+    self.mouseSensivity = self.props.mouseSensivity or defaultMouseSensivity
     self.handlerId = self.id .. ".camera.update"
     self.renderTargetName = nil
   end)
@@ -110,7 +112,7 @@ local function freeCamera(cls)
     self.props.cameraPath = "yaw.pitch.roll." .. self.entity.id
     self.rotate = false
     self.movementVector = Vector3.ZERO
-    self.mouseSensivity = self.props.mouseSensivity or 0.003
+    self.mouseSensivity = self.props.mouseSensivity or defaultMouseSensivity
     self.speed = self.props.speed or 5
     self.yawNode = getNode("yaw")
     self.pitchNode = getNode("yaw.pitch")
@@ -156,8 +158,8 @@ local function freeCamera(cls)
       elseif event.type == MouseEvent.MOUSE_UP and event.button == Mouse.Right then
         self.rotate = false
       elseif event.type == MouseEvent.MOUSE_MOVE and self.rotate then
-        self.yawNode:yaw(Degree.new(-event.relX * self.mouseSensivity))
-        self.pitchNode:pitch(Degree.new(-event.relY * self.mouseSensivity))
+        self.yawNode:yaw(Radian.new(Degree.new(-event.relX * self.mouseSensivity)), OgreNode.TS_LOCAL)
+        self.pitchNode:pitch(Radian.new(Degree.new(-event.relY * self.mouseSensivity)), OgreNode.TS_LOCAL)
       end
       return true
     end
