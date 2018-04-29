@@ -240,9 +240,9 @@ namespace Gsage {
       return false;
 
     if(src == "rtt") {
-      dst = RenderTarget::Rtt;
+      dst = RenderTargetType::Rtt;
     } else if(src == "window") {
-      dst = RenderTarget::Window;
+      dst = RenderTargetType::Window;
     } else {
       return false;
     }
@@ -252,10 +252,56 @@ namespace Gsage {
   const RenderTargetTypeCaster::FromType RenderTargetTypeCaster::from(const RenderTargetTypeCaster::Type& value) const
   {
     switch(value) {
-      case RenderTarget::Rtt:
+      case RenderTargetType::Rtt:
         return "rtt";
-      case RenderTarget::Window:
+      case RenderTargetType::Window:
         return "window";
+      default:
+        return "";
+    }
+    return "";
+  }
+
+  // -----------------------------------------------------------------------------
+
+  bool RenderOperationTypeCaster::to(const RenderOperationTypeCaster::FromType& src, RenderOperationTypeCaster::Type& dst) const
+  {
+    if(src.empty())
+      return false;
+
+    if(src == "OT_POINT_LIST") {
+      dst = Ogre::RenderOperation::OT_POINT_LIST;
+    } else if(src == "OT_LINE_LIST") {
+      dst = Ogre::RenderOperation::OT_LINE_LIST;
+    } else if(src == "OT_LINE_STRIP") {
+      dst = Ogre::RenderOperation::OT_LINE_STRIP;
+    } else if(src == "OT_TRIANGLE_LIST") {
+      dst = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+    } else if(src == "OT_TRIANGLE_STRIP") {
+      dst = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+    } else if(src == "OT_TRIANGLE_FAN") {
+      dst = Ogre::RenderOperation::OT_TRIANGLE_FAN;
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  const RenderOperationTypeCaster::FromType RenderOperationTypeCaster::from(const RenderOperationTypeCaster::Type& value) const
+  {
+    switch(value) {
+      case Ogre::RenderOperation::OT_POINT_LIST:
+        return "OT_POINT_LIST";
+      case Ogre::RenderOperation::OT_LINE_LIST:
+        return "OT_LINE_LIST";
+      case Ogre::RenderOperation::OT_LINE_STRIP:
+        return "OT_LINE_STRIP";
+      case Ogre::RenderOperation::OT_TRIANGLE_LIST:
+        return "OT_TRIANGLE_LIST";
+      case Ogre::RenderOperation::OT_TRIANGLE_STRIP:
+        return "OT_TRIANGLE_STRIP";
+      case Ogre::RenderOperation::OT_TRIANGLE_FAN:
+        return "OT_TRIANGLE_FAN";
       default:
         return "";
     }

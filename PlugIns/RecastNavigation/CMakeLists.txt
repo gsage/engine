@@ -3,23 +3,18 @@ set(LIB_NAME "RecastNavigationPlugin")
 include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
+  ${gsage_SOURCE_DIR}/Vendor/gmath/src
   ${SDL_INCLUDE_DIRS}
+  ${RECAST_INCLUDE_DIRS}
 )
 
 set(LIBS
   GsageCore
   easyloggingpp
-  recastNavigation
+  ${RECAST_LIBRARIES}
 )
 
-file(GLOB sources src/*.cpp)
-
-if(APPLE)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/OSXUtils.mm PROPERTIES COMPILE_FLAGS "-x objective-c++")
-  set(sources src/OSXUtils.mm ${sources})
-  set(LIBS ${LIBS}
-    ${COREFOUNDATION_LIBRARY})
-endif(APPLE)
+file(GLOB sources src/*.cpp src/*/*.cpp)
 
 gsage_plugin(${LIB_NAME} SHARED ${sources})
 target_link_libraries(${LIB_NAME} ${LIBS})

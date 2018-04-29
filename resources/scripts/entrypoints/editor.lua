@@ -1,6 +1,13 @@
 package.path = package.path .. ';' .. getResourcePath('scripts/?.lua') ..
                                ';' .. getResourcePath('behaviors/trees/?.lua') ..
-                               ";" .. getResourcePath('behaviors/?.lua') .. ";"
+                               ";" .. getResourcePath('behaviors/?.lua') ..
+                               ";" .. getResourcePath('locales/?.lua') .. ";"
+
+local version = _VERSION:match("%d+%.%d+")
+package.path = ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?.lua') ..
+               ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?/init.lua') .. ';' .. package.path
+package.cpath = getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.so') .. ';' ..
+                getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.dll') .. ';' .. package.cpath
 
 require 'math'
 require 'helpers.base'
@@ -10,6 +17,7 @@ require 'factories.camera'
 require 'factories.emitters'
 local eal = require 'lib.eal.manager'
 local event = require 'lib.event'
+local lm = require 'lib.locales'
 
 local imguiInterface = require 'imgui.base'
 
@@ -20,9 +28,15 @@ if imguiInterface:available() then
   require 'imgui.stats'
   require 'imgui.transform'
   require 'imgui.sceneExplorer'
+  require 'imgui.settings'
 end
 
 local rocketInitialized = false
+
+local globalEditorState = editor:getGlobalState()
+if globalEditorState.settings then
+  lm:setLocale(globalEditorState.settings.locale)
+end
 
 function setOrbitalCam()
 end
@@ -129,10 +143,13 @@ if imguiInterface:available() then
     if imgui.Button("load example scene") then
       game:reset()
       game:loadArea("exampleLevel")
-      core:movement():rebuildNavMesh()
+      core:navigation():rebuildNavMesh({})
       spawn()
     end
   end, true)
+
+  settings = SettingsView(true)
+  imguiInterface:addView("settings", settings)
 
   local states = {}
   imguiInterface:addView("dock states", function()
@@ -161,24 +178,60 @@ if imguiInterface:available() then
 
   local views = {}
   for name, view in pairs(imguiInterface.views) do
-    views[#views+1] = MenuItem(view.title,
+    views[#views+1] = MenuItem("window_title." .. view.label,
       function() view.open = not view.open end,
       function() return view.open end
     )
   end
 
   local menus = {
-    List("Views", views)
+    List("views", views)
   }
   imguiInterface:addView("mainMenu", Menu(menus))
 
   -- read saved editor settings
-  local globalEditorState = editor:getGlobalState()
   if globalEditorState and globalEditorState.dockState then
     log.info("Restoring imgui dock state")
     imgui.SetDockState(globalEditorState.dockState)
   end
   event:bind(core, EngineEvent.STOPPING, saveDockState)
+
+  local systemEditors = {}
+
+  local function createEditorView(systemType)
+    local success, editorView = pcall(function() return require('imgui.systems.' .. systemType) end)
+    if not success then
+      log.warn("Failed to load editor for system " .. systemType)
+    else
+      systemEditors[systemType] = editorView(true)
+      imguiInterface:addView(systemType, systemEditors[systemType])
+    end
+  end
+
+  local function onSystemUpdate(event)
+    local systemType = event.system.info.type
+
+    if event.type == EngineEvent.SYSTEM_ADDED then
+      createEditorView(systemType)
+    else
+      if systemEditors[systemType] then
+        imguiInterface:removeView(systemType, systemEditors[systemType])
+      end
+    end
+  end
+
+  event:onSystemChange(core, SystemChangeEvent.SYSTEM_ADDED, onSystemUpdate)
+  event:onSystemChange(core, SystemChangeEvent.SYSTEM_REMOVED, onSystemUpdate)
+
+  local systems = core:getSystems()
+  for name, system in pairs(systems) do
+    if system.info then
+      local systemType = system.info.type
+      if systemType then
+        createEditorView(systemType)
+      end
+    end
+  end
 end
 
 function reload()

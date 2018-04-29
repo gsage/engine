@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "ogre/BillboardWrapper.h"
 
+#include "OgreConverters.h"
 #include <OgreSceneManager.h>
 
 namespace Gsage {

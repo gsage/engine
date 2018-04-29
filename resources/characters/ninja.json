@@ -53,6 +53,9 @@
     "moveAnimation": "walk",
     "animSpeedRatio": 0.15
   },
+  "navigation": {
+    "align": true
+  },
   "stats":
   {
     "atk": 500,

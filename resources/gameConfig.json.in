@@ -11,7 +11,7 @@
   "startupScript": "scripts/entrypoints/chaos.lua",
   "inputHandler": "SDL",
   "systems": [
-    "ogre", "recast", "dynamicStats", "lua"
+    "ogre", "3dmovement", "recast", "dynamicStats", "lua"
   ],
   "packager": {
     "deps": [
@@ -28,7 +28,8 @@
     "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/ImGUIPlugin",
     "@PLUGINS_DIRECTORY@/RocketUIPlugin",
-    "@PLUGINS_DIRECTORY@/SDLPlugin"
+    "@PLUGINS_DIRECTORY@/SDLPlugin",
+    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin"
   ],
 
   "imgui": {

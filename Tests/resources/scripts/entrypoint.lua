@@ -32,12 +32,42 @@ local timing = function(state, arguments)
   return os.clock() - start < expected
 end
 
+local truncateFloat = function(exact, precision)
+  return tonumber(string.format("%." .. tostring(precision) .. "f", exact))
+end
+
+local equals_float = function(state, arguments)
+  local precision = arguments[3] or 5
+  
+  local a1 = truncateFloat(arguments[1], precision)
+  local a2 = truncateFloat(arguments[2], precision)
+  if a1 ~= a2 then
+    return false, {a1, a2}
+  end
+  return true
+end
+
+local close_enough = function(state, arguments)
+  local percent = arguments[3] or 1
+  local a1 = arguments[1]
+  local a2 = arguments[2]
+
+  local t = math.max(math.abs(a1), math.abs(a2))
+
+  local delta = math.max(arguments[4] or 0.2, math.abs(t / 100 * percent))
+  arguments[3] = delta
+  if math.abs(a1 - a2) > delta then
+    return false, {a1, a2, delta}
+  end
+  return true
+end
+
 local runTests = function()
-  local runner, assert, say
+  local s, runner, assert
   local res, err = pcall(function()
     runner = require 'busted.runner'
     assert = require 'luassert'
-    say = require 'say.init'
+    s = require 'say'
   end)
 
   if err then
@@ -46,8 +76,14 @@ local runTests = function()
     return nil, 2
   end
 
-  say:set("assertion.timing.positive", "Expected function to execute faster than: %s")
+  s:set("assertion.timing.positive", "Expected function to execute faster than: %s")
   assert:register("assertion", "timing", timing, "assertion.timing.positive")
+
+  s:set("assertion.equals_float.positive", "Expected %s to be equal to %s")
+  assert:register("assertion", "equals_float", equals_float, "assertion.equals_float.positive")
+
+  s:set("assertion.close_enough.positive", "Expected %s and %s difference to be less than: %s")
+  assert:register("assertion", "close_enough", close_enough, "assertion.close_enough.positive")
 
   res, err = pcall(runner, ({standalone=false}))
   async.signal("TestsComplete")
@@ -61,6 +97,15 @@ function main()
     if hasOgre then
       game:loadPlugin(PLUGINS_DIR .. "/ImGUIPlugin")
       game:createSystem("ogre")
+      core:render():configure({
+        colourAmbient = "0x403030",
+        resources = {
+          workdir = TRESOURCES,
+          TestResources = {
+            "FileSystem:models/",
+          }
+        }
+      })
     end
   else
     if arg then
@@ -104,4 +149,5 @@ local success, exitCode = pcall(main)
 if not success then
   print("Tests error: " .. tostring(exitCode))
   exitCode = 1
+  game:shutdown(exitCode)
 end

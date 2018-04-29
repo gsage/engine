@@ -77,6 +77,7 @@ find_package(LibRocket QUIET)
 find_package(OIS QUIET)
 find_package(PythonLibs QUIET)
 find_package(PYBIND11 QUIET)
+set(WITH_RECAST False)
 
 if(OGRE_FOUND)
   # Find Boost

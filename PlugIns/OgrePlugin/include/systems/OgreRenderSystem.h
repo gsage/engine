@@ -39,11 +39,13 @@ THE SOFTWARE.
 #include <OgreRenderQueueListener.h>
 
 #include "ComponentStorage.h"
-#include "components/RenderComponent.h"
+#include "systems/RenderSystem.h"
+#include "RenderTarget.h"
+#include "RenderTargetTypes.h"
+#include "components/OgreRenderComponent.h"
 #include "ogre/OgreObjectManager.h"
 #include "EventDispatcher.h"
 
-#include "RenderTarget.h"
 #include "Definitions.h"
 
 static const std::string OGRE_SECTION        = "OgreRenderer";
@@ -84,7 +86,7 @@ namespace Gsage
               );
   };
 
-  class GSAGE_OGRE_PLUGIN_API OgreRenderSystem : public ComponentStorage<RenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public EventSubscriber<OgreRenderSystem>
+  class GSAGE_OGRE_PLUGIN_API OgreRenderSystem : public ComponentStorage<OgreRenderComponent>, public Ogre::RenderQueueListener, public EventDispatcher, public EventSubscriber<OgreRenderSystem>, public RenderSystem
   {
     public:
       static const std::string ID;
@@ -103,13 +105,19 @@ namespace Gsage
       virtual bool initialize(const DataProxy& settings);
 
       /**
-       * Initializes RenderComponent: creates ogre node, lights and etc.
+       * Initializes OgreRenderComponent, injects objectManager, resourceManager and sceneManager
        *
-       * @param component RenderComponent component to initialize
+       * @param c OgreRenderComponent component to initialize
+       */
+      virtual bool prepareComponent(OgreRenderComponent* c);
+      /**
+       * Finalizes setup
+       *
+       * @param component OgreRenderComponent component to initialize
        * @param data DataProxy with node settings
        * @returns false if failed to initialize component for some reason
        */
-      virtual bool fillComponentData(RenderComponent* component, const DataProxy& data);
+      virtual bool fillComponentData(OgreRenderComponent* component, const DataProxy& data);
 
       /**
        * Update render system
@@ -118,20 +126,20 @@ namespace Gsage
       virtual void update(const double& time);
 
       /**
-       * Update RenderComponent
+       * Update OgreRenderComponent
        *
-       * @param component RenderComponent to update
+       * @param component OgreRenderComponent to update
        * @param entity Entity that owns that component
        * @param time Elapsed time
        */
-      virtual void updateComponent(RenderComponent* component, Entity* entity, const double& time);
+      virtual void updateComponent(OgreRenderComponent* component, Entity* entity, const double& time);
 
       /**
        * Remove render component from the system. Removes all related visual nodes
        *
-       * @param component RenderComponent component to remove
+       * @param component OgreRenderComponent component to remove
        */
-      virtual bool removeComponent(RenderComponent* component);
+      virtual bool removeComponent(OgreRenderComponent* component);
 
       /**
        * Reconfigure render system
@@ -144,6 +152,28 @@ namespace Gsage
        * Get current configs of the system
        */
       DataProxy& getConfig();
+
+      // --------------------------------------------------------------------------------
+      // RenderSystem implementation
+      // --------------------------------------------------------------------------------
+
+      /**
+       * Get implementation independent Geometry information
+       *
+       * @param bounds get entities in bounds
+       * @param flags filter entities by flags (default is all)
+       *
+       * @returns GeomPtr
+       */
+      GeomPtr getGeometry(const BoundingBox& bounds, int flags = 0xFF);
+
+      /**
+       * Get implementation independent Geometry information
+       *
+       * @param entities filter entities by names
+       * @returns GeomPtr
+       */
+      GeomPtr getGeometry(std::vector<std::string> entities);
 
       // --------------------------------------------------------------------------------
       // Ogre::RenderQueueListener implementation
@@ -196,8 +226,17 @@ namespace Gsage
        * Gets all scene entities
        *
        * @param query Filter entities by some query, default is all
+       * @param bounds filter entities which are intersected by bounds
+       */
+      OgreEntities getEntities(const unsigned int& query, const BoundingBox& bounds);
+
+      /**
+       * Gets all scene entities
+       *
+       * @param query Filter entities by some query, default is all
        */
       OgreEntities getEntities(const unsigned int& query = 0xFF);
+
       /**
        * Get objects in radius
        * @param position Point to search around
@@ -262,7 +301,7 @@ namespace Gsage
        * @param type Render target type
        * @param parameters Additional parameters
        */
-      RenderTargetPtr createRenderTarget(const std::string& name, RenderTarget::Type type, DataProxy parameters);
+      RenderTargetPtr createRenderTarget(const std::string& name, RenderTargetType::Type type, DataProxy parameters);
 
       /**
        * Get render target by name
@@ -282,6 +321,8 @@ namespace Gsage
        * @param event WindowEvent
        */
       bool handleWindowResized(EventDispatcher* sender, const Event& event);
+
+      GeomPtr getGeometry(OgreEntities entities);
 
       void removeAllRenderTargets();
 

@@ -90,7 +90,9 @@ namespace Gsage {
       }
 
       /*
-       * Register factory
+       * Register factory. Usually, you will not need this method.
+       * As registerSystem will automatically create a systemFactory for you.
+       * But if the factory should have some custom logic inside, you will need to use this method to register your custom factory.
        *
        * @param id Factory id
        */

@@ -39,11 +39,11 @@ THE SOFTWARE.
 #include "MouseEvent.h"
 #include "Engine.h"
 
-#include "ogre/SceneNodeWrapper.h"
+#include "components/RenderComponent.h"
 
 namespace Gsage {
 
-  RenderTarget::RenderTarget(const std::string& name, Type type, const DataProxy& parameters, Engine* engine)
+  RenderTarget::RenderTarget(const std::string& name, RenderTargetType::Type type, const DataProxy& parameters, Engine* engine)
     : mName(name)
     , mParameters(parameters)
     , mCurrentCamera(0)
@@ -72,7 +72,7 @@ namespace Gsage {
     , mParameters(parameters)
     , mCurrentCamera(0)
     , mAutoUpdate(mParameters.get("autoUpdated", true))
-    , mType(Generic)
+    , mType(RenderTargetType::Generic)
     , mX(0)
     , mY(0)
     , mWidth(parameters.get("width", 320))
@@ -96,7 +96,7 @@ namespace Gsage {
 
   void RenderTarget::subscribe()
   {
-    int priority = mType == RenderTarget::Rtt ? -200 : -199;
+    int priority = mType == RenderTargetType::Rtt ? -200 : -199;
 
     addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &RenderTarget::handleMouseEvent, priority);
     addEventListener(mEngine, MouseEvent::MOUSE_UP, &RenderTarget::handleMouseEvent, priority);
@@ -179,7 +179,7 @@ namespace Gsage {
       return;
     }
 
-    if((target->getQueryFlags() & SceneNodeWrapper::STATIC) == SceneNodeWrapper::STATIC && select)
+    if((target->getQueryFlags() & RenderComponent::STATIC) == RenderComponent::STATIC && select)
        mContinuousRaycast = true;
 
     const std::string& id = entityId.get<const std::string>();
@@ -199,7 +199,7 @@ namespace Gsage {
     return mName;
   }
 
-  RenderTarget::Type RenderTarget::getType() const
+  RenderTargetType::Type RenderTarget::getType() const
   {
     return mType;
   }
@@ -291,7 +291,7 @@ namespace Gsage {
     }
 
     if(mContinuousRaycast)
-      doRaycasting(mMousePosition.x, mMousePosition.y, SceneNodeWrapper::STATIC, true);
+      doRaycasting(mMousePosition.x, mMousePosition.y, RenderComponent::STATIC, true);
     else
       doRaycasting(mMousePosition.x, mMousePosition.y);
   }
@@ -366,7 +366,7 @@ namespace Gsage {
   }
 
   RttRenderTarget::RttRenderTarget(const std::string& name, const DataProxy& parameters, Engine* engine)
-    : RenderTarget(name, RenderTarget::Rtt, parameters, engine)
+    : RenderTarget(name, RenderTargetType::Rtt, parameters, engine)
   {
     createTexture(
         mName,
@@ -413,8 +413,8 @@ namespace Gsage {
       // reattach camera to the new render target
       setCamera(mCurrentCamera);
     }
-#if GSAGE_PLATFORM != GSAGE_WIN32
-    // for some reason it does not play well on Windows
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    // it works well only on OSX
     mWrappedTarget->update();
 #endif
 
@@ -433,7 +433,7 @@ namespace Gsage {
   }
 
   WindowRenderTarget::WindowRenderTarget(const std::string& name, const DataProxy& parameters, Engine* engine)
-    : RenderTarget(name, RenderTarget::Window, parameters, engine)
+    : RenderTarget(name, RenderTargetType::Window, parameters, engine)
   {
     Ogre::NameValuePairList params;
     auto paramNode = parameters.get<DataProxy>("params");
@@ -496,14 +496,14 @@ namespace Gsage {
     RenderTarget::setDimensions(width, height);
   }
 
-  RenderTargetPtr RenderTargetFactory::create(const std::string& name, RenderTarget::Type type, const DataProxy& parameters, Engine* engine)
+  RenderTargetPtr RenderTargetFactory::create(const std::string& name, RenderTargetType::Type type, const DataProxy& parameters, Engine* engine)
   {
     RenderTarget* target;
     switch(type) {
-      case RenderTarget::Rtt:
+      case RenderTargetType::Rtt:
         target = new RttRenderTarget(name, parameters, engine);
         break;
-      case RenderTarget::Window:
+      case RenderTargetType::Window:
         target = new WindowRenderTarget(name, parameters, engine);
         break;
       default:

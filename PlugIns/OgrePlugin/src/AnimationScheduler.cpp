@@ -25,7 +25,7 @@ THE SOFTWARE.
 */
 
 #include "AnimationScheduler.h"
-#include "components/RenderComponent.h"
+#include "components/OgreRenderComponent.h"
 #include "ogre/SceneNodeWrapper.h"
 #include "ogre/EntityWrapper.h"
 
@@ -193,7 +193,7 @@ namespace Gsage {
   // AnimationGroup
   // --------------------------------------------------------------------------------
 
-  AnimationGroup::AnimationGroup(RenderComponent* c)
+  AnimationGroup::AnimationGroup(OgreRenderComponent* c)
     : mSpeed(1)
     , mRenderComponent(c)
   {
@@ -346,12 +346,12 @@ namespace Gsage {
     mRenderComponent = 0;
   }
 
-  void AnimationScheduler::setRenderComponent(RenderComponent* c)
+  void AnimationScheduler::setRenderComponent(OgreRenderComponent* c)
   {
     mRenderComponent = c;
   }
 
-  bool AnimationScheduler::initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager, RenderComponent* c)
+  bool AnimationScheduler::initialize(const DataProxy& dict, Ogre::SceneManager* sceneManager, OgreRenderComponent* c)
   {
     mRenderComponent = c;
     mSceneManager = sceneManager;

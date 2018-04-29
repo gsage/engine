@@ -42,7 +42,8 @@ local function follow(self, context)
   if context.target == nil then
     return false
   end
-  return self.movement:go(context.target.render.position)
+  local pos = context.target.render.position
+  return self.navigation:go(pos.x, pos.y, pos.z)
 end
 
 local function createTree()

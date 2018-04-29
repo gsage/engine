@@ -141,7 +141,7 @@ namespace Gsage {
     return mMode;
   }
 
-  bool Gizmo::drawCoordinatesEditor(float v_speed, float v_min, float v_max, const std::string& display_format, float power)
+  bool Gizmo::drawCoordinatesEditor(float v_speed, float v_min, float v_max, const std::string& display_format, float power, const std::string& posLabel, const std::string& scaleLabel, const std::string& rotationLabel)
   {
     if(mTarget == nullptr || !mEnabled) {
       return false;
@@ -161,9 +161,9 @@ namespace Gsage {
     float roll = orientation.getRoll().valueDegrees();
     float rotation[3] = {pitch, yaw, roll};
 
-    ImGui::DragFloat3("position", position.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
-    ImGui::DragFloat3("rotation", rotation, v_speed, v_min, v_max, display_format.c_str(), power);
-    ImGui::DragFloat3("scale", scale.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
+    ImGui::DragFloat3(posLabel.c_str(), position.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
+    ImGui::DragFloat3(rotationLabel.c_str(), rotation, v_speed, v_min, v_max, display_format.c_str(), power);
+    ImGui::DragFloat3(scaleLabel.c_str(), scale.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
 
     node->setPosition(position);
     node->setScale(scale);

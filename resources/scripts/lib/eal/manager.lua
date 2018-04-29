@@ -31,11 +31,13 @@ local EALManager = class(function(self)
 
   self.entityUpdateHandler = function(event, sender)
     if event.type == Facade.BEFORE_RESET then
-      -- invalidate all entities
-      for _, e in pairs(self.entities) do
-        e:__destroy()
-      end
+      local entities = self.entities
       self.entities = {}
+      -- invalidate all entities
+      for _, e in pairs(entities) do
+        e:__destroy()
+        e.entity = nil
+      end
     elseif event.type == EntityEvent.CREATE then
       -- create and cache created entity in the eal
       log.trace("EAL: initialize lua extensions for entity " .. event.id)

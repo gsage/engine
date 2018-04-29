@@ -1,0 +1,49 @@
+{
+  "views": "ウィンドウ",
+  "language": "日本語",
+  "lang.select": "言語",
+
+  "window_title": {
+    "debug": "デバグ",
+    "scene explorer": "シーンエクスプローラ",
+    "recast": "Recast「ナビゲーション」",
+    "settings": "セッチング",
+    "lua console": "Luaコンソール",
+    "transform": "変換",
+    "stats": "統計",
+    "assets": "アセット",
+    "scene explorer": "シーンエクスプローラ",
+    "viewport": "シーン"
+  },
+
+  "console": {
+    "welcome": "「Lua Console」にようこそ！",
+    "version": "エンジン稿: %{version}",
+    "clear": "澄ます",
+    "scroll_to_bottom": "下スクロール",
+    "autocomplete": "オートコンプリート用の「TAB」を使用する下さい.",
+    "autoscroll": "オートスクロール",
+    "input": "入力"
+  },
+
+  "sceneExplorer": {
+    "entities": "オブジェクト",
+    "no_editor": "%{component}:%{type}システム用にエディタが定義されていない"
+  },
+
+  "transform": {
+    "mode": "モド",
+    "op": {
+      "translate": "移す",
+      "rotate": "回転する",
+      "scale": "スケールを変更する"
+    },
+    "local": "ロカル",
+    "world": "世界",
+    "dimensions": "次元",
+    "no_target": "オブジェクトのセェクト下さい",
+    "position": "位置",
+    "rotation": "回転",
+    "scale": "スケール"
+  }
+}

@@ -25,8 +25,15 @@ THE SOFTWARE.
 */
 
 #include "RecastNavigationPlugin.h"
+#include "GsageFacade.h"
+#include "RecastEvent.h"
+
+#include "components/RecastNavigationComponent.h"
+#include "systems/RecastNavigationSystem.h"
 
 namespace Gsage {
+
+  const std::string PLUGIN_NAME = "RecastNavigation";
 
   RecastNavigationPlugin::RecastNavigationPlugin()
   {
@@ -36,4 +43,115 @@ namespace Gsage {
   {
   }
 
+  const std::string& RecastNavigationPlugin::getName() const
+  {
+    return PLUGIN_NAME;
+  }
+
+  void RecastNavigationPlugin::setupLuaBindings() {
+    if (mLuaInterface && mLuaInterface->getState())
+    {
+      sol::state_view lua(mLuaInterface->getState());
+
+      lua.new_usertype<RecastNavigationSystem>("RecastNavigationSystem",
+          sol::base_classes, sol::bases<EngineSystem>(),
+          "defaultOptions", sol::property(&RecastNavigationSystem::getDefaultOptions),
+          "rebuildNavMesh", &RecastNavigationSystem::rebuild,
+          "findNearestPointOnNavmesh", &RecastNavigationSystem::findNearestPointOnNavmesh,
+          "findPath", [](RecastNavigationSystem* self, Gsage::Vector3 start, Gsage::Vector3 end, sol::this_state s) -> sol::object {
+            auto path = self->findPath(start, end);
+            if(path == nullptr) {
+              return sol::lua_nil;
+            }
+            sol::state_view lua(s);
+            sol::table res = lua.create_table();
+            DataProxy t = DataProxy::wrap(res);
+            path->dump(t);
+            return res;
+          },
+          "getNavMeshRawPoints", [](RecastNavigationSystem* self, sol::this_state s){
+            sol::state_view lua(s);
+            sol::table t = lua.create_table();
+            auto points = self->getNavMeshRawPoints();
+            for(int i = 0; i < points.size(); ++i) {
+              t[i + 1] = points[i];
+            }
+            return t;
+          }
+      );
+
+      // Components
+
+      lua.new_usertype<RecastNavigationComponent>("RecastNavigationComponent",
+          sol::base_classes, sol::bases<Reflection>(),
+          "props", sol::property(&RecastNavigationComponent::getProps, &RecastNavigationComponent::setProps),
+          "go", sol::overload(
+            (void(RecastNavigationComponent::*)(const Gsage::Vector3&))&RecastNavigationComponent::setTarget,
+            (void(RecastNavigationComponent::*)(float, float, float))&RecastNavigationComponent::setTarget
+          )
+      );
+
+      lua["Engine"]["navigation"] = &Engine::getSystem<RecastNavigationSystem>;
+      lua["Entity"]["navigation"] = &Entity::getComponent<RecastNavigationComponent>;
+
+      // register recast events
+      mLuaInterface->registerEvent<RecastEvent>("RecastEvent",
+        "onRecastEvent",
+        sol::base_classes, sol::bases<Event>(),
+        "NAVIGATION_START", sol::var(RecastEvent::NAVIGATION_START),
+        "entityID", &RecastEvent::mEntityID,
+        "path", &RecastEvent::mPath
+      );
+      LOG(INFO) << "Registered lua bindings for " << PLUGIN_NAME;
+    }
+    else
+    {
+      LOG(WARNING) << "Lua bindings for recastNavigation plugin were not registered: lua state is nil";
+    }
+  }
+
+  bool RecastNavigationPlugin::installImpl()
+  {
+    mFacade->registerSystemFactory<RecastNavigationSystem>();
+    return true;
+  }
+
+  void RecastNavigationPlugin::uninstallImpl()
+  {
+    if (mLuaInterface && mLuaInterface->getState())
+    {
+      sol::state_view& lua = *mLuaInterface->getSolState();
+
+      lua["Engine"]["navigation"] = sol::lua_nil;
+      lua["Entity"]["navigation"] = sol::lua_nil;
+    }
+
+    mFacade->getEngine()->removeSystem("navigation");
+    mFacade->removeSystemFactory<RecastNavigationSystem>();
+  }
+}
+
+Gsage::RecastNavigationPlugin* recastNavigationPlugin = NULL;
+
+extern "C" bool PluginExport dllStartPlugin(Gsage::GsageFacade* facade)
+{
+  if(recastNavigationPlugin != NULL)
+  {
+    return false;
+  }
+  recastNavigationPlugin = new Gsage::RecastNavigationPlugin();
+  return facade->installPlugin(recastNavigationPlugin);
+}
+
+extern "C" bool PluginExport dllStopPlugin(Gsage::GsageFacade* facade)
+{
+  if(recastNavigationPlugin == NULL)
+    return true;
+
+  bool res = facade->uninstallPlugin(recastNavigationPlugin);
+  if(!res)
+    return false;
+  delete recastNavigationPlugin;
+  recastNavigationPlugin = NULL;
+  return true;
 }

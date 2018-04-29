@@ -2,17 +2,15 @@
 require 'actions'
 
 local function moveRandomly(self, context)
-  local position = Vector3:new(
+  self.navigation:go(
     self.render.position.x + math.random(30) - 15,
     0,
     self.render.position.z + math.random(30) - 15
   )
-
-  self.movement:go(position)
 end
 
 local function findEnemy(self, context, distance)
-  local objects = self:getObjectsAround(distance, OgreSceneNode.DYNAMIC, self.stats:getString("enemy", "none"))
+  local objects = self:getObjectsAround(distance, RenderComponent.DYNAMIC, self.stats:getString("enemy", "none"))
   context.target = nil
   for _, object in pairs(objects) do
     if actions.attackable(self, object) then
@@ -48,7 +46,8 @@ local function follow(self, context)
   if context.target == nil then
     return false
   end
-  return self.movement:go(context.target.render.position)
+  local pos = context.target.render.position
+  return self.navigation:go(pos.x, pos.y, pos.z)
 end
 
 local function createTree()

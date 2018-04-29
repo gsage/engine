@@ -71,7 +71,10 @@ namespace Gsage {
    *
    *  -- draw coordinates editor for this gizmo
    *  -- it is separate to make it possible to draw it in the separate window
-   *  gizmo:drawCoordinatesEditor()
+   *  gizmo:drawCoordinatesEditor(1, 0, 0, "%.3f", 1,
+      "position",
+      "scale",
+      "rotation")
    * \endverbatim
    */
   class Gizmo
@@ -118,7 +121,7 @@ namespace Gsage {
       /**
        * Draw coordinates editor
        */
-      bool drawCoordinatesEditor(float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f);
+      bool drawCoordinatesEditor(float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f, const std::string& posLabel = "position", const std::string& scaleLabel = "scale", const std::string& rotationLabel = "rotation");
     private:
       OgreRenderSystem* mRenderSystem;
       SceneNodeWrapper* mTarget;

@@ -35,6 +35,8 @@ THE SOFTWARE.
 #include "ogre/BillboardWrapper.h"
 #include "ogre/ParticleSystemWrapper.h"
 #include "ogre/CameraWrapper.h"
+#include "ogre/LineWrapper.h"
+#include "ogre/ManualObjectWrapper.h"
 
 #include "RenderEvent.h"
 #include "EngineEvent.h"
@@ -67,6 +69,8 @@ THE SOFTWARE.
 #include <OgrePCZPlugin.h>
 #include <OgreParticleFXPlugin.h>
 #endif
+
+#include "OgreGeom.h"
 
 
 namespace Gsage {
@@ -210,7 +214,7 @@ namespace Gsage {
     // initialize render window
     mRoot->initialise(false);
 
-    mWindow = createRenderTarget(windowName, RenderTarget::Window, windowParams);
+    mWindow = createRenderTarget(windowName, RenderTargetType::Window, windowParams);
 
     EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, WindowEvent::RESIZE, &OgreRenderSystem::handleWindowResized, 0);
 
@@ -247,7 +251,7 @@ namespace Gsage {
           continue;
         }
 
-        createRenderTarget(name, pair.second.get<RenderTarget::Type>("type", RenderTarget::Rtt), pair.second);
+        createRenderTarget(name, pair.second.get<RenderTargetType::Type>("type", RenderTargetType::Rtt), pair.second);
         auto camera = pair.second.get<std::string>("camera");
         if(camera.second) {
           renderCameraToTarget(camera.first, name);
@@ -262,6 +266,8 @@ namespace Gsage {
     mObjectManager.registerElement<BillboardSetWrapper>();
     mObjectManager.registerElement<ParticleSystemWrapper>();
     mObjectManager.registerElement<CameraWrapper>();
+    mObjectManager.registerElement<LineWrapper>();
+    mObjectManager.registerElement<ManualObjectWrapper>();
 
     mRoot->clearEventTimes();
     mRenderSystem->_initRenderTargets();
@@ -275,33 +281,24 @@ namespace Gsage {
     return true;
   }
 
-  bool OgreRenderSystem::fillComponentData(RenderComponent* c, const DataProxy& dict)
+  bool OgreRenderSystem::prepareComponent(OgreRenderComponent* c)
   {
-    if(!c->getResources().empty())
-    {
-      if(!mResourceManager->load(c->getResources()))
-        return false;
+    if(!mSceneManager) {
+      return false;
     }
+    c->prepare(mSceneManager, mResourceManager, &mObjectManager);
+    return true;
+  }
 
-    auto element = dict.get<DataProxy>("root");
-    if(element.second)
-    {
-      c->mRootNode = mObjectManager.create<SceneNodeWrapper>(element.first, c->getOwner()->getId(), mSceneManager);
-    }
-    element = dict.get<DataProxy>("animations");
-    if(element.second)
-    {
-      LOG(INFO) << "Read animations for component of entity " << c->getOwner()->getId();
-      c->mAnimationScheduler.initialize(element.first, mSceneManager, c);
-    }
+  bool OgreRenderSystem::fillComponentData(OgreRenderComponent* c, const DataProxy& dict)
+  {
     c->mAddedToScene = true;
-
     return true;
   }
 
   void OgreRenderSystem::update(const double& time)
   {
-    ComponentStorage<RenderComponent>::update(time);
+    ComponentStorage<OgreRenderComponent>::update(time);
     Ogre::WindowEventUtilities::messagePump();
 
     mEngine->fireEvent(RenderEvent(RenderEvent::UPDATE, this));
@@ -321,7 +318,7 @@ namespace Gsage {
       mEngine->fireEvent(EngineEvent(EngineEvent::SHUTDOWN));
   }
 
-  void OgreRenderSystem::updateComponent(RenderComponent* component, Entity* entity, const double& time)
+  void OgreRenderSystem::updateComponent(OgreRenderComponent* component, Entity* entity, const double& time)
   {
     component->mAnimationScheduler.update(time);
   }
@@ -338,7 +335,7 @@ namespace Gsage {
     resources = mConfig.get<DataProxy>("resources");
     if(resources.second)
       mResourceManager->load(resources.first);
-    mSceneManager->setAmbientLight(config.get("colourAmbient", Ogre::ColourValue()));
+    mSceneManager->setAmbientLight(config.get("colourAmbient", Ogre::ColourValue::Black));
     if(config.count("fog") != 0)
     {
       mSceneManager->setFog(
@@ -361,6 +358,58 @@ namespace Gsage {
   DataProxy& OgreRenderSystem::getConfig()
   {
     return mConfig;
+  }
+
+  GeomPtr OgreRenderSystem::getGeometry(const BoundingBox& bounds, int flags)
+  {
+    OgreEntities entities = getEntities(flags, bounds);
+    return getGeometry(entities);
+  }
+
+  GeomPtr OgreRenderSystem::getGeometry(std::vector<std::string> entities)
+  {
+    std::map<std::string, bool> ids;
+    for(auto id : entities) {
+      ids[id] = true;
+    }
+
+    OgreEntities ogreEntities = getEntities();
+    OgreEntities toProcess;
+    for(auto e : ogreEntities) {
+      Ogre::Any entityId;
+      entityId = e->getUserObjectBindings().getUserAny("entity");
+      if(entityId.isEmpty() || ids.count(entityId.get<std::string>()) == 0)
+        continue;
+
+      toProcess.push_back(e);
+    }
+
+    return getGeometry(entities);
+  }
+
+  GeomPtr OgreRenderSystem::getGeometry(OgreEntities entities) {
+    Ogre::SceneNode* root = mSceneManager->getRootSceneNode();
+    if(!root) {
+      LOG(INFO) << "Failed to get geometry: no root node defined";
+      return nullptr;
+    }
+
+    GeomPtr geom = GeomPtr(new OgreGeom(entities, root));
+    Ogre::AxisAlignedBox meshBoundingBox;
+
+    // calculate bounds
+    for(auto entity : entities) {
+      Ogre::AxisAlignedBox bbox = entity->getBoundingBox();
+      bbox.transform(root->_getFullTransform().inverse() * entity->getParentSceneNode()->_getFullTransform());
+      meshBoundingBox.merge(bbox);
+    }
+
+    Ogre::Vector3 min = meshBoundingBox.getMinimum();
+    Ogre::Vector3 max = meshBoundingBox.getMaximum();
+    geom->bmin = new float[3]{min.x, min.y, min.z};
+    geom->bmax = new float[3]{max.x, max.y, max.z};
+
+    return geom;
   }
 
   void OgreRenderSystem::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation)
@@ -389,7 +438,7 @@ namespace Gsage {
     }
   }
 
-  bool OgreRenderSystem::removeComponent(RenderComponent* component)
+  bool OgreRenderSystem::removeComponent(OgreRenderComponent* component)
   {
     LOG(INFO) << "Remove component " << component->getOwner()->getId();
     if(component->mRootNode)
@@ -400,7 +449,7 @@ namespace Gsage {
     component->mAddedToScene = false;
 
     mResourceManager->unload(component->getResources());
-    ComponentStorage<RenderComponent>::removeComponent(component);
+    ComponentStorage<OgreRenderComponent>::removeComponent(component);
     return true;
   }
 
@@ -411,6 +460,27 @@ namespace Gsage {
     while(iterator.hasMoreElements())
     {
       Ogre::Entity* e = static_cast<Ogre::Entity*>(iterator.getNext());
+      if((e->getQueryFlags() | query) == query)
+        res.push_back(e);
+    }
+    return res;
+  }
+
+  OgreRenderSystem::OgreEntities OgreRenderSystem::getEntities(const unsigned int& query, const BoundingBox& bounds)
+  {
+    if(bounds.extent != BoundingBox::EXTENT_FINITE) {
+      return getEntities(query);
+    }
+
+    Ogre::AxisAlignedBox bbox = BoundingBoxToAxisAlignedBox(bounds);
+    OgreRenderSystem::OgreEntities res;
+    Ogre::SceneManager::MovableObjectIterator iterator = mSceneManager->getMovableObjectIterator("Entity");
+    while(iterator.hasMoreElements())
+    {
+      Ogre::Entity* e = static_cast<Ogre::Entity*>(iterator.getNext());
+      if(!e->getBoundingBox().intersects(bbox)) {
+        continue;
+      }
       if((e->getQueryFlags() | query) == query)
         res.push_back(e);
     }
@@ -455,7 +525,7 @@ namespace Gsage {
       return 0;
     }
 
-    if(mRenderTargets.at(target)->getType() != RenderTarget::Rtt) {
+    if(mRenderTargets.at(target)->getType() != RenderTargetType::Rtt) {
       LOG(WARNING) << "FBOID can be obtained only from Rtt target";
       return 0;
     }
@@ -530,10 +600,10 @@ namespace Gsage {
     mRenderTargets[target]->setDimensions(width, height);
   }
 
-  RenderTargetPtr OgreRenderSystem::createRenderTarget(const std::string& name, RenderTarget::Type type, DataProxy parameters) {
+  RenderTargetPtr OgreRenderSystem::createRenderTarget(const std::string& name, RenderTargetType::Type type, DataProxy parameters) {
     parameters.put("name", name);
     mRenderTargets[name] = mRenderTargetFactory.create(name, type, parameters, mEngine);
-    if(type == RenderTarget::Window) {
+    if(type == RenderTargetType::Window) {
       std::string windowHandle = parameters.get("windowHandle", "");
       if(!windowHandle.empty()) {
         mRenderWindowsByHandle[windowHandle] = mRenderTargets[name];

@@ -10,10 +10,11 @@ class GsageConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [True, False],
-        "with_ogre": ["1.9.0", "disabled"],
+        "with_ogre": ["1.9.0", "2.1.0", "disabled"],
         "with_input": ["nothing", "OIS"],
         "with_librocket": [True, False],
-        "with_lua_version": ["luajit-2.0.5", "luajit-2.1.0", "lua-5.1"]
+        "with_lua_version": ["luajit-2.0.5", "luajit-2.1.0", "lua-5.1"],
+        "with_recast": [True, False],
     }
     default_options = (
         "shared=False",
@@ -21,6 +22,7 @@ class GsageConan(ConanFile):
         "with_ogre=disabled",
         "with_librocket=False",
         "with_lua_version=luajit-2.0.5",
+        "with_recast=True",
         "OGRE:with_boost=False",
     )
     generators = "cmake"
@@ -54,6 +56,8 @@ class GsageConan(ConanFile):
         if self.options.with_librocket:
             self.requires.add("libRocket/1.3.0@gsage/master", private=False)
             self.options["libRocket"].with_lua_bindings = True
+        if self.options.with_recast:
+            self.requires.add("recast/latest@gsage/master")
 
     def build(self):
         cmake = CMake(self)
@@ -66,6 +70,9 @@ class GsageConan(ConanFile):
 
         if "luajit" in str(self.options.with_lua_version):
             options["WITH_LUAJIT"] = True
+
+        if self.options.with_recast:
+            options["WITH_RECAST"] = True
 
         if self.options.with_ogre != "disabled":
             options["OGRE_FOUND"] = True

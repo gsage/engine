@@ -1,35 +1,44 @@
 require 'lib.class'
-
+local lm = require 'lib.locales'
 
 -- base class for all windowed views
-ImguiWindow = class(function(self, title, docked, open)
+ImguiWindow = class(function(self, label, docked, open)
   self.docked = docked
+  self.flags = 0
   if self.open == nil then
     self.open = true
   else
     self.open = open
   end
-  self.title = title
+  self.label = label
   if self.docked then
     self.imguiBegin = function(self)
       local active
-      active, self.open = imgui.BeginDockOpen(self.title, self.open, 0)
+      active, self.open = imgui.BeginDockTitleOpen(self.label, self:getLocalizedTitle(), self.open, self.flags)
       return active
     end
     self.imguiEnd = function(self)  imgui.EndDock() end
   else
     self.imguiBegin = function(self)
       local active
-      active, self.open = imgui.Begin(self.title, self.open, 0)
+      active, self.open = imgui.Begin(self.label, self.open, self.flags)
       return active
     end
     self.imguiEnd = function(self) imgui.End() end
   end
 end)
 
+function ImguiWindow:getLocalizedTitle()
+  local res = lm("window_title." .. self.label)
+  if res == lm.MISSING then
+    return self.label
+  end
+  return res
+end
+
 -- wrap function into ImguiWindow
-local ImguiWindowRender = class(ImguiWindow, function(self, callback, title, docked, open)
-  ImguiWindow.init(self, title, docked, open)
+local ImguiWindowRender = class(ImguiWindow, function(self, callback, label, docked, open)
+  ImguiWindow.init(self, label, docked, open)
   self.callback = callback
 end)
 
@@ -56,13 +65,13 @@ function ImguiInterface:available()
 end
 
 -- add view to imgui render list
-function ImguiInterface:addView(name, view, docked, open, title)
+function ImguiInterface:addView(name, view, docked, open, label)
   if not self:available() then
     return false
   end
 
   if type(view) == "function" then
-    view = ImguiWindowRender(view, title or name, docked, open)
+    view = ImguiWindowRender(view, label or name, docked, open)
   end
 
   local added = imgui.render:addView(name, view)

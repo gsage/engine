@@ -158,8 +158,9 @@ bool Engine::removeSystem(const std::string& name)
   if(!hasSystem(name))
     return false;
 
+  fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, name, getSystem(name)));
+
   SystemNames::iterator it = std::find(mManagedByEngine.begin(), mManagedByEngine.end(), name);
-  fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, name));
   if(it != mManagedByEngine.end())
     delete mEngineSystems[name];
 
@@ -170,7 +171,7 @@ bool Engine::removeSystem(const std::string& name)
 void Engine::removeSystems()
 {
   for(auto& pair : mEngineSystems) {
-    fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, pair.first));
+    fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, pair.first, pair.second));
   }
 
   for(auto& name : mManagedByEngine) {
@@ -197,14 +198,14 @@ Entity* Engine::createEntity(DataProxy& data)
   {
     entity = mEntities.create();
     entity->mId = id;
-    entity->setClass(data.get<std::string>("class", "default"));
-    auto pair = data.get<DataProxy>("props");
-    if(pair.second) {
-      entity->setProps(pair.first);
-    }
-    mEntityMap[id] = entity;
     created = true;
   }
+  entity->setClass(data.get<std::string>("class", "default"));
+  auto pair = data.get<DataProxy>("props");
+  if(pair.second) {
+    entity->setProps(pair.first);
+  }
+  mEntityMap[id] = entity;
   readEntityData(entity, data);
   if(created) {
     fireEvent(EntityEvent(EntityEvent::CREATE, entity->getId()));
@@ -250,7 +251,7 @@ void Engine::unloadAll()
 Entity* Engine::getEntity(const std::string& id)
 {
   if(mEntityMap.count(id) == 0)
-    return 0;
+    return nullptr;
   return mEntityMap[id];
 }
 

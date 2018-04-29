@@ -495,11 +495,15 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiKey_Home");
     lua_pushnumber(L, ImGuiCol_Text);
     lua_setglobal(L, "ImGuiCol_Text");
+    lua_pushnumber(L, ImGuiCol_FrameBg);
+    lua_setglobal(L, "ImGuiCol_FrameBg");
+    lua_pushnumber(L, ImGuiCol_ChildWindowBg);
+    lua_setglobal(L, "ImGuiCol_ChildWindowBg");
 
     sol::table imgui = lua["imgui"];
-/*
+
     imgui["InputFloatN"] = [] (const std::string& label, sol::table t, const int length, int decimal_precision, ImGuiInputTextFlags extra_flags) -> bool {
-      float values[length];
+      float* values = new float[length];
       for(int i = 0; i < length; i++) {
         values[i] = t[i + 1];
       }
@@ -524,11 +528,12 @@ namespace Gsage {
         t[i + 1] = values[i];
       }
 
+      delete values;
       return ret;
     };
 
     imgui["DragFloatN"] = [] (const std::string& label, sol::table t, const int length, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f) -> bool {
-      float values[length];
+      float* values = new float[length];
       for(int i = 0; i < length; i++) {
         values[i] = t[i + 1];
       }
@@ -553,8 +558,9 @@ namespace Gsage {
         t[i + 1] = values[i];
       }
 
+      delete values;
       return ret;
-    };*/
+    };
 
     imgui["TextBuffer"] = [] (int size) -> std::shared_ptr<ImguiTextBuffer> {
       return std::shared_ptr<ImguiTextBuffer>(new ImguiTextBuffer(size));
@@ -564,6 +570,8 @@ namespace Gsage {
         "write", &ImguiTextBuffer::write,
         "read", (std::string(ImguiTextBuffer::*)()const)&ImguiTextBuffer::read
     );
+
+//ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items = -1);
 
     imgui["InputText"] = InputText;
     imgui["InputTextWithCallback"] = InputTextWithCallback;
@@ -589,5 +597,9 @@ namespace Gsage {
     imgui.new_usertype<ImVector<char>>("ImVector",
         "data", &ImVector<char>::Data
     );
+
+    imgui["PushStyleColor_U32"] = [] (ImGuiCol idx, ImU32 col) {
+      ImGui::PushStyleColor(idx, ImGui::ColorConvertU32ToFloat4(col));
+    };
   }
 }

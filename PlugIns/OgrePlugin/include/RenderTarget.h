@@ -28,10 +28,12 @@ THE SOFTWARE.
 */
 
 #include <OgreRenderTarget.h>
+#include "RenderTargetTypes.h"
 #include "DataProxy.h"
 #include "EventSubscriber.h"
 #include "CollisionTools.h"
 #include <OgreVector2.h>
+#include "OgreConverters.h"
 
 namespace Ogre {
   class SceneManager;
@@ -42,20 +44,8 @@ namespace Gsage {
   class RenderTarget : public EventSubscriber<RenderTarget>
   {
     public:
-      /**
-       * Represents different kinds of underlying wrapped target
-       */
-      enum Type {
-        // Generic can contain any Ogre::RenderTarget
-        Generic = 0,
-        // Rtt wraps render to texture target
-        Rtt     = 1,
-        // Window wraps Ogre::RenderWindow
-        Window  = 2
-      };
-
       RenderTarget(const std::string& name, Ogre::RenderTarget* wrapped, const DataProxy& parameters, Engine* engine);
-      RenderTarget(const std::string& name, Type type, const DataProxy& parameters, Engine* engine);
+      RenderTarget(const std::string& name, RenderTargetType::Type type, const DataProxy& parameters, Engine* engine);
       virtual ~RenderTarget();
 
       /**
@@ -66,7 +56,7 @@ namespace Gsage {
       /**
        * Get RenderTarget type
        */
-      Type getType() const;
+      RenderTargetType::Type getType() const;
 
       /**
        * Initialize with scene manager
@@ -175,7 +165,7 @@ namespace Gsage {
       Ogre::Camera* mCurrentCamera;
 
       bool mAutoUpdate;
-      Type mType;
+      RenderTargetType::Type mType;
       bool mRenderQueueSequenceCreated;
       bool mHasQueueSequence;
       int mSamples;
@@ -244,11 +234,11 @@ namespace Gsage {
        * Create render target of specified type
        *
        * @param name render target name
-       * @param type RenderTarget:Rtt or RenderTarget::Window
+       * @param type RenderTargetType:Rtt or RenderTargetType::Window
        * @param parameters additional parameters
        * @param engine Engine instance
        */
-      RenderTargetPtr create(const std::string& name, RenderTarget::Type type, const DataProxy& parameters, Engine* engine);
+      RenderTargetPtr create(const std::string& name, RenderTargetType::Type type, const DataProxy& parameters, Engine* engine);
 
       /**
        * Wrap render target

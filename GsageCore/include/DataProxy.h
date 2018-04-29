@@ -345,6 +345,19 @@ namespace Gsage {
       }
 
       /**
+       * Get child at index using type caster.
+       *
+       * @param index index
+       *
+       * @returns pair value, success
+       */
+      template<class T>
+      std::pair<T, bool> get(int index)
+      {
+        return static_cast<const DataProxy&>(*this).get<T>(index);
+      }
+
+      /**
        * Get child at key using type caster.
        *
        * @param key child ID
@@ -383,6 +396,25 @@ namespace Gsage {
       T get(const std::string& key, const T& def) const
       {
         auto pair = get<T>(key);
+        if(pair.second)
+        {
+          return pair.first;
+        }
+        return def;
+      }
+
+      /**
+       * Get child at index using type caster.
+       *
+       * @param index index
+       * @param def Default value
+       *
+       * @returns pair value, success
+       */
+      template<class T>
+      T get(int index, const T& def) const
+      {
+        auto pair = get<T>(index);
         if(pair.second)
         {
           return pair.first;

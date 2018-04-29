@@ -331,11 +331,13 @@ local function orbitCamera(cls)
 
   function cls:setTarget(targetName)
     if self.target and self.target.render then
-      assert(event:unbind(self.target.render, RenderComponent.POSITION_CHANGE, self.positionUpdater))
+      assert(event:unbind(self.target.render, OgreRenderComponent.POSITION_CHANGE, self.positionUpdater))
     end
 
     if targetName == nil then
       -- target reset
+      self.targetName = nil
+      self.target = nil
       return true
     end
 
@@ -350,7 +352,7 @@ local function orbitCamera(cls)
     end
     self.target = target
     self.targetName = targetName
-    self.positionUpdateListenerID = event:bind(self.target.render, RenderComponent.POSITION_CHANGE, self.positionUpdater)
+    event:bind(self.target.render, OgreRenderComponent.POSITION_CHANGE, self.positionUpdater)
     self:follow(self.target.render)
     log.info("Camera target updated to \"" .. targetName .. "\"")
     return true

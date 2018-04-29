@@ -33,6 +33,7 @@ set(TEST_FILES
   Core/TestDataProxy.cpp
   Core/TestGsageFacade.cpp
   Core/TestFileLoader.cpp
+  Core/TestPath.cpp
   Plugins/ImGUI/TestDockspace.cpp
 )
 

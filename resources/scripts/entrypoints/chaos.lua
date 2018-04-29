@@ -4,6 +4,12 @@ package.path = package.path .. ';' .. getResourcePath('scripts/?.lua') ..
                                ';' .. getResourcePath('behaviors/trees/?.lua') ..
                                ";" .. getResourcePath('behaviors/?.lua') .. ";"
 
+local version = _VERSION:match("%d+%.%d+")
+package.path = ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?.lua') ..
+               ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?/init.lua') .. ';' .. package.path
+package.cpath = getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.so') .. ';' ..
+                getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.dll') .. ';' .. package.cpath
+
 require 'math'
 require 'helpers.base'
 require 'lib.behaviors'
@@ -26,7 +32,7 @@ local rocketInitialized = false
 function onRoll(e)
   if e.type == OgreSelectEvent.ROLL_OVER then
     local target = eal:getEntity(e.entity)
-    if e:hasFlags(OgreSceneNode.DYNAMIC) then
+    if e:hasFlags(RenderComponent.DYNAMIC) then
       cursor:GetElementById("cursorIcon"):SetClass("attack", actions.attackable(player, target))
     end
   else
@@ -82,7 +88,7 @@ function spawnMore(count)
 end
 
 function spawn()
-  data:createEntity(getResourcePath('characters/ninja.json'), {movement = {speed = 10}})
+  data:createEntity(getResourcePath('characters/gunspider.json'), {movement = {speed = 10}})
 end
 
 function onKeyEvent(event)
@@ -121,16 +127,16 @@ function onSelect(e)
     return
   end
 
-  if e:hasFlags(OgreSceneNode.DYNAMIC) then
+  if e:hasFlags(RenderComponent.DYNAMIC) then
     if actions.attackable(player, target) then
       player.script.state.target = target
     end
-  elseif e:hasFlags(OgreSceneNode.STATIC) then
+  elseif e:hasFlags(RenderComponent.STATIC) then
     player.script.state.target = nil
     if player.movement == nil or player.render == nil then
       return
     end
-    player.movement:go(e.intersection)
+    player.navigation:go(e.intersection.x, e.intersection.y, e.intersection.z)
   end
 end
 
@@ -143,7 +149,6 @@ function onReady(e)
 
   initialized = true
   player = eal:getEntity("sinbad")
-  core:movement():setControlledEntity(player.id)
 
   spawn()
   spawnMore(10)
@@ -160,4 +165,7 @@ if imgui then
   imgui.render:addView("console", imguiConsole)
   stats = Stats("stats", false)
   imgui.render:addView("stats", stats)
+
+  local recastEditor = require 'imgui.systems.recast'
+  imgui.render:addView("recast", recastEditor(true, false))
 end

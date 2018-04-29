@@ -28,6 +28,7 @@ THE SOFTWARE.
 */
 
 #include <string>
+#include "Logger.h"
 
 #define TYPE_CASTER(name, t, f) \
 struct name {\

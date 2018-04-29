@@ -46,9 +46,15 @@ namespace Gsage {
     std::string type;
     std::string section;
     std::string path;
+    std::string workdir = mWorkdir;
+    resources.read("workdir", workdir);
+
     for(auto& pair : resources)
     {
       section = pair.first;
+      if(section == "workdir") {
+        continue;
+      }
       for(auto& config : pair.second)
       {
         std::vector<std::string> list = split(config.second.as<std::string>(), ':');
@@ -59,9 +65,9 @@ namespace Gsage {
         }
 
         std::vector<std::string> pathList;
-        if (!mWorkdir.empty())
+        if (!workdir.empty())
         {
-          pathList.push_back(mWorkdir);
+          pathList.push_back(workdir);
         }
 
         for(std::vector<std::string>::iterator it = list.begin() + 1; it != list.end(); it++)
@@ -72,6 +78,7 @@ namespace Gsage {
         path = join(pathList, GSAGE_PATH_SEPARATOR);
         type = list[0];
 
+        LOG(INFO) << "Adding resource location " << path;
         orgm.addResourceLocation(path, type, section, true, path.find(".zip") != std::string::npos);
       }
 

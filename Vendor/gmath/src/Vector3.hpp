@@ -34,6 +34,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <type_traits>
 
 namespace Gsage {
 
@@ -60,6 +61,12 @@ namespace Gsage {
     inline Vector3(double x, double y);
     inline Vector3(double x, double y, double z);
 
+    template<class T, std::enable_if_t<std::is_integral<T>::value>>
+    inline Vector3(T vals[]) {
+      data[0] = (double)vals[0];
+      data[1] = (double)vals[1];
+      data[2] = (double)vals[2];
+    };
 
     /**
      * Constants for common vectors.
@@ -329,6 +336,12 @@ namespace Gsage {
     inline struct Vector3& operator-=(const Vector3 rhs);
     inline struct Vector3& operator*=(const Vector3 rhs);
     inline struct Vector3& operator/=(const Vector3 rhs);
+
+    /**
+     * Get vector data as array of T
+     */
+    template<class T, std::enable_if_t<std::is_integral<T>::value>>
+    T* as() const { return {(T)data[0], (T)data[1], (T)data[2]}; };
   };
 
   inline Vector3 operator-(Vector3 rhs);

@@ -1,0 +1,96 @@
+{
+  "views": "Views",
+  "language": "English",
+  "lang.select": "Language",
+  "window_title": {
+    "debug": "Debug",
+    "scene explorer": "Scene Explorer",
+    "recast": "Recast Navigation",
+    "settings": "Settings",
+    "lua console": "Lua Console",
+    "transform": "Transform",
+    "stats": "Stats",
+    "assets": "Assets",
+    "scene explorer": "Scene Explorer",
+    "viewport": "Viewport",
+    "dock states": "Dock states"
+  },
+
+  "console": {
+    "welcome": "Welcome to lua console",
+    "version": "Engine Version: %{version}",
+    "clear": "Clear",
+    "scroll_to_bottom": "Scroll to bottom",
+    "autocomplete": "Use TAB for text autocompletion.",
+    "autoscroll": "Autoscroll",
+    "input": "Input",
+    "failed_to_parse": "Failed to parse script: %{err}"
+  },
+
+  "sceneExplorer": {
+    "entities": "Entities",
+    "no_editor": "No editor defined for component %{component}: %{type}"
+  },
+
+  "transform": {
+    "mode": "Mode",
+    "op": {
+      "translate": "Translate",
+      "rotate": "Rotate",
+      "scale": "Scale"
+    },
+    "local": "Local",
+    "world": "World",
+    "dimensions": "Dimensions",
+    "no_target": "No target selected",
+    "position": "Position",
+    "rotation": "Rotation",
+    "scale": "Scale"
+  },
+
+  "recast": {
+    "rebuild_settings": "Rebuild Settings",
+    "rebuild": "Rebuild",
+    "cell_dimensions": "Cell Dimensions",
+    "group": {
+      "walkable": "Walkable",
+      "area": "Area",
+      "misc": "Misc",
+      "flags": "Flags",
+      "visualize": "Visualize",
+      "recast": "Recast",
+      "filter": "Filters"
+    },
+    "walkable": {
+      "slope": "Slope",
+      "height": "Height",
+      "climb": "Climb",
+      "radius": "Radius"
+    },
+    "area": {
+      "merge_region": "Merge Region",
+      "min_region": "Min Region"
+    },
+    "misc": {
+      "max_edge_len": "Max Edge Len",
+      "max_simplification_error": "Max Simplification Error",
+      "max_verts_per_poly": "Max Verts Per Poly",
+      "detail_sample_dist": "Detail Sample Dist",
+      "detail_sample_max_error": "Detail Sample Max Error",
+      "tile_size": "Tile Size",
+      "tris_per_chunk": "Tris Per Chunk"
+    },
+    "flags": {
+      "low_hanging_obstacles": "Low Hanging Obstacles",
+      "ledge_spans": "Ledge Spans",
+      "walkable_low_height_spans": "Walkable Low Height Spans",
+      "dynamic_rebuild": "Dynamic Rebuild",
+      "merge": "Merge Into Existing Mavmesh"
+    },
+    "visualize": {
+      "show_navmesh": "Show Navigation Mesh",
+      "show_path": "Show Navigation Path"
+    }
+  }
+}
+

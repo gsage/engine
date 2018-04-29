@@ -37,8 +37,6 @@ namespace Gsage {
   class SceneNodeWrapper : public OgreObject, public EventSubscriber<SceneNodeWrapper>
   {
     public:
-      enum Type { STATIC = 0x01, DYNAMIC = 0x02, UNKNOWN = 0x04 };
-
       static const std::string TYPE;
 
       SceneNodeWrapper();

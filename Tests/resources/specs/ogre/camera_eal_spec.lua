@@ -13,7 +13,7 @@ describe("test camera eal #ogre", function()
       },
       root = {
         position = Vector3.new(0, 0, 0),
-        scale = Vector3.new(0.03, 0.03, 0.03),
+        scale = Vector3.new(0.01, 0.01, 0.01),
         rotation = Quaternion.new(1, 0, 0.5, 0),
         orientationVector = Vector3.new(0, 0, -1),
         children = {
@@ -44,6 +44,10 @@ describe("test camera eal #ogre", function()
     ninja:render().position = Vector3.new(0, 0, 0)
     s = spy.on(orbit, "follow")
     assert.spy(s).was.not_called()
+    -- verify proper removal
+    game:reset()
+    assert.is_nil(orbit.targetName)
+    assert.is_nil(orbit.target)
   end)
 
   it("should properly register eal for the free camera", function()
