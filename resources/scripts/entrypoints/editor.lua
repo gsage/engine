@@ -20,6 +20,7 @@ local event = require 'lib.event'
 local lm = require 'lib.locales'
 
 local imguiInterface = require 'imgui.base'
+local icons = require 'imgui.icons'
 
 if imguiInterface:available() then
   require 'imgui.menu'
@@ -29,6 +30,7 @@ if imguiInterface:available() then
   require 'imgui.transform'
   require 'imgui.sceneExplorer'
   require 'imgui.settings'
+  require 'imgui.tools'
 end
 
 local rocketInitialized = false
@@ -42,7 +44,7 @@ function setOrbitalCam()
 end
 
 function spawn()
-  data:createEntity(getResourcePath('characters/ninja.json'), {movement = {speed = 10}})
+  --data:createEntity(getResourcePath('characters/ninja.json'), {movement = {speed = 10}})
 end
 
 function initLibrocket(event)
@@ -118,7 +120,7 @@ if imguiInterface:available() then
   imguiInterface:addView("ogreView", ogreView)
 
   local function onAreaLoad(event)
-    ogreView:createCamera("free")
+    --ogreView:createCamera("free")
   end
 
   event:bind(core, Facade.LOAD, onAreaLoad)
@@ -132,7 +134,7 @@ if imguiInterface:available() then
   imguiInterface:addView("stats", stats)
 
   imguiInterface:addView("assets", function()
-    imgui.TextWrapped("coming soon")
+    imgui.TextWrapped(icons.directions_run .. " coming soon")
   end, true)
 
   sceneExplorer = SceneExplorer("scene explorer", true)
@@ -141,10 +143,16 @@ if imguiInterface:available() then
 
   imguiInterface:addView("debug", function()
     if imgui.Button("load example scene") then
-      game:reset()
+      game:reset(function(e)
+        return not e.props.utility
+      end)
       game:loadArea("exampleLevel")
-      core:navigation():rebuildNavMesh({})
-      spawn()
+    end
+
+    if imgui.Button("create cam") then
+      -- use utility parameter to avoid deleting the cam on scene reload
+      ogreView:createCamera("free", {utility = true})
+      --core:navigation():rebuildNavMesh({})
     end
   end, true)
 
@@ -175,6 +183,9 @@ if imguiInterface:available() then
       imgui.EndChildFrame()
     end
   end)
+
+  tools = ToolsView(true)
+  imguiInterface:addView("tools", tools)
 
   local views = {}
   for name, view in pairs(imguiInterface.views) do
@@ -232,10 +243,4 @@ if imguiInterface:available() then
       end
     end
   end
-end
-
-function reload()
-  game:loadArea("exampleLevel")
-  game:reset()
-  game:loadArea("exampleLevel")
 end

@@ -27,7 +27,6 @@
   [
     "@PLUGINS_DIRECTORY@/OgrePlugin",
     "@PLUGINS_DIRECTORY@/ImGUIPlugin",
-    "@PLUGINS_DIRECTORY@/RocketUIPlugin",
     "@PLUGINS_DIRECTORY@/SDLPlugin",
     "@PLUGINS_DIRECTORY@/RecastNavigationPlugin"
   ],
@@ -45,21 +44,33 @@
 
   "render":
   {
-    "pluginsFile": "plugins.cfg",
-    "configFile": "ogreConfig.cfg",
+    "renderSystems": [
+      {"id": "Metal Rendering Subsystem"},
+      {"id": "OpenGL 3+ Rendering Subsystem"},
+      {"id": "OpenGL Rendering Subsystem",
+        "Fixed Pipeline Enabled": "Yes",
+        "RTT Preferred Mode": "FBO"
+      }
+    ],
     "plugins": [
+      "RenderSystem_Direct3D11",
       "RenderSystem_GL",
+      "RenderSystem_GL3Plus",
+      "RenderSystem_Metal",
       "OctreeSceneManager",
       "ParticleFX"
     ],
     "globalResources":
     {
+      "Hlms": {
+        "common": "FileSystem:materials/Common",
+        "pbs": "FileSystem:materials/Pbs",
+        "unlit": "FileSystem:materials/Unlit"
+      },
       "General":
       [
         "FileSystem:materials/",
-        "FileSystem:programs/",
-        "FileSystem:particles/PU",
-        "FileSystem:particles/Ogre"
+        "FileSystem:programs/"
       ],
       "Rocket":
       [
@@ -84,7 +95,8 @@
       {
         "FSAA": 0,
         "displayFrequency": 50,
-        "vsync": false
+        "vsync": false,
+        "gamma": "true"
       }
     }
   }

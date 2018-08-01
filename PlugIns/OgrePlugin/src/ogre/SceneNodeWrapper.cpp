@@ -64,7 +64,12 @@ namespace Gsage {
     if(dict.count("name") == 0)
     {
       mObjectId = ownerId;
+#if OGRE_VERSION_MAJOR == 2
+      // TODO: static/dynamic nodes
+      mNode = parent->createChildSceneNode();
+#else
       mNode = parent->createChildSceneNode(mObjectId);
+#endif
     }
 
     addEventListener(objectManager, OgreObjectManagerEvent::FACTORY_UNREGISTERED, &SceneNodeWrapper::onFactoryUnregister);
@@ -84,7 +89,12 @@ namespace Gsage {
     }
     mObjectId = id;
     std::string name = generateName();
+#if OGRE_VERSION_MAJOR == 2
+      // TODO: static/dynamic nodes
+    mNode = mParentNode->createChildSceneNode();
+#else
     mNode = mParentNode->createChildSceneNode(name);
+#endif
     LOG(TRACE) << "Creating scene node \"" << name << "\"";
   }
 
@@ -261,7 +271,7 @@ namespace Gsage {
       node->getCreator()->destroyMovableObject(itObject.getNext());
 
     // Recurse to child SceneNode
-    Ogre::SceneNode::ChildNodeIterator itChild = node->getChildIterator();
+    auto itChild = node->getChildIterator();
 
     while ( itChild.hasMoreElements() )
     {
@@ -305,6 +315,10 @@ namespace Gsage {
   void SceneNodeWrapper::roll(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->roll(angle, relativeTo);
+  }
+
+  void SceneNodeWrapper::translate(const Ogre::Vector3& d) {
+    translate(d, Ogre::Node::TS_LOCAL);
   }
 
   void SceneNodeWrapper::translate(const Ogre::Vector3& d, Ogre::Node::TransformSpace relativeTo)

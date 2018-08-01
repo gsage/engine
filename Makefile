@@ -1,6 +1,6 @@
 OGRE_VERSION ?= 1.9.0
 LUA_VERSION ?= luajit-2.0.5
-INPUT ?= OIS
+OIS_ENABLED ?= False
 WITH_LIBROCKET ?= True
 UNAME_S := $(shell uname -s)
 IS_WINDOWS := 0
@@ -75,7 +75,7 @@ EDITOR_CMD := $(EDITOR_CMD)$(POSTFIX)$(FILE_EXTENSION)
 	@touch .repo
 
 .deps: .repo conanfile.py
-	@conan install -g cmake -s build_type=$(CMAKE_BUILD_TYPE) -o gsage:with_ogre=$(OGRE_VERSION) -o gsage:with_input=$(INPUT) -o gsage:with_librocket=$(WITH_LIBROCKET) -o with_lua_version=$(LUA_VERSION) --build=outdated .
+	conan install -g cmake -s build_type=$(CMAKE_BUILD_TYPE) -o gsage:with_ogre=$(OGRE_VERSION) -o gsage:with_ois=$(OIS_ENABLED) -o gsage:with_librocket=$(WITH_LIBROCKET) -o with_lua_version=$(LUA_VERSION)  --build=outdated .
 	@touch .deps
 
 upload-deps: .deps

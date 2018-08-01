@@ -5,6 +5,7 @@ local lm = require 'lib.locales'
 ImguiWindow = class(function(self, label, docked, open)
   self.docked = docked
   self.flags = 0
+  self.dockFlags = 0
   if self.open == nil then
     self.open = true
   else
@@ -14,7 +15,7 @@ ImguiWindow = class(function(self, label, docked, open)
   if self.docked then
     self.imguiBegin = function(self)
       local active
-      active, self.open = imgui.BeginDockTitleOpen(self.label, self:getLocalizedTitle(), self.open, self.flags)
+      active, self.open = imgui.BeginDockTitleOpen(self.label, self:getLocalizedTitle(), self.open, self.flags, self.dockFlags)
       return active
     end
     self.imguiEnd = function(self)  imgui.EndDock() end
@@ -31,8 +32,13 @@ end)
 function ImguiWindow:getLocalizedTitle()
   local res = lm("window_title." .. self.label)
   if res == lm.MISSING then
-    return self.label
+    res = self.label
   end
+
+  if self.icon then
+    res = self.icon .. " " .. res
+  end
+
   return res
 end
 
@@ -74,7 +80,7 @@ function ImguiInterface:addView(name, view, docked, open, label)
     view = ImguiWindowRender(view, label or name, docked, open)
   end
 
-  local added = imgui.render:addView(name, view)
+  local added = imgui.render:addView(name, view, not(not docked))
   if not added then
     return false
   end

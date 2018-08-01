@@ -1,10 +1,12 @@
 require 'lib.class'
 local time = require 'lib.time'
 require 'imgui.base'
+local icons = require 'imgui.icons'
 
 -- imgui engine stats view
 Stats = class(ImguiWindow, function(self, title, docked, open)
   ImguiWindow.init(self, title, docked, open)
+  self.icon = icons.equalizer
   self.fps = 0
   self.frames = 0
   self.elapsedTime = 0

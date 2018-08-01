@@ -114,6 +114,7 @@ namespace Gsage {
     Uint32 flags = 0;
     int x = params.get("x", SDL_WINDOWPOS_UNDEFINED);
     int y = params.get("y", SDL_WINDOWPOS_UNDEFINED);
+    bool showCursor = params.get("showCursor", false);
 
     std::map<std::string, Uint32> flagsMap;
     flagsMap["hidden"] = SDL_WINDOW_HIDDEN;

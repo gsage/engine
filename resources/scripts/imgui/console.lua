@@ -1,5 +1,6 @@
 require 'lib.class'
 local lm = require 'lib.locales'
+local icons = require 'imgui.icons'
 
 -- table.filter({"a", "b", "c", "d"}, function(o, k, i) return o >= "c" end)  --> {"c","d"}
 --
@@ -62,6 +63,7 @@ end
 -- lua/logs console
 Console = class(ImguiWindow, function(self, maxInput, docked)
   ImguiWindow.init(self, "lua console", docked)
+  self.icon = icons.code
   self.flags = ImGuiWindowFlags_NoScrollbar + ImGuiWindowFlags_NoScrollWithMouse
   self.history = {}
   self.historyPos = 0
@@ -165,17 +167,27 @@ function Console:__call()
   end
 
   imgui.TextWrapped(lm("console.autocomplete"))
-  if imgui.SmallButton(lm("console.clear")) then
+  if imgui.Button(icons.block) then
     self:clear()
   end
-  imgui.SameLine()
+  if imgui.IsItemHovered() then
+      imgui.BeginTooltip();
+      imgui.Text(lm("console.clear"));
+      imgui.EndTooltip();
+  end
+  imgui.SameLine(0, 5)
 
   local scrollToBottom = false
-  if imgui.SmallButton(lm("console.scroll_to_bottom")) then
+  if imgui.Button(icons.to_bottom) then
     scrollToBottom = true
   end
+  if imgui.IsItemHovered() then
+      imgui.BeginTooltip();
+      imgui.Text(lm("console.scroll_to_bottom"));
+      imgui.EndTooltip();
+  end
 
-  imgui.SameLine()
+  imgui.SameLine(0, 5)
   imgui.PushStyleVar_2(ImGuiStyleVar_FramePadding, 0, 0)
   local _, enabled = imgui.Checkbox(lm("console.autoscroll"), self.scrollToBottom)
   self.scrollToBottom = enabled

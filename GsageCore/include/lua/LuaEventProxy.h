@@ -39,19 +39,19 @@ namespace Gsage {
   {
     public:
       /**
-       * sol::protected_function wrapper
+       * sol::function wrapper
        */
       class GenericCallback
       {
         public:
-          GenericCallback(sol::protected_function func)
+          GenericCallback(sol::function func)
             : mFunc(func)
             , mState(func.lua_state()) {};
 
           virtual ~GenericCallback() {};
           /**
            * Checks if wrapped function is valid
-           * @returns sol::protected_function valid result
+           * @returns sol::function valid result
            */
           bool valid() const{
             return mState != NULL && mFunc.lua_state() == mState && mFunc.valid();
@@ -61,18 +61,18 @@ namespace Gsage {
            * Calls underlying lua callback
            *
            * @param event Event to process
-           * @returnds sol::protected_function_result
+           * @returnds sol::function_result
            */
-          virtual sol::protected_function_result operator()(const Event& event)
+          virtual sol::function_result operator()(const Event& event)
           {
             return mFunc(std::ref(event));
           }
 
-          operator const sol::protected_function&() const {
+          operator const sol::function() const {
             return mFunc;
           }
 
-          friend bool operator==(GenericCallback* cb, const sol::protected_function& func) {
+          friend bool operator==(GenericCallback* cb, const sol::function& func) {
             return cb->mFunc == func;
           }
 
@@ -99,9 +99,9 @@ namespace Gsage {
            * Calls underlying lua callback
            *
            * @param event Event to process (will be cast to the particular templated event).
-           * @returns sol::protected_function_result
+           * @returns sol::function_result
            */
-          virtual sol::protected_function_result operator()(const Event& event)
+          virtual sol::function_result operator()(const Event& event)
           {
             return mFunc(std::ref(static_cast<const T&>(event)));
           }

@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2018 Artem Chernyshev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #ifndef _UIManager_H_
 #define _UIManager_H_
+
+#include <string>
 
 struct lua_State;
 
@@ -68,6 +70,11 @@ namespace Gsage
        * @param L New lua state
        */
       virtual void setLuaState(lua_State* L) { mLuaState = L; };
+
+      /**
+       * Get type id
+       */
+      virtual const std::string& getType() = 0;
     protected:
       Engine* mEngine;
       lua_State* mLuaState;

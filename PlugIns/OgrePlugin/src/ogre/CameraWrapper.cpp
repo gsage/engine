@@ -54,7 +54,13 @@ namespace Gsage {
   {
     if(mObject) {
       LOG(INFO) << "Destroy camera " << mObjectId;
+#if OGRE_VERSION_MAJOR == 1
       mSceneManager->destroyCamera(mObjectId);
+#else
+      if(getCamera()) {
+        mSceneManager->destroyCamera(getCamera());
+      }
+#endif
     }
   }
 
@@ -69,6 +75,7 @@ namespace Gsage {
   }
 
   void CameraWrapper::attach(Ogre::Viewport* viewport) {
+#if OGRE_VERSION_MAJOR == 1
     Ogre::Camera* camera = getCamera();
     mViewport = viewport;
     if (mViewport == 0) {
@@ -82,6 +89,9 @@ namespace Gsage {
     mViewport->setCamera(camera);
     mIsActive = true;
     LOG(INFO) << "Attached camera to viewport";
+#else
+    LOG(ERROR) << "Attaching camera to viewport is not supported in ogre " << OGRE_VERSION_MAJOR << "." << OGRE_VERSION_MINOR << " . Use compositor instead";
+#endif
   }
 
   void CameraWrapper::attach(RenderTargetPtr renderTarget) {
@@ -115,10 +125,14 @@ namespace Gsage {
 
   void CameraWrapper::setBgColour(const Ogre::ColourValue& value)
   {
+#if OGRE_VERSION_MAJOR == 1
     mBgColour = value;
     if(mViewport) {
       mViewport->setBackgroundColour(value);
     }
+#else
+    // TODO: do it using compositor
+#endif
   }
 
   const Ogre::ColourValue& CameraWrapper::getBgColour() const

@@ -30,7 +30,11 @@ THE SOFTWARE.
 #include <OgreParticleSystemRenderer.h>
 #include <OgreParticle.h>
 
-#include "ogre/MovableText.h"
+#if OGRE_VERSION_MAJOR == 1
+#include "ogre/v1/MovableText.h"
+#else
+#include "ogre/v2/MovableText.h"
+#endif
 
 #include "Logger.h"
 
@@ -48,7 +52,11 @@ namespace Ogre
   class TextNode
   {
     public:
+#if OGRE_VERSION_MAJOR == 1
       TextNode(const std::string& name);
+#else
+      TextNode(IdType id, ObjectMemoryManager* memoryManager, SceneManager* sceneManager);
+#endif
 
       virtual ~TextNode();
 
@@ -82,11 +90,17 @@ namespace Ogre
       void setHeight(const float value);
 
     private:
-      std::string mName;
       MovableTextValue* mValue;
       SceneNode* mSceneNode;
 
       MovableText* mView;
+#if OGRE_VERSION_MAJOR == 1
+      std::string mName;
+#else
+      IdType mId;
+      ObjectMemoryManager* mObjectManager;
+      SceneManager* mSceneManager;
+#endif
 
   };
 
@@ -139,7 +153,11 @@ namespace Ogre
           void doSet(void* target, const std::string& val);
       };
 
+#if OGRE_VERSION_MAJOR == 1
       ManualMovableTextRenderer(const std::string& name);
+#else
+      ManualMovableTextRenderer(const std::string& name, ObjectMemoryManager* memoryManager, SceneManager* sceneManager);
+#endif
       virtual ~ManualMovableTextRenderer();
 
       /**
@@ -161,22 +179,11 @@ namespace Ogre
       /**
        * Updates all nodes in the renderer
        */
+#if OGRE_VERSION_MAJOR == 1
       void _updateRenderQueue(RenderQueue* queue, list<Particle*>::type& currentParticles, bool cullIndividually);
-
-      /**
-       * Not used
-       */
-      void _setMaterial(MaterialPtr& mat);
-
-      /**
-       * Not used
-       */
-      void _notifyCurrentCamera(Camera* cam);
-
-      /**
-       * Not used
-       */
-      void _notifyAttached(Node* parent, bool isTagPoint = false);
+#else
+      void _updateRenderQueue(RenderQueue *queue, Camera *camera, const Camera *lodCamera, list< Particle * >::type &currentParticles, bool cullIndividually, RenderableArray &outRenderables);
+#endif
 
       /**
        * 
@@ -209,10 +216,52 @@ namespace Ogre
        */
       SortMode _getSortMode() const;
 
+#if OGRE_VERSION_MAJOR == 1
       /**
        * Not used
        */
       void visitRenderables(Renderable::Visitor* visitor, bool debugRenderables = false);
+
+      /**
+       * Not used
+       */
+      void _setMaterial(MaterialPtr& mat) {};
+
+      /**
+       * Not used
+       */
+      void _notifyCurrentCamera(Camera* cam) {};
+
+      /**
+       * Not used
+       */
+      void _notifyAttached(Node* parent, bool isTagPoint = false) {};
+#else
+      /**
+       * Not used
+       */
+      void _setDatablock( HlmsDatablock *datablock ) {};
+
+      /**
+       * Not used
+       */
+      void _setMaterialName( const String &matName, const String &resourceGroup ) {};
+
+      /**
+       * Not used
+       */
+      void _notifyCurrentCamera(const Camera* cam) {};
+
+      /**
+       * Not used
+       */
+      void _notifyAttached(Node* parent) {};
+
+      /**
+       * Not used
+       */
+      void setRenderQueueSubGroup(uint8 queueID) {};
+#endif
 
       /**
        * Not used
@@ -238,6 +287,10 @@ namespace Ogre
       std::string mFontName;
 
       int mPrevousParticleCount;
+#if OGRE_VERSION_MAJOR == 2
+      ObjectMemoryManager* mObjectManager;
+      SceneManager* mSceneManager;
+#endif
     protected:
       static CmdFontName msFontNameCmd;
   };
@@ -246,6 +299,7 @@ namespace Ogre
   {
     public:
       ManualMovableTextRendererFactory();
+      virtual ~ManualMovableTextRendererFactory();
       /// @copydoc FactoryObj::getType
       const String& getType() const;
       /// @copydoc FactoryObj::createInstance
@@ -254,6 +308,9 @@ namespace Ogre
       void destroyInstance(ParticleSystemRenderer* ptr);
     private:
       int mCreatedRenderersCounter;
+#if OGRE_VERSION_MAJOR == 2
+      ObjectMemoryManager *mDummyObjectMemoryManager;
+#endif
   };
 }
 

@@ -27,10 +27,42 @@ THE SOFTWARE.
 #include "ResourceManager.h"
 #include "Logger.h"
 
+#if OGRE_VERSION >= 0x020100
+#include "ogre/v2/HlmsUnlit.h"
+#endif
+
 namespace Gsage {
+
+  std::tuple<std::string, std::string> ResourceManager::processPath(const std::string& line)
+  {
+    std::vector<std::string> list = split(line, ':');
+    if(list.size() < 2)
+    {
+      LOG(ERROR) << "Malformed resource path: " << line;
+      OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
+                  std::string("Malformed resource path: ") + line,
+                  "processPath");
+    }
+
+    std::vector<std::string> pathList;
+    if (!mWorkdir.empty())
+    {
+      pathList.push_back(mWorkdir);
+    }
+
+    for(std::vector<std::string>::iterator it = list.begin() + 1; it != list.end(); it++)
+    {
+      pathList.push_back(*it);
+    }
+
+    std::string path = join(pathList, GSAGE_PATH_SEPARATOR);
+    std::string type = list[0];
+    return std::make_tuple(path, type);
+  }
 
   ResourceManager::ResourceManager(const std::string& workdir)
     : mWorkdir(workdir)
+    , mHlmsLoaded(false)
   {
 
   }
@@ -49,40 +81,49 @@ namespace Gsage {
     std::string workdir = mWorkdir;
     resources.read("workdir", workdir);
 
+#if OGRE_VERSION >= 0x020100
+    if(!mHlmsLoaded) {
+      Ogre::Root& root = Ogre::Root::getSingleton();
+      DataProxy hlms;
+      resources.read("Hlms", hlms);
+      Ogre::RenderSystem *renderSystem = root.getRenderSystem();
+      mShaderSyntax = "GLSL";
+      if( renderSystem->getName() == "Direct3D11 Rendering Subsystem" )
+        mShaderSyntax = "HLSL";
+      else if( renderSystem->getName() == "Metal Rendering Subsystem" )
+        mShaderSyntax = "Metal";
+      mCommonFolder = hlms.get("common", "FileSystem:materials/Common");
+
+      LOG(INFO) << "[Hlms] Loading configuration";
+      registerHlms<Ogre::HlmsPbs>(hlms.get("pbs", "FileSystem:materials/Pbs"));
+      registerHlms<Gsage::HlmsUnlit>(hlms.get("unlit", "FileSystem:materials/Unlit"));
+      mHlmsLoaded = true;
+    }
+#endif
+
     for(auto& pair : resources)
     {
       section = pair.first;
       if(section == "workdir") {
         continue;
       }
+
+      if(section == "Hlms") {
+        continue;
+      }
+
       for(auto& config : pair.second)
       {
-        std::vector<std::string> list = split(config.second.as<std::string>(), ':');
-        if(list.size() < 2)
-        {
-          LOG(ERROR) << "Malformed resource path: " << pair.second.as<std::string>();
-          continue;
-        }
-
-        std::vector<std::string> pathList;
-        if (!workdir.empty())
-        {
-          pathList.push_back(workdir);
-        }
-
-        for(std::vector<std::string>::iterator it = list.begin() + 1; it != list.end(); it++)
-        {
-          pathList.push_back(*it);
-        }
-
-        path = join(pathList, GSAGE_PATH_SEPARATOR);
-        type = list[0];
-
+        std::tie(path, type) = processPath(config.second.as<std::string>());
         LOG(INFO) << "Adding resource location " << path;
         orgm.addResourceLocation(path, type, section, true, path.find(".zip") != std::string::npos);
       }
 
+#if OGRE_VERSION_MAJOR == 2
+      orgm.initialiseResourceGroup(section, false);
+#else
       orgm.initialiseResourceGroup(section);
+#endif
     }
     return true;
   }

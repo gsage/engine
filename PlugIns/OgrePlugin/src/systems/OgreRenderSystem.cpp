@@ -25,18 +25,19 @@ THE SOFTWARE.
 */
 
 #include "systems/OgreRenderSystem.h"
-#include <RenderSystems/GL/OgreGLTexture.h>
-#include <RenderSystems/GL/OgreGLFrameBufferObject.h>
-#include <RenderSystems/GL/OgreGLFBORenderTexture.h>
 
 #include "ogre/SceneNodeWrapper.h"
 #include "ogre/EntityWrapper.h"
 #include "ogre/LightWrapper.h"
-#include "ogre/BillboardWrapper.h"
-#include "ogre/ParticleSystemWrapper.h"
 #include "ogre/CameraWrapper.h"
-#include "ogre/LineWrapper.h"
-#include "ogre/ManualObjectWrapper.h"
+#include "ogre/ParticleSystemWrapper.h"
+#include "ogre/BillboardWrapper.h"
+#if OGRE_VERSION_MAJOR == 1
+#include "ogre/v1/ManualObjectWrapper.h"
+#else
+#include "ogre/v2/ManualObjectWrapper.h"
+#include "ogre/v2/ItemWrapper.h"
+#endif
 
 #include "RenderEvent.h"
 #include "EngineEvent.h"
@@ -51,8 +52,6 @@ THE SOFTWARE.
 #include "EngineEvent.h"
 #include "WindowManager.h"
 
-#include "ResourceManager.h"
-
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #include <Overlay/OgreFontManager.h>
 #else
@@ -63,11 +62,22 @@ THE SOFTWARE.
 #include "WindowEventListener.h"
 
 #ifdef OGRE_STATIC
+#if OGRE_VERSION < 0x020100
 #include <RenderSystems/GL/OgreGLPlugin.h>
 #include <OgreBspSceneManagerPlugin.h>
 #include <OgreOctreePlugin.h>
 #include <OgrePCZPlugin.h>
+#else
+#include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
+#ifdef WITH_METAL
+#include <RenderSystems/Metal/OgreMetalPlugin.h>
+#endif
+#endif
 #include <OgreParticleFXPlugin.h>
+#endif
+
+#if OGRE_VERSION >= 0x020100
+#include <Compositor/OgreCompositorManager2.h>
 #endif
 
 #include "OgreGeom.h"
@@ -100,21 +110,32 @@ namespace Gsage {
   // Render system identifier for the factory registration
   const std::string OgreRenderSystem::ID = "ogre";
 
-  OgreRenderSystem::OgreRenderSystem() :
-    mRoot(0),
-    mFontManager(0),
-    mManualMovableTextParticleFactory(0),
-    mResourceManager(0),
-    mViewport(0),
-    mWindowEventListener(0),
-    mSceneManager(0)
+  OgreRenderSystem::OgreRenderSystem()
+    : mRoot(0)
+    , mFontManager(0)
+    , mManualMovableTextParticleFactory(0)
+    , mResourceManager(0)
+    , mViewport(0)
+    , mWindowEventListener(0)
+    , mSceneManager(0)
+#if OGRE_VERSION >= 0x020100
+    , mRectangle2DFactory(0)
+#endif
   {
     mSystemInfo.put("type", OgreRenderSystem::ID);
+    mSystemInfo.put("version", OGRE_VERSION);
     mLogManager = new Ogre::LogManager();
   }
 
   OgreRenderSystem::~OgreRenderSystem()
   {
+#if OGRE_VERSION >= 0x020100
+    if(mRectangle2DFactory != 0) {
+      mRoot->removeMovableObjectFactory(mRectangle2DFactory);
+      delete mRectangle2DFactory;
+    }
+#endif
+
     if(mFontManager != 0)
       delete mFontManager;
 
@@ -128,6 +149,12 @@ namespace Gsage {
 
     if(mRoot != 0)
       delete mRoot;
+#if OGRE_STATIC
+    for(auto pair : mOgrePlugins) {
+      delete pair.second;
+    }
+    mOgrePlugins.clear();
+#endif
     if(mManualMovableTextParticleFactory != 0)
       delete mManualMovableTextParticleFactory;
     if(mResourceManager != 0)
@@ -141,45 +168,27 @@ namespace Gsage {
   bool OgreRenderSystem::initialize(const DataProxy& settings)
   {
     std::string workdir   = mEngine->env().get("workdir", ".");
-    std::string plugins;
-    std::string config    = workdir + GSAGE_PATH_SEPARATOR + settings.get("configFile", "ogreConfig.cfg");
-#ifndef OGRE_STATIC
-    plugins = workdir + GSAGE_PATH_SEPARATOR + settings.get("pluginsFile", "plugins.cfg");
-#endif
+    std::string config    = workdir + GSAGE_PATH_SEPARATOR + settings.get("configFile", "");
 
     // redirect ogre logs to custom logger
     mLogManager->createLog("", true, false, false);
     mLogManager->getDefaultLog()->addListener(&mLogRedirect);
 
     // initialize ogre root
-    mRoot = new Ogre::Root(plugins, config, "");
+    mRoot = new Ogre::Root("", config, "");
     // initialize resource manager
     mResourceManager = new ResourceManager(workdir);
 
-#ifdef OGRE_STATIC
     auto pair = settings.get<DataProxy>("plugins");
     if(pair.second) {
       for(auto p : pair.first) {
         std::string id = p.second.getValueOptional<std::string>("");
-        LOG(INFO) << "Installing plugin " << id;
-
-        if(id == "RenderSystem_GL") {
-          mRoot->installPlugin(new Ogre::GLPlugin());
-        } else if(id == "OctreeSceneManager") {
-          mRoot->installPlugin(new Ogre::OctreePlugin());
-        } else if(id == "ParticleFX") {
-          mRoot->installPlugin(new Ogre::ParticleFXPlugin());
-        } else if(id == "PCZSceneManager") {
-          mRoot->installPlugin(new Ogre::PCZPlugin());
-        } else if(id == "BSPSceneManager") {
-          mRoot->installPlugin(new Ogre::BspSceneManagerPlugin());
-        } else {
-          LOG(ERROR) << "Can't install plugin " << id;
+        if(!installPlugin(id) && !settings.get("ignoreFailedPlugins", true)) {
           return false;
         }
       }
     }
-#endif
+
     auto p = settings.get<DataProxy>("window");
     if(!p.second) {
       LOG(ERROR) << "No primary window is defined for OGRE render system";
@@ -199,6 +208,7 @@ namespace Gsage {
         windowParams
       );
       if(window == nullptr) {
+        LOG(ERROR) << "Failed to create window";
         return false;
       }
 
@@ -208,8 +218,48 @@ namespace Gsage {
       }
     }
 
-    if(!(mRoot->restoreConfig()))
+    auto rs = settings.get<DataProxy>("renderSystems");
+    if(rs.second) {
+      Ogre::RenderSystem* renderSystem = nullptr;
+      // iterate over defined render systems and try install one of them
+      for(auto p : rs.first) {
+        std::string id = p.second.get("id", "");
+        renderSystem = mRoot->getRenderSystemByName(id);
+        if(!renderSystem) {
+          LOG(INFO) << "Can't create render system of type " << id << ", using fallback to the next one";
+          continue;
+        }
+        try
+        {
+          for (auto pair : p.second)
+          {
+            if(pair.first == "id") {
+              continue;
+            }
+            renderSystem->setConfigOption(pair.first, pair.second.as<std::string>());
+          }
+        }
+        catch( Ogre::Exception &e )
+        {
+          LOG(ERROR) << e.getFullDescription();
+          return false;
+        }
+
+        Ogre::String err = renderSystem->validateConfigOptions();
+        if (err.length() > 0)
+          return false;
+
+        break;
+      }
+      if(!renderSystem) {
+        LOG(ERROR) << "Failed to create render system using config: " << dumps(rs.second, DataWrapper::JSON_OBJECT);
         return false;
+      }
+      mRoot->setRenderSystem(renderSystem);
+    } else {
+      LOG(ERROR) << "No \"renderSystem\" configuration found";
+      return false;
+    }
 
     // initialize render window
     mRoot->initialise(false);
@@ -223,10 +273,36 @@ namespace Gsage {
       Ogre::WindowEventUtilities::addWindowEventListener(getRenderWindow(), mWindowEventListener);
     }
 
+    std::string defaultSceneManager;
+#if OGRE_VERSION_MAJOR == 1
+    defaultSceneManager = "OctreeSceneManager";
+#else
+    defaultSceneManager = "DefaultSceneManager";
+#endif
+
+#if OGRE_VERSION >= 0x020100
+    mRectangle2DFactory = OGRE_NEW OgreV1::Rectangle2DFactory();
+    mRoot->addMovableObjectFactory(mRectangle2DFactory);
+
+    mCustomPassProvider.initialize(mEngine);
+
+    auto compositorManager = mRoot->getCompositorManager2();
+    compositorManager->setCompositorPassProvider(&mCustomPassProvider);
+#endif
+
     // initialize scene manager
-    mSceneManager = mRoot->createSceneManager(settings.get("sceneManager", "OctreeSceneManager"));
+    mSceneManager = mRoot->createSceneManager(
+        settings.get("sceneManager", defaultSceneManager)
+#if OGRE_VERSION_MAJOR == 2
+        , settings.get("numWorkerThreads", 1)
+        , Ogre::INSTANCING_CULLING_SINGLETHREAD // TODO: allow configuring that
+#endif
+    );
+#if OGRE_VERSION < 0x020100
     // TODO: make it customizable via config
     mSceneManager->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_MODULATIVE);
+#endif
+
     mSceneManager->addRenderQueueListener(this);
 
     mFontManager = new Ogre::FontManager();
@@ -237,6 +313,33 @@ namespace Gsage {
     auto resources = settings.get<DataProxy>("globalResources");
     if(resources.second && !mResourceManager->load(resources.first))
       return false;
+
+#if OGRE_VERSION >= 0x020100
+    // TODO: make this configurable
+    Ogre::Hlms *hlms = mRoot->getHlmsManager()->getHlms(Ogre::HLMS_PBS);
+    Ogre::HlmsPbs *pbs = static_cast<Ogre::HlmsPbs*>(hlms);
+    pbs->setShadowSettings(Ogre::HlmsPbs::PCF_2x2);
+
+    // configure forward3D if it's defined
+    auto forward3D = settings.get<DataProxy>("forward3D");
+
+    if(forward3D.second) {
+      mSceneManager->setForward3D(
+        true,
+        forward3D.first.get("width", 4),
+        forward3D.first.get("height", 4),
+        forward3D.first.get("numSlices", 5),
+        forward3D.first.get("lightsPerCell", 96),
+        forward3D.first.get("minDistance", 3.0f),
+        forward3D.first.get("maxDistance", 200.0f)
+      );
+    } else {
+      mSceneManager->setForward3D(
+        false,
+        4, 4, 5, 96, 3.0f, 200.f
+      );
+    }
+#endif
 
     mRenderSystem = mRoot->getRenderSystem();
 
@@ -266,8 +369,10 @@ namespace Gsage {
     mObjectManager.registerElement<BillboardSetWrapper>();
     mObjectManager.registerElement<ParticleSystemWrapper>();
     mObjectManager.registerElement<CameraWrapper>();
-    mObjectManager.registerElement<LineWrapper>();
     mObjectManager.registerElement<ManualObjectWrapper>();
+#if OGRE_VERSION >= 0x020100
+    mObjectManager.registerElement<ItemWrapper>();
+#endif
 
     mRoot->clearEventTimes();
     mRenderSystem->_initRenderTargets();
@@ -275,6 +380,7 @@ namespace Gsage {
     // finally initialize render targets defined in configs
     for(auto pair : mRenderTargets) {
       pair.second->initialize(mSceneManager);
+      mRenderTargetsReverseIndex[pair.second->getOgreRenderTarget()] = pair.first;
     }
 
     EngineSystem::initialize(settings);
@@ -335,7 +441,17 @@ namespace Gsage {
     resources = mConfig.get<DataProxy>("resources");
     if(resources.second)
       mResourceManager->load(resources.first);
-    mSceneManager->setAmbientLight(config.get("colourAmbient", Ogre::ColourValue::Black));
+    Ogre::ColourValue ambientColour = config.get("colourAmbient", Ogre::ColourValue::Black);
+    mSceneManager->setAmbientLight(
+#if OGRE_VERSION_MAJOR == 1
+        ambientColour
+#else
+        config.get("ambientLight.upperHemisphere", ambientColour),
+        config.get("ambientLight.lowerHemisphere", ambientColour),
+        config.get("ambientLight.hepisphereDir", Ogre::Vector3::UNIT_Y),
+        config.get("ambientLight.envmapScale", 1.0f)
+#endif
+    );
     if(config.count("fog") != 0)
     {
       mSceneManager->setFog(
@@ -358,6 +474,74 @@ namespace Gsage {
   DataProxy& OgreRenderSystem::getConfig()
   {
     return mConfig;
+  }
+
+  bool OgreRenderSystem::installPlugin(const std::string& id)
+  {
+    LOG(INFO) << "Installing plugin " << id;
+#if OGRE_STATIC
+    Ogre::Plugin* plugin = nullptr;
+    if(id == "ParticleFX") {
+      plugin = new Ogre::ParticleFXPlugin();
+    }
+#if OGRE_VERSION_MAJOR == 1
+    else if(id == "RenderSystem_GL") {
+      plugin = new Ogre::GLPlugin();
+    } else if(id == "OctreeSceneManager") {
+      plugin = new Ogre::OctreePlugin();
+    } else if(id == "PCZSceneManager") {
+      plugin = new Ogre::PCZPlugin();
+    } else if(id == "BSPSceneManager") {
+      plugin = new Ogre::BspSceneManagerPlugin();
+    }
+#else
+    else if(id == "RenderSystem_GL" || id == "RenderSystem_GL3Plus") {
+      plugin = new Ogre::GL3PlusPlugin();
+    }
+#ifdef WITH_METAL
+    else if(id == "RenderSystem_Metal") {
+      plugin = new Ogre::MetalPlugin();
+    }
+#endif
+#endif
+
+    if(plugin) {
+      mRoot->installPlugin(plugin);
+      mOgrePlugins[id] = plugin;
+      return true;
+    }
+#endif
+    std::map<std::string, std::string> pluginIDToFilename;
+    pluginIDToFilename["OctreeSceneManager"] = "Plugin_OctreeSceneManager";
+    pluginIDToFilename["PCZSceneManager"] = "Plugin_PCZSceneManager";
+    pluginIDToFilename["BSPSceneManager"] = "Plugin_BSPSceneManager";
+    pluginIDToFilename["ParticleFX"] = "Plugin_ParticleFX";
+
+    std::string pluginsDir = mConfig.get("pluginsDir", "");
+    if(!pluginsDir.empty()) {
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32 || OGRE_PLATFORM == OGRE_PLATFORM_WINRT
+      pluginsDir += "\\";
+#elif OGRE_PLATFORM == OGRE_PLATFORM_LINUX
+      pluginsDir += "/";
+#endif
+    }
+    try {
+      std::string pluginPath;
+      std::string filename = pluginIDToFilename.count(id) != 0 ? pluginIDToFilename[id] : id;
+#if GSAGE_PLATFORM ==  GSAGE_WIN32 && (!defined(NDEBUG) && !defined(__OPTIMIZE__) || defined(_DEBUG) && !defined(NDEBUG))
+      pluginPath = pluginsDir + filename + "_d";
+#else
+      pluginPath = pluginsDir + filename;
+#endif
+      LOG(INFO) << "Loading plugin " << pluginPath;
+      mRoot->loadPlugin(pluginPath);
+      return true;
+    } catch(Ogre::Exception& e) {
+
+      LOG(ERROR) << "Failed to load plugin " << id;
+    }
+
+    return false;
   }
 
   GeomPtr OgreRenderSystem::getGeometry(const BoundingBox& bounds, int flags)
@@ -395,13 +579,21 @@ namespace Gsage {
     }
 
     GeomPtr geom = GeomPtr(new OgreGeom(entities, root));
+#if OGRE_VERSION_MAJOR == 1
     Ogre::AxisAlignedBox meshBoundingBox;
+#else
+    Ogre::Aabb meshBoundingBox;
+#endif
 
     // calculate bounds
     for(auto entity : entities) {
+#if OGRE_VERSION_MAJOR == 1
       Ogre::AxisAlignedBox bbox = entity->getBoundingBox();
       bbox.transform(root->_getFullTransform().inverse() * entity->getParentSceneNode()->_getFullTransform());
       meshBoundingBox.merge(bbox);
+#else
+      meshBoundingBox.merge(entity->getWorldAabb());
+#endif
     }
 
     Ogre::Vector3 min = meshBoundingBox.getMinimum();
@@ -459,7 +651,7 @@ namespace Gsage {
     Ogre::SceneManager::MovableObjectIterator iterator = mSceneManager->getMovableObjectIterator("Entity");
     while(iterator.hasMoreElements())
     {
-      Ogre::Entity* e = static_cast<Ogre::Entity*>(iterator.getNext());
+      OgreV1::Entity* e = static_cast<OgreV1::Entity*>(iterator.getNext());
       if((e->getQueryFlags() | query) == query)
         res.push_back(e);
     }
@@ -477,10 +669,16 @@ namespace Gsage {
     Ogre::SceneManager::MovableObjectIterator iterator = mSceneManager->getMovableObjectIterator("Entity");
     while(iterator.hasMoreElements())
     {
-      Ogre::Entity* e = static_cast<Ogre::Entity*>(iterator.getNext());
+      OgreV1::Entity* e = static_cast<OgreV1::Entity*>(iterator.getNext());
+#if OGRE_VERSION_MAJOR == 1
       if(!e->getBoundingBox().intersects(bbox)) {
         continue;
       }
+#else
+      if(!e->getWorldAabb().intersects(Ogre::Aabb::newFromExtents(bbox.getMinimum(), bbox.getMaximum()))) {
+        continue;
+      }
+#endif
       if((e->getQueryFlags() | query) == query)
         res.push_back(e);
     }
@@ -612,6 +810,7 @@ namespace Gsage {
 
     if(mSceneManager) {
       mRenderTargets[name]->initialize(mSceneManager);
+      mRenderTargetsReverseIndex[mRenderTargets[name]->getOgreRenderTarget()] = name;
     }
     return mRenderTargets[name];
   }
@@ -626,6 +825,7 @@ namespace Gsage {
   }
 
   void OgreRenderSystem::renderCameraToTarget(const std::string& cameraName, const std::string& target) {
+#if OGRE_VERSION_MAJOR == 1
     if(mRenderTargets.count(target) == 0) {
       return;
     }
@@ -643,6 +843,7 @@ namespace Gsage {
     }
 
     renderCameraToTarget(cam, target);
+#endif
   }
 
   RenderTargetPtr OgreRenderSystem::getRenderTarget(const std::string& name)
@@ -652,6 +853,15 @@ namespace Gsage {
     }
 
     return mRenderTargets[name];
+  }
+
+  RenderTargetPtr OgreRenderSystem::getRenderTarget(Ogre::RenderTarget* target)
+  {
+    if(mRenderTargetsReverseIndex.count(target) == 0) {
+      return nullptr;
+    }
+
+    return mRenderTargets[mRenderTargetsReverseIndex[target]];
   }
 
   RenderTargetPtr OgreRenderSystem::getMainRenderTarget()

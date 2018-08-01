@@ -109,7 +109,7 @@ namespace Gsage
        * Run script in the LuaScriptSystem
        *
        * @param script Script string or file to run
-       * @returns sol::protected_function_result
+       * @returns True if succeed
        */
       bool runScript(const std::string& script);
 
@@ -120,7 +120,7 @@ namespace Gsage
        * @param func Function to run
        * @returns true if succeed
        */
-      bool runFunction(ScriptComponent* component, sol::protected_function func);
+      bool runFunction(ScriptComponent* component, sol::function func);
 
       /**
        * Add lua function which will be called on each update of the system
@@ -144,12 +144,12 @@ namespace Gsage
     private:
       struct Listener
       {
-        Listener(sol::protected_function function, bool global)
+        Listener(sol::function function, bool global)
           : function(function)
           , global(global)
         {}
 
-        sol::protected_function function;
+        sol::function function;
         bool global;
       };
 

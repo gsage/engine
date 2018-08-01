@@ -12,6 +12,14 @@ include_directories(
 
 file(GLOB sources src/*.cpp src/*/*.cpp )
 
+if("${OGRE_VERSION_MAJOR}" STREQUAL "2")
+  file(GLOB version_dependent src/ogre/v2/*.cpp )
+else("${OGRE_VERSION_MAJOR}" STREQUAL "2")
+  file(GLOB version_dependent src/ogre/v1/*.cpp )
+endif("${OGRE_VERSION_MAJOR}" STREQUAL "2")
+
+set(sources ${sources} ${version_dependent})
+
 set(LIBS
   GsageCore
   easyloggingpp
@@ -19,6 +27,7 @@ set(LIBS
   ${OGRE_Overlay_LIBRARY}
   ${OGRE_LIBRARIES}
 )
+message("${OGRE_LIBRARIES}", "${CONAN_LIBS_ZZIPLIB}")
 
 if(APPLE)
   set(LIBS
@@ -30,6 +39,13 @@ if(APPLE)
     ${OpenGL_LIBRARY}
     ${OPENGL_glu_LIBRARY}
   )
+if(WITH_METAL)
+  set(LIBS
+    "-framework Metal"
+    "-framework QuartzCore"
+    ${LIBS}
+  )
+endif(WITH_METAL)
 endif(APPLE)
 
 if(WIN32)
@@ -77,9 +93,9 @@ install(TARGETS ${LIB_NAME}
 gsage_plugin(${PLUGIN_NAME} ${sources})
 
 target_link_libraries(${PLUGIN_NAME} ${LIBS})
-set(OGRE_PLUGIN_VERSION_MAJOR 1)
-set(OGRE_PLUGIN_VERSION_MINOR 9)
-set(OGRE_PLUGIN_VERSION_PATCH 0)
+set(OGRE_PLUGIN_VERSION_MAJOR ${OGRE_VERSION_MAJOR})
+set(OGRE_PLUGIN_VERSION_MINOR ${OGRE_VERSION_MINOR})
+set(OGRE_PLUGIN_VERSION_PATCH ${OGRE_VERSION_PATCH})
 set(OGRE_PLUGIN_VERSION_STRING ${OGRE_PLUGIN_VERSION_MAJOR}.${OGRE_PLUGIN_VERSION_MINOR}.${OGRE_PLUGIN_VERSION_PATCH})
 
 set_target_properties(${PLUGIN_NAME} PROPERTIES VERSION ${OGRE_PLUGIN_VERSION_STRING} COMPILE_FLAGS -DOGRE_PLUGIN_EXPORT)

@@ -13,7 +13,17 @@
     "assets": "Assets",
     "scene explorer": "Scene Explorer",
     "viewport": "Viewport",
-    "dock states": "Dock states"
+    "dock states": "Dock states",
+    "tools": "Tools"
+  },
+
+  "tools": {
+    "tooltips": {
+      "create": "Create Scene",
+      "save": "Save Scene",
+      "undo": "Undo",
+      "redo": "Redo"
+    }
   },
 
   "console": {
@@ -29,7 +39,10 @@
 
   "sceneExplorer": {
     "entities": "Entities",
-    "no_editor": "No editor defined for component %{component}: %{type}"
+    "no_editor": "No editor defined for component %{component}: %{type}",
+    "entity": {
+      "reload": "Reload"
+    }
   },
 
   "transform": {
@@ -93,4 +106,3 @@
     }
   }
 }
-

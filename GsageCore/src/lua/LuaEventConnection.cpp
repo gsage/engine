@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  LuaEventConnection::LuaEventConnection(sol::protected_function handler)
+  LuaEventConnection::LuaEventConnection(sol::function handler)
     : mHandler(handler)
     , mNextID(0)
   {

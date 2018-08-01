@@ -53,6 +53,9 @@ namespace Gsage
     public:
       typedef std::map<std::string, EngineSystem*> EngineSystems;
       typedef ObjectPool<Entity> Entities;
+
+      typedef std::function<bool(Entity*)> UnloadMatcherFunc;
+
       Engine(const unsigned int& poolSize = ENTITY_POOL_SIZE);
       virtual ~Engine();
       /**
@@ -170,6 +173,12 @@ namespace Gsage
        * Destroy all entities
        */
       void unloadAll();
+      /**
+       * Destroy entities that match filter
+       *
+       * @param f Matcher function
+       */
+      void unloadMatching(UnloadMatcherFunc f);
       /**
        * Get component by entity and name
        * @param entity Entity with all components

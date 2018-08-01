@@ -24,6 +24,8 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "OgrePrerequisites.h"
+#include "Definitions.h"
 #include "GsageOgrePlugin.h"
 #include "GsageFacade.h"
 #include "EngineEvent.h"
@@ -94,7 +96,10 @@ namespace Gsage {
           "pitch", &SceneNodeWrapper::pitch,
           "yaw", &SceneNodeWrapper::yaw,
           "roll", &SceneNodeWrapper::roll,
-          "translate", &SceneNodeWrapper::translate,
+          "translate", sol::overload(
+            (void(SceneNodeWrapper::*)(const Ogre::Vector3&))&SceneNodeWrapper::translate,
+            (void(SceneNodeWrapper::*)(const Ogre::Vector3&, Ogre::Node::TransformSpace))&SceneNodeWrapper::translate
+          ),
           "lookAt", &SceneNodeWrapper::lookAt,
           "children", sol::property(&SceneNodeWrapper::writeChildren)
       );
@@ -107,9 +112,9 @@ namespace Gsage {
       lua.new_usertype<ParticleSystemWrapper>("OgreParticleSystem",
           sol::base_classes, sol::bases<OgreObject>(),
           "createParticle", sol::overload(
-            (void(ParticleSystemWrapper::*)(unsigned short, const std::string&)) &ParticleSystemWrapper::createParticle,
-            (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&)) &ParticleSystemWrapper::createParticle,
-            (void(ParticleSystemWrapper::*)(unsigned short, const std::string&, const std::string&, const Ogre::Quaternion&)) &ParticleSystemWrapper::createParticle
+            (void(ParticleSystemWrapper::*)(unsigned short, __NODE_ID_TYPE)) &ParticleSystemWrapper::createParticle,
+            (void(ParticleSystemWrapper::*)(unsigned short, __NODE_ID_TYPE, const std::string&)) &ParticleSystemWrapper::createParticle,
+            (void(ParticleSystemWrapper::*)(unsigned short, __NODE_ID_TYPE, const std::string&, const Ogre::Quaternion&)) &ParticleSystemWrapper::createParticle
           )
       );
 
@@ -156,7 +161,7 @@ namespace Gsage {
             (void(OgreRenderSystem::*)(Ogre::Camera*, const std::string&)) &OgreRenderSystem::renderCameraToTarget
           ),
           "mainRenderTarget", sol::property(&OgreRenderSystem::getMainRenderTarget),
-          "getRenderTarget", &OgreRenderSystem::getRenderTarget,
+          "getRenderTarget", (RenderTargetPtr(OgreRenderSystem::*)(const std::string&))&OgreRenderSystem::getRenderTarget,
           "getGeometry", sol::overload(
             (GeomPtr(OgreRenderSystem::*)(const BoundingBox&, int)) &OgreRenderSystem::getGeometry,
             (GeomPtr(OgreRenderSystem::*)(std::vector<std::string>)) &OgreRenderSystem::getGeometry
@@ -165,6 +170,14 @@ namespace Gsage {
 
       lua["ogre"] = lua.create_table_with(
           "PF_R8G8B8A8", Ogre::PF_R8G8B8A8,
+#if OGRE_VERSION_MAJOR == 2
+          "OT_POINT_LIST", Ogre::OT_POINT_LIST,
+          "OT_LINE_LIST", Ogre::OT_LINE_LIST,
+          "OT_LINE_STRIP", Ogre::OT_LINE_STRIP,
+          "OT_TRIANGLE_LIST", Ogre::OT_TRIANGLE_LIST,
+          "OT_TRIANGLE_STRIP", Ogre::OT_TRIANGLE_STRIP,
+          "OT_TRIANGLE_FAN", Ogre::OT_TRIANGLE_FAN
+#else
           "RENDER_QUEUE_BACKGROUND", Ogre::RENDER_QUEUE_BACKGROUND,
           "RENDER_QUEUE_SKIES_EARLY", Ogre::RENDER_QUEUE_SKIES_EARLY,
           "RENDER_QUEUE_MAIN", Ogre::RENDER_QUEUE_MAIN,
@@ -175,6 +188,7 @@ namespace Gsage {
           "OT_TRIANGLE_LIST", Ogre::RenderOperation::OT_TRIANGLE_LIST,
           "OT_TRIANGLE_STRIP", Ogre::RenderOperation::OT_TRIANGLE_STRIP,
           "OT_TRIANGLE_FAN", Ogre::RenderOperation::OT_TRIANGLE_FAN
+#endif
       );
 
       // Components
@@ -258,13 +272,13 @@ namespace Gsage {
       );
 
       lua.new_usertype<Ogre::Radian>("Radian",
-          sol::constructors<sol::types<float>>(),
+          sol::constructors<sol::types<float>, sol::types<Ogre::Degree>>(),
           "degrees", sol::property(&Ogre::Radian::valueDegrees),
           "radians", sol::property(&Ogre::Radian::valueRadians)
       );
 
       lua.new_usertype<Ogre::Degree>("Degree",
-          sol::constructors<sol::types<float>>(),
+          sol::constructors<sol::types<float>, sol::types<Ogre::Radian>>(),
           "degrees", sol::property(&Ogre::Degree::valueDegrees),
           "radians", sol::property(&Ogre::Degree::valueRadians)
       );

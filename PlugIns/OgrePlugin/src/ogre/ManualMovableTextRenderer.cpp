@@ -36,6 +36,7 @@ namespace Ogre
 
   const std::string manualMovableTextRendererName = "manual_text";
 
+#if OGRE_VERSION_MAJOR == 1
   TextNode::TextNode(const std::string& name)
     : mValue(0)
     , mView(0)
@@ -43,6 +44,17 @@ namespace Ogre
     , mSceneNode(0)
   {
   }
+#else
+  TextNode::TextNode(IdType id, ObjectMemoryManager* memoryManager, SceneManager* sceneManager)
+    : mValue(0)
+    , mView(0)
+    , mId(id)
+    , mSceneNode(0)
+    , mSceneManager(sceneManager)
+    , mObjectManager(memoryManager)
+  {
+  }
+#endif
 
   TextNode::~TextNode()
   {
@@ -65,8 +77,18 @@ namespace Ogre
     mValue->setNode(this);
     if(!mView)
     {
+#if OGRE_VERSION_MAJOR == 1
       mView = new MovableText(mName, mValue->getValue(), fontName, 1, ColourValue(1.0, 1.0, 1.0));
       mSceneNode = mValue->getNodeToAttachTo()->createChildSceneNode(mName);
+#else
+      Ogre::NameValuePairList params;
+      params["name"] = std::to_string(mId);
+      params["caption"] = mValue->getValue();
+      params["fontName"] = fontName;
+
+      mView = static_cast<MovableText*>(mSceneManager->createMovableObject("MovableText", mObjectManager, &params));
+      mSceneNode = mValue->getNodeToAttachTo()->createChildSceneNode();
+#endif
       mSceneNode->attachObject(mView);
     }
     else
@@ -131,10 +153,19 @@ namespace Ogre
 
   ManualMovableTextRenderer::CmdFontName ManualMovableTextRenderer::msFontNameCmd;
 
-  ManualMovableTextRenderer::ManualMovableTextRenderer(const std::string& name)
+  ManualMovableTextRenderer::ManualMovableTextRenderer(const std::string& name
+#if OGRE_VERSION_MAJOR == 2
+    , ObjectMemoryManager* objectManager
+    , SceneManager* sceneManager
+#endif
+  )
     : mName(name)
     , mQuota(0)
     , mPrevousParticleCount(0)
+#if OGRE_VERSION_MAJOR == 2
+    , mObjectManager(objectManager)
+    , mSceneManager(sceneManager)
+#endif
   {
     if(createParamDictionary("ManualMovableTextRenderer"))
     {
@@ -166,7 +197,11 @@ namespace Ogre
     return manualMovableTextRendererName; 
   }
 
+#if OGRE_VERSION_MAJOR == 1
   void ManualMovableTextRenderer::_updateRenderQueue(RenderQueue* queue, list<Particle*>::type& currentParticles, bool cullIndividually)
+#else
+  void ManualMovableTextRenderer::_updateRenderQueue(RenderQueue *queue, Camera *camera, const Camera *lodCamera, list< Particle * >::type &currentParticles, bool cullIndividually, RenderableArray &outRenderables)
+#endif
   {
 
     for (list<Particle*>::type::iterator i = currentParticles.begin();
@@ -190,8 +225,13 @@ namespace Ogre
           continue;
         }
       }
+#if OGRE_VERSION_MAJOR == 1
       value->getNode()->setPosition(p->position);
       value->getNode()->setColour(p->colour);
+#else
+      value->getNode()->setPosition(p->mPosition);
+      value->getNode()->setColour(p->mColour);
+#endif
       if(p->mHeight > 0)
         value->getNode()->setHeight(p->mHeight);
     }
@@ -218,20 +258,6 @@ namespace Ogre
     mPrevousParticleCount = currentParticles.size();
   }
 
-  void ManualMovableTextRenderer::_setMaterial(MaterialPtr& mat)
-  {
-
-  }
-
-  void ManualMovableTextRenderer::_notifyCurrentCamera(Camera* cam)
-  {
-    // iterate over all movable object and do notify current camera
-  }
-
-  void ManualMovableTextRenderer::_notifyAttached(Node* parent, bool isTagPoint)
-  {
-  }
-
   void ManualMovableTextRenderer::_notifyParticleQuota(size_t quota)
   {
     mQuota = quota;
@@ -248,6 +274,7 @@ namespace Ogre
 
   }
 
+
   void ManualMovableTextRenderer::setRenderQueueGroupAndPriority(uint8 queueID, ushort priority)
   {
 
@@ -262,9 +289,11 @@ namespace Ogre
     return SM_DISTANCE;
   }
 
+#if OGRE_VERSION_MAJOR == 1
   void ManualMovableTextRenderer::visitRenderables(Renderable::Visitor* visitor, bool debugRenderables)
   {
   }
+#endif
 
   void ManualMovableTextRenderer::adjustNodeCount()
   {
@@ -282,9 +311,13 @@ namespace Ogre
     {
       for(int i = mNodePool.size(); i < mQuota; i++)
       {
+#if OGRE_VERSION_MAJOR == 1
         std::stringstream ss;
         ss << mName << "textNode" << i;
         mNodePool.emplace_back(ss.str());
+#else
+        mNodePool.emplace_back(i, mObjectManager, mSceneManager);
+#endif
         mFreeNodes.push_back(&mNodePool.back());
       }
     }
@@ -293,6 +326,17 @@ namespace Ogre
   ManualMovableTextRendererFactory::ManualMovableTextRendererFactory()
     : mCreatedRenderersCounter(0)
   {
+#if OGRE_VERSION_MAJOR == 2
+    mDummyObjectMemoryManager = new ObjectMemoryManager();
+#endif
+  }
+
+  ManualMovableTextRendererFactory::~ManualMovableTextRendererFactory()
+  {
+#if OGRE_VERSION_MAJOR == 2
+    delete mDummyObjectMemoryManager;
+    mDummyObjectMemoryManager = 0;
+#endif
   }
 
   const String& ManualMovableTextRendererFactory::getType() const
@@ -304,7 +348,11 @@ namespace Ogre
   {
     std::stringstream ss;
     ss << name << (mCreatedRenderersCounter++);
+#if OGRE_VERSION_MAJOR == 1
     return OGRE_NEW ManualMovableTextRenderer(ss.str());
+#else
+    return OGRE_NEW ManualMovableTextRenderer(ss.str(), mDummyObjectMemoryManager, mCurrentSceneManager);
+#endif
   }
 
   void ManualMovableTextRendererFactory::destroyInstance(ParticleSystemRenderer* ptr)

@@ -42,11 +42,16 @@ THE SOFTWARE.
 #include "systems/RenderSystem.h"
 #include "RenderTarget.h"
 #include "RenderTargetTypes.h"
+#include "ResourceManager.h"
 #include "components/OgreRenderComponent.h"
 #include "ogre/OgreObjectManager.h"
 #include "EventDispatcher.h"
 
 #include "Definitions.h"
+#if OGRE_VERSION >= 0x020100
+#include <OgreRectangle2D.h>
+#include "ogre/v2/CustomPassProvider.h"
+#endif
 
 static const std::string OGRE_SECTION        = "OgreRenderer";
 static const std::string OGRE_PLUGINS_PATH   = "PluginsPath";
@@ -66,7 +71,6 @@ namespace Ogre
 namespace Gsage
 {
   class AnimationScheduler;
-  class ResourceManager;
   class Entity;
   class Engine;
   class EngineEvent;
@@ -180,7 +184,7 @@ namespace Gsage
       // --------------------------------------------------------------------------------
 
       /**
-       * Callback for ui updating
+       * Callback for ui updating 1.x, 2.0
        */
       virtual void renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation);
 
@@ -202,6 +206,15 @@ namespace Gsage
       template<typename T>
       bool unregisterElement() { return mObjectManager.unregisterElement<T>(); }
 
+#if OGRE_VERSION >= 0x020100
+      /**
+       * Register pass factory
+       */
+      template<class C>
+      bool registerPassDef(Ogre::IdString id) { return mCustomPassProvider.registerPassDef<C>(id); }
+#endif
+
+
       /**
        * Get ogre render window
        */
@@ -221,7 +234,7 @@ namespace Gsage
       /**
        * Enumerable of Ogre::Entity
        */
-      typedef std::vector<Ogre::Entity*> OgreEntities;
+      typedef std::vector<OgreV1::Entity*> OgreEntities;
       /**
        * Gets all scene entities
        *
@@ -311,9 +324,27 @@ namespace Gsage
       RenderTargetPtr getRenderTarget(const std::string& name);
 
       /**
+       * Get render target by wrapped Ogre::RenderTarget*
+       *
+       * @param target Ogre::RenderTarget
+       */
+      RenderTargetPtr getRenderTarget(Ogre::RenderTarget* target);
+
+      /**
        * Get main render target (window)
        */
       RenderTargetPtr getMainRenderTarget();
+
+#if OGRE_VERSION >= 0x020100
+      /**
+       * Register new Hlms
+       */
+      template<class T>
+      void registerHlms(const std::string& resourcePath)
+      {
+        mResourceManager->registerHlms<T>(resourcePath);
+      }
+#endif
     protected:
       /**
        * Handle window resizing
@@ -321,6 +352,8 @@ namespace Gsage
        * @param event WindowEvent
        */
       bool handleWindowResized(EventDispatcher* sender, const Event& event);
+
+      bool installPlugin(const std::string& name);
 
       GeomPtr getGeometry(OgreEntities entities);
 
@@ -346,12 +379,24 @@ namespace Gsage
       typedef std::map<std::string, RenderTargetPtr> RenderTargets;
       RenderTargets mRenderTargets;
 
+      typedef std::map<Ogre::RenderTarget*, std::string> RenderTargetReverseIndex;
+      RenderTargetReverseIndex mRenderTargetsReverseIndex;
+
       RenderTargetFactory mRenderTargetFactory;
 
       typedef std::map<std::string, RenderTargetPtr> RenderWindowsByHandle;
       RenderWindowsByHandle mRenderWindowsByHandle;
 
       RenderTargetPtr mWindow;
+#if OGRE_VERSION >= 0x020100
+      OgreV1::Rectangle2DFactory* mRectangle2DFactory;
+
+      CustomPassProvider mCustomPassProvider;
+#endif
+#if OGRE_STATIC
+      typedef std::map<std::string, Ogre::Plugin*> OgrePlugins;
+      OgrePlugins mOgrePlugins;
+#endif
   };
 }
 

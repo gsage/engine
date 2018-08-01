@@ -61,6 +61,19 @@ namespace Gsage
        */
       bool dumpSave(const std::string& saveFile);
       /**
+       * Remove entity by id
+       *
+       * @param id Entity id
+       */
+      bool removeEntity(const std::string& id);
+
+      /**
+       * Get raw entity data by id
+       * @param id Entity id
+       */
+      DataProxy getEntityData(const std::string& id);
+
+      /**
        * Create entity from string
        *
        * @param json Json string to create entity from

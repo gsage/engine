@@ -29,6 +29,11 @@ THE SOFTWARE.
 
 #include <OgreParticleSystem.h>
 #include "ogre/OgreObject.h"
+#if OGRE_VERSION_MAJOR == 1
+#define __NODE_ID_TYPE const std::string&
+#else
+#define __NODE_ID_TYPE Ogre::IdType
+#endif
 
 namespace Gsage {
 
@@ -61,7 +66,7 @@ namespace Gsage {
        * @param index Index of the emitter
        * @param nodeId Emit particle from the specified node
        */
-      void createParticle(unsigned short index, const std::string& nodeId);
+      void createParticle(unsigned short index, __NODE_ID_TYPE nodeId);
 
       /**
        * Manually create text particle in the system
@@ -70,7 +75,7 @@ namespace Gsage {
        * @param nodeId Emit particle from the specified node
        * @param value Text value
        */
-      void createParticle(unsigned short index, const std::string& nodeId, const std::string& value);
+      void createParticle(unsigned short index, __NODE_ID_TYPE nodeId, const std::string& value);
 
       /**
        * Manually create text particle in the system
@@ -80,10 +85,10 @@ namespace Gsage {
        * @param value Text value
        * @param rotate the emitter in the following direction
        */
-      void createParticle(unsigned short index, const std::string& nodeId, const std::string& value, const Ogre::Quaternion& rotation);
+      void createParticle(unsigned short index, __NODE_ID_TYPE nodeId, const std::string& value, const Ogre::Quaternion& rotation);
     private:
 
-      void createParticle(unsigned short index, Ogre::ParticleVisualData* data, const std::string& nodeId, const Ogre::Quaternion& rotation);
+      void createParticle(unsigned short index, Ogre::ParticleVisualData* data, __NODE_ID_TYPE nodeId, const Ogre::Quaternion& rotation);
 
       std::string mTemplate;
       Ogre::ParticleSystem* mParticleSystem;

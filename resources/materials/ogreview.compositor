@@ -1,0 +1,21 @@
+compositor_node ogreview_node
+{
+    in 0 renderwindow
+    target renderwindow
+    {
+        pass clear
+        {
+            colour_value 0.6 0.7 0.8 1
+        }
+        pass render_scene
+        {
+            rq_first    0
+            rq_last     max
+        }
+    }
+}
+
+workspace ogreview
+{
+    connect_output ogreview_node 0
+}

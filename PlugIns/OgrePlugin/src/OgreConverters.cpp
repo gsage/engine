@@ -270,17 +270,17 @@ namespace Gsage {
       return false;
 
     if(src == "OT_POINT_LIST") {
-      dst = Ogre::RenderOperation::OT_POINT_LIST;
+      dst = RenderOperationTypeCaster::Type::OT_POINT_LIST;
     } else if(src == "OT_LINE_LIST") {
-      dst = Ogre::RenderOperation::OT_LINE_LIST;
+      dst = RenderOperationTypeCaster::Type::OT_LINE_LIST;
     } else if(src == "OT_LINE_STRIP") {
-      dst = Ogre::RenderOperation::OT_LINE_STRIP;
+      dst = RenderOperationTypeCaster::Type::OT_LINE_STRIP;
     } else if(src == "OT_TRIANGLE_LIST") {
-      dst = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+      dst = RenderOperationTypeCaster::Type::OT_TRIANGLE_LIST;
     } else if(src == "OT_TRIANGLE_STRIP") {
-      dst = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+      dst = RenderOperationTypeCaster::Type::OT_TRIANGLE_STRIP;
     } else if(src == "OT_TRIANGLE_FAN") {
-      dst = Ogre::RenderOperation::OT_TRIANGLE_FAN;
+      dst = RenderOperationTypeCaster::Type::OT_TRIANGLE_FAN;
     } else {
       return false;
     }
@@ -290,17 +290,17 @@ namespace Gsage {
   const RenderOperationTypeCaster::FromType RenderOperationTypeCaster::from(const RenderOperationTypeCaster::Type& value) const
   {
     switch(value) {
-      case Ogre::RenderOperation::OT_POINT_LIST:
+      case RenderOperationTypeCaster::Type::OT_POINT_LIST:
         return "OT_POINT_LIST";
-      case Ogre::RenderOperation::OT_LINE_LIST:
+      case RenderOperationTypeCaster::Type::OT_LINE_LIST:
         return "OT_LINE_LIST";
-      case Ogre::RenderOperation::OT_LINE_STRIP:
+      case RenderOperationTypeCaster::Type::OT_LINE_STRIP:
         return "OT_LINE_STRIP";
-      case Ogre::RenderOperation::OT_TRIANGLE_LIST:
+      case RenderOperationTypeCaster::Type::OT_TRIANGLE_LIST:
         return "OT_TRIANGLE_LIST";
-      case Ogre::RenderOperation::OT_TRIANGLE_STRIP:
+      case RenderOperationTypeCaster::Type::OT_TRIANGLE_STRIP:
         return "OT_TRIANGLE_STRIP";
-      case Ogre::RenderOperation::OT_TRIANGLE_FAN:
+      case RenderOperationTypeCaster::Type::OT_TRIANGLE_FAN:
         return "OT_TRIANGLE_FAN";
       default:
         return "";

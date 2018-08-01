@@ -17,6 +17,7 @@ class TestDataProxyConverters : public ::testing::Test
     DataProxy mDataProxy;
 };
 
+
 TEST_F(TestDataProxyConverters, TestVector3)
 {
   auto pair = mDataProxy.get<Ogre::Vector3>("position");

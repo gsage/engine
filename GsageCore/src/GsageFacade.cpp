@@ -310,6 +310,16 @@ namespace Gsage {
     mEngine.fireEvent(Event(RESET));
   }
 
+  void GsageFacade::reset(sol::function f)
+  {
+    mEngine.fireEvent(Event(BEFORE_RESET));
+    mEngine.unloadMatching([f](Entity* e) -> bool {
+      bool match = f(e);
+      return match;
+    });
+    mEngine.fireEvent(Event(RESET));
+  }
+
   bool GsageFacade::loadArea(const std::string& name)
   {
     if(!mGameDataManager->loadArea(name))
@@ -342,6 +352,15 @@ namespace Gsage {
       mUIManagers[handle]->initialize(&mEngine, mLuaInterface->getState());
     }
     return handle;
+  }
+
+  UIManager* GsageFacade::getUIManager(const std::string& name) {
+    for(auto pair : mUIManagers) {
+      if(pair.second->getType() == name) {
+        return pair.second;
+      }
+    }
+    return nullptr;
   }
 
   bool GsageFacade::removeUIManager(int handle)

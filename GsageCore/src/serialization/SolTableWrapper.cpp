@@ -28,11 +28,12 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  SolTableWrapper::SolTableWrapper(const sol::table& value)
+  SolTableWrapper::SolTableWrapper(const sol::object& value)
     : DataWrapper(LUA_TABLE)
     , mObject(value)
     , mArrayMode(false)
   {
+    tableUpdate();
   }
 
   SolTableWrapper::SolTableWrapper()
@@ -48,7 +49,7 @@ namespace Gsage {
     if(value.getType() != getType()) {
       return false;
     }
-    mObject[key] = static_cast<SolTableWrapper&>(value).getObject();
+    getTable()[key] = static_cast<SolTableWrapper&>(value).getObject();
     return true;
   }
 
@@ -56,28 +57,28 @@ namespace Gsage {
     if(value.getType() != getType()) {
       return false;
     }
-    mObject[correctIndex(key)] = static_cast<SolTableWrapper&>(value).getObject();
+    getTable()[correctIndex(key)] = static_cast<SolTableWrapper&>(value).getObject();
     return true;
   }
 
   DataWrapper* SolTableWrapper::createChildAt(const std::string& key)
   {
     // DataProxy will wrap it into shared pointer
-    return new SolTableWrapper(mObject.create(key));
+    return new SolTableWrapper(getTable().create(key));
   }
 
   DataWrapper* SolTableWrapper::createChildAt(int key)
   {
     key = correctIndex(key);
-    mObject[key] = mObject.create();
-    sol::table t = mObject[key];
+    getTable()[key] = getTable().create();
+    sol::object t = getTable()[key];
     // DataProxy will wrap it into shared pointer
     return new SolTableWrapper(t);
   }
 
   const DataWrapper* SolTableWrapper::getChildAt(const std::string& key) const
   {
-    sol::optional<sol::object> child = mObject[key];
+    sol::optional<sol::object> child = getTable()[key];
     if(!child) {
       return 0;
     }
@@ -88,7 +89,7 @@ namespace Gsage {
 
   const DataWrapper* SolTableWrapper::getChildAt(int key) const
   {
-    sol::optional<sol::object> child = mObject[correctIndex(key)];
+    sol::optional<sol::object> child = getTable()[correctIndex(key)];
     if(!child) {
       return 0;
     }
@@ -107,7 +108,7 @@ namespace Gsage {
     bool isArray = false;
     switch(mObject.get_type()) {
       case sol::type::table:
-        return mObject.size() != 0 ? Array : Object;
+        return size() != 0 ? Array : Object;
       case sol::type::boolean:
         return Bool;
       case sol::type::number:
@@ -177,7 +178,8 @@ namespace Gsage {
     } else {
       mCurrent.first = iter.first.as<std::string>();
     }
-    mCurrentValue->mObject = iter.second.as<sol::table>();
+    mCurrentValue->mObject = iter.second;
+    mCurrentValue->tableUpdate();
     DataWrapper::iterator::mCurrent = DataWrapper::iterator::value_type(mCurrent.first, mCurrentValue);
   }
 

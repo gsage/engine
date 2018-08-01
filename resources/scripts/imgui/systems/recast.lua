@@ -3,6 +3,7 @@ local lm = require 'lib.locales'
 require 'lib.class'
 require 'imgui.base'
 local event = require 'lib.event'
+local icons = require 'imgui.icons'
 
 -- imgui view for recast navigation editor
 local RecastEditorView = class(ImguiWindow, function(self, open, dockable)
@@ -13,6 +14,7 @@ local RecastEditorView = class(ImguiWindow, function(self, open, dockable)
   if not core:navigation() then
     error("Navigation system is not loaded")
   end
+  self.icon = icons.timeline
   self.buildOptions = core:navigation().defaultOptions
   self.buildOptions.merge = false
 

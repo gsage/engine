@@ -35,8 +35,15 @@ THE SOFTWARE.
 #include <OgreVector2.h>
 #include "OgreConverters.h"
 
+#if OGRE_VERSION >= 0x020100
+#include <Compositor/OgreCompositorWorkspaceListener.h>
+#endif
+
 namespace Ogre {
   class SceneManager;
+#if OGRE_VERSION_MAJOR == 2
+  class CompositorWorkspace;
+#endif
 }
 
 namespace Gsage {
@@ -150,7 +157,11 @@ namespace Gsage {
     protected:
       virtual void updateCameraAspectRatio();
 
+#if OGRE_VERSION >= 0x020100
+      virtual void configureWorkspace(Ogre::CompositorWorkspace* workspace);
+#else
       virtual void configureViewport(Ogre::Viewport* viewport);
+#endif
 
       Ogre::RenderTarget* mWrappedTarget;
       std::string renderQueueSequenceName;
@@ -166,7 +177,10 @@ namespace Gsage {
 
       bool mAutoUpdate;
       RenderTargetType::Type mType;
+
+#if OGRE_VERSION_MAJOR == 1
       bool mRenderQueueSequenceCreated;
+#endif
       bool mHasQueueSequence;
       int mSamples;
 
@@ -178,6 +192,9 @@ namespace Gsage {
 
       Ogre::Vector2 mMousePosition;
       std::string mRolledOverObject;
+#if OGRE_VERSION_MAJOR == 2
+      Ogre::CompositorWorkspace* mWorkspace;
+#endif
   };
 
   /**

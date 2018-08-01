@@ -27,9 +27,14 @@ THE SOFTWARE.
 #include "ogre/EntityWrapper.h"
 #include "ogre/OgreObjectManager.h"
 
+#include <OgreMeshManager.h>
 #include <OgreEntity.h>
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
+
+#if OGRE_VERSION_MAJOR == 2
+#include <OgreOldSkeletonInstance.h>
+#endif
 
 namespace Gsage {
 
@@ -37,7 +42,7 @@ namespace Gsage {
 
   EntityWrapper::EntityWrapper()
     : mQuery(STATIC)
-    , mAnimBlendMode(Ogre::ANIMBLEND_CUMULATIVE)
+    , mAnimBlendMode(OgreV1::ANIMBLEND_CUMULATIVE)
   {
     BIND_ACCESSOR_WITH_PRIORITY("mesh", &EntityWrapper::setMesh, &EntityWrapper::getMesh, 1);
 
@@ -77,10 +82,16 @@ namespace Gsage {
   void EntityWrapper::setMesh(const std::string& model)
   {
     mMeshName = model;
-    mObject = mSceneManager->createEntity(generateName(), model);
+
+    // always load meshes using HBU_STATIC to make MOC & Recast work properly
+    OgreV1::MeshPtr mesh = OgreV1::MeshManager::getSingleton().load(
+      model, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,
+      OgreV1::HardwareBuffer::HBU_STATIC, OgreV1::HardwareBuffer::HBU_STATIC);
+
+    mObject = mSceneManager->createEntity(mesh);
     mObject->setQueryFlags(mQuery);
     mObject->getUserObjectBindings().setUserAny("entity", Ogre::Any(mOwnerId));
-    Ogre::Skeleton* skeleton = mObject->getSkeleton();
+    auto skeleton = static_cast<OgreV1::Entity*>(mObject)->getSkeleton();
     if(skeleton != 0)
       skeleton->setBlendMode(mAnimBlendMode);
     attachObject(mObject);

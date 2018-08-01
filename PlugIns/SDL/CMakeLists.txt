@@ -18,7 +18,8 @@ if(APPLE)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/OSXUtils.mm PROPERTIES COMPILE_FLAGS "-x objective-c++")
   set(sources src/OSXUtils.mm ${sources})
   set(LIBS ${LIBS}
-    ${COREFOUNDATION_LIBRARY})
+    ${COREFOUNDATION_LIBRARY}
+    "-framework Metal")
 endif(APPLE)
 
 gsage_plugin(${LIB_NAME} SHARED ${sources})

@@ -159,6 +159,14 @@ namespace Gsage
        * @returns int handle of UIManager. Use it to remove UI manager from the system
        */
       int addUIManager(UIManager* value);
+
+      /**
+       * Get UI manager by name
+       *
+       * @param name UIManager::TYPE
+       */
+      UIManager* getUIManager(const std::string& name);
+
       /**
        * Remove UIManager by it's handle
        *
@@ -178,6 +186,13 @@ namespace Gsage
        * Unloads current scene from engine
        */
       virtual void reset();
+      /**
+       * Unloads current scene from engine
+       *
+       * @param f Lua function callable
+       */
+      virtual void reset(sol::function f);
+
       /**
        * Loads game save
        *

@@ -239,6 +239,10 @@ bool Engine::removeEntity(Entity* entity)
 
 void Engine::unloadAll()
 {
+  for(auto pair : mEntityMap) {
+    fireEvent(EntityEvent(EntityEvent::REMOVE, pair.first));
+  }
+
   for(auto& pair : mEngineSystems)
   {
     LOG(INFO) << "Unload components from system " << pair.first;
@@ -246,6 +250,33 @@ void Engine::unloadAll()
   }
   mEntities.clear();
   mEntityMap.clear();
+}
+
+void Engine::unloadMatching(UnloadMatcherFunc f)
+{
+  std::vector<Entity*> removed;
+
+  for(auto pair : mEntityMap) {
+    if(f(pair.second)) {
+      removed.push_back(pair.second);
+      for(auto& p : pair.second->mComponents)
+      {
+        if(!hasSystem(p.first))
+          continue;
+
+        if(!mEngineSystems[p.first]->removeComponent(p.second)) {
+          LOG(WARNING) << "Got false return value while removing " << p.first << " component";
+        }
+      }
+    }
+  }
+
+  for(auto entity : removed) {
+    fireEvent(EntityEvent(EntityEvent::REMOVE, entity->getId()));
+    LOG(INFO) << "Removed entity \"" << entity->getId() << "\"";
+    mEntityMap.erase(entity->getId());
+    mEntities.erase(entity);
+  }
 }
 
 Entity* Engine::getEntity(const std::string& id)

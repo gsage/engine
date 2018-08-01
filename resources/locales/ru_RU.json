@@ -27,7 +27,10 @@
 
   "sceneExplorer": {
     "entities": "Объекты",
-    "no_editor": "Редактор для компонента %{component}: %{type} не найден"
+    "no_editor": "Редактор для компонента %{component}: %{type} не найден",
+    "entity": {
+      "reload": "Перезагрузить"
+    }
   },
 
   "transform": {

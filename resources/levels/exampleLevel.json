@@ -3,14 +3,18 @@
     "render": {
       "resources": {
         "exampleLevel": [
-          "Zip:models/packs/exampleLevel.zip",
+          "FileSystem:models/packs/exampleLevel",
           "Zip:models/packs/torch.zip"
         ]
       },
 
-      "colourBackground": "0xc0c0c",
-      "colourAmbient": "0x7F7F7F",
-      "colourDiffuse": "0xc0c0c"
+      "ambientLight" :{
+        "lowerHemisphere": "0x337F7FFF",
+        "upperHemisphere": "0xFF7F7FFF"
+      },
+      "colourBackground": "0xc0c0cFF",
+      "colourAmbient": "0x7F7F7FFF",
+      "colourDiffuse": "0xc0c0c0FF"
     },
     "script": {
       "hooks": {
@@ -20,7 +24,7 @@
     }
   },
   "entities": [
-  {
+    {
     "id": "castle",
     "render": {
       "root": {
@@ -35,24 +39,43 @@
         }]
       }
     }
-  }, {
-      "id": "Lamp",
+  },
+  {
+      "id": "lamp",
       "render": {
         "root": {
-          "position": "0,0,0",
+          "position": "-50,10,-40",
           "rotation": "0.570947,0.169076,0.755880,-0.272171",
-          "scale": "1.000000,1.000000,1.000000",
-          "name": "Lamp",
+          "name": "lamp",
           "children": [{
             "type": "light",
-            "colourSpecular": "0xffffff",
-            "direction": "0,-0.5,0.5",
-            "name": "Lamp",
+            "colourSpecular": "0xaaaaaaff",
+            "name": "lamp",
             "castShadows": true,
-            "position": "40,10,40",
-            "colourShadow": "0xffffff",
-            "colourDiffuse": "0xffffff",
-            "lightType": "directional"
+            "colourShadow": "0xffffffff",
+            "colourDiffuse": "0xFFCC00ff",
+            "lightType": "point",
+            "powerScale": 4
+          }]
+        }
+      }
+  }, {
+      "id": "sun",
+      "render": {
+        "root": {
+          "position": "0, 10, 0",
+          "rotation": "0.570947,0.169076,0.755880,-0.272171",
+          "name": "sun",
+          "children": [{
+            "type": "light",
+            "colourSpecular": "0xffffffff",
+            "direction": "-1, -1, -1",
+            "name": "sun",
+            "castShadows": true,
+            "colourShadow": "0xffffffff",
+            "colourDiffuse": "0xffffffff",
+            "lightType": "directional",
+            "powerScale": 4
           }]
         }
       }

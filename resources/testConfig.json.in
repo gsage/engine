@@ -86,8 +86,15 @@
     "@PLUGINS_DIRECTORY@/SDLPlugin"
   ],
   "render": {
-    "pluginsFile": "plugins.cfg",
-    "configFile": "ogreConfig.cfg",
+    "renderSystems": [
+      {"id": "Direct3D11 Rendering Subsystem"},
+      {"id": "Metal Rendering Subsystem"},
+      {"id": "OpenGL 3+ Rendering Subsystem"},
+      {"id": "OpenGL Rendering Subsystem",
+        "Fixed Pipeline Enabled": "Yes",
+        "RTT Preferred Mode": "FBO"
+      }
+    ],
     "globalResources":
     {
       "General":

@@ -68,8 +68,8 @@ namespace Gsage {
   {
     if(mConfig.count("cache") != 0)
       mTileCache->load(mConfig.get<std::string>("cache").first);
-    else
-      rebuild(DataProxy::create(DataWrapper::JSON_OBJECT));
+    //else
+      //rebuild(DataProxy::create(DataWrapper::JSON_OBJECT));
     return EngineSystem::configUpdated();
   }
 
@@ -81,6 +81,10 @@ namespace Gsage {
 
   void RecastNavigationSystem::updateComponent(RecastNavigationComponent* component, Entity* entity, const double& time)
   {
+    if(mTileCache == nullptr) {
+      return;
+    }
+
     MovementComponent* movementComponent = mEngine->getComponent<MovementComponent>(entity);
     RenderComponent* renderComponent = mEngine->getComponent<RenderComponent>(entity);
     if(!movementComponent || !renderComponent) {

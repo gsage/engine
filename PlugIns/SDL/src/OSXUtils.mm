@@ -36,5 +36,4 @@ namespace Gsage {
 
     return (unsigned long)view;
   }
-
 }
