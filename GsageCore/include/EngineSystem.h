@@ -133,7 +133,24 @@ namespace Gsage
        * @param name system's name as it's registered in the Engine
        */
       void setName(const std::string& name);
+
+      /**
+       * Count of threads to use for the system
+       */
+      inline int getThreadsNumber() { return mThreadsNumber; };
+
+      /**
+       * Check if multithreading is enabled
+       */
+      inline bool dedicatedThread() { return mDedicatedThread; };
     protected:
+
+      /**
+       * This function tells Engine if the particular system allows running in separate thread
+       *
+       * @returns false by default
+       */
+      virtual bool allowMultithreading();
 
       /**
        * Update configuration
@@ -141,14 +158,18 @@ namespace Gsage
       virtual void configUpdated();
 
       Engine* mEngine;
-      bool mReady;
       DataProxy mConfig;
-      bool mConfigDirty;
       GsageFacade* mFacade;
+      DataProxy mSystemInfo;
+
+      std::string mName;
+
+      int mThreadsNumber;
 
       bool mEnabled;
-      DataProxy mSystemInfo;
-      std::string mName;
+      bool mReady;
+      bool mConfigDirty;
+      bool mDedicatedThread;
   };
 }
 

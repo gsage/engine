@@ -80,6 +80,8 @@ THE SOFTWARE.
 #include <Compositor/OgreCompositorManager2.h>
 #endif
 
+#include <chrono>
+
 #include "OgreGeom.h"
 
 
@@ -383,8 +385,7 @@ namespace Gsage {
       mRenderTargetsReverseIndex[pair.second->getOgreRenderTarget()] = pair.first;
     }
 
-    EngineSystem::initialize(settings);
-    return true;
+    return EngineSystem::initialize(settings);
   }
 
   bool OgreRenderSystem::prepareComponent(OgreRenderComponent* c)
@@ -422,6 +423,10 @@ namespace Gsage {
 
     if(!continueRendering)
       mEngine->fireEvent(EngineEvent(EngineEvent::SHUTDOWN));
+
+    if(dedicatedThread()) {
+      std::this_thread::sleep_for(std::chrono::microseconds((long)(6000 - time)));
+    }
   }
 
   void OgreRenderSystem::updateComponent(OgreRenderComponent* component, Entity* entity, const double& time)
@@ -542,6 +547,11 @@ namespace Gsage {
     }
 
     return false;
+  }
+
+  bool OgreRenderSystem::allowMultithreading()
+  {
+    return true;
   }
 
   GeomPtr OgreRenderSystem::getGeometry(const BoundingBox& bounds, int flags)

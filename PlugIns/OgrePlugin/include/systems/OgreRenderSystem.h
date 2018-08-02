@@ -355,6 +355,11 @@ namespace Gsage
 
       bool installPlugin(const std::string& name);
 
+      /**
+       * Allow multithreaded mode for OgreRenderSystem
+       */
+      bool allowMultithreading();
+
       GeomPtr getGeometry(OgreEntities entities);
 
       void removeAllRenderTargets();

@@ -33,7 +33,13 @@ if(APPLE)
   set(LIBS ${LIBS}
     ${COREFOUNDATION_LIBRARY})
 elseif(UNIX)
-  set(LIBS ${CMAKE_DL_LIBS} ${LIBS})
+  find_package(Threads REQUIRED)
+  set(LIBS ${CMAKE_DL_LIBS}
+    -Wl,--whole-archive
+    Threads::Threads
+    -Wl,--no-whole-archive
+    ${LIBS}
+  )
 endif(APPLE)
 
 target_link_libraries(

@@ -38,6 +38,9 @@ THE SOFTWARE.
 #include "ObjectPool.h"
 #include <map>
 #include <vector>
+#include <thread>
+#include <atomic>
+
 #include "DataProxy.h"
 
 namespace Gsage
@@ -248,7 +251,39 @@ namespace Gsage
        * Get settings
        */
       const DataProxy& settings() const { return mConfiguration; }
+
+      /**
+       * Shutdown the engine
+       * @param terminate Abort all running threads
+       */
+      void shutdown(bool terminate = false);
     private:
+      class SystemWorker
+      {
+        public:
+          SystemWorker(EngineSystem* system);
+          virtual ~SystemWorker();
+
+          /**
+           * Start the worker
+           */
+          void start();
+
+          /**
+           * Stops the worker
+           */
+          void shutdown(bool terminate);
+        private:
+
+          /**
+           * Run loop
+           */
+          void run();
+          EngineSystem* mSystem;
+          std::thread* mThread;
+          std::atomic_bool mShutdown;
+          std::chrono::high_resolution_clock::time_point mPreviousUpdateTime;
+      };
       /**
        * Create component for entity
        *
@@ -265,6 +300,13 @@ namespace Gsage
        */
       bool readEntityData(Entity* entity, const DataProxy& node);
 
+      /**
+       * Shutdown threads
+       *
+       * @param terminate Abort execution
+       */
+      void shutdownThreads(bool terminate);
+
       bool mInitialized;
 
       EngineSystems mEngineSystems;
@@ -279,6 +321,9 @@ namespace Gsage
 
       DataProxy mConfiguration;
       DataProxy mEnvironment;
+
+      typedef std::map<std::string, std::unique_ptr<SystemWorker>> Workers;
+      Workers mWorkers;
   };
 }
 
