@@ -29,15 +29,22 @@ THE SOFTWARE.
 namespace Gsage
 {
 
-  EngineSystem::EngineSystem() :
-    mReady(false),
-    mConfigDirty(false),
-    mEnabled(true)
+  EngineSystem::EngineSystem()
+    : mReady(false)
+    , mConfigDirty(false)
+    , mEnabled(true)
+    , mThreadsNumber(1)
+    , mDedicatedThread(false)
   {
   }
 
   EngineSystem::~EngineSystem()
   {
+  }
+
+  bool EngineSystem::allowMultithreading()
+  {
+    return false;
   }
 
   bool EngineSystem::configure(const DataProxy& config)
@@ -56,6 +63,12 @@ namespace Gsage
   bool EngineSystem::initialize(const DataProxy& settings)
   {
     mConfig = settings;
+    mThreadsNumber = mConfig.get("threadsNumber", 1);
+    mDedicatedThread = mConfig.get("dedicatedThread", false);
+    if(mDedicatedThread && !allowMultithreading()) {
+      LOG(ERROR) << "System " << mName << " does not support multithreaded mode";
+      return false;
+    }
     return mReady = true;
   }
 

@@ -299,6 +299,7 @@ namespace Gsage {
   void GsageFacade::shutdown(int exitCode)
   {
     mEngine.fireEvent(EngineEvent(EngineEvent::STOPPING));
+    mEngine.shutdown();
     mExitCode = exitCode;
     mStopped = true;
   }

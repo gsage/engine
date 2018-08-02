@@ -70,6 +70,38 @@ class TestSystem : public ComponentStorage<SpeedComponent>
     }
 };
 
+class TestThreadedSystem : public ComponentStorage<SpeedComponent>
+{
+  public:
+    TestThreadedSystem()
+      : mWasUpdated(false)
+    {
+    }
+
+    bool allowMultithreading()
+    {
+      return true;
+    }
+
+    void updateComponent(SpeedComponent* component, Entity* entity, const double& time)
+    {
+      component->value *= mEngine->getComponent<AccelerationComponent>(*entity, "accelerator")->value;
+    }
+
+    void update(const double& time)
+    {
+      mWasUpdated = true;
+      ComponentStorage<SpeedComponent>::update(time);
+    }
+
+    bool fillComponentData(SpeedComponent* c, const DataProxy& data)
+    {
+      c->value = data.get<double>("speed").first;
+      return true;
+    }
+    std::atomic_bool mWasUpdated;
+};
+
 class TestEngine : public ::testing::Test
 {
   public:
@@ -153,4 +185,27 @@ TEST_F(TestEngine, TestEntityAddFailure)
   ASSERT_TRUE(mInstance->removeEntity("test"));
   ASSERT_FALSE(mInstance->removeEntity("test"));
   ASSERT_FALSE(mInstance->removeEntity("not_exists"));
+}
+
+TEST_F(TestEngine, TestThreadedSystemsStartStop)
+{
+  TestThreadedSystem system;
+  DataProxy env;
+  std::string rawJson = "{\"speedThreaded\": {\"dedicatedThread\": true, \"threadsNumber\": 3}}";
+  DataProxy config = loads(rawJson, DataWrapper::JSON_OBJECT);
+  mInstance->initialize(config, env);
+  mInstance->addSystem("speedThreaded", &system, true);
+  for(int i = 0; i < 5; i++) {
+    if(system.mWasUpdated) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+  ASSERT_TRUE(system.mWasUpdated);
+  mInstance->shutdown();
+  system.mWasUpdated = false;
+  for(int i = 0; i < 5; i++) {
+    ASSERT_FALSE(system.mWasUpdated);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
 }
