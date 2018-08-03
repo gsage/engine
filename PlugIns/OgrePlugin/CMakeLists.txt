@@ -4,6 +4,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
+  ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
   ${OGRE_INCLUDE_DIRS}
   ${OGRE_Overlay_INCLUDE_DIR}
   ${OGRE_Terrain_INCLUDE_DIR}
@@ -23,6 +24,7 @@ set(sources ${sources} ${version_dependent})
 set(LIBS
   GsageCore
   easyloggingpp
+  cpp-channel
   ${OGRE_Terrain_LIBRARY}
   ${OGRE_Overlay_LIBRARY}
   ${OGRE_LIBRARIES}

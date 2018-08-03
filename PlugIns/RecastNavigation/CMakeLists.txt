@@ -4,6 +4,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
+  ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
   ${SDL_INCLUDE_DIRS}
   ${RECAST_INCLUDE_DIRS}
 )
@@ -11,6 +12,7 @@ include_directories(
 set(LIBS
   GsageCore
   easyloggingpp
+  cpp-channel
   ${RECAST_LIBRARIES}
 )
 

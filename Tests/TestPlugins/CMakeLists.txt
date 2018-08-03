@@ -1,7 +1,13 @@
 macro(test_plugin plugin_name)
 
 set(LIBS
-  GsageCore)
+  GsageCore
+  cpp-channel
+)
+
+include_directories(
+  ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
+)
 
 file(GLOB sources src/*.cpp)
 

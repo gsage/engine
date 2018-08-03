@@ -11,7 +11,7 @@ if imgui then
   describe("imgui tests #core #imgui", function()
     it("should work after engine reset", function()
       camera:createAndAttach('free', 'free')
-      imgui.render:addView("test", view)
+      imgui.render:addView("test", view, true)
       game:reset()
       async.waitSeconds(0.2)
     end)

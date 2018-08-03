@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include "EventDispatcher.h"
 #include "Logger.h"
+#include "ThreadSafeQueue.h"
 
 namespace Gsage {
   /**
@@ -52,6 +53,9 @@ namespace Gsage {
       typedef std::map<EventSubscription, Handlers> EventConnections;
       // Event callback format
       typedef bool (C::*CallbackMemFn)(EventDispatcher*, const Event&);
+
+      typedef std::function<void()> QueuedCallback;
+
 
       class HandlerDescriptor
       {
@@ -98,10 +102,11 @@ namespace Gsage {
        * @param callback The function that accepts EventDispatcher pointer as the first param and const Event& as the second param.
        *   It should return bool value. Returning false, will stop event propagation.
        * @param priority Adjusts callback call order
+       * @param async Do not trigger event call from the same thread, but put the event to the queue
        *
        * @returns true if added, false if already exists
        */
-      bool addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, CallbackMemFn callback, const int priority = 0)
+      bool addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, CallbackMemFn callback, const int priority = 0, bool async = false)
       {
         EventSubscription subscription(dispatcher, eventType);
         // if there is the same listener, there is no need to add another
@@ -118,7 +123,19 @@ namespace Gsage {
           addEventListener(dispatcher, DispatcherEvent::FORCE_UNSUBSCRIBE, &EventSubscriber<C>::onForceUnsubscribe);
         }
 
-        mConnections[subscription].push_back(HandlerDescriptor(callback, dispatcher->addEventListener(eventType, std::bind(callback, (C*)this, std::placeholders::_1, std::placeholders::_2), priority)));
+        EventCallback cb = [this, callback, async] (EventDispatcher* dispatcher, const Event& event) -> bool {
+          if(async) {
+            mCallbacks << [this, callback, async, dispatcher, event] () {
+              (((C*)this)->*callback)(dispatcher, event);
+            };
+            // no propagation interruption in async mode
+            return true;
+          }
+
+          return (((C*)this)->*callback)(dispatcher, event);
+        };
+
+        mConnections[subscription].push_back(HandlerDescriptor(callback, dispatcher->addEventListener(eventType, cb, priority)));
         return true;
       }
 
@@ -197,6 +214,32 @@ namespace Gsage {
         return true;
       }
 
+      /**
+       * Flush events accumulated in the event queue
+       *
+       * @returns count of flushed events
+       */
+      int flushEvents()
+      {
+        int flushed = 0;
+        int remaining = -1;
+        while(remaining == -1 || flushed < remaining) {
+          QueuedCallback cb;
+          int c = mCallbacks.get(cb);
+          if(c == 0) {
+            break;
+          }
+
+          if(remaining == -1) {
+            remaining = c;
+          }
+
+          cb();
+          flushed++;
+        }
+        return flushed;
+      }
+
     protected:
       HandlerIterator getDescriptor(Handlers& h, const CallbackMemFn& callback)
       {
@@ -204,6 +247,10 @@ namespace Gsage {
       }
 
       EventConnections mConnections;
+
+      typedef ThreadSafeQueue<QueuedCallback> QueuedCallbacks;
+
+      QueuedCallbacks mCallbacks;
   };
 }
 #endif
