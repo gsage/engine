@@ -3,21 +3,15 @@ Ogre Plugin
 
 Plugin Name: :code:`OgrePlugin`
 
-.. note::
-
-  This page is mostly a stub for OGRE Plugin documentation. It will be more useful after adding support for OGRE 2.1.
-
-Ogre Plugin is going to support different versions of OGRE rendering library.
-1.9.0 and 2.1.0 are pretty different feature wise and 2.1.0 does not have backward
-compatibility with 1.9.0.
+Only one version of OGRE can be built simultaneously. E.g. you can't build both 2.1 and 1.9 plugins at the same time.
 
 Common Features
 ^^^^^^^^^^^^^^^
 
-TBD: only 1.9.0 is supported currently.
-
 1.9.0
 ^^^^^
+
+This version is still used by default, no additional build parameters are required to select this version.
 
 Supported rendering subsystems:
 
@@ -31,10 +25,32 @@ Custom pipeline setup is not there yet. Editor starts, but it crashes when tryin
 1.10.0
 ^^^^^^
 
-TBD: when ogre 1.10 is supported.
+Will be used instead of 1.9.0 in future. 1.9.0 support will be dropped.
 
 2.1.0
 ^^^^^
 
-Legacy API still can be used by defining that explicitly in render component entities and nodes.
+To build against OGRE 2.1.
 
+Using makefile:
+
+.. code-block:: bash
+
+   # bash
+   OGRE_VERSION=2.1.0 make build
+
+   # windows shell
+   set OGRE_VERSION=2.1.0
+   make.exe build
+
+Conan commands:
+
+.. code-block:: bash
+
+	conan install -g cmake -s build_type=Release -o gsage:with_ogre=2.1.0 --build=outdated .
+	conan build .
+
+Supported rendering subsystems:
+
+* OpenGL 3+ Rendering Subsystem
+* Metal Rendering Subsystem (OSX only)

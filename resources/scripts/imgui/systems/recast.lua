@@ -131,9 +131,8 @@ function RecastEditorView:__call()
         end
         imgui.Separator()
       end
-
-      imgui.EndChild()
     end
+    imgui.EndChild()
 
     imgui.Separator()
 

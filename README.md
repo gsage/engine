@@ -8,6 +8,10 @@ Graphics System Agnostic Game Engine
 
 ## Showcase
 
+**GsageExe example is not working right now, that's known issue. This
+example will be replaced by proper template project that will be
+available from the editor**
+
 ![Editor](/docs/images/editor.png)
 ![ExampleGame](/docs/images/game2.png)
 See [documentation](http://engine.readthedocs.io/) for more examples.

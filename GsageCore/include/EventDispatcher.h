@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <vector>
 #include <string>
 #include <functional>
+#include <mutex>
 #include "GsageDefinitions.h"
 
 namespace Gsage {
@@ -170,6 +171,7 @@ namespace Gsage {
        */
       EventConnection addEventListener(Event::ConstType eventType, EventCallback callback, const int priority = 0);
       EventTypes mSignals;
+      std::mutex mMutationMutex;
   };
 }
 

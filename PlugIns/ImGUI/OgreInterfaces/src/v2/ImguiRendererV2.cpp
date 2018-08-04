@@ -37,9 +37,6 @@ THE SOFTWARE.
 #include "ogre/v2/HlmsUnlit.h"
 #include "ogre/v2/HlmsUnlitDatablock.h"
 
-#include "v2/ImguiHlms.h"
-#include "v2/ImguiHlmsDatablock.h"
-
 #include "Engine.h"
 
 namespace Gsage {

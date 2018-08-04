@@ -36,7 +36,7 @@
 
 // Helpers
 #ifndef IM_ASSERT
-#include <assert.h>                                                             
+#include <assert.h>
 #define IM_ASSERT(_EXPR)            assert(_EXPR)                               // You can override the default assert handler by editing imconfig.h
 #endif
 #if defined(__clang__) || defined(__GNUC__)

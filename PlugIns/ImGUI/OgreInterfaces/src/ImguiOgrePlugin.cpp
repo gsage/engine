@@ -33,6 +33,9 @@ THE SOFTWARE.
 #include "Definitions.h"
 #include "ImguiDefinitions.h"
 
+#include "OgreView.h"
+#include "Gizmo.h"
+
 #if OGRE_VERSION >= 0x020100
 #include "v2/ImguiRendererV2.h"
 #endif
@@ -90,6 +93,47 @@ namespace Gsage {
 
   void ImguiOgrePlugin::setupLuaBindings()
   {
+    sol::state_view& lua = *mLuaInterface->getSolState();
+    lua["imgui"]["createOgreView"] = [&] () -> std::shared_ptr<OgreView>{
+      OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
+      if(render == 0) {
+        return std::shared_ptr<OgreView>(nullptr);
+      }
+      return std::shared_ptr<OgreView>(new OgreView(render));
+    };
+    lua.new_usertype<OgreView>("OgreView",
+        "setTextureID", &OgreView::setTextureID,
+        "render", &OgreView::render
+    );
+
+    sol::table gizmo = lua.create_table();
+
+    gizmo["IsOver"] = [] () -> bool { return ImGuizmo::IsOver(); };
+    gizmo["IsUsing"] = [] () -> bool { return ImGuizmo::IsUsing(); };
+    gizmo["ROTATE"] = ImGuizmo::OPERATION::ROTATE;
+    gizmo["TRANSLATE"] = ImGuizmo::OPERATION::TRANSLATE;
+    gizmo["SCALE"] = ImGuizmo::OPERATION::SCALE;
+
+    gizmo["WORLD"] = ImGuizmo::MODE::WORLD;
+    gizmo["LOCAL"] = ImGuizmo::MODE::LOCAL;
+
+    lua["imgui"]["gizmo"] = gizmo;
+
+    lua["imgui"]["createGizmo"] = [&] () -> std::shared_ptr<Gizmo>{
+      OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
+      if(render == 0) {
+        return std::shared_ptr<Gizmo>(nullptr);
+      }
+      return std::shared_ptr<Gizmo>(new Gizmo(render));
+    };
+    lua.new_usertype<Gizmo>("Gizmo",
+        "setTarget", &Gizmo::setTarget,
+        "enable", &Gizmo::enable,
+        "render", &Gizmo::render,
+        "operation", sol::property(&Gizmo::getOperation, &Gizmo::setOperation),
+        "mode", sol::property(&Gizmo::getMode, &Gizmo::setMode),
+        "drawCoordinatesEditor", &Gizmo::drawCoordinatesEditor
+    );
   }
 }
 

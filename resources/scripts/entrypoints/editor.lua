@@ -120,7 +120,7 @@ if imguiInterface:available() then
   imguiInterface:addView("ogreView", ogreView)
 
   local function onAreaLoad(event)
-    --ogreView:createCamera("free")
+    ogreView:createCamera("free")
   end
 
   event:bind(core, Facade.LOAD, onAreaLoad)

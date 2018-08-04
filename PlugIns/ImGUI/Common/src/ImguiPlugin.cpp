@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include "ImguiPlugin.h"
 #include "GsageFacade.h"
 #include "ImguiLuaInterface.h"
+#include "ImguiEvent.h"
+
 #include <imgui.h>
 
 #include "sol.hpp"
@@ -59,7 +61,7 @@ namespace Gsage {
   {
     sol::state_view& lua = *mLuaInterface->getSolState();
     lua["imgui"] = sol::lua_nil;
-    lua["ImguiRenderer"] = sol::lua_nil;
+    lua["ImguiManager"] = sol::lua_nil;
 
     mFacade->removeUIManager(mUIManagerHandle);
   }
@@ -68,13 +70,22 @@ namespace Gsage {
   {
     sol::state_view& lua = *mLuaInterface->getSolState();
 
-    lua.new_usertype<ImguiRenderer>("ImguiRenderer",
+    lua.new_usertype<ImguiManager>("ImguiManager",
         "new", sol::no_constructor,
-        "addView", &ImguiRenderer::addView,
-        "removeView", &ImguiRenderer::removeView
+        "addView", &ImguiManager::addView,
+        "removeView", &ImguiManager::removeView
+    );
+
+    mLuaInterface->registerEvent<ImguiEvent>("ImguiEvent",
+        "onImgui",
+        sol::base_classes, sol::bases<Event>(),
+        "contextName", &ImguiEvent::mContextName,
+        "CONTEXT_CREATED", sol::var(ImguiEvent::CONTEXT_CREATED)
     );
 
     ImguiLuaInterface::addLuaBindings(lua);
+    lua["imgui"]["manager"] = &mUIManager;
+    mUIManager.setLuaState(mLuaInterface->getState());
   }
 }
 

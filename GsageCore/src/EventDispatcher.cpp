@@ -41,27 +41,42 @@ namespace Gsage {
 
   EventConnection EventDispatcher::addEventListener(Event::ConstType eventType, EventCallback callback, const int priority)
   {
-    if(!hasListenersForType(eventType))
+    if(!hasListenersForType(eventType)) {
+      mMutationMutex.lock();
       mSignals[eventType] = new EventSignal();
+      mMutationMutex.unlock();
+    }
 
-    return mSignals[eventType]->connect(priority, callback);
+    mMutationMutex.lock();
+    EventConnection c = mSignals[eventType]->connect(priority, callback);
+    mMutationMutex.unlock();
+    return c;
   }
 
   bool EventDispatcher::hasListenersForType(Event::ConstType type)
   {
-    return mSignals.count(type) > 0;
+    mMutationMutex.lock();
+    bool res = mSignals.count(type) > 0;
+    mMutationMutex.unlock();
+    return res;
   }
 
   void EventDispatcher::fireEvent(const Event& event)
   {
-    if(!hasListenersForType(event.getType()))
+    if(!hasListenersForType(event.getType())) {
       return;
+    }
 
-    (*mSignals[event.getType()])(this, event);
+    EventSignal* s = nullptr;
+    mMutationMutex.lock();
+    s = mSignals[event.getType()];
+    mMutationMutex.unlock();
+    (*s)(this, event);
   }
 
   void EventDispatcher::removeAllListeners()
   {
+    mMutationMutex.lock();
     for(std::pair<Event::Type, EventSignal*> element : mSignals)
     {
       if (element.first == DispatcherEvent::FORCE_UNSUBSCRIBE)
@@ -71,6 +86,7 @@ namespace Gsage {
       }
     }
     mSignals.clear();
+    mMutationMutex.unlock();
   }
 
   EventSignal::EventSignal()

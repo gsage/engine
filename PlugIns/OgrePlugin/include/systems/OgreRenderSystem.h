@@ -109,6 +109,11 @@ namespace Gsage
       virtual bool initialize(const DataProxy& settings);
 
       /**
+       * Shutdown OGRE
+       */
+      virtual void shutdown();
+
+      /**
        * Initializes OgreRenderComponent, injects objectManager, resourceManager and sceneManager
        *
        * @param c OgreRenderComponent component to initialize
@@ -345,6 +350,10 @@ namespace Gsage
         mResourceManager->registerHlms<T>(resourcePath);
       }
 #endif
+      /**
+       * Allow multithreaded mode for OgreRenderSystem
+       */
+      bool allowMultithreading();
     protected:
       /**
        * Handle window resizing
@@ -354,11 +363,6 @@ namespace Gsage
       bool handleWindowResized(EventDispatcher* sender, const Event& event);
 
       bool installPlugin(const std::string& name);
-
-      /**
-       * Allow multithreaded mode for OgreRenderSystem
-       */
-      bool allowMultithreading();
 
       GeomPtr getGeometry(OgreEntities entities);
 

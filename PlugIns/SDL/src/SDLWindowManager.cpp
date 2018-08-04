@@ -158,19 +158,25 @@ namespace Gsage {
       wrapper->mGLContext = sdlContext;
     }
 
+    mWindowsMutex.lock();
     fireWindowEvent(WindowEvent::CREATE, wrapper->getWindowHandle(), width, height);
     mWindows.push_back(WindowPtr(static_cast<Window*>(wrapper)));
-    return mWindows[mWindows.size()-1];
+    auto res = mWindows[mWindows.size()-1];
+    mWindowsMutex.unlock();
+    return res;
   }
 
   bool SDLWindowManager::destroyWindow(WindowPtr window)
   {
+    mWindowsMutex.lock();
     auto result = std::find(mWindows.begin(), mWindows.end(), window);
     if(result == mWindows.end()) {
+      mWindowsMutex.unlock();
       return false;
     }
     fireWindowEvent(WindowEvent::CLOSE, window->getWindowHandle());
     mWindows.erase(result);
+    mWindowsMutex.unlock();
     return true;
   }
 

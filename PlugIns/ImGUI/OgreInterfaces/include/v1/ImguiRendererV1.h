@@ -49,6 +49,7 @@ namespace Gsage {
     protected:
       void updateVertexData(Ogre::Viewport* vp, ImVec2 displaySize);
       void createMaterial();
+      void updateFontTexture();
     private:
       std::vector<ImGUIRenderable*> mRenderables;
 

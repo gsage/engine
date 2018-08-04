@@ -95,6 +95,14 @@ namespace Gsage {
         mMutex.unlock();
         return tail;
       }
+
+      size_t size()
+      {
+        mMutex.lock();
+        size_t size = mQueue.size();
+        mMutex.unlock();
+        return size;
+      }
     private:
       std::queue<C> mQueue;
       int mLimit;

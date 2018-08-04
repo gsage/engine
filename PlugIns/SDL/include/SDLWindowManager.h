@@ -28,6 +28,7 @@ THE SOFTWARE.
 */
 
 #include "WindowManager.h"
+#include <mutex>
 #include <SDL2/SDL.h>
 
 namespace Gsage {
@@ -93,6 +94,8 @@ namespace Gsage {
     private:
       typedef std::vector<WindowPtr> Windows;
       Windows mWindows;
+
+      std::mutex mWindowsMutex;
   };
 }
 

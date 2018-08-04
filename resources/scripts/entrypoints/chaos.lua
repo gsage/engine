@@ -164,10 +164,10 @@ game:loadSave('gameStart')
 if imgui then
   imguiConsole = Console(256)
   imguiConsole:setOpen(true)
-  imgui.render:addView("console", imguiConsole, false)
+  imgui.manager:addView("console", imguiConsole, false)
   stats = Stats("stats", false)
-  imgui.render:addView("stats", stats, false)
+  imgui.manager:addView("stats", stats, false)
 
   local recastEditor = require 'imgui.systems.recast'
-  imgui.render:addView("recast", recastEditor(true, false), false)
+  imgui.manager:addView("recast", recastEditor(true, false), false)
 end

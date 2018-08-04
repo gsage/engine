@@ -35,11 +35,13 @@ namespace Gsage {
 
   const Event::Type EngineEvent::STOPPING = "stopping";
 
+  const Event::Type EngineEvent::UPDATE = "EngineEvent::UPDATE";
+
   const Event::Type EntityEvent::REMOVE = "entityDeleted";
 
   const Event::Type EntityEvent::CREATE = "entityCreated";
 
-  const Event::Type SettingsEvent::UPDATE = "update";
+  const Event::Type SettingsEvent::UPDATE = "SettingsEvent::UPDATE";
 
   const Event::Type SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
 
