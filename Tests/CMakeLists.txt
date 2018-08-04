@@ -6,6 +6,7 @@ set(TEST_DEPENDENCIES
   jsoncpp
   ImGUIPlugin
   easyloggingpp
+  cpp-channel
   ${LUAJIT_LIBRARIES}
   ${GTEST_LIBRARIES}
 )
@@ -17,6 +18,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
+  ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
   ${gsage_SOURCE_DIR}/PlugIns/ImGUI/Common/include
 
@@ -34,6 +36,7 @@ set(TEST_FILES
   Core/TestGsageFacade.cpp
   Core/TestFileLoader.cpp
   Core/TestPath.cpp
+  Core/TestThreadSafeQueue.cpp
   Plugins/ImGUI/TestDockspace.cpp
 )
 

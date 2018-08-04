@@ -3,6 +3,7 @@ set(LIB_NAME "ImGUIPlugin")
 include_directories(
   ${gsage_SOURCE_DIR}/Vendor/imgui
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
+  ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
   ${gsage_SOURCE_DIR}/Vendor/sole
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
 )
@@ -10,6 +11,7 @@ include_directories(
 set(LIBS
   GsageCore
   imgui
+  cpp-channel
 )
 
 file(GLOB sources src/*.cpp)

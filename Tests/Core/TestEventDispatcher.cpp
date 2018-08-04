@@ -2,6 +2,10 @@
 #include "EventDispatcher.h"
 #include "EventSubscriber.h"
 
+#include <thread>
+#include <channel>
+#include <chrono>
+
 using namespace Gsage;
 
 class TestEvent : public Event
@@ -360,4 +364,72 @@ TEST(TestRemoveEventListener, TestRemoveInHandler)
 
   delete handler;
   delete dispatcher;
+}
+
+/**
+ * Test async subscription mode
+ */
+TEST(TestAsyncSubscriber, TestBasic)
+{
+  EventDispatcher* dispatcher = new EventDispatcher();
+  TestEventHandlerRemove* handler = new TestEventHandlerRemove();
+  handler->addEventListener(dispatcher, TestEvent::PING, &TestEventHandlerRemove::onTestEvent, 0, true);
+
+  enum Command {
+    Send,
+    Receive,
+    Shutdown,
+  };
+
+  cpp::channel<Command> senderCommands;
+  cpp::channel<Command> receiverCommands;
+  auto firstThreadFunc = [&] () {
+    while(true) {
+      switch(senderCommands.recv()) {
+        case Send:
+          dispatcher->fireEvent(TestEvent(TestEvent::PING, 1));
+          break;
+        case Shutdown:
+          return;
+        default:
+          break;
+      }
+    }
+  };
+
+  auto secondThreadFunc = [&] () {
+    while(true) {
+      switch(receiverCommands.recv()) {
+        case Receive:
+          handler->flushEvents();
+          break;
+        case Shutdown:
+          return;
+        default:
+          break;
+      }
+    }
+  };
+
+  std::thread firstThread(firstThreadFunc);
+  std::thread secondThread(secondThreadFunc);
+
+  senderCommands.send(Send);
+  ASSERT_FALSE(handler->gotEvent);
+
+  for(int i = 0; i < 10; ++i) {
+    receiverCommands.send(Receive);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    if(handler->gotEvent) {
+      break;
+    }
+  }
+
+  senderCommands.send(Shutdown);
+  receiverCommands.send(Shutdown);
+
+  firstThread.join();
+  secondThread.join();
+
+  ASSERT_TRUE(handler->gotEvent);
 }

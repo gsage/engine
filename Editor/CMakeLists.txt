@@ -6,6 +6,7 @@ include_directories(${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include)
 include_directories(${gsage_SOURCE_DIR}/Vendor/Sol2/include)
 include_directories(${gsage_SOURCE_DIR}/Vendor/jsoncpp/include)
 include_directories(${gsage_SOURCE_DIR}/Vendor/easylogging/include)
+include_directories(${gsage_SOURCE_DIR}/Vendor/cpp-channel/include)
 
 include_directories(
   ${LUAJIT_INCLUDE_DIR}
@@ -17,6 +18,7 @@ FILE(GLOB sources src/*.cpp)
 set(LIBS
   GsageCore
   easyloggingpp
+  cpp-channel
   ${LUAJIT_LIBRARIES}
 )
 

@@ -119,13 +119,15 @@
       "height": 768,
       "params":
       {
-        "FSAA": 16,
         "displayFrequency": 50,
-        "vsync": false
+        "vsync": false,
+        "gamma": true
       }
     },
     "plugins": [
       "RenderSystem_GL",
+      "RenderSystem_GL3Plus",
+      "RenderSystem_Metal",
       "OctreeSceneManager",
       "ParticleFX"
     ]

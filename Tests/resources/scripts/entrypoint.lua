@@ -96,6 +96,7 @@ function main()
     local hasOgre = game:loadPlugin(PLUGINS_DIR .. "/OgrePlugin")
     if hasOgre then
       game:loadPlugin(PLUGINS_DIR .. "/ImGUIPlugin")
+      game:loadPlugin(PLUGINS_DIR .. "/ImGUIOgreRenderer")
       game:createSystem("ogre")
       core:render():configure({
         colourAmbient = "0x403030",

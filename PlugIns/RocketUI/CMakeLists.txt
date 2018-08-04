@@ -3,6 +3,7 @@ set(LIB_NAME "RocketUIPlugin")
 include_directories(
     ${gsage_SOURCE_DIR}/Vendor/gmath/src
     ${gsage_SOURCE_DIR}/Vendor/easylogging/include
+    ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
     ${LIBROCKET_INCLUDE_DIRS}
 )
 
@@ -12,7 +13,7 @@ if(UNIX AND NOT APPLE)
   set(LIBROCKET_LIBS -Wl,--whole-archive ${LIBROCKET_LIBRARIES} -Wl,--no-whole-archive)
 endif(UNIX AND NOT APPLE)
 
-set(LIBS GsageCore ${LIBROCKET_LIBS})
+set(LIBS GsageCore cpp-channel ${LIBROCKET_LIBS})
 
 file(GLOB sources src/*.cpp)
 

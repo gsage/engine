@@ -14,6 +14,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
+  ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
 
   ${LUAJIT_INCLUDE_DIR}
   ${MSGPACK_INCLUDE_DIRS}
@@ -26,6 +27,7 @@ set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS -DGS
 set(LIBS
   jsoncpp
   easyloggingpp
+  cpp-channel
   ${LUAJIT_LIBRARIES}
   ${MSGPACK_LIBRARIES})
 
