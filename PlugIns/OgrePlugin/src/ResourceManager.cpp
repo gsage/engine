@@ -33,9 +33,10 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  std::tuple<std::string, std::string> ResourceManager::processPath(const std::string& line)
+  std::tuple<std::string, std::string> ResourceManager::processPath(const std::string& line, const std::string& workdir)
   {
     std::vector<std::string> list = split(line, ':');
+    std::string wd = workdir.empty() ? mWorkdir : workdir;
     if(list.size() < 2)
     {
       LOG(ERROR) << "Malformed resource path: " << line;
@@ -45,9 +46,9 @@ namespace Gsage {
     }
 
     std::vector<std::string> pathList;
-    if (!mWorkdir.empty())
+    if (!wd.empty())
     {
-      pathList.push_back(mWorkdir);
+      pathList.push_back(wd);
     }
 
     for(std::vector<std::string>::iterator it = list.begin() + 1; it != list.end(); it++)
@@ -114,7 +115,7 @@ namespace Gsage {
 
       for(auto& config : pair.second)
       {
-        std::tie(path, type) = processPath(config.second.as<std::string>());
+        std::tie(path, type) = processPath(config.second.as<std::string>(), workdir);
         LOG(INFO) << "Adding resource location " << path;
         orgm.addResourceLocation(path, type, section, true, path.find(".zip") != std::string::npos);
       }

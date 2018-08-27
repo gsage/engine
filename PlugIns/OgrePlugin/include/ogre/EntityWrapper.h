@@ -60,6 +60,17 @@ namespace Gsage {
       const std::string& getQueryFlags() const;
 
       /**
+       * Set model resource group
+       * @param name Resource group name, e.g. General
+       */
+      void setResourceGroup(const std::string& name);
+
+      /**
+       * Get resource group name
+       */
+      const std::string& getResourceGroup() const;
+
+      /**
        * Set model mesh (this function creates entity)
        * @param mesh Mesh file name
        */
@@ -100,6 +111,7 @@ namespace Gsage {
 
       std::string mMeshName;
       std::string mQueryString;
+      std::string mResourceGroup;
 
       Query mQuery;
 

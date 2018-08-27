@@ -43,7 +43,9 @@ namespace Gsage {
   EntityWrapper::EntityWrapper()
     : mQuery(STATIC)
     , mAnimBlendMode(OgreV1::ANIMBLEND_CUMULATIVE)
+    , mResourceGroup(Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME)
   {
+    BIND_ACCESSOR_WITH_PRIORITY("resourceGroup", &EntityWrapper::setResourceGroup, &EntityWrapper::getResourceGroup, 2);
     BIND_ACCESSOR_WITH_PRIORITY("mesh", &EntityWrapper::setMesh, &EntityWrapper::getMesh, 1);
 
     BIND_ACCESSOR("query", &EntityWrapper::setQueryFlags, &EntityWrapper::getQueryFlags);
@@ -79,13 +81,23 @@ namespace Gsage {
     return mQueryString;
   }
 
+  void EntityWrapper::setResourceGroup(const std::string& name)
+  {
+    mResourceGroup = name;
+  }
+
+  const std::string& EntityWrapper::getResourceGroup() const
+  {
+    return mResourceGroup;
+  }
+
   void EntityWrapper::setMesh(const std::string& model)
   {
     mMeshName = model;
 
     // always load meshes using HBU_STATIC to make MOC & Recast work properly
     OgreV1::MeshPtr mesh = OgreV1::MeshManager::getSingleton().load(
-      model, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,
+      model, mResourceGroup,
       OgreV1::HardwareBuffer::HBU_STATIC, OgreV1::HardwareBuffer::HBU_STATIC);
 
     mObject = mSceneManager->createEntity(mesh);
