@@ -110,7 +110,7 @@ namespace Gsage {
       }
 #endif
 
-      std::tuple<std::string, std::string> processPath(const std::string& line);
+      std::tuple<std::string, std::string> processPath(const std::string& line, const std::string& workdir = "");
     private:
       std::string mWorkdir;
       bool mHlmsLoaded;

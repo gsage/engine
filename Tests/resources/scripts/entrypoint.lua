@@ -11,6 +11,7 @@ package.cpath = getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.s
                 getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.dll') .. ';' .. package.cpath
 
 local async = require 'lib.async'
+local exitCode = 0
 
 local timing = function(state, arguments)
   local func = arguments[1]
@@ -86,6 +87,9 @@ local runTests = function()
   assert:register("assertion", "close_enough", close_enough, "assertion.close_enough.positive")
 
   res, err = pcall(runner, ({standalone=false}))
+  if not res then
+    exitCode = 1
+  end
   async.signal("TestsComplete")
   return res, err
 end
@@ -146,7 +150,7 @@ end
 local shutdownCoroutine = coroutine.create(shutdown)
 coroutine.resume(shutdownCoroutine)
 
-local success, exitCode = pcall(main)
+local success, _ = pcall(main)
 if not success then
   print("Tests error: " .. tostring(exitCode))
   exitCode = 1
