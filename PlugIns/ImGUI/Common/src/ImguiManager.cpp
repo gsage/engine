@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "EngineEvent.h"
 #include "ImGuiDockspaceState.h"
 #include "ImGuiConverters.h"
+#include "ImguiEvent.h"
 
 namespace Gsage {
 
@@ -51,103 +52,23 @@ namespace Gsage {
     }
   }
 
-  bool ImguiRenderer::addView(const std::string& name, sol::object view, bool docked)
+  ImGuiDockspaceRenderer* ImguiRenderer::getDockspace(ImGuiContext* imctx)
   {
-    sol::function callback;
-    sol::table t = view.as<sol::table>();
-    sol::optional<sol::function> call = t[sol::meta_function::call];
-    RenderView render;
-
-    if (call) {
-      render = [t, call] () -> sol::function_result { return call.value()(t); };
-      docked = t.get_or("docked", docked);
-    } else if(view.is<sol::function>()) {
-      callback = view.as<sol::function>();
-      render = [callback] () -> sol::function_result { return callback(); };
-    } else {
-      LOG(ERROR) << "Failed to add lua object as lua view " << name << ": must be either callable or function";
-      return false;
+    if(mContextNames.count(imctx) == 0) {
+      return nullptr;
     }
 
-    if(docked){
-      mDockedViews[name] = render;
-    } else {
-      mViews[name] = render;
-    }
+    Context& ctx = mContexts[mContextNames[imctx]];
 
-    return true;
+    return ctx.dockspace.get();
   }
 
-  bool ImguiRenderer::removeView(const std::string& name, sol::object view)
+  ImguiRenderer::Context* ImguiRenderer::initializeContext(const std::string& name)
   {
-    bool docked = false;
-    auto views = &mViews;
-    if(view != sol::lua_nil) {
-      sol::table t = view.as<sol::table>();
-      if(t.get_or("docked", docked)) {
-        views = &mDockedViews;
-      }
-    }
-
-    if(views->count(name) == 0) {
-      return false;
-    }
-
-    views->erase(name);
-    return true;
-  }
-
-  void ImguiRenderer::renderViews()
-  {
-    ImGuiIO& io = ImGui::GetIO();
-    if(mDockedViews.size() > 0) {
-      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
-      ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetColorU32(ImGuiCol_Border));
-      ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-      ImVec2 size = io.DisplaySize;
-
-      ImGui::SetNextWindowSize(size);
-      ImGui::SetNextWindowPos(ImVec2(0, 0));
-      ImGui::Begin(
-          "###dockspace",
-          NULL,
-          ImGuiWindowFlags_NoTitleBar |
-          ImGuiWindowFlags_NoResize |
-          ImGuiWindowFlags_NoMove |
-          ImGuiWindowFlags_NoScrollbar |
-          ImGuiWindowFlags_NoScrollWithMouse |
-          ImGuiWindowFlags_NoBringToFrontOnFocus |
-          ImGuiWindowFlags_NoSavedSettings
-      );
-      ImGui::PopStyleVar();
-      mDockspace.beginWorkspace(ImVec2(5, 35), size - ImVec2(10, 40));
-      ImGui::PopStyleColor(2);
-      for(auto pair : mDockedViews) {
-        try {
-          auto res = pair.second();
-          if(!res.valid()) {
-            sol::error e = res;
-            LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
-          }
-        } catch(sol::error e) {
-          LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
-        }
-      }
-      mDockspace.endWorkspace();
-      ImGui::End();
-    }
-
-    for(auto pair : mViews) {
-      try {
-        auto res = pair.second();
-        if(!res.valid()) {
-          sol::error e = res;
-          LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
-        }
-      } catch(sol::error e) {
-        LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
-      }
-    }
+    Context ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    mContexts[name] = std::move(ctx);
+    return &mContexts[name];
   }
 
   void ImguiRenderer::setMousePosition(const std::string& name, ImVec2 position)
@@ -155,38 +76,50 @@ namespace Gsage {
     mMousePositions[name] = position;
   }
 
-  void ImguiRenderer::newFrame(const std::string& name, float width, float height)
+  void ImguiRenderer::render()
   {
-    ImGuiIO& io = ImGui::GetIO();
-    if(mMousePositions.count(name) != 0) {
-      io.MousePos.x = mMousePositions[name].x;
-      io.MousePos.y = mMousePositions[name].y;
+    mContextLock.lock();
+    for(auto& pair : mContexts) {
+      if(mRenderTargetWhitelist.count(pair.first) == 0) {
+        continue;
+      }
+
+      // inject imgui context
+      if(pair.second.context == NULL) {
+        pair.second.context = mManager->getImGuiContext(pair.first, pair.second.size);
+        ImGui::SetCurrentContext(pair.second.context);
+        pair.second.dockspace = std::make_unique<ImGuiDockspaceRenderer>();
+        pair.second.dockspace->setState(mManager->getDockState(pair.first));
+        mContextNames[pair.second.context] = pair.first;
+      } else  {
+        ImGui::SetCurrentContext(pair.second.context);
+      }
+
+      ImGuiIO& io = ImGui::GetIO();
+      if(mMousePositions.count(pair.first) != 0) {
+        io.MousePos.x = mMousePositions[pair.first].x;
+        io.MousePos.y = mMousePositions[pair.first].y;
+      }
+
+      mFrameEnded = false;
+
+      // Setup display size (every frame to accommodate for window resizing)
+      io.DisplaySize = ImVec2(pair.second.size.x, pair.second.size.y);
+
+      // Start the frame
+      ImGui::NewFrame();
+      setImguiContext(pair.second.context);
+      mManager->renderViews(pair.second);
+      ImGui::EndFrame();
+      ImGui::Render();
     }
-
-    mFrameEnded = false;
-
-    // Setup display size (every frame to accommodate for window resizing)
-    io.DisplaySize = ImVec2(width, height);
-
-    // Start the frame
-    ImGui::NewFrame();
-    renderViews();
-  }
-
-  bool ImguiRenderer::endFrame()
-  {
-    if(mFrameEnded) {
-      return false;
-    }
-    ImGui::EndFrame();
-    ImGui::Render();
-    mFrameEnded = true;
-    return true;
+    mContextLock.unlock();
   }
 
   ImguiManager::ImguiManager()
     : mRenderer(0)
     , mIsSetUp(false)
+    , mFontAtlas(NULL)
   {
   }
 
@@ -240,11 +173,231 @@ namespace Gsage {
     if(mIsSetUp)
       return;
 
-    LOG(INFO) << "Creating ImGui context";
-    ImGuiContext* ctx = ImGui::CreateContext();
+    EngineSystem* render = mEngine->getSystem("render");
+    if(render == 0 || !render->isReady()) {
+      return;
+    }
+
+    const std::string type = render->getSystemInfo().get("type", "");
+
+    if(type.empty()) {
+      LOG(ERROR) << "Render system type is empty, can't select appropriate renderer for it";
+      return;
+    }
+
+    if(mRendererFactories.count(type) > 0)
+    {
+      if(mRenderer) {
+        delete mRenderer;
+      }
+
+      LOG(INFO) << "Initialize for render system " << type;
+      mRenderer = mRendererFactories[type]();
+    } else {
+      LOG(INFO) << "Can't initialize on render system " << type << ", waiting for interface to be registered";
+      mPendingSystemType = type;
+      return;
+    }
+
+    mRenderer->mManager = this;
+    mRenderer->initialize(mEngine, mLuaState);
+    setLuaState(mLuaState);
+
+    mIsSetUp = true;
+
+    // subscribe for engine updates to handle UI
+    addEventListener(mEngine, EngineEvent::UPDATE, &ImguiManager::render);
+  }
+
+  void ImguiManager::tearDown()
+  {
+    removeEventListener(mEngine, EngineEvent::UPDATE, &ImguiManager::render);
+    mIsSetUp = false;
+    delete mRenderer;
+    mRenderer = 0;
+    mUsedRendererType = "";
+    for(auto pair : mContexts) {
+      ImGui::SetCurrentContext(pair.second);
+      ImGui::DestroyContext();
+    }
+    mContexts.clear();
+    mFontAtlas = NULL;
+  }
+
+  lua_State* ImguiManager::getLuaState()
+  {
+    return mLuaState;
+  }
+
+  void ImguiManager::setLuaState(lua_State* L)
+  {
+    mLuaState = L;
+    sol::state_view lua(L);
+    lua["imgui"]["render"] = mRenderer;
+    lua["ImGuiDock_NoTitleBar"] = ImGuiDock_NoTitleBar;
+    lua["ImGuiDock_NoResize"] = ImGuiDock_NoResize;
+
+    lua["imgui"]["BeginDock"] = [this](std::string label, int flags) -> bool {
+      return mRenderer->getDockspace(ImGui::GetCurrentContext())->begin(label.c_str(), NULL, flags);
+    };
+
+    lua["imgui"]["BeginDockOpen"] = [this](std::string label, bool opened, int flags) -> std::tuple<bool, bool> {
+      bool active = mRenderer->getDockspace(ImGui::GetCurrentContext())->begin(label.c_str(), &opened, flags);
+      return std::make_tuple(active, opened);
+    };
+
+    lua["imgui"]["BeginDockTitleOpen"] = [this](std::string label, std::string title, bool opened, int flags, int dockFlags) -> std::tuple<bool, bool> {
+      bool active = mRenderer->getDockspace(ImGui::GetCurrentContext())->begin(label.c_str(), title.c_str(), &opened, flags, dockFlags);
+      return std::make_tuple(active, opened);
+    };
+
+    lua["imgui"]["EndDock"] = [this]() {
+      return mRenderer->getDockspace(ImGui::GetCurrentContext())->end();
+    };
+
+    lua["imgui"]["GetDockState"] = [this] () -> sol::table {
+      if(mRenderer) {
+        mRenderer->getDockState(mDockspaceStates);
+      }
+
+      sol::state_view lua(mLuaState);
+      sol::table t = lua.create_table();
+      mDockspaceStates.dump(t);
+      return t;
+    };
+
+    lua["imgui"]["SetDockState"] = [this] (sol::table t) {
+      DataProxy dp = DataProxy::wrap(t);
+      dp.dump(mDockspaceStates);
+      if(mRenderer) {
+        mRenderer->setDockState(dp);
+      }
+    };
+  }
+
+  bool ImguiManager::handleMouseEvent(EventDispatcher* sender, const Event& event)
+  {
+    if(!mRenderer || mContexts.size() == 0)
+      return true;
+
+    const MouseEvent& e = static_cast<const MouseEvent&>(event);
+    mRenderer->setMousePosition(e.dispatcher, ImVec2(e.mouseX, e.mouseY));
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseWheel += e.relativeZ / 100;
+
+    io.MouseDown[e.button] = e.getType() == MouseEvent::MOUSE_DOWN;
+    return !doCapture() || e.getType() == MouseEvent::MOUSE_UP;
+  }
+
+  const std::string& ImguiManager::getType()
+  {
+    return ImguiManager::TYPE;
+  }
+
+  void ImguiManager::addRendererFactory(const std::string& type, RendererFactory f)
+  {
+    if(mRendererFactories.count(type) != 0) {
+      LOG(ERROR) << "Renderable factory of type " << type << " already exists. Remove conflicting interfaces plugins";
+      return;
+    }
+
+    LOG(INFO) << "Render interface for render system " << type << " was installed";
+    mRendererFactories[type] = f;
+    if(mPendingSystemType == type) {
+      setUp();
+      mPendingSystemType = "";
+      mUsedRendererType = type;
+    }
+  }
+
+  void ImguiManager::removeRendererFactory(const std::string& type)
+  {
+    mRendererFactories.erase(type);
+    if(mUsedRendererType == type && mRenderer) {
+      tearDown();
+      LOG(INFO) << "Renderer plugin \"" << type <<  "\" was removed, renderer was destroyed";
+    }
+  }
+
+  bool ImguiManager::handleKeyboardEvent(EventDispatcher* sender, const Event& event)
+  {
+    if(!mRenderer || mContexts.size() == 0)
+      return true;
+
+    const KeyboardEvent& e = static_cast<const KeyboardEvent&>(event);
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeysDown[e.key] = e.getType() == KeyboardEvent::KEY_DOWN;
+
+    if(e.text > 0)
+    {
+        io.AddInputCharacter((unsigned short)e.text);
+    }
+
+    // Read keyboard modifiers inputs
+    io.KeyCtrl = e.isModifierDown(KeyboardEvent::Ctrl);
+    io.KeyShift = e.isModifierDown(KeyboardEvent::Shift);
+    io.KeyAlt = e.isModifierDown(KeyboardEvent::Alt);
+    io.KeySuper = e.isModifierDown(KeyboardEvent::Win);
+
+    return !ImGui::IsAnyItemActive() || e.getType() == KeyboardEvent::KEY_UP;
+  }
+
+  bool ImguiManager::handleInputEvent(EventDispatcher* sender, const Event& event)
+  {
+    if(!mRenderer || mContexts.size() == 0)
+      return true;
+
+    const TextInputEvent& e = static_cast<const TextInputEvent&>(event);
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.AddInputCharactersUTF8(e.getText());
+
+    return true;
+  }
+
+  bool ImguiManager::doCapture()
+  {
+    return ImGui::GetIO().WantCaptureMouse;
+  }
+
+  bool ImguiManager::render(EventDispatcher* dispatcher, const Event& e)
+  {
+    mRenderer->render();
+    return true;
+  }
+
+  void ImguiRenderer::getDockState(DataProxy& dest)
+  {
+    for(auto& pair : mContexts) {
+      dest.put(pair.first, dumpState(pair.second.dockspace->getState()));
+    }
+  }
+
+  void ImguiRenderer::setDockState(const DataProxy& state)
+  {
+    for(auto pair : state) {
+      if(mContexts.count(pair.first) > 0) {
+        ImGuiDockspaceState s = loadState(pair.second);
+        mContexts[pair.first].dockspace->setState(s);
+      }
+    }
+  }
+
+  ImGuiContext* ImguiManager::getImGuiContext(std::string name, const ImVec2& initialSize)
+  {
+    if(mContexts.count(name) != 0) {
+      return mContexts[name];
+    }
+
+    LOG(INFO) << "Creating ImGui context " << name;
+    ImGuiContext* ctx = ImGui::CreateContext(mFontAtlas);
     ImGui::SetCurrentContext(ctx);
 
-    DataProxy theme = mEngine->settings().get("imgui.theme", DataProxy::create(DataWrapper::JSON_OBJECT));
+    DataProxy theme = DataProxy::create(DataWrapper::JSON_OBJECT);
+    if(!mEngine->settings().read(std::string("imgui.theme.") + name, theme)) {
+      mEngine->settings().read("imgui.theme", theme);
+    }
 
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -308,106 +461,76 @@ namespace Gsage {
     style.GrabRounding          = theme.get("grabRounding", 3.0f);
     style.CurveTessellationTol  = theme.get("curveTessellationTol", 1.25f);
 
-    EngineSystem* render = mEngine->getSystem("render");
-    if(render == 0) {
-      return;
-    }
-
-    const std::string type = render->getSystemInfo().get("type", "");
-
-    if(type.empty()) {
-      LOG(ERROR) << "Render system type is empty, can't select appropriate renderer for it";
-      return;
-    }
-
-    if(mRendererFactories.count(type) > 0)
-    {
-      if(mRenderer) {
-        delete mRenderer;
-      }
-
-      LOG(INFO) << "Initialize for render system " << type;
-      mRenderer = mRendererFactories[type]();
-    } else {
-      LOG(INFO) << "Can't initialize on render system " << type << ", waiting for interface to be registered";
-      mPendingSystemType = type;
-      return;
-    }
-
     std::string workdir = mEngine->env().get("workdir", ".");
     auto additionalFonts = mEngine->settings().get<DataProxy>("imgui.fonts");
 
-    // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
+    if(!mFontAtlas) {
+      // Build texture atlas
+      unsigned char* pixels;
+      int width, height;
+      if(additionalFonts.second) {
+        int i = 0;
+        mGlyphRanges.clear();
+        mGlyphRanges.reserve(additionalFonts.first.size());
+        for(auto pair : additionalFonts.first) {
+          mGlyphRanges.emplace_back();
+          auto file = pair.second.get<std::string>("file");
+          if(!file.second) {
+            LOG(ERROR) << "Malformed font syntax, \'file\' field is mandatory";
+            continue;
+          }
 
-    unsigned char* pixels;
-    int width, height;
+          auto size = pair.second.get<float>("size");
+          if(!size.second) {
+            LOG(ERROR) << "Malformed font syntax, \'size\' field is mandatory";
+            continue;
+          }
 
-    if(additionalFonts.second) {
-      int i = 0;
-      mGlyphRanges.clear();
-      mGlyphRanges.reserve(additionalFonts.first.size());
-      for(auto pair : additionalFonts.first) {
-        mGlyphRanges.emplace_back();
-        auto file = pair.second.get<std::string>("file");
-        if(!file.second) {
-          LOG(ERROR) << "Malformed font syntax, \'file\' field is mandatory";
-          continue;
-        }
+          ImFontConfig config;
+          config.MergeMode = pair.second.get("merge", false);
+          pair.second.read("oversampleH", config.OversampleH);
+          pair.second.read("oversampleV", config.OversampleV);
 
-        auto size = pair.second.get<float>("size");
-        if(!size.second) {
-          LOG(ERROR) << "Malformed font syntax, \'size\' field is mandatory";
-          continue;
-        }
-
-        ImFontConfig config;
-        config.MergeMode = pair.second.get("merge", false);
-        pair.second.read("oversampleH", config.OversampleH);
-        pair.second.read("oversampleV", config.OversampleV);
-
-        ImFontAtlas::GlyphRangesBuilder builder;
-        auto glyphRanges = pair.second.get<DataProxy>("glyphRanges");
-        if(glyphRanges.second) {
-          for(auto range : glyphRanges.first) {
-            for(int j = range.second[0].as<int>(); j < range.second[1].as<int>(); j++) {
-              builder.AddChar((ImWchar)j);
+          ImFontAtlas::GlyphRangesBuilder builder;
+          auto glyphRanges = pair.second.get<DataProxy>("glyphRanges");
+          if(glyphRanges.second) {
+            for(auto range : glyphRanges.first) {
+              for(int j = range.second[0].as<int>(); j < range.second[1].as<int>(); j++) {
+                builder.AddChar((ImWchar)j);
+              }
             }
           }
-        }
 
-        if(!pair.second.get("noDefaultRanges", false)) {
-          builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
-          builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
-          builder.AddRanges(io.Fonts->GetGlyphRangesCyrillic());
-        }
+          if(!pair.second.get("noDefaultRanges", false)) {
+            builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
+            builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
+            builder.AddRanges(io.Fonts->GetGlyphRangesCyrillic());
+          }
 
-        auto glyphOffset = pair.second.get<ImVec2>("glyphOffset");
-        if(glyphOffset.second) {
-          config.GlyphOffset = glyphOffset.first;
-        }
-        builder.BuildRanges(&mGlyphRanges[i]);
-        config.PixelSnapH = pair.second.get("pixelSnapH", false);
+          auto glyphOffset = pair.second.get<ImVec2>("glyphOffset");
+          if(glyphOffset.second) {
+            config.GlyphOffset = glyphOffset.first;
+          }
+          builder.BuildRanges(&mGlyphRanges[i]);
+          config.PixelSnapH = pair.second.get("pixelSnapH", false);
 
-        ImFont* pFont = io.Fonts->AddFontFromFileTTF((workdir + GSAGE_PATH_SEPARATOR + file.first).c_str(), size.first, &config, mGlyphRanges[i].Data);
-        mFonts.push_back(pFont);
-        i++;
+          ImFont* pFont = io.Fonts->AddFontFromFileTTF((workdir + GSAGE_PATH_SEPARATOR + file.first).c_str(), size.first, &config, mGlyphRanges[i].Data);
+          mFonts.push_back(pFont);
+          i++;
+        }
       }
+
+      io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+      mRenderer->createFontTexture(pixels, width, height);
+      mFontAtlas = io.Fonts;
     }
 
-    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-    mRenderer->createFontTexture(pixels, width, height);
+    io.MouseDrawCursor = mEngine->settings().get("imgui.drawCursor", true);
 
-    io.MouseDrawCursor = mEngine->settings().get("imgui.draCursor", true);
-
-    mRenderer->initialize(mEngine, mLuaState);
-
-    io.DisplaySize = ImVec2(320, 240);
+    io.DisplaySize = initialSize;
     ImGui::NewFrame();
     ImGui::EndFrame();
-    mRenderer->setImguiContext(ctx);
-
-    setLuaState(mLuaState);
 
     io.KeyMap[ImGuiKey_Tab] = KeyboardEvent::KC_TAB;
     io.KeyMap[ImGuiKey_LeftArrow] = KeyboardEvent::KC_LEFT;
@@ -429,149 +552,120 @@ namespace Gsage {
     io.KeyMap[ImGuiKey_Y] = KeyboardEvent::KC_Y;
     io.KeyMap[ImGuiKey_Z] = KeyboardEvent::KC_Z;
     io.KeyMap[ImGuiKey_Space] = KeyboardEvent::KC_SPACE;
+    mContexts[name] = ctx;
 
-    mIsSetUp = true;
+    mEngine->fireEvent(ImguiEvent(ImguiEvent::CONTEXT_CREATED, name));
+    return ctx;
   }
 
-  void ImguiManager::tearDown()
+  bool ImguiManager::addView(const std::string& name, sol::object view, bool docked)
   {
-    mIsSetUp = false;
-    ImGui::DestroyContext();
-    delete mRenderer;
-    mRenderer = 0;
-    mUsedRendererType = "";
-  }
+    sol::function callback;
+    sol::table t = view.as<sol::table>();
+    sol::optional<sol::function> call = t[sol::meta_function::call];
+    RenderView render;
 
-  lua_State* ImguiManager::getLuaState()
-  {
-    return mLuaState;
-  }
-
-  void ImguiManager::setLuaState(lua_State* L)
-  {
-    mLuaState = L;
-    sol::state_view lua(L);
-    lua["imgui"]["render"] = mRenderer;
-    lua["imgui"]["dockspace"] = mRenderer->mDockspace;
-    lua["ImGuiDock_NoTitleBar"] = ImGuiDock_NoTitleBar;
-    lua["ImGuiDock_NoResize"] = ImGuiDock_NoResize;
-
-    lua["imgui"]["BeginDock"] = [this](std::string label, int flags) -> bool {
-      return mRenderer->mDockspace.begin(label.c_str(), NULL, flags);
-    };
-
-    lua["imgui"]["BeginDockOpen"] = [this](std::string label, bool opened, int flags) -> std::tuple<bool, bool> {
-      bool active = mRenderer->mDockspace.begin(label.c_str(), &opened, flags);
-      return std::make_tuple(active, opened);
-    };
-
-    lua["imgui"]["BeginDockTitleOpen"] = [this](std::string label, std::string title, bool opened, int flags, int dockFlags) -> std::tuple<bool, bool> {
-      bool active = mRenderer->mDockspace.begin(label.c_str(), title.c_str(), &opened, flags, dockFlags);
-      return std::make_tuple(active, opened);
-    };
-
-    lua["imgui"]["EndDock"] = [this]() {
-      return mRenderer->mDockspace.end();
-    };
-
-    lua["imgui"]["GetDockState"] = [this] () -> sol::table {
-      DataProxy p = dumpState(mRenderer->mDockspace.getState());
-      sol::state_view lua(mLuaState);
-      sol::table t = lua.create_table();
-      p.dump(t);
-      return t;
-    };
-
-    lua["imgui"]["SetDockState"] = [this] (sol::table t) {
-      DataProxy dp = DataProxy::wrap(t);
-      ImGuiDockspaceState state = loadState(dp);
-      mRenderer->mDockspace.setState(state);
-    };
-  }
-
-  bool ImguiManager::handleMouseEvent(EventDispatcher* sender, const Event& event)
-  {
-    if(!mRenderer)
-      return true;
-
-    const MouseEvent& e = static_cast<const MouseEvent&>(event);
-    mRenderer->setMousePosition(e.dispatcher, ImVec2(e.mouseX, e.mouseY));
-    ImGuiIO& io = ImGui::GetIO();
-    io.MouseWheel += e.relativeZ / 100;
-
-    io.MouseDown[e.button] = e.getType() == MouseEvent::MOUSE_DOWN;
-    return !doCapture() || e.getType() == MouseEvent::MOUSE_UP;
-  }
-
-  const std::string& ImguiManager::getType()
-  {
-    return ImguiManager::TYPE;
-  }
-
-  void ImguiManager::addRendererFactory(const std::string& type, RendererFactory f)
-  {
-    if(mRendererFactories.count(type) != 0) {
-      LOG(ERROR) << "Renderable factory of type " << type << " already exists. Remove conflicting interfaces plugins";
-      return;
+    if (call) {
+      render = [t, call] () -> sol::function_result { return call.value()(t); };
+      docked = t.get_or("docked", docked);
+    } else if(view.is<sol::function>()) {
+      callback = view.as<sol::function>();
+      render = [callback] () -> sol::function_result { return callback(); };
+    } else {
+      LOG(ERROR) << "Failed to add lua object as lua view " << name << ": must be either callable or function";
+      return false;
     }
 
-    LOG(INFO) << "Render interface for render system " << type << " was installed";
-    mRendererFactories[type] = f;
-    if(mPendingSystemType == type) {
-      setUp();
-      mPendingSystemType = "";
-      mUsedRendererType = type;
+    if(docked){
+      mDockedViews[name] = render;
+    } else {
+      mViews[name] = render;
     }
-  }
-
-  void ImguiManager::removeRendererFactory(const std::string& type)
-  {
-    mRendererFactories.erase(type);
-    if(mUsedRendererType == type && mRenderer) {
-      tearDown();
-      LOG(INFO) << "Renderer plugin \"" << type <<  "\" was removed, renderer was destroyed";
-    }
-  }
-
-  bool ImguiManager::handleKeyboardEvent(EventDispatcher* sender, const Event& event)
-  {
-    if(!mRenderer)
-      return true;
-
-    const KeyboardEvent& e = static_cast<const KeyboardEvent&>(event);
-
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[e.key] = e.getType() == KeyboardEvent::KEY_DOWN;
-
-    if(e.text > 0)
-    {
-        io.AddInputCharacter((unsigned short)e.text);
-    }
-
-    // Read keyboard modifiers inputs
-    io.KeyCtrl = e.isModifierDown(KeyboardEvent::Ctrl);
-    io.KeyShift = e.isModifierDown(KeyboardEvent::Shift);
-    io.KeyAlt = e.isModifierDown(KeyboardEvent::Alt);
-    io.KeySuper = e.isModifierDown(KeyboardEvent::Win);
-
-    return !ImGui::IsAnyItemActive() || e.getType() == KeyboardEvent::KEY_UP;
-  }
-
-  bool ImguiManager::handleInputEvent(EventDispatcher* sender, const Event& event)
-  {
-    if(!mRenderer)
-      return true;
-
-    const TextInputEvent& e = static_cast<const TextInputEvent&>(event);
-
-    ImGuiIO& io = ImGui::GetIO();
-    io.AddInputCharactersUTF8(e.getText());
 
     return true;
   }
 
-  bool ImguiManager::doCapture()
+  bool ImguiManager::removeView(const std::string& name, sol::object view)
   {
-    return ImGui::GetIO().WantCaptureMouse;
+    bool docked = false;
+    auto views = &mViews;
+    if(view != sol::lua_nil) {
+      sol::table t = view.as<sol::table>();
+      if(t.get_or("docked", docked)) {
+        views = &mDockedViews;
+      }
+    }
+
+    if(views->count(name) == 0) {
+      return false;
+    }
+
+    views->erase(name);
+    return true;
+  }
+
+  void ImguiManager::renderViews(ImguiRenderer::Context& ctx)
+  {
+    ImGuiIO& io = ImGui::GetIO();
+    if(mDockedViews.size() > 0) {
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetColorU32(ImGuiCol_Border));
+      ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+      ImVec2 size = ctx.size;
+
+      ImGui::SetNextWindowSize(size);
+      ImGui::SetNextWindowPos(ImVec2(0, 0));
+      ImGui::Begin(
+          "###dockspace",
+          NULL,
+          ImGuiWindowFlags_NoTitleBar |
+          ImGuiWindowFlags_NoResize |
+          ImGuiWindowFlags_NoMove |
+          ImGuiWindowFlags_NoScrollbar |
+          ImGuiWindowFlags_NoScrollWithMouse |
+          ImGuiWindowFlags_NoBringToFrontOnFocus |
+          ImGuiWindowFlags_NoSavedSettings
+      );
+      ImGui::PopStyleVar();
+      if(ctx.dockspace) {
+        ctx.dockspace->beginWorkspace(ImVec2(5, 35), size - ImVec2(10, 40));
+      }
+      ImGui::PopStyleColor(2);
+      for(auto pair : mDockedViews) {
+        try {
+          auto res = pair.second();
+          if(!res.valid()) {
+            sol::error e = res;
+            LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
+          }
+        } catch(sol::error e) {
+          LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
+        }
+      }
+      if(ctx.dockspace) {
+        ctx.dockspace->endWorkspace();
+      }
+      ImGui::End();
+    }
+
+    for(auto pair : mViews) {
+      try {
+        auto res = pair.second();
+        if(!res.valid()) {
+          sol::error e = res;
+          LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
+        }
+      } catch(sol::error e) {
+        LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
+      }
+    }
+  }
+
+  ImGuiDockspaceState ImguiManager::getDockState(const std::string& name)
+  {
+    ImGuiDockspaceState s;
+    DataProxy dp;
+    mDockspaceStates.read(name, dp);
+    return loadState(dp);
   }
 }

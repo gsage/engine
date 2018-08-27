@@ -123,6 +123,8 @@ TEST_F(TestEngine, TestAddSystem)
   TestSystem system;
   mInstance->addSystem("speed", &system);
   mInstance->addSystem("accelerator", new AccelerationSystem());
+  DataProxy config;
+  mInstance->initialize(config, config);
   DataProxy entityData;
   DataProxy speed;
   DataProxy accelerator;

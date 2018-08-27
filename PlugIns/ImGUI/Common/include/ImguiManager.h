@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "KeyboardEvent.h"
 #include "ImGuiDockspace.h"
 #include "ImguiExportHeader.h"
+#include "DataProxy.h"
 
 #include "sol_forward.hpp"
 
@@ -46,26 +47,8 @@ namespace Gsage {
   class ImguiRenderer {
     public:
 
-      ImguiRenderer() : mEngine(0), mFrameEnded(true) {}
+      ImguiRenderer() : mEngine(0), mFrameEnded(true), mManager(0) {}
       virtual ~ImguiRenderer() {}
-
-      /**
-       * Add new lua view to the imgui renderer.
-       *
-       * @param name view name
-       * @param view lua function that will render everything.
-       * @param docked view is docked
-       */
-      bool addView(const std::string& name, sol::object view, bool docked = false);
-
-      /**
-       * Remove named view
-       *
-       * @param name view name
-       * @param view view object
-       * @returns true if the view was removed
-       */
-      bool removeView(const std::string& name, sol::object view);
 
       /**
        * Set engine, setup lua bindings
@@ -93,47 +76,48 @@ namespace Gsage {
       virtual void createFontTexture(unsigned char* pixels, int width, int height) = 0;
 
       /**
+       * Render a single imgui frame
+       */
+      virtual void render();
+
+      /**
        * Imgui context is not shared across plugins, so pass it to renderer
        *
        * @param ctx Context to use
        */
       virtual void setImguiContext(ImGuiContext* ctx) = 0;
 
-      /**
-       * Start imgui rendering
-       *
-       * @param name Context name
-       * @param width Window width
-       * @param height Window height
-       */
-      virtual void newFrame(const std::string& name, float width, float height);
+      void setDockState(const DataProxy& state);
 
-      /**
-       * Imgui::EndFrame()
-       */
-      virtual bool endFrame();
+      void getDockState(DataProxy& dest);
     protected:
       friend class ImguiManager;
 
-      virtual void renderViews();
+      struct Context
+      {
+        ImVec2 size;
+        ImGuiContext* context;
+        std::unique_ptr<ImGuiDockspaceRenderer> dockspace;
+      };
 
-      typedef std::function<sol::function_result()> RenderView;
+      virtual ImGuiDockspaceRenderer* getDockspace(ImGuiContext* context);
 
-      typedef std::map<std::string, RenderView> Views;
-
-      Views mViews;
-
-      Views mDockedViews;
+      virtual Context* initializeContext(const std::string& name);
 
       std::map<std::string, ImVec2> mMousePositions;
-
-      ImGuiDockspaceRenderer mDockspace;
 
       Engine* mEngine;
 
       bool mFrameEnded;
 
       std::map<std::string, bool> mRenderTargetWhitelist;
+
+      std::mutex mContextLock;
+
+      std::map<std::string, Context> mContexts;
+      std::map<ImGuiContext*, std::string> mContextNames;
+
+      ImguiManager* mManager;
   };
 
   class IMGUI_PLUGIN_API ImguiManager : public UIManager, public EventSubscriber<ImguiManager>
@@ -200,6 +184,35 @@ namespace Gsage {
        */
       void removeRendererFactory(const std::string& type);
 
+      /**
+       * Get or create new ImGuiContext instance
+       *
+       * @param name Context name
+       * @param initialSize Initial context size
+       */
+      ImGuiContext* getImGuiContext(std::string name, const ImVec2& initialSize);
+
+      /**
+       * Add new lua view to the imgui renderer.
+       *
+       * @param name view name
+       * @param view lua function that will render everything.
+       * @param docked view is docked
+       */
+      bool addView(const std::string& name, sol::object view, bool docked = false);
+
+      /**
+       * Remove named view
+       *
+       * @param name view name
+       * @param view view object
+       * @returns true if the view was removed
+       */
+      bool removeView(const std::string& name, sol::object view);
+
+      void renderViews(ImguiRenderer::Context& ctx);
+
+      ImGuiDockspaceState getDockState(const std::string& name);
     private:
       /**
        * Handle keyboard event from engine
@@ -213,8 +226,21 @@ namespace Gsage {
        * Check if mouse event can be captured by any rocket element
        */
       bool doCapture();
+      /**
+       * This function does not handle actual render system rendering, it only updates ImGUI draw list
+       */
+      bool render(EventDispatcher* dispatcher, const Event& e);
+
+      typedef std::function<sol::function_result()> RenderView;
+
+      typedef std::map<std::string, RenderView> Views;
+
+      Views mViews;
+
+      Views mDockedViews;
 
       ImguiRenderer* mRenderer;
+      ImFontAtlas* mFontAtlas;
 
       bool mIsSetUp;
 
@@ -230,6 +256,10 @@ namespace Gsage {
       typedef std::vector<ImVector<ImWchar>> GlyphRanges;
 
       GlyphRanges mGlyphRanges;
+
+      std::map<std::string, ImGuiContext*> mContexts;
+
+      DataProxy mDockspaceStates;
   };
 }
 #endif

@@ -92,14 +92,24 @@ namespace Gsage
 
   void Engine::update(const double& time)
   {
+    fireEvent(EngineEvent(EngineEvent::UPDATE));
     for(auto& pair : mEngineSystems)
     {
-      if(!pair.second->isEnabled())
+      if(!pair.second->isEnabled() || !pair.second->isReady())
         continue;
 
-      // nothing to do for systems that are running in a dedicate thread
-      if(!pair.second->dedicatedThread()) {
+      if(pair.second->dedicatedThread()) {
+        if(pair.second->becameReady()) {
+          fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, pair.first, pair.second));
+        }
+      } else {
         pair.second->update(time);
+      }
+
+      for(int i = 0; i < mMainThreadCallbacks.size(); ++i) {
+        QueuedCallbackPtr cb;
+        mMainThreadCallbacks.get(cb);
+        cb->execute();
       }
     }
   }
@@ -128,8 +138,6 @@ namespace Gsage
   }
 
   bool Engine::configureSystem(const std::string& name) {
-    auto config = mConfiguration.get<DataProxy>(name);
-
     EngineSystem* s = getSystem(name);
     if(!s) {
       return false;
@@ -137,23 +145,33 @@ namespace Gsage
 
     bool firstSetup = !s->isReady();
 
-    bool res = s->initialize(config.second ? config.first : DataProxy());
-    if(!res) {
-      return false;
-    }
+    DataProxy config;
+    mConfiguration.read(name, config);
 
-    if(firstSetup && s->dedicatedThread()) {
+    bool dedicatedThread = config.get("dedicatedThread", false) && s->allowMultithreading();
+    int numThreads = config.get("numThreads", 1);
+
+    if(firstSetup && dedicatedThread) {
       // spawn n system threads
-      for(int i = 0; i < s->getThreadsNumber(); i++) {
+      for(int i = 0; i < numThreads; i++) {
         std::stringstream ss;
         ss << name << i;
-        mWorkers[ss.str()] = std::make_unique<SystemWorker>(s);
+        const std::string workerName = ss.str();
+        mWorkers[workerName] = std::make_unique<SystemWorker>(s);
         LOG(INFO) << "Spawn system worker " << ss.str();
-        mWorkers[ss.str()]->start();
+        mWorkers[workerName]->mSystemConfig = config;
+        mWorkers[workerName]->start();
       }
     }
 
-    if(firstSetup) {
+    if(!firstSetup || !dedicatedThread) {
+      bool res = s->initialize(config);
+      if(!res) {
+        return false;
+      }
+    }
+
+    if(firstSetup && !dedicatedThread) {
       fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, s));
     }
     return true;
@@ -310,6 +328,13 @@ namespace Gsage
     shutdownThreads(terminate);
   }
 
+  Engine::QueuedCallbackPtr Engine::executeInMainThread(MainThreadCallback func)
+  {
+    QueuedCallbackPtr qcb = std::make_shared<QueuedCallback>(func);
+    mMainThreadCallbacks << qcb;
+    return qcb;
+  }
+
   bool Engine::createComponent(Entity* entity, const std::string& type, const DataProxy& dict)
   {
     if(!hasSystem(type))
@@ -409,11 +434,20 @@ namespace Gsage
 
   void Engine::SystemWorker::run()
   {
+    if(!mSystem->isReady()) {
+      if(!mSystem->initialize(mSystemConfig)) {
+        LOG(INFO) << "Failed to initialize system " << mSystem->getName() << ", worker stopped";
+        return;
+      }
+    }
+
     while (!mShutdown) {
       auto now = std::chrono::high_resolution_clock::now();
       double frameTime = std::chrono::duration_cast<std::chrono::duration<double>>(now - mPreviousUpdateTime).count();
       mSystem->update(frameTime);
       mPreviousUpdateTime = now;
     }
+
+    mSystem->shutdown();
   }
 }

@@ -54,6 +54,7 @@ function OgreView:__call()
   local x, y = imgui.GetCursorScreenPos()
 
   if w < 0 or h < 0 then
+    self:imguiEnd()
     return
   end
 

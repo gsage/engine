@@ -50,6 +50,10 @@ namespace Gsage {
        * Engine was shut down
        */
       static const Event::Type SHUTDOWN;
+      /**
+       * Engine main loop update
+       */
+      static const Event::Type UPDATE;
       EngineEvent(Event::ConstType type);
       virtual ~EngineEvent();
   };

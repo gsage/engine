@@ -141,13 +141,7 @@ namespace Gsage {
     if(mFontManager != 0)
       delete mFontManager;
 
-    if(getRenderWindow() != 0 && mWindowEventListener != 0)
-      mWindowEventListener->windowClosed(getRenderWindow());
-
-    for(auto pair : mRenderTargets) {
-      delete pair.second;
-    }
-    mRenderTargets.clear();
+    shutdown();
 
     if(mRoot != 0)
       delete mRoot;
@@ -202,13 +196,23 @@ namespace Gsage {
     std::string windowName = windowParams.get("name", "mainWindow");
 
     if(windowParams.get("useWindowManager", false)) {
-      WindowPtr window = mFacade->getWindowManager()->createWindow(
-        windowName,
-        windowParams.get("width", 1024),
-        windowParams.get("height", 786),
-        windowParams.get("fullscreen", false),
-        windowParams
-      );
+      WindowPtr window;
+      auto createWindow = [&]() {
+        window = mFacade->getWindowManager()->createWindow(
+          windowName,
+          windowParams.get("width", 1024),
+          windowParams.get("height", 786),
+          windowParams.get("fullscreen", false),
+          windowParams
+        );
+      };
+
+      if(settings.get("dedicatedThread", false)) {
+        LOG(INFO) << "Creating window in the main thread";
+        mEngine->executeInMainThread(createWindow)->wait();
+      } else {
+        createWindow();
+      }
       if(window == nullptr) {
         LOG(ERROR) << "Failed to create window";
         return false;
@@ -386,6 +390,25 @@ namespace Gsage {
     }
 
     return EngineSystem::initialize(settings);
+  }
+
+  void OgreRenderSystem::shutdown()
+  {
+    if(!isReady())
+    {
+      return;
+    }
+
+    if(getRenderWindow() != 0 && mWindowEventListener != 0)
+      mWindowEventListener->windowClosed(getRenderWindow());
+
+    for(auto pair : mRenderTargets) {
+      delete pair.second;
+    }
+    mRenderTargets.clear();
+    mRoot->shutdown();
+
+    EngineSystem::shutdown();
   }
 
   bool OgreRenderSystem::prepareComponent(OgreRenderComponent* c)

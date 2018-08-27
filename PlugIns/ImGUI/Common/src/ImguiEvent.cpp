@@ -24,51 +24,19 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "v2/ImguiHlms.h"
-
-#include <OgreHlmsUnlitDatablock.h>
+#include "ImguiEvent.h"
 
 namespace Gsage {
+  const Event::Type ImguiEvent::CONTEXT_CREATED = "ImguiEvent::CONTEXT_CREATED";
 
-  ImguiHlms::ImguiHlms(Ogre::Archive* dataFolder, Ogre::ArchiveVec* libraryFolders)
-    : Ogre::HlmsUnlit(dataFolder, libraryFolders)
+  ImguiEvent::ImguiEvent(Event::ConstType t, const std::string& ctxName)
+    : Event(t)
+    , mContextName(ctxName)
   {
   }
 
-  ImguiHlms::ImguiHlms(Ogre::Archive* dataFolder, Ogre::ArchiveVec* libraryFolders,
-          Ogre::HlmsTypes type, const Ogre::String& typeName)
-    : Ogre::HlmsUnlit(dataFolder, libraryFolders, type, typeName)
+  ImguiEvent::~ImguiEvent()
   {
   }
-
-  ImguiHlms::~ImguiHlms()
-  {
-  }
-
-  Ogre::uint32 ImguiHlms::fillBuffersForImgui(
-      const Ogre::HlmsCache* cache,
-      const Ogre::QueuedRenderable& queuedRenderable,
-      bool casterPass,
-      Ogre::uint32 baseVertex,
-      Ogre::uint32 lastCacheHash,
-      Ogre::CommandBuffer* commandBuffer
-  )
-  {
-    return 0;
-  }
-
-  void ImguiHlms::getDefaultPaths(Ogre::String& outDataFolderPath, Ogre::StringVector& outLibraryFoldersPaths)
-  {
-
-  }
-
-  Ogre::HlmsDatablock* ImguiHlms::createDatablockImpl(Ogre::IdString datablockName,
-          const Ogre::HlmsMacroblock *macroblock,
-          const Ogre::HlmsBlendblock *blendblock,
-          const Ogre::HlmsParamVec &paramVec)
-  {
-    return OGRE_NEW Ogre::HlmsUnlitDatablock(datablockName, this, macroblock, blendblock, paramVec);
-  }
-
 
 }

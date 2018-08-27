@@ -1,3 +1,6 @@
+#ifndef _ImguiEvent_H_
+#define _ImguiEvent_H_
+
 /*
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
@@ -24,16 +27,19 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "v2/ImguiHlmsDatablock.h"
+#include "EventDispatcher.h"
 
 namespace Gsage {
-
-  ImguiHlmsDatablock::ImguiHlmsDatablock()
+  class ImguiEvent : public Event
   {
-  }
+    public:
+      static const Event::Type CONTEXT_CREATED;
 
-  ImguiHlmsDatablock::~ImguiHlmsDatablock()
-  {
-  }
-
+      ImguiEvent(Event::ConstType type, const std::string& contextName);
+      virtual ~ImguiEvent();
+    
+      std::string mContextName;
+  };
 }
+
+#endif

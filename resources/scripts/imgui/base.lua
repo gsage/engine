@@ -67,7 +67,7 @@ end)
 
 -- is imgui available for usage
 function ImguiInterface:available()
-  return imgui ~= nil and imgui.render ~= nil
+  return imgui ~= nil and imgui.manager ~= nil
 end
 
 -- add view to imgui render list
@@ -80,7 +80,7 @@ function ImguiInterface:addView(name, view, docked, open, label)
     view = ImguiWindowRender(view, label or name, docked, open)
   end
 
-  local added = imgui.render:addView(name, view, not(not docked))
+  local added = imgui.manager:addView(name, view, not(not docked))
   if not added then
     return false
   end
@@ -94,7 +94,7 @@ function ImguiInterface:removeView(name, view)
     return false
   end
 
-  local removed = imgui.render:removeView(name, view)
+  local removed = imgui.manager:removeView(name, view)
   self.views[name] = nil
   return removed
 end

@@ -35,16 +35,12 @@ namespace Gsage
     , mEnabled(true)
     , mThreadsNumber(1)
     , mDedicatedThread(false)
+    , mReadyWasSet(false)
   {
   }
 
   EngineSystem::~EngineSystem()
   {
-  }
-
-  bool EngineSystem::allowMultithreading()
-  {
-    return false;
   }
 
   bool EngineSystem::configure(const DataProxy& config)
@@ -69,7 +65,13 @@ namespace Gsage
       LOG(ERROR) << "System " << mName << " does not support multithreaded mode";
       return false;
     }
-    return mReady = true;
+    setReady(true);
+    return true;
+  }
+
+  void EngineSystem::shutdown()
+  {
+    setReady(false);
   }
 
   void EngineSystem::setEngineInstance(Engine* value)

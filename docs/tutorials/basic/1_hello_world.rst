@@ -258,8 +258,8 @@ Imgui views can be registered in lua using:
 
       local view = View()
 
-      imgui.render:addView("viewID", view)
-      imgui.render:addView("viewID2", render)
+      imgui.manager:addView("viewID", view)
+      imgui.manager:addView("viewID2", render)
 
       -- remove
-      success = imgui.render:removeView("viewID")
+      success = imgui.manager:removeView("viewID")

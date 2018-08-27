@@ -29,6 +29,7 @@ THE SOFTWARE.
 #define _EngineSystem_H_
 
 #include <vector>
+#include <atomic>
 
 #include "Component.h"
 #include "GsageDefinitions.h"
@@ -68,6 +69,11 @@ namespace Gsage
       virtual bool initialize(const DataProxy& settings);
 
       /**
+       * Shutdown is called before the system is removed from the engine
+       */
+      virtual void shutdown();
+
+      /**
        * Updates system
        * @param time Delta time
        */
@@ -105,7 +111,29 @@ namespace Gsage
       /**
        * Flag that means that the system was initialized
        */
-      bool isReady() { return mReady; }
+      bool isReady() { return mReady.load(); }
+      /**
+       * Set system ready
+       * @param value Ready flag
+       */
+      void setReady(bool value) {
+        mReadyWasSet.store(true);
+        mReady.store(value);
+      }
+
+      /**
+       * Check if the system was just set up by checking mReadyWasSet flag
+       * Will return true only once
+       */
+      bool becameReady()
+      {
+        if(mReadyWasSet.load()) {
+          mReadyWasSet.store(false);
+          return true;
+        }
+
+        return false;
+      }
       /**
        * Flag that means that the system should be updated
        */
@@ -143,15 +171,13 @@ namespace Gsage
        * Check if multithreading is enabled
        */
       inline bool dedicatedThread() { return mDedicatedThread; };
-    protected:
-
       /**
        * This function tells Engine if the particular system allows running in separate thread
        *
        * @returns false by default
        */
-      virtual bool allowMultithreading();
-
+      virtual bool allowMultithreading() { return false; }
+    protected:
       /**
        * Update configuration
        */
@@ -167,9 +193,11 @@ namespace Gsage
       int mThreadsNumber;
 
       bool mEnabled;
-      bool mReady;
       bool mConfigDirty;
       bool mDedicatedThread;
+
+      std::atomic_bool mReadyWasSet;
+      std::atomic_bool mReady;
   };
 }
 

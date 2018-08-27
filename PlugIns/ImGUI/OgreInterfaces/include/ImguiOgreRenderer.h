@@ -32,6 +32,8 @@ THE SOFTWARE.
 #include "EventSubscriber.h"
 #include "sol.hpp"
 
+#include <mutex>
+
 struct lua_State;
 
 namespace Gsage {
@@ -46,19 +48,25 @@ namespace Gsage {
 
       virtual void createFontTexture(unsigned char* pixels, int width, int height);
 
-      virtual void setImguiContext(ImGuiContext* ctx)
-      {
-        ImGui::SetCurrentContext(ctx);
-      };
-
       virtual void updateVertexData(Ogre::Viewport* vp, ImVec2 displaySize) = 0;
+
+      virtual void setImguiContext(ImGuiContext* ctx) {
+        ImGui::SetCurrentContext(ctx);
+      }
+
     protected:
+      virtual void updateFontTexture() {};
       virtual void createMaterial() = 0;
-      virtual bool renderQueueStarted(EventDispatcher* sender, const Event& event);
       virtual bool renderQueueEnded(EventDispatcher* sender, const Event& event);
       Ogre::TexturePtr mFontTex;
       Ogre::SceneManager* mSceneMgr;
 
+      unsigned char* mFontPixels;
+      int mFontTexWidth;
+      int mFontTexHeight;
+      bool mUpdateFontTex;
+
+      std::mutex mFontTexLock;
   };
 }
 

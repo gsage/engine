@@ -87,7 +87,7 @@ namespace Gsage {
     }
 
 #endif
-    while(mRenderables.size()>0)
+    while(mRenderables.size() > 0)
     {
       delete mRenderables.back();
       mRenderables.pop_back();
@@ -104,6 +104,14 @@ namespace Gsage {
 
   void ImguiRendererV1::updateVertexData(Ogre::Viewport* vp, ImVec2 displaySize)
   {
+#if OGRE_VERSION >= 0x020100
+    if(!mFontTex) {
+#else
+    if(mFontTex.isNull()) {
+#endif
+      return;
+    }
+
     Ogre::Matrix4 projMatrix(2.0f / displaySize.x, 0.0f, 0.0f, -1.0f,
         0.0f, -2.0f / displaySize.y, 0.0f, 1.0f,
         0.0f, 0.0f, -1.0f, 0.0f,
@@ -230,13 +238,15 @@ namespace Gsage {
         float top = (float)scTop / (float)vpHeight * factor;
         float width = (float)(scRight - scLeft) / (float)vpWidth * factor;
         float height = (float)(scBottom - scTop) / (float)vpHeight * factor;
-        vp->setScissors(left, top, width, height);
+
+        vp->setScissors(std::max(0.0f, left), std::max(0.0f, top), std::min(1.0f, width), std::min(1.0f, height));
         mSceneMgr->getDestinationRenderSystem()->_setViewport(vp);
 #endif
         //render the object
 #if OGRE_VERSION_MAJOR == 1
         mSceneMgr->_injectRenderWithPass(mPass, renderable, false, false);
 #elif OGRE_VERSION_MAJOR == 2
+
 #if OGRE_VERSION_MINOR == 0
         mSceneMgr->_injectRenderWithPass(mPass, renderable, 0, false, false);
 #else
@@ -694,7 +704,10 @@ namespace Gsage {
     blendblock.mDestBlendFactorAlpha = Ogre::SBF_ZERO;
     mPass->setBlendblock(blendblock);
 #endif
+  }
 
+  void ImguiRendererV1::updateFontTexture()
+  {
     Ogre::TextureUnitState* texUnit = mPass->createTextureUnitState();
     texUnit->setTexture(mFontTex);
 #if OGRE_VERSION < 0x020100

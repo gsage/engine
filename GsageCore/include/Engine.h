@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include <atomic>
 
 #include "DataProxy.h"
+#include "ThreadSafeQueue.h"
 
 namespace Gsage
 {
@@ -257,6 +258,46 @@ namespace Gsage
        * @param terminate Abort all running threads
        */
       void shutdown(bool terminate = false);
+
+      /**
+       * Callback to call in the main thread
+       */
+      typedef std::function<void()> MainThreadCallback;
+
+      /**
+       * Return value from main thread callback queueing
+       */
+      struct QueuedCallback {
+        QueuedCallback(MainThreadCallback func) : func(func) {
+          waitLock.lock();
+        }
+        MainThreadCallback func;
+        std::mutex waitLock;
+
+        void wait() {
+          waitLock.lock();
+          waitLock.unlock();
+        }
+
+        void execute()
+        {
+          func();
+          waitLock.unlock();
+        }
+        private:
+          QueuedCallback(const QueuedCallback&);
+      };
+
+      typedef std::shared_ptr<QueuedCallback> QueuedCallbackPtr;
+
+      /**
+       * Queue callback for execution in the main thread
+       *
+       * @param callback Callback function
+       * @returns QueuedCallback which can be used to make call blocking
+       */
+      QueuedCallbackPtr executeInMainThread(MainThreadCallback func);
+
     private:
       class SystemWorker
       {
@@ -273,7 +314,9 @@ namespace Gsage
            * Stops the worker
            */
           void shutdown(bool terminate);
+
         private:
+          friend class Engine;
 
           /**
            * Run loop
@@ -283,6 +326,7 @@ namespace Gsage
           std::thread* mThread;
           std::atomic_bool mShutdown;
           std::chrono::high_resolution_clock::time_point mPreviousUpdateTime;
+          DataProxy mSystemConfig;
       };
       /**
        * Create component for entity
@@ -324,6 +368,9 @@ namespace Gsage
 
       typedef std::map<std::string, std::unique_ptr<SystemWorker>> Workers;
       Workers mWorkers;
+
+      typedef ThreadSafeQueue<std::shared_ptr<QueuedCallback>> QueuedCallbacks;
+      QueuedCallbacks mMainThreadCallbacks;
   };
 }
 
