@@ -41,7 +41,7 @@ namespace Gsage {
 
   ImguiTextBuffer::~ImguiTextBuffer()
   {
-    delete mBuffer;
+    delete[] mBuffer;
   }
 
   std::string ImguiTextBuffer::read() const
@@ -528,7 +528,7 @@ namespace Gsage {
         t[i + 1] = values[i];
       }
 
-      delete values;
+      delete[] values;
       return ret;
     };
 
@@ -558,7 +558,7 @@ namespace Gsage {
         t[i + 1] = values[i];
       }
 
-      delete values;
+      delete[] values;
       return ret;
     };
 

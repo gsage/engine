@@ -72,7 +72,9 @@
   ],
   "packager": {
     "deps": [
-      "busted"
+      "busted",
+      "i18n",
+      "luafilesystem"
     ]
   },
   "windowManager": {
@@ -107,7 +109,6 @@
     },
     "window":
     {
-      "autoUpdated": false,
       "viewport": {
         "renderQueueSequence": [0, 5, 25, 50, 100, {"id": 101, "suppressShadows": true}],
         "backgroundColor": "#000000"

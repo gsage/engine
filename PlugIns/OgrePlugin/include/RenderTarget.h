@@ -35,10 +35,6 @@ THE SOFTWARE.
 #include <OgreVector2.h>
 #include "OgreConverters.h"
 
-#if OGRE_VERSION >= 0x020100
-#include <Compositor/OgreCompositorWorkspaceListener.h>
-#endif
-
 namespace Ogre {
   class SceneManager;
 #if OGRE_VERSION_MAJOR == 2
@@ -146,6 +142,14 @@ namespace Gsage {
        * Check if mouse over
        */
       bool isMouseOver() const;
+
+      /**
+       * Switches back to default camera
+       */
+      void switchToDefaultCamera();
+#if OGRE_VERSION >= 0x020100
+      void destroyCurrentWorkspace();
+#endif
     private:
       void subscribe();
 
@@ -174,6 +178,7 @@ namespace Gsage {
       DataProxy mParameters;
       const std::string mName;
       Ogre::Camera* mCurrentCamera;
+      Ogre::Camera* mDefaultCamera;
 
       bool mAutoUpdate;
       RenderTargetType::Type mType;

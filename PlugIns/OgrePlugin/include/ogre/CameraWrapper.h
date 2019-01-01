@@ -37,7 +37,7 @@ namespace Ogre {
 }
 
 namespace Gsage {
-  class CameraWrapper : public MovableObjectWrapper<Ogre::Camera>
+  class CameraWrapper : public MovableObjectWrapper<Ogre::Camera>, public Ogre::MovableObject::Listener
   {
     public:
       static const std::string TYPE;
@@ -127,6 +127,8 @@ namespace Gsage {
        * Remove camera
        */
       void destroy();
+      
+      void objectDestroyed(Ogre::MovableObject* cam);
     private:
       std::string mTarget;
 
@@ -135,6 +137,8 @@ namespace Gsage {
       Ogre::RenderWindow* mWindow;
 
       bool mIsActive;
+
+      RenderTargetPtr mRenderTarget;
   };
 }
 

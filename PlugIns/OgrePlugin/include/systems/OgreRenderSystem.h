@@ -46,6 +46,8 @@ THE SOFTWARE.
 #include "components/OgreRenderComponent.h"
 #include "ogre/OgreObjectManager.h"
 #include "EventDispatcher.h"
+#include "ThreadSafeQueue.h"
+#include "ObjectMutation.h"
 
 #include "Definitions.h"
 #if OGRE_VERSION >= 0x020100
@@ -354,6 +356,13 @@ namespace Gsage
        * Allow multithreaded mode for OgreRenderSystem
        */
       bool allowMultithreading();
+
+      /**
+       * Queue object mutation is called from Ogre wrappers
+       *
+       * @param callback Mutation callback
+       */
+      void queueMutation(ObjectMutation::Callback callback);
     protected:
       /**
        * Handle window resizing
@@ -406,6 +415,7 @@ namespace Gsage
       typedef std::map<std::string, Ogre::Plugin*> OgrePlugins;
       OgrePlugins mOgrePlugins;
 #endif
+      ThreadSafeQueue<ObjectMutation> mMutationQueue;
   };
 }
 

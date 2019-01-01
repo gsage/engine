@@ -18,8 +18,8 @@
     },
     "script": {
       "hooks": {
-        "camera": "setOrbitalCam()",
-        "damageEmitter": "emitter.create('damage')"
+        "camera": "--setOrbitalCam()",
+        "damageEmitter": "--emitter.create('damage')"
       }
     }
   },
@@ -35,6 +35,22 @@
           "type": "model",
           "mesh": "castle.mesh",
           "name": "castle",
+          "castShadows": true
+        }]
+      }
+    }
+  },
+    {
+    "id": "torii",
+    "render": {
+      "root": {
+        "position": "0,10,0",
+        "rotation": "0,0,1,1",
+        "scale": "1,1,1",
+        "children": [{
+          "type": "model",
+          "mesh": "torii.mesh",
+          "name": "torii",
           "castShadows": true
         }]
       }

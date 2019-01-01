@@ -29,12 +29,14 @@ THE SOFTWARE.
 
 #include "ogre/OgreObject.h"
 #include "Logger.h"
+#include "OgreRenderSystem.h"
 
 namespace Gsage {
 
   const Event::Type OgreObjectManagerEvent::FACTORY_UNREGISTERED = "factoryUnregistered";
 
-  OgreObjectManager::OgreObjectManager()
+  OgreObjectManager::OgreObjectManager(OgreRenderSystem* rs)
+    : mRenderSystem(rs)
   {
   }
 

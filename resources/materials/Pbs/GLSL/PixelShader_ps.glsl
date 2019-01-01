@@ -37,6 +37,7 @@ layout(std140) uniform;
 @end
 
 @insertpiece( DeclPlanarReflTextures )
+@insertpiece( DeclAreaApproxTextures )
 
 @property( hlms_vpos )
 in vec4 gl_FragCoord;
@@ -78,7 +79,7 @@ in block
 	uniform sampler3D irradianceVolume;
 @end
 
-@property( !roughness_map )#define ROUGHNESS material.kS.w@end
+@property( !roughness_map && !hlms_decals_diffuse )#define ROUGHNESS material.kS.w@end
 @property( num_textures )uniform sampler2DArray textureMaps[@value( num_textures )];@end
 @property( use_envprobe_map )uniform samplerCube	texEnvProbeMap;@end
 
@@ -95,9 +96,9 @@ in block
 @property( use_envprobe_map )	uint envMapIdx;@end
 
 vec4 diffuseCol;
-@property( specular_map && !metallic_workflow && !fresnel_workflow )vec3 specularCol;@end
-@property( metallic_workflow || (specular_map && fresnel_workflow) )@insertpiece( FresnelType ) F0;@end
-@property( roughness_map )float ROUGHNESS;@end
+@property( (specular_map && !metallic_workflow && !fresnel_workflow) || hlms_decals_diffuse )vec3 specularCol;@end
+@property( metallic_workflow || (specular_map && fresnel_workflow) || hlms_decals_diffuse )@insertpiece( FresnelType ) F0;@end
+@property( roughness_map || hlms_decals_diffuse )float ROUGHNESS;@end
 
 Material material;
 @property( hlms_normal || hlms_qtangent )vec3 nNormal;@end
@@ -155,15 +156,21 @@ vec3 qmul( vec4 q, vec3 v )
 @property( (hlms_normal || hlms_qtangent) && !hlms_prepass )
 @insertpiece( DeclareBRDF )
 @insertpiece( DeclareBRDF_InstantRadiosity )
+@insertpiece( DeclareBRDF_AreaLightApprox )
 @end
 
 @property( use_parallax_correct_cubemaps )
 @insertpiece( DeclParallaxLocalCorrect )
 @end
 
+@insertpiece( DeclDecalsSamplers )
+
 @insertpiece( DeclShadowMapMacros )
 @insertpiece( DeclShadowSamplers )
 @insertpiece( DeclShadowSamplingFuncs )
+
+@insertpiece( DeclAreaLtcTextures )
+@insertpiece( DeclAreaLtcLightFuncs )
 
 @insertpiece( custom_ps_functions )
 
@@ -231,18 +238,23 @@ void main()
 	@foreach( detail_maps_diffuse, n )
 		@insertpiece( blend_mode_idx@n ) @add( t, 1 ) @end
 
-		/// Apply the material's diffuse over the textures
-		@property( !transparent_mode )
-			diffuseCol.xyz *= material.kD.xyz;
-		@end @property( transparent_mode )
-			diffuseCol.xyz *= material.kD.xyz * diffuseCol.w * diffuseCol.w;
-		@end
+	/// Apply the material's diffuse over the textures
+	@property( !transparent_mode )
+	    diffuseCol.xyz *= material.kD.xyz;
+	@end @property( transparent_mode )
+	    diffuseCol.xyz *= material.kD.xyz * diffuseCol.w * diffuseCol.w;
+	@end
 
-	@property( alpha_test )
+	@property( alpha_test && !alpha_test_shadow_caster_only )
 		if( material.kD.w @insertpiece( alpha_test_cmp_func ) diffuseCol.a )
 			discard;
 	@end
 @end
+
+	@insertpiece( SampleSpecularMap )
+	@insertpiece( SampleRoughnessMap )
+
+	@insertpiece( forwardPlusDoDecals )
 
 @property( !hlms_use_prepass )
 	@property( !normal_map )
@@ -287,13 +299,13 @@ void main()
 
 	@insertpiece( custom_ps_posSampleNormal )
 
+	@insertpiece( forwardPlusApplyDecalsNormal )
+
 	@property( normal_map )
 		nNormal = normalize( TBN * nNormal );
 	@end
 
 	@insertpiece( DoDirectionalShadowMaps )
-
-	@insertpiece( SampleRoughnessMap )
 
 @end @property( hlms_use_prepass )
 	ivec2 iFragCoord = ivec2( gl_FragCoord.x,
@@ -344,8 +356,6 @@ void main()
 	@end
 @end
 
-@insertpiece( SampleSpecularMap )
-
 @property( !hlms_prepass )
 	//Everything's in Camera space
 @property( hlms_lights_spot || use_envprobe_map || hlms_use_ssr || use_planar_reflections || ambient_hemisphere || hlms_forwardplus )
@@ -374,7 +384,7 @@ void main()
 		finalColour += BRDF( passBuf.lights[@n].position.xyz, viewDir, NdotV, passBuf.lights[@n].diffuse, passBuf.lights[@n].specular );@end
 @end
 
-@property( hlms_lights_point || hlms_lights_spot )	vec3 lightDir;
+@property( hlms_lights_point || hlms_lights_spot || hlms_lights_area_approx || hlms_lights_area_ltc )	vec3 lightDir;
 	float fDistance;
 	vec3 tmpColour;
 	float spotCosAngle;@end
@@ -398,7 +408,7 @@ void main()
 @foreach( hlms_lights_spot, n, hlms_lights_point )
 	lightDir = passBuf.lights[@n].position.xyz - inPs.pos;
 	fDistance= length( lightDir );
-@property( !hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), passBuf.lights[@n].spotDirection );@end
+@property( !hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), passBuf.lights[@n].spotDirection.xyz );@end
 @property( hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), zAxis( passBuf.lights[@n].spotQuaternion ) );@end
 	if( fDistance <= passBuf.lights[@n].attenuation.x && spotCosAngle >= passBuf.lights[@n].spotParams.y @insertpiece( andObjLightMaskCmp ) )
 	{
@@ -415,6 +425,10 @@ void main()
 		float atten = 1.0 / (0.5 + (passBuf.lights[@n].attenuation.y + passBuf.lights[@n].attenuation.z * fDistance) * fDistance );
 		finalColour += tmpColour * (atten * spotAtten);
 	}@end
+
+	//Custom 2D shape lights
+	@insertpiece( DoAreaApproxLights )
+	@insertpiece( DoAreaLtcLights )
 
 @insertpiece( forward3dLighting )
 @insertpiece( applyIrradianceVolumes )

@@ -17,7 +17,9 @@ require 'actions'
 require 'factories.camera'
 require 'factories.emitters'
 
-if imgui then
+local imguiInterface = require 'imgui.base'
+
+if imguiInterface:available() then
   require 'imgui.console'
   require 'imgui.stats'
   require 'imgui.ogreView'
@@ -153,7 +155,7 @@ function onReady(e)
 
   --spawn()
   --spawnMore(10)
-  camera:createAndAttach('free', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
+  camera:createAndAttach('orbit', 'orbo', {target='sinbad', cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=EntityFactory.REUSE})
 end
 
 event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
@@ -161,7 +163,7 @@ event:bind(core, Facade.LOAD, onReady)
 console_visible = false
 game:loadSave('gameStart')
 
-if imgui then
+if imguiInterface:available() then
   imguiConsole = Console(256)
   imguiConsole:setOpen(true)
   imgui.manager:addView("console", imguiConsole, false)
