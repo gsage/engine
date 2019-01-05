@@ -108,7 +108,7 @@ function SceneExplorer:renderComponentEditor(id, componentName)
   local function defaultRenderer()
     local component = entity[componentName]
     if component.props then
-      component.props = tableEditor(component.props, id)
+      tableEditor(component.props, id)
     else
       imgui.TextWrapped(lm("sceneExplorer.no_editor", {component = componentName, type = type}))
     end

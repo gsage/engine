@@ -37,6 +37,7 @@ namespace Gsage {
     , mViewport(0)
     , mWindow(0)
     , mIsActive(false)
+    , mRenderTarget(nullptr)
   {
     BIND_ACCESSOR_WITH_PRIORITY("name", &CameraWrapper::createCamera, &CameraWrapper::getName, 1);
 
@@ -61,6 +62,18 @@ namespace Gsage {
         mSceneManager->destroyCamera(getCamera());
       }
 #endif
+    }
+  }
+
+  void CameraWrapper::objectDestroyed(Ogre::MovableObject* cam)
+  {
+    cam->setListener(0);
+    if(mRenderTarget) {
+#if OGRE_VERSION >= 0x020100
+      mRenderTarget->destroyCurrentWorkspace();
+#endif
+      mRenderTarget->setCamera(nullptr);
+      mRenderTarget->switchToDefaultCamera();
     }
   }
 
@@ -95,8 +108,12 @@ namespace Gsage {
   }
 
   void CameraWrapper::attach(RenderTargetPtr renderTarget) {
-    renderTarget->setCamera(getCamera());
-    LOG(INFO) << "Attached camera to render target " << renderTarget->getName();
+    if(mRenderTarget && mRenderTarget != renderTarget) {
+      mRenderTarget->setCamera(nullptr);
+    }
+    mRenderTarget = renderTarget;
+    mRenderTarget->setCamera(getCamera());
+    LOG(INFO) << "Attached camera to render target " << mRenderTarget->getName();
   }
 
   void CameraWrapper::createCamera(const std::string& name)
@@ -105,6 +122,7 @@ namespace Gsage {
     LOG(TRACE) << "Create camera with id " << name;
     // toss camera object to the movable wrapper
     mObject = mSceneManager->createCamera(name);
+    mObject->setListener(this);
     attachObject(mObject);
   }
 

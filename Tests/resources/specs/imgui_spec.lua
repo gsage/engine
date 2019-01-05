@@ -1,5 +1,6 @@
 local camera = require 'factories.camera'
 local async = require "lib.async"
+local imguiInterface = require 'imgui.base'
 
 local testView = function()
   imgui.Begin("Test Window")
@@ -11,7 +12,7 @@ if imgui then
   describe("imgui tests #core #imgui", function()
     it("should work after engine reset", function()
       camera:createAndAttach('free', 'free')
-      imgui.manager:addView("test", view, true)
+      assert.truthy(imguiInterface:addView("test", testView, true))
       game:reset()
       async.waitSeconds(0.2)
     end)

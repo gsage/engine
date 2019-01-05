@@ -44,7 +44,7 @@ function setOrbitalCam()
 end
 
 function spawn()
-  --data:createEntity(getResourcePath('characters/ninja.json'), {movement = {speed = 10}})
+  data:createEntity(getResourcePath('characters/ninja.json'), {movement = {speed = 10}})
 end
 
 function initLibrocket(event)
@@ -120,7 +120,7 @@ if imguiInterface:available() then
   imguiInterface:addView("ogreView", ogreView)
 
   local function onAreaLoad(event)
-    ogreView:createCamera("free")
+    ogreView:createCamera("free", {utility = true})
   end
 
   event:bind(core, Facade.LOAD, onAreaLoad)
@@ -143,16 +143,8 @@ if imguiInterface:available() then
 
   imguiInterface:addView("debug", function()
     if imgui.Button("load example scene") then
-      game:reset(function(e)
-        return not e.props.utility
-      end)
+      game:reset()
       game:loadArea("exampleLevel")
-    end
-
-    if imgui.Button("create cam") then
-      -- use utility parameter to avoid deleting the cam on scene reload
-      ogreView:createCamera("free", {utility = true})
-      --core:navigation():rebuildNavMesh({})
     end
   end, true)
 

@@ -44,6 +44,7 @@ namespace Ogre
 }
 
 namespace Gsage {
+  class OgreRenderSystem;
   class OgreObject;
 
   /**
@@ -72,7 +73,7 @@ namespace Gsage {
   {
     public:
 
-      OgreObjectManager();
+      OgreObjectManager(OgreRenderSystem* rs);
       virtual ~OgreObjectManager();
 
       OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, OgreV1::Entity* parentEntity);
@@ -157,6 +158,11 @@ namespace Gsage {
       {
         unregisterElement(C::TYPE);
       }
+
+      /**
+       * Get targeted render system instance
+       */
+      inline OgreRenderSystem* getRenderSystem() { return mRenderSystem; }
     private:
       class OgreObjectPool
       {
@@ -201,6 +207,8 @@ namespace Gsage {
       typedef std::map<const std::string, OgreObjectPool*> OgreObjectsCollections;
 
       OgreObjectsCollections mObjects;
+
+      OgreRenderSystem* mRenderSystem;
 
   };
 }

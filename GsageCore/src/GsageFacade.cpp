@@ -86,6 +86,7 @@ namespace Gsage {
       return;
 
     mStopped = true;
+    mEngine.unloadAll();
     mEngine.removeSystems();
     mEngine.removeAllListeners();
 

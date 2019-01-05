@@ -35,6 +35,10 @@ THE SOFTWARE.
 
 #if GSAGE_PLATFORM == GSAGE_LINUX
 #define _NOEXCEPT _GLIBCXX_USE_NOEXCEPT
+#else
+#ifndef _NOEXCEPT
+#define _NOEXCEPT
+#endif
 #endif
 
 namespace Gsage {

@@ -106,7 +106,7 @@ function Console:handleCommandLineCallback(data)
       data.selectionEnd = data.cursorPos
       self.prevHistoryPos = self.historyPos
       data.bufDirty = true
-      self.commandLine:write(str)
+      self.commandLine:write(text)
   end
 
   if data.eventFlag == ImGuiInputTextFlags_CallbackHistory then

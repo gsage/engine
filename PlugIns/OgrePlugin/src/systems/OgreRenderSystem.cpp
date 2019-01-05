@@ -120,6 +120,7 @@ namespace Gsage {
     , mViewport(0)
     , mWindowEventListener(0)
     , mSceneManager(0)
+    , mObjectManager(this)
 #if OGRE_VERSION >= 0x020100
     , mRectangle2DFactory(0)
 #endif
@@ -428,6 +429,12 @@ namespace Gsage {
 
   void OgreRenderSystem::update(const double& time)
   {
+    for(int i = 0; i < mMutationQueue.size(); ++i) {
+      ObjectMutation om;
+      mMutationQueue.get(om);
+      om.execute();
+    }
+
     ComponentStorage<OgreRenderComponent>::update(time);
     Ogre::WindowEventUtilities::messagePump();
 
@@ -575,6 +582,11 @@ namespace Gsage {
   bool OgreRenderSystem::allowMultithreading()
   {
     return true;
+  }
+
+  void OgreRenderSystem::queueMutation(ObjectMutation::Callback callback)
+  {
+    mMutationQueue << ObjectMutation(callback);
   }
 
   GeomPtr OgreRenderSystem::getGeometry(const BoundingBox& bounds, int flags)

@@ -63,6 +63,7 @@ namespace Gsage {
     : mName(name)
     , mParameters(parameters)
     , mCurrentCamera(0)
+    , mDefaultCamera(0)
     , mAutoUpdate(mParameters.get("autoUpdated", true))
     , mType(type)
     , mX(0)
@@ -237,12 +238,7 @@ namespace Gsage {
     }
 
     mSceneManager = sceneManager;
-    // create default camera
-    auto name = mParameters.get("defaultCamera.name", "");
-    if(!name.empty()) {
-      setCamera(sceneManager->createCamera(name));
-      LOG(INFO) << "[" << mName << "] " << "Created default camera " << name;
-    }
+    switchToDefaultCamera();
 
     mCollisionTools = std::make_shared<MOC::CollisionTools>(mSceneManager);
   }
@@ -297,17 +293,16 @@ namespace Gsage {
     Ogre::Viewport* vp = mWrappedTarget->addViewport(mCurrentCamera);
     configureViewport(vp);
 #else
-    Ogre::CompositorManager2 *compositorManager = Ogre::Root::getSingletonPtr()->getCompositorManager2();
-    const Ogre::String workspaceName(mParameters.get("workspaceName", "basic"));
-
     if(mWorkspace) {
-      compositorManager->removeWorkspace(mWorkspace);
+      destroyCurrentWorkspace();
     }
-    LOG(INFO) << "Delete workspace " << workspaceName;
 
     if(!camera) {
       return;
     }
+
+    Ogre::CompositorManager2 *compositorManager = Ogre::Root::getSingletonPtr()->getCompositorManager2();
+    const Ogre::String workspaceName(mParameters.get("workspaceName", "basic"));
 
     auto backgroundColor = mParameters.get<Ogre::ColourValue>("viewport.backgroundColor", Ogre::ColourValue::Black);
 
@@ -403,7 +398,34 @@ namespace Gsage {
   void RenderTarget::configureWorkspace(Ogre::CompositorWorkspace* workspace)
   {
   }
+
+  void RenderTarget::destroyCurrentWorkspace()
+  {
+    if(mWorkspace) {
+      mWorkspace->setEnabled(false);
+      Ogre::Root::getSingletonPtr()->getCompositorManager2()->removeWorkspace(mWorkspace);
+      mWorkspace = 0;
+      const Ogre::String workspaceName(mParameters.get("workspaceName", "basic"));
+      LOG(INFO) << "Delete workspace " << workspaceName;
+    }
+  }
 #endif
+
+  void RenderTarget::switchToDefaultCamera()
+  {
+    // create default camera
+    auto name = mParameters.get("defaultCamera.name", "");
+    if(!name.empty()) {
+      if(!mDefaultCamera) {
+        mDefaultCamera = mSceneManager->createCamera(name);
+        LOG(INFO) << "[" << mName << "] " << "Created default camera " << name;
+      }
+
+      setCamera(mDefaultCamera);
+      LOG(INFO) << "Using default camera " << mName;
+    }
+  }
+
 
   Ogre::RenderTarget* RenderTarget::getOgreRenderTarget()
   {
@@ -461,6 +483,10 @@ namespace Gsage {
       unsigned int height,
       unsigned int samples,
       Ogre::PixelFormat pixelFormat) {
+
+#if OGRE_VERSION >= 0x020100
+    destroyCurrentWorkspace();
+#endif
 
     Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
 
