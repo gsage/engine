@@ -82,8 +82,8 @@ Console = class(ImguiWindow, function(self, maxInput, docked)
   self:info(lm("console.version", {version = game.version or "unknown"}))
 
   log.proxy:subscribe("console", function(message)
-    local level = LogEntry.LEVEL_MAP[message:level()] or "UNKNOWN"
-    self:logMessage(level, "[".. level .."] " .. message:message())
+    local level = LogEntry.LEVEL_MAP[message.level] or "UNKNOWN"
+    self:logMessage(level, "[".. level .."] " .. message.message)
   end)
 end)
 
@@ -166,6 +166,7 @@ function Console:__call()
     return
   end
 
+  log.proxy:flushMessages()
   imgui.TextWrapped(lm("console.autocomplete"))
   if imgui.Button(icons.block) then
     self:clear()

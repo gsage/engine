@@ -173,27 +173,29 @@ namespace Gsage {
     float roll = orientation.getRoll().valueDegrees();
     float rotation[3] = {pitch, yaw, roll};
 
-    ImGui::DragFloat3(posLabel.c_str(), position.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
-    ImGui::DragFloat3(rotationLabel.c_str(), rotation, v_speed, v_min, v_max, display_format.c_str(), power);
-    ImGui::DragFloat3(scaleLabel.c_str(), scale.ptr(), v_speed, v_min, v_max, display_format.c_str(), power);
-
-    node->setPosition(position);
-    node->setScale(scale);
-
-    float deltaPitch = rotation[0] - pitch;
-    float deltaYaw = rotation[1] - yaw;
-    float deltaRoll = rotation[2] - roll;
-
-    if(deltaPitch) {
-      node->rotate(Ogre::Vector3::UNIT_X, Ogre::Degree(deltaPitch), Ogre::SceneNode::TS_WORLD);
+    if(ImGui::DragFloat3(posLabel.c_str(), position.ptr(), v_speed, v_min, v_max, display_format.c_str(), power)) {
+      node->setPosition(position);
     }
 
-    if(deltaYaw) {
-      node->rotate(Ogre::Vector3::UNIT_Y, Ogre::Degree(deltaYaw), Ogre::SceneNode::TS_WORLD);
-    }
+    if(ImGui::DragFloat3(rotationLabel.c_str(), rotation, v_speed, v_min, v_max, display_format.c_str(), power)) {
+      float deltaPitch = rotation[0] - pitch;
+      float deltaYaw = rotation[1] - yaw;
+      float deltaRoll = rotation[2] - roll;
 
-    if(deltaRoll) {
-      node->rotate(Ogre::Vector3::UNIT_Z, Ogre::Degree(deltaRoll), Ogre::SceneNode::TS_WORLD);
+      if(deltaPitch) {
+        node->rotate(Ogre::Vector3::UNIT_X, Ogre::Degree(deltaPitch), Ogre::SceneNode::TS_WORLD);
+      }
+
+      if(deltaYaw) {
+        node->rotate(Ogre::Vector3::UNIT_Y, Ogre::Degree(deltaYaw), Ogre::SceneNode::TS_WORLD);
+      }
+
+      if(deltaRoll) {
+        node->rotate(Ogre::Vector3::UNIT_Z, Ogre::Degree(deltaRoll), Ogre::SceneNode::TS_WORLD);
+      }
+    }
+    if(ImGui::DragFloat3(scaleLabel.c_str(), scale.ptr(), v_speed, v_min, v_max, display_format.c_str(), power)) {
+      node->setScale(scale);
     }
 
     return true;

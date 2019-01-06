@@ -734,7 +734,7 @@ std::pair<bool, std::unique_ptr<T>> internal::_channel<T, N>::try_recv_ptr(
   assert(!is_full() || std::this_thread::get_id() != pair.first);
 
   // move/copy before pop_front() to ensure strong exception safety
-  std::unique_ptr<T> t_ptr(make_unique<T>(std::move(pair.second)));
+  std::unique_ptr<T> t_ptr(cpp::internal::make_unique<T>(std::move(pair.second)));
 
   m_queue.pop_front();
   assert(!is_full());
@@ -843,7 +843,7 @@ std::unique_ptr<T> internal::_channel<T, N>::recv_ptr()
   assert(!is_full() || std::this_thread::get_id() != pair.first);
 
   // move/copy before pop_front() to ensure strong exception safety
-  std::unique_ptr<T> t_ptr(make_unique<T>(std::move(pair.second)));
+  std::unique_ptr<T> t_ptr(cpp::internal::make_unique<T>(std::move(pair.second)));
   _post_blocking_recv(lock);
   return t_ptr;
 }

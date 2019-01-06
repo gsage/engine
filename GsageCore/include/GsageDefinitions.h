@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include <iterator>
 #include <ostream>
 #include <vector>
+#include <channel>
 
 static inline std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
@@ -65,6 +66,15 @@ static inline std::string join(const std::vector<std::string>& vector, const cha
     }
   }
   return s.str();
+}
+
+namespace Gsage {
+  enum ChannelSignal {
+    DONE,
+    SHUTDOWN
+  };
+
+  typedef cpp::channel<ChannelSignal> SignalChannel;
 }
 
 #define GSAGE_UNSUPPORTED 0

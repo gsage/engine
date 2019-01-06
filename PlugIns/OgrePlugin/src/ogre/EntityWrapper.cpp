@@ -93,13 +93,15 @@ namespace Gsage {
 
   void EntityWrapper::setMesh(const std::string& model)
   {
+    if(mMeshName == model) {
+      return;
+    }
+
     mMeshName = model;
 
-    // always load meshes using HBU_STATIC to make MOC & Recast work properly
     OgreV1::MeshPtr mesh = OgreV1::MeshManager::getSingleton().load(
       model, mResourceGroup,
       OgreV1::HardwareBuffer::HBU_STATIC, OgreV1::HardwareBuffer::HBU_STATIC);
-
     mObject = mSceneManager->createEntity(mesh);
     mObject->setQueryFlags(mQuery);
     mObject->getUserObjectBindings().setUserAny("entity", Ogre::Any(mOwnerId));

@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "DataProxy.h"
 #include "Engine.h"
 #include "sol_forward.hpp"
+#include "ThreadSafeQueue.h"
 
 #include "lua/LuaEventProxy.h"
 #include "lua/LuaEventConnection.h"
@@ -134,6 +135,20 @@ namespace Gsage
        * @param name callback name
        */
       void unsubscribe(const std::string& name);
+
+      /**
+       * Flush accumulated messages
+       */
+      void flushMessages();
+
+      struct LogMessage {
+        el::Level Level;
+        el::base::type::LineNumber Line;
+        std::string File;
+        std::string Func;
+        el::base::type::VerboseLevel VerboseLevel;
+        el::base::type::string_t Message;
+      };
     private:
       class LogSubscriber : public el::LogDispatchCallback
       {
@@ -146,12 +161,18 @@ namespace Gsage
            * @param wrapped sol::protected_function
            */
           void setWrappedFunction(sol::protected_function wrapped);
+          /**
+           * Flush accumulated messages
+           */
+          void flushMessages();
         protected:
           void handle(const el::LogDispatchData* data);
         private:
           sol::protected_function mWrapped;
           bool mReady;
+          ThreadSafeQueue<LogMessage> mMessages;
       };
+      std::map<std::string, LogSubscriber*> mSubscribers;
   };
 
   /**

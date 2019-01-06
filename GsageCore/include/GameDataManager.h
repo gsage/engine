@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <istream>
 #include <ostream>
 #include <map>
+#include <thread>
 #include "GsageDefinitions.h"
 #include "DataProxy.h"
 

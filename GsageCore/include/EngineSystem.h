@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include <vector>
 #include <atomic>
+#include <channel>
 
 #include "Component.h"
 #include "GsageDefinitions.h"
@@ -40,6 +41,34 @@ namespace Gsage
   class Engine;
   class EntityComponent;
   class GsageFacade;
+  class EngineSystem;
+
+  /**
+   * Async task object
+   */
+  class Task
+  {
+    public:
+      typedef std::function<void()> Function;
+
+      Task(Function func);
+      virtual ~Task();
+
+      /**
+       * Cancel task
+       */
+      void cancel();
+
+      /**
+       * Run task
+       */
+      void run();
+    private:
+      Function mFunction;
+      std::atomic<bool> mCancelled;
+  };
+
+  typedef std::shared_ptr<Task> TaskPtr;
 
   /**
    * Abstract system class.
@@ -177,6 +206,13 @@ namespace Gsage
        * @returns false by default
        */
       virtual bool allowMultithreading() { return false; }
+
+      /**
+       * Runs async task using system thread pool
+       *
+       * @param task function to run
+       */
+      virtual TaskPtr asyncTask(Task::Function func);
     protected:
       /**
        * Update configuration
@@ -198,6 +234,12 @@ namespace Gsage
 
       std::atomic_bool mReadyWasSet;
       std::atomic_bool mReady;
+      std::atomic_bool mShutdown;
+
+      cpp::channel<TaskPtr> mTasksQueue;
+      SignalChannel mShutdownChannel;
+
+      std::vector<std::thread> mBackgroundWorkers;
   };
 }
 

@@ -70,7 +70,8 @@ namespace Gsage {
   void LogProxy::subscribe(const std::string& name, sol::protected_function function)
   {
     el::Helpers::installLogDispatchCallback<LogSubscriber>(name);
-    el::Helpers::logDispatchCallback<LogSubscriber>(name)->setWrappedFunction(function);
+    mSubscribers[name] = el::Helpers::logDispatchCallback<LogSubscriber>(name);
+    mSubscribers[name]->setWrappedFunction(function);
   }
 
   void LogProxy::unsubscribe(const std::string& name)
@@ -78,13 +79,36 @@ namespace Gsage {
     el::Helpers::uninstallLogDispatchCallback<LogSubscriber>(name);
   }
 
+  void LogProxy::flushMessages()
+  {
+    for(auto& pair : mSubscribers) {
+      pair.second->flushMessages();
+    }
+  }
+
   void LogProxy::LogSubscriber::handle(const el::LogDispatchData* data)
   {
     if(!mReady || !mWrapped.valid()) {
       return;
     }
+    const el::LogMessage* msg = data->logMessage();
 
-    mWrapped(data->logMessage());
+    mMessages << LogMessage{
+      msg->level(),
+      msg->line(),
+      msg->file(),
+      msg->func(),
+      msg->verboseLevel(),
+      msg->message()
+    };
+  }
+
+  void LogProxy::LogSubscriber::flushMessages()
+  {
+    LogMessage msg;
+    while(mMessages.get(msg) > 0) {
+      mWrapped(msg);
+    }
   }
 
   void LogProxy::LogSubscriber::setWrappedFunction(sol::protected_function wrapped)
@@ -759,15 +783,16 @@ namespace Gsage {
     // Logging
     lua.new_usertype<LogProxy>("LogProxy",
         "subscribe", &LogProxy::subscribe,
-        "unsubscribe", &LogProxy::unsubscribe
+        "unsubscribe", &LogProxy::unsubscribe,
+        "flushMessages", &LogProxy::flushMessages
     );
 
-    lua.new_usertype<el::LogMessage>("LogMessage",
-        "level", &el::LogMessage::level,
-        "message", &el::LogMessage::message,
-        "file", &el::LogMessage::file,
-        "line", &el::LogMessage::line,
-        "func", &el::LogMessage::func,
+    lua.new_usertype<LogProxy::LogMessage>("LogMessage",
+        "level", &LogProxy::LogMessage::Level,
+        "message", &LogProxy::LogMessage::Message,
+        "file", &LogProxy::LogMessage::File,
+        "line", &LogProxy::LogMessage::Line,
+        "func", &LogProxy::LogMessage::Func,
         "Global", sol::var(el::Level::Global),
         "Trace", sol::var(el::Level::Trace),
         "Debug", sol::var(el::Level::Debug),
