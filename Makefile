@@ -40,12 +40,14 @@ CMAKE := $(shell where /r . CMakeLists.txt)
 CONFIGS := $(shell where /r ./resources *.in)
 CMAKE_FUNCTIONS := $(shell where /r . *.cmake)
 ADD_REPO_CMD = conan remote list | findstr /I "gsage" && if %errorlevel% == 1 (conan remote add gsage https://api.bintray.com/conan/gsage/main --insert && conan user -p $(API_KEY) -r gsage $(CONAN_USER))
+ADD_BINCRAFTERS_CMD = conan remote list | findstr /I "bincrafters" && if %errorlevel% == 1 (conan remote add bincrafters "https://api.bintray.com/conan/bincrafters/public-conan" --insert 1)
 else
 HEADERS := $(shell find ./ -name "*.h" -o -name "*.hpp" -type f)
 CPP := $(shell find ./ -name "*.cpp" -o -name "*.cc" -type f)
 CMAKE := $(shell find ./ -name "*.txt" -o -name "*.cmake" -type f)
 CONFIGS := resources/*.in
 ADD_REPO_CMD := if ! conan remote list | grep gsage; then conan remote add gsage https://api.bintray.com/conan/gsage/main --insert; conan user -p $(API_KEY) -r gsage $(CONAN_USER);  fi
+ADD_BINCRAFTERS_CMD := if ! conan remote list | grep bincrafters; then conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --insert 1;  fi
 endif
 
 UNIT_CMD :=  cd ./build/bin/ && $(PREFIX)unit-tests
@@ -72,6 +74,7 @@ EDITOR_CMD := $(EDITOR_CMD)$(POSTFIX)$(FILE_EXTENSION)
 
 .repo: conanfile.py
 	@$(ADD_REPO_CMD)
+	@$(ADD_BINCRAFTERS_CMD)
 	@touch .repo
 
 .deps: .repo conanfile.py

@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <OgreRoot.h>
 #include <OgreConfigFile.h>
+#include <mutex>
 
 #include "DataProxy.h"
 #if OGRE_VERSION >= 0x020100

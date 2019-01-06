@@ -29,6 +29,28 @@ THE SOFTWARE.
 namespace Gsage
 {
 
+  Task::Task(Task::Function func)
+    : mFunction(func)
+  {
+
+  }
+
+  Task::~Task()
+  {
+  }
+
+  void Task::cancel()
+  {
+    mCancelled.store(true);
+  }
+
+  void Task::run()
+  {
+    if(!mCancelled.load()) {
+      mFunction();
+    }
+  }
+
   EngineSystem::EngineSystem()
     : mReady(false)
     , mConfigDirty(false)
@@ -36,6 +58,7 @@ namespace Gsage
     , mThreadsNumber(1)
     , mDedicatedThread(false)
     , mReadyWasSet(false)
+    , mShutdown(false)
   {
   }
 
@@ -66,11 +89,44 @@ namespace Gsage
       return false;
     }
     setReady(true);
+
+    size_t backgroundWorkersCount = mConfig.get("backgroundWorkersCount", 0);
+    if(backgroundWorkersCount > 0) {
+      for(int i = 0; i < backgroundWorkersCount - mBackgroundWorkers.size(); i++) {
+        mBackgroundWorkers.push_back(std::thread([&](){
+          LOG(INFO) << "Starting background worker " << i;
+          bool run = true;
+          while(run) {
+            ChannelSignal signal;
+            cpp::select select;
+            select.recv(mTasksQueue, [](TaskPtr task){
+              task->run();
+            });
+            select.recv_only(mShutdownChannel, signal);
+            select.wait();
+
+            run = mShutdown.load() && signal != ChannelSignal::SHUTDOWN;
+          }
+        }));
+      }
+    }
+
     return true;
   }
 
   void EngineSystem::shutdown()
   {
+    mShutdown.store(true);
+    for(int i = 0; i < mBackgroundWorkers.size(); i++) {
+      mShutdownChannel.send(ChannelSignal::SHUTDOWN);
+    }
+
+    for(auto& t : mBackgroundWorkers) {
+      if(t.joinable()) {
+        t.join();
+      }
+    }
+    mBackgroundWorkers.clear();
     setReady(false);
   }
 
@@ -113,5 +169,18 @@ namespace Gsage
   void EngineSystem::setName(const std::string& name)
   {
     mName = name;
+  }
+
+  TaskPtr EngineSystem::asyncTask(Task::Function func)
+  {
+    if(mBackgroundWorkers.size() == 0) {
+      LOG(WARNING) << "No background workers are started in system " << mName << ". Task will be run in foreground";
+      func();
+      return nullptr;
+    }
+
+    TaskPtr t = std::make_shared<Task>(func);
+    mTasksQueue.send(t);
+    return t;
   }
 }
