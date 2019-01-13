@@ -468,6 +468,8 @@ namespace Gsage {
   }
 
   unsigned int RttRenderTarget::getGLID() const {
+    // TODO: check if render target is openGL actually
+    // or remove this method completely as it's not used anywhere
 #if OGRE_VERSION_MAJOR == 1
     Ogre::GLTexture *nativeTexture = static_cast<Ogre::GLTexture*>(mTexture.get());
     return nativeTexture->getGLID();

@@ -98,7 +98,16 @@ namespace Gsage {
        */
       std::string generateName() const;
 
+      /**
+       * Sync all pending property updates
+       */
+      void sync();
+
     protected:
+      struct PendingPropertyUpdate {
+        std::string propertyName;
+      };
+
       std::string mObjectId;
       std::string mOwnerId;
       std::string mType;

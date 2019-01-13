@@ -40,8 +40,6 @@ THE SOFTWARE.
 #define RESOURCES_FOLDER "./resources"
 #endif
 
-#define MALLOC_CHECK_ 2
-
 #ifdef __cplusplus
 extern "C" {
 #endif

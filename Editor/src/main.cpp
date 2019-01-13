@@ -45,8 +45,6 @@ THE SOFTWARE.
 
 #include "sol.hpp"
 
-#define MALLOC_CHECK_ 2
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -14,7 +14,7 @@ install:
 
 # scripts to run before build
 before_build:
-  - conan install -g cmake -o gsage:with_ogre=1.9.0 -o gsage:with_librocket=True -o with_lua_version=luajit-2.0.5 --build=outdated .
+  - conan install -s compiler.runtime=MT -g cmake -o gsage:with_ogre=1.9.0 -o gsage:with_librocket=True -o with_lua_version=luajit-2.0.5 --build=outdated .
   - conan upload "*" --all -r gsage -c
 
 build_script:

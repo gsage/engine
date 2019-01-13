@@ -2,8 +2,9 @@
 #
 
 # You can set these variables from the command line.
+VERSION       = $(shell git describe --tags)
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = VERSION=$(VERSION) sphinx-build
 PAPER         =
 BUILDDIR      = _build
 

@@ -51,136 +51,138 @@ namespace Gsage {
   SDLInputListener::SDLInputListener(size_t handle, Engine* eventRedirect)
     : InputHandler(handle, eventRedirect)
   {
-    mKeyMap[SDLK_ESCAPE] = KeyboardEvent::KC_ESCAPE;
-    mKeyMap[SDLK_1] = KeyboardEvent::KC_1;
-    mKeyMap[SDLK_2] = KeyboardEvent::KC_2;
-    mKeyMap[SDLK_3] = KeyboardEvent::KC_3;
-    mKeyMap[SDLK_4] = KeyboardEvent::KC_4;
-    mKeyMap[SDLK_5] = KeyboardEvent::KC_5;
-    mKeyMap[SDLK_6] = KeyboardEvent::KC_6;
-    mKeyMap[SDLK_7] = KeyboardEvent::KC_7;
-    mKeyMap[SDLK_8] = KeyboardEvent::KC_8;
-    mKeyMap[SDLK_9] = KeyboardEvent::KC_9;
-    mKeyMap[SDLK_0] = KeyboardEvent::KC_0;
-    mKeyMap[SDLK_MINUS] = KeyboardEvent::KC_MINUS;
-    mKeyMap[SDLK_EQUALS] = KeyboardEvent::KC_EQUALS;
-    mKeyMap[SDLK_BACKSPACE] = KeyboardEvent::KC_BACK;
-    mKeyMap[SDLK_TAB] = KeyboardEvent::KC_TAB;
-    mKeyMap[SDLK_q] = KeyboardEvent::KC_Q;
-    mKeyMap[SDLK_w] = KeyboardEvent::KC_W;
-    mKeyMap[SDLK_e] = KeyboardEvent::KC_E;
-    mKeyMap[SDLK_r] = KeyboardEvent::KC_R;
-    mKeyMap[SDLK_t] = KeyboardEvent::KC_T;
-    mKeyMap[SDLK_y] = KeyboardEvent::KC_Y;
-    mKeyMap[SDLK_u] = KeyboardEvent::KC_U;
-    mKeyMap[SDLK_i] = KeyboardEvent::KC_I;
-    mKeyMap[SDLK_o] = KeyboardEvent::KC_O;
-    mKeyMap[SDLK_p] = KeyboardEvent::KC_P;
-    mKeyMap[SDLK_KP_LEFTBRACE] = KeyboardEvent::KC_LBRACKET;
-    mKeyMap[SDLK_KP_RIGHTBRACE] = KeyboardEvent::KC_RBRACKET;
-    mKeyMap[SDLK_RETURN] = KeyboardEvent::KC_RETURN;
-    mKeyMap[SDLK_LCTRL] = KeyboardEvent::KC_LCONTROL;
-    mKeyMap[SDLK_a] = KeyboardEvent::KC_A;
-    mKeyMap[SDLK_s] = KeyboardEvent::KC_S;
-    mKeyMap[SDLK_d] = KeyboardEvent::KC_D;
-    mKeyMap[SDLK_f] = KeyboardEvent::KC_F;
-    mKeyMap[SDLK_g] = KeyboardEvent::KC_G;
-    mKeyMap[SDLK_h] = KeyboardEvent::KC_H;
-    mKeyMap[SDLK_j] = KeyboardEvent::KC_J;
-    mKeyMap[SDLK_k] = KeyboardEvent::KC_K;
-    mKeyMap[SDLK_l] = KeyboardEvent::KC_L;
-    mKeyMap[SDLK_SEMICOLON] = KeyboardEvent::KC_SEMICOLON;
-    mKeyMap[SDLK_QUOTE] = KeyboardEvent::KC_APOSTROPHE;
-    mKeyMap[SDLK_BACKQUOTE] = KeyboardEvent::KC_GRAVE;
-    mKeyMap[SDLK_LSHIFT] = KeyboardEvent::KC_LSHIFT;
-    mKeyMap[SDLK_BACKSLASH] = KeyboardEvent::KC_BACKSLASH;
-    mKeyMap[SDLK_z] = KeyboardEvent::KC_Z;
-    mKeyMap[SDLK_x] = KeyboardEvent::KC_X;
-    mKeyMap[SDLK_c] = KeyboardEvent::KC_C;
-    mKeyMap[SDLK_v] = KeyboardEvent::KC_V;
-    mKeyMap[SDLK_b] = KeyboardEvent::KC_B;
-    mKeyMap[SDLK_n] = KeyboardEvent::KC_N;
-    mKeyMap[SDLK_m] = KeyboardEvent::KC_M;
-    mKeyMap[SDLK_COMMA] = KeyboardEvent::KC_COMMA;
-    mKeyMap[SDLK_PERIOD] = KeyboardEvent::KC_PERIOD;
-    mKeyMap[SDLK_SLASH] = KeyboardEvent::KC_SLASH;
-    mKeyMap[SDLK_RSHIFT] = KeyboardEvent::KC_RSHIFT;
-    mKeyMap[SDLK_KP_MULTIPLY] = KeyboardEvent::KC_MULTIPLY;
-    mKeyMap[SDLK_MENU] = KeyboardEvent::KC_LMENU;
-    mKeyMap[SDLK_SPACE] = KeyboardEvent::KC_SPACE;
-    mKeyMap[SDLK_CAPSLOCK] = KeyboardEvent::KC_CAPITAL;
-    mKeyMap[SDLK_F1] = KeyboardEvent::KC_F1;
-    mKeyMap[SDLK_F2] = KeyboardEvent::KC_F2;
-    mKeyMap[SDLK_F3] = KeyboardEvent::KC_F3;
-    mKeyMap[SDLK_F4] = KeyboardEvent::KC_F4;
-    mKeyMap[SDLK_F5] = KeyboardEvent::KC_F5;
-    mKeyMap[SDLK_F6] = KeyboardEvent::KC_F6;
-    mKeyMap[SDLK_F7] = KeyboardEvent::KC_F7;
-    mKeyMap[SDLK_F8] = KeyboardEvent::KC_F8;
-    mKeyMap[SDLK_F9] = KeyboardEvent::KC_F9;
-    mKeyMap[SDLK_F10] = KeyboardEvent::KC_F10;
-    mKeyMap[SDLK_NUMLOCKCLEAR] = KeyboardEvent::KC_NUMLOCK;
-    mKeyMap[SDLK_SCROLLLOCK] = KeyboardEvent::KC_SCROLL;
-    mKeyMap[SDLK_KP_7] = KeyboardEvent::KC_NUMPAD7;
-    mKeyMap[SDLK_KP_8] = KeyboardEvent::KC_NUMPAD8;
-    mKeyMap[SDLK_KP_9] = KeyboardEvent::KC_NUMPAD9;
-    mKeyMap[SDLK_KP_MINUS] = KeyboardEvent::KC_SUBTRACT;
-    mKeyMap[SDLK_KP_4] = KeyboardEvent::KC_NUMPAD4;
-    mKeyMap[SDLK_KP_5] = KeyboardEvent::KC_NUMPAD5;
-    mKeyMap[SDLK_KP_6] = KeyboardEvent::KC_NUMPAD6;
-    mKeyMap[SDLK_KP_PLUS] = KeyboardEvent::KC_ADD;
-    mKeyMap[SDLK_KP_1] = KeyboardEvent::KC_NUMPAD1;
-    mKeyMap[SDLK_KP_2] = KeyboardEvent::KC_NUMPAD2;
-    mKeyMap[SDLK_KP_3] = KeyboardEvent::KC_NUMPAD3;
-    mKeyMap[SDLK_KP_0] = KeyboardEvent::KC_NUMPAD0;
-    mKeyMap[SDLK_KP_DECIMAL] = KeyboardEvent::KC_DECIMAL;
-    mKeyMap[SDLK_F11] = KeyboardEvent::KC_F11;
-    mKeyMap[SDLK_F12] = KeyboardEvent::KC_F12;
-    mKeyMap[SDLK_F13] = KeyboardEvent::KC_F13;
-    mKeyMap[SDLK_F14] = KeyboardEvent::KC_F14;
-    mKeyMap[SDLK_F15] = KeyboardEvent::KC_F15;
-    mKeyMap[SDLK_KP_EQUALS] = KeyboardEvent::KC_NUMPADEQUALS;
-    mKeyMap[SDLK_AUDIOPREV] = KeyboardEvent::KC_PREVTRACK;
-    mKeyMap[SDLK_COLON] = KeyboardEvent::KC_COLON;
-    mKeyMap[SDLK_UNDERSCORE] = KeyboardEvent::KC_UNDERLINE;
-    mKeyMap[SDLK_STOP] = KeyboardEvent::KC_STOP;
-    mKeyMap[SDLK_AUDIONEXT] = KeyboardEvent::KC_NEXTTRACK;
-    mKeyMap[SDLK_KP_ENTER] = KeyboardEvent::KC_NUMPADENTER;
-    mKeyMap[SDLK_RCTRL] = KeyboardEvent::KC_RCONTROL;
-    mKeyMap[SDLK_AUDIOMUTE] = KeyboardEvent::KC_MUTE;
-    mKeyMap[SDLK_CALCULATOR] = KeyboardEvent::KC_CALCULATOR;
-    mKeyMap[SDLK_AUDIOPLAY] = KeyboardEvent::KC_PLAYPAUSE;
-    mKeyMap[SDLK_AUDIOSTOP] = KeyboardEvent::KC_MEDIASTOP;
-    mKeyMap[SDLK_VOLUMEDOWN] = KeyboardEvent::KC_VOLUMEDOWN;
-    mKeyMap[SDLK_VOLUMEUP] = KeyboardEvent::KC_VOLUMEUP;
-    mKeyMap[SDLK_WWW] = KeyboardEvent::KC_WEBHOME;
-    mKeyMap[SDLK_KP_COMMA] = KeyboardEvent::KC_NUMPADCOMMA;
-    mKeyMap[SDLK_KP_DIVIDE] = KeyboardEvent::KC_DIVIDE;
-    mKeyMap[SDLK_SYSREQ] = KeyboardEvent::KC_SYSRQ;
-    mKeyMap[SDLK_PAUSE] = KeyboardEvent::KC_PAUSE;
-    mKeyMap[SDLK_HOME] = KeyboardEvent::KC_HOME;
-    mKeyMap[SDLK_UP] = KeyboardEvent::KC_UP;
-    mKeyMap[SDLK_PAGEUP] = KeyboardEvent::KC_PGUP;
-    mKeyMap[SDLK_LEFT] = KeyboardEvent::KC_LEFT;
-    mKeyMap[SDLK_RIGHT] = KeyboardEvent::KC_RIGHT;
-    mKeyMap[SDLK_END] = KeyboardEvent::KC_END;
-    mKeyMap[SDLK_DOWN] = KeyboardEvent::KC_DOWN;
-    mKeyMap[SDLK_PAGEDOWN] = KeyboardEvent::KC_PGDOWN;
-    mKeyMap[SDLK_INSERT] = KeyboardEvent::KC_INSERT;
-    mKeyMap[SDLK_DELETE] = KeyboardEvent::KC_DELETE;
-    mKeyMap[SDLK_LGUI] = KeyboardEvent::KC_LWIN;
-    mKeyMap[SDLK_RGUI] = KeyboardEvent::KC_RWIN;
-    mKeyMap[SDLK_POWER] = KeyboardEvent::KC_POWER;
-    mKeyMap[SDLK_SLEEP] = KeyboardEvent::KC_SLEEP;
-    mKeyMap[SDLK_AC_SEARCH] = KeyboardEvent::KC_WEBSEARCH;
-    mKeyMap[SDLK_AC_BOOKMARKS] = KeyboardEvent::KC_WEBFAVORITES;
-    mKeyMap[SDLK_AC_REFRESH] = KeyboardEvent::KC_WEBREFRESH;
-    mKeyMap[SDLK_AC_STOP] = KeyboardEvent::KC_WEBSTOP;
-    mKeyMap[SDLK_AC_FORWARD] = KeyboardEvent::KC_WEBFORWARD;
-    mKeyMap[SDLK_AC_BACK] = KeyboardEvent::KC_WEBBACK;
-    mKeyMap[SDLK_COMPUTER] = KeyboardEvent::KC_MYCOMPUTER;
-    mKeyMap[SDLK_MAIL] = KeyboardEvent::KC_MAIL;
-    mKeyMap[SDLK_MEDIASELECT] = KeyboardEvent::KC_MEDIASELECT;
+    mKeyMap[SDL_SCANCODE_ESCAPE] = KeyboardEvent::KC_ESCAPE;
+    mKeyMap[SDL_SCANCODE_1] = KeyboardEvent::KC_1;
+    mKeyMap[SDL_SCANCODE_2] = KeyboardEvent::KC_2;
+    mKeyMap[SDL_SCANCODE_3] = KeyboardEvent::KC_3;
+    mKeyMap[SDL_SCANCODE_4] = KeyboardEvent::KC_4;
+    mKeyMap[SDL_SCANCODE_5] = KeyboardEvent::KC_5;
+    mKeyMap[SDL_SCANCODE_6] = KeyboardEvent::KC_6;
+    mKeyMap[SDL_SCANCODE_7] = KeyboardEvent::KC_7;
+    mKeyMap[SDL_SCANCODE_8] = KeyboardEvent::KC_8;
+    mKeyMap[SDL_SCANCODE_9] = KeyboardEvent::KC_9;
+    mKeyMap[SDL_SCANCODE_0] = KeyboardEvent::KC_0;
+    mKeyMap[SDL_SCANCODE_MINUS] = KeyboardEvent::KC_MINUS;
+    mKeyMap[SDL_SCANCODE_EQUALS] = KeyboardEvent::KC_EQUALS;
+    mKeyMap[SDL_SCANCODE_BACKSPACE] = KeyboardEvent::KC_BACK;
+    mKeyMap[SDL_SCANCODE_TAB] = KeyboardEvent::KC_TAB;
+    mKeyMap[SDL_SCANCODE_Q] = KeyboardEvent::KC_Q;
+    mKeyMap[SDL_SCANCODE_W] = KeyboardEvent::KC_W;
+    mKeyMap[SDL_SCANCODE_E] = KeyboardEvent::KC_E;
+    mKeyMap[SDL_SCANCODE_R] = KeyboardEvent::KC_R;
+    mKeyMap[SDL_SCANCODE_T] = KeyboardEvent::KC_T;
+    mKeyMap[SDL_SCANCODE_Y] = KeyboardEvent::KC_Y;
+    mKeyMap[SDL_SCANCODE_U] = KeyboardEvent::KC_U;
+    mKeyMap[SDL_SCANCODE_I] = KeyboardEvent::KC_I;
+    mKeyMap[SDL_SCANCODE_O] = KeyboardEvent::KC_O;
+    mKeyMap[SDL_SCANCODE_P] = KeyboardEvent::KC_P;
+    mKeyMap[SDL_SCANCODE_LEFTBRACKET] = KeyboardEvent::KC_LBRACKET;
+    mKeyMap[SDL_SCANCODE_RIGHTBRACKET] = KeyboardEvent::KC_RBRACKET;
+    mKeyMap[SDL_SCANCODE_KP_LEFTBRACE] = KeyboardEvent::KC_LBRACKET;
+    mKeyMap[SDL_SCANCODE_KP_RIGHTBRACE] = KeyboardEvent::KC_RBRACKET;
+    mKeyMap[SDL_SCANCODE_RETURN] = KeyboardEvent::KC_RETURN;
+    mKeyMap[SDL_SCANCODE_LCTRL] = KeyboardEvent::KC_LCONTROL;
+    mKeyMap[SDL_SCANCODE_A] = KeyboardEvent::KC_A;
+    mKeyMap[SDL_SCANCODE_S] = KeyboardEvent::KC_S;
+    mKeyMap[SDL_SCANCODE_D] = KeyboardEvent::KC_D;
+    mKeyMap[SDL_SCANCODE_F] = KeyboardEvent::KC_F;
+    mKeyMap[SDL_SCANCODE_G] = KeyboardEvent::KC_G;
+    mKeyMap[SDL_SCANCODE_H] = KeyboardEvent::KC_H;
+    mKeyMap[SDL_SCANCODE_J] = KeyboardEvent::KC_J;
+    mKeyMap[SDL_SCANCODE_K] = KeyboardEvent::KC_K;
+    mKeyMap[SDL_SCANCODE_L] = KeyboardEvent::KC_L;
+    mKeyMap[SDL_SCANCODE_SEMICOLON] = KeyboardEvent::KC_SEMICOLON;
+    mKeyMap[SDL_SCANCODE_APOSTROPHE] = KeyboardEvent::KC_APOSTROPHE;
+    mKeyMap[SDL_SCANCODE_GRAVE] = KeyboardEvent::KC_GRAVE;
+    mKeyMap[SDL_SCANCODE_LSHIFT] = KeyboardEvent::KC_LSHIFT;
+    mKeyMap[SDL_SCANCODE_BACKSLASH] = KeyboardEvent::KC_BACKSLASH;
+    mKeyMap[SDL_SCANCODE_Z] = KeyboardEvent::KC_Z;
+    mKeyMap[SDL_SCANCODE_X] = KeyboardEvent::KC_X;
+    mKeyMap[SDL_SCANCODE_C] = KeyboardEvent::KC_C;
+    mKeyMap[SDL_SCANCODE_V] = KeyboardEvent::KC_V;
+    mKeyMap[SDL_SCANCODE_B] = KeyboardEvent::KC_B;
+    mKeyMap[SDL_SCANCODE_N] = KeyboardEvent::KC_N;
+    mKeyMap[SDL_SCANCODE_M] = KeyboardEvent::KC_M;
+    mKeyMap[SDL_SCANCODE_COMMA] = KeyboardEvent::KC_COMMA;
+    mKeyMap[SDL_SCANCODE_PERIOD] = KeyboardEvent::KC_PERIOD;
+    mKeyMap[SDL_SCANCODE_SLASH] = KeyboardEvent::KC_SLASH;
+    mKeyMap[SDL_SCANCODE_RSHIFT] = KeyboardEvent::KC_RSHIFT;
+    mKeyMap[SDL_SCANCODE_KP_MULTIPLY] = KeyboardEvent::KC_MULTIPLY;
+    mKeyMap[SDL_SCANCODE_MENU] = KeyboardEvent::KC_LMENU;
+    mKeyMap[SDL_SCANCODE_SPACE] = KeyboardEvent::KC_SPACE;
+    mKeyMap[SDL_SCANCODE_CAPSLOCK] = KeyboardEvent::KC_CAPITAL;
+    mKeyMap[SDL_SCANCODE_F1] = KeyboardEvent::KC_F1;
+    mKeyMap[SDL_SCANCODE_F2] = KeyboardEvent::KC_F2;
+    mKeyMap[SDL_SCANCODE_F3] = KeyboardEvent::KC_F3;
+    mKeyMap[SDL_SCANCODE_F4] = KeyboardEvent::KC_F4;
+    mKeyMap[SDL_SCANCODE_F5] = KeyboardEvent::KC_F5;
+    mKeyMap[SDL_SCANCODE_F6] = KeyboardEvent::KC_F6;
+    mKeyMap[SDL_SCANCODE_F7] = KeyboardEvent::KC_F7;
+    mKeyMap[SDL_SCANCODE_F8] = KeyboardEvent::KC_F8;
+    mKeyMap[SDL_SCANCODE_F9] = KeyboardEvent::KC_F9;
+    mKeyMap[SDL_SCANCODE_F10] = KeyboardEvent::KC_F10;
+    mKeyMap[SDL_SCANCODE_NUMLOCKCLEAR] = KeyboardEvent::KC_NUMLOCK;
+    mKeyMap[SDL_SCANCODE_SCROLLLOCK] = KeyboardEvent::KC_SCROLL;
+    mKeyMap[SDL_SCANCODE_KP_7] = KeyboardEvent::KC_NUMPAD7;
+    mKeyMap[SDL_SCANCODE_KP_8] = KeyboardEvent::KC_NUMPAD8;
+    mKeyMap[SDL_SCANCODE_KP_9] = KeyboardEvent::KC_NUMPAD9;
+    mKeyMap[SDL_SCANCODE_KP_MINUS] = KeyboardEvent::KC_SUBTRACT;
+    mKeyMap[SDL_SCANCODE_KP_4] = KeyboardEvent::KC_NUMPAD4;
+    mKeyMap[SDL_SCANCODE_KP_5] = KeyboardEvent::KC_NUMPAD5;
+    mKeyMap[SDL_SCANCODE_KP_6] = KeyboardEvent::KC_NUMPAD6;
+    mKeyMap[SDL_SCANCODE_KP_PLUS] = KeyboardEvent::KC_ADD;
+    mKeyMap[SDL_SCANCODE_KP_1] = KeyboardEvent::KC_NUMPAD1;
+    mKeyMap[SDL_SCANCODE_KP_2] = KeyboardEvent::KC_NUMPAD2;
+    mKeyMap[SDL_SCANCODE_KP_3] = KeyboardEvent::KC_NUMPAD3;
+    mKeyMap[SDL_SCANCODE_KP_0] = KeyboardEvent::KC_NUMPAD0;
+    mKeyMap[SDL_SCANCODE_KP_DECIMAL] = KeyboardEvent::KC_DECIMAL;
+    mKeyMap[SDL_SCANCODE_F11] = KeyboardEvent::KC_F11;
+    mKeyMap[SDL_SCANCODE_F12] = KeyboardEvent::KC_F12;
+    mKeyMap[SDL_SCANCODE_F13] = KeyboardEvent::KC_F13;
+    mKeyMap[SDL_SCANCODE_F14] = KeyboardEvent::KC_F14;
+    mKeyMap[SDL_SCANCODE_F15] = KeyboardEvent::KC_F15;
+    mKeyMap[SDL_SCANCODE_KP_EQUALS] = KeyboardEvent::KC_NUMPADEQUALS;
+    mKeyMap[SDL_SCANCODE_AUDIOPREV] = KeyboardEvent::KC_PREVTRACK;
+    mKeyMap[SDL_SCANCODE_STOP] = KeyboardEvent::KC_STOP;
+    mKeyMap[SDL_SCANCODE_AUDIONEXT] = KeyboardEvent::KC_NEXTTRACK;
+    mKeyMap[SDL_SCANCODE_KP_ENTER] = KeyboardEvent::KC_NUMPADENTER;
+    mKeyMap[SDL_SCANCODE_RCTRL] = KeyboardEvent::KC_RCONTROL;
+    mKeyMap[SDL_SCANCODE_MUTE] = KeyboardEvent::KC_MUTE;
+    mKeyMap[SDL_SCANCODE_CALCULATOR] = KeyboardEvent::KC_CALCULATOR;
+    mKeyMap[SDL_SCANCODE_AUDIOPLAY] = KeyboardEvent::KC_PLAYPAUSE;
+    mKeyMap[SDL_SCANCODE_AUDIOSTOP] = KeyboardEvent::KC_MEDIASTOP;
+    mKeyMap[SDL_SCANCODE_VOLUMEDOWN] = KeyboardEvent::KC_VOLUMEDOWN;
+    mKeyMap[SDL_SCANCODE_VOLUMEUP] = KeyboardEvent::KC_VOLUMEUP;
+    mKeyMap[SDL_SCANCODE_WWW] = KeyboardEvent::KC_WEBHOME;
+    mKeyMap[SDL_SCANCODE_KP_COMMA] = KeyboardEvent::KC_NUMPADCOMMA;
+    mKeyMap[SDL_SCANCODE_KP_DIVIDE] = KeyboardEvent::KC_DIVIDE;
+    mKeyMap[SDL_SCANCODE_SYSREQ] = KeyboardEvent::KC_SYSRQ;
+    mKeyMap[SDL_SCANCODE_PAUSE] = KeyboardEvent::KC_PAUSE;
+    mKeyMap[SDL_SCANCODE_HOME] = KeyboardEvent::KC_HOME;
+    mKeyMap[SDL_SCANCODE_UP] = KeyboardEvent::KC_UP;
+    mKeyMap[SDL_SCANCODE_PAGEUP] = KeyboardEvent::KC_PGUP;
+    mKeyMap[SDL_SCANCODE_LEFT] = KeyboardEvent::KC_LEFT;
+    mKeyMap[SDL_SCANCODE_RIGHT] = KeyboardEvent::KC_RIGHT;
+    mKeyMap[SDL_SCANCODE_END] = KeyboardEvent::KC_END;
+    mKeyMap[SDL_SCANCODE_DOWN] = KeyboardEvent::KC_DOWN;
+    mKeyMap[SDL_SCANCODE_PAGEDOWN] = KeyboardEvent::KC_PGDOWN;
+    mKeyMap[SDL_SCANCODE_INSERT] = KeyboardEvent::KC_INSERT;
+    mKeyMap[SDL_SCANCODE_DELETE] = KeyboardEvent::KC_DELETE;
+    mKeyMap[SDL_SCANCODE_LGUI] = KeyboardEvent::KC_LWIN;
+    mKeyMap[SDL_SCANCODE_RGUI] = KeyboardEvent::KC_RWIN;
+    mKeyMap[SDL_SCANCODE_LALT] = KeyboardEvent::KC_LALT;
+    mKeyMap[SDL_SCANCODE_RALT] = KeyboardEvent::KC_RALT;
+    mKeyMap[SDL_SCANCODE_POWER] = KeyboardEvent::KC_POWER;
+    mKeyMap[SDL_SCANCODE_SLEEP] = KeyboardEvent::KC_SLEEP;
+    mKeyMap[SDL_SCANCODE_AC_SEARCH] = KeyboardEvent::KC_WEBSEARCH;
+    mKeyMap[SDL_SCANCODE_AC_BOOKMARKS] = KeyboardEvent::KC_WEBFAVORITES;
+    mKeyMap[SDL_SCANCODE_AC_REFRESH] = KeyboardEvent::KC_WEBREFRESH;
+    mKeyMap[SDL_SCANCODE_AC_STOP] = KeyboardEvent::KC_WEBSTOP;
+    mKeyMap[SDL_SCANCODE_AC_FORWARD] = KeyboardEvent::KC_WEBFORWARD;
+    mKeyMap[SDL_SCANCODE_AC_BACK] = KeyboardEvent::KC_WEBBACK;
+    mKeyMap[SDL_SCANCODE_COMPUTER] = KeyboardEvent::KC_MYCOMPUTER;
+    mKeyMap[SDL_SCANCODE_MAIL] = KeyboardEvent::KC_MAIL;
+    mKeyMap[SDL_SCANCODE_MEDIASELECT] = KeyboardEvent::KC_MEDIASELECT;
   }
 
   SDLInputListener::~SDLInputListener()
@@ -201,7 +203,16 @@ namespace Gsage {
         handleKeyboardEvent(event);
         break;
       case SDL_TEXTINPUT:
-        mEngine->fireEvent(TextInputEvent(TextInputEvent::INPUT, event->text.text));
+        TextInputEvent e(TextInputEvent::INPUT, event->text.text);
+#if GSAGE_PLATFORM == GSAGE_LINUX
+        SDL_Keycode sc = event->key.keysym.scancode;
+        if(mKeyMap.count(sc) != 0) {
+          e.key = mKeyMap[sc];
+        } else {
+          e.key = KeyboardEvent::KC_UNASSIGNED;
+        }
+#endif
+        mEngine->fireEvent(e);
         break;
     }
   }
@@ -229,12 +240,20 @@ namespace Gsage {
 
   void SDLInputListener::handleKeyboardEvent(SDL_Event* event)
   {
-    if(mKeyMap.count(event->key.keysym.sym) == 0) {
+    SDL_Keycode vc = event->key.keysym.sym;
+    SDL_Keycode sc = event->key.keysym.scancode;
+    if(mKeyMap.count(sc) == 0) {
+      LOG(WARNING) << "Unhandled " <<  SDL_GetKeyName(vc) << " " << (event->type == SDL_KEYDOWN ? "down" : "up");
       return;
     }
 
-    KeyboardEvent::Key key = mKeyMap[event->key.keysym.sym];
-    KeyboardEvent e(event->type == SDL_KEYDOWN ? KeyboardEvent::KEY_DOWN : KeyboardEvent::KEY_UP, key, 0, SDL_GetModState());
+    unsigned int text = 0;
+    if(vc > 0x20 && vc < 0x7A) {
+      text = vc;
+    }
+
+    KeyboardEvent::Key key = mKeyMap[sc];
+    KeyboardEvent e(event->key.state == SDL_PRESSED ? KeyboardEvent::KEY_DOWN : KeyboardEvent::KEY_UP, key, text, SDL_GetModState());
     mEngine->fireEvent(e);
   }
 
@@ -261,4 +280,3 @@ namespace Gsage {
     return res;
   }
 }
-

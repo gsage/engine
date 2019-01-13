@@ -91,7 +91,14 @@ function EventProxy:handle(id, event, target)
     return true
   end
 
-  handler(event, target)
+  local success, err = pcall(function()
+    handler(event, target)
+  end)
+
+  if not success then
+    log.warn("Failed to call handler id, event: " .. event.id .. ", error: " .. err)
+  end
+
 end
 
 function EventProxy:traverseSet(target, type, callback, id, direct)

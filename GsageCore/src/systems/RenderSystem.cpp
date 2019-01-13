@@ -87,6 +87,28 @@ namespace Gsage {
     return bmax;
   }
 
+  const Event::Type Texture::RESIZE = "Texture::RESIZE";
+
+  Texture::Texture()
+    : mValid(false)
+    , mWidth(0)
+    , mHeight(0)
+    , mBuffer(0)
+    , mSize(0)
+    , mBufferWidth(0)
+    , mBufferHeight(0)
+  {
+  }
+
+  void Texture::setSize(int width, int height)
+  {
+    fireEvent(Event(Texture::RESIZE));
+  }
+
+  Texture::~Texture()
+  {
+  }
+
   RenderSystem::RenderSystem()
   {
   }

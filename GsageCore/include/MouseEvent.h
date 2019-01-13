@@ -43,6 +43,8 @@ namespace Gsage
 
       enum ButtonType { Left = 0, Right, Middle, Button3, Button4, Button5, Button6, Button7, None };
 
+      MouseEvent() {}
+
       MouseEvent(Event::ConstType type,
                  double width,
                  double height,

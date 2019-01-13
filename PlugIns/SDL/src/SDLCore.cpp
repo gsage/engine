@@ -54,15 +54,21 @@ namespace Gsage {
   void SDLCore::update(double time)
   {
     SDL_Event event;
-    SDL_PumpEvents();
     while(SDL_PollEvent(&event) != 0) {
       if(event.type == SDL_QUIT) {
         mFacade->shutdown();
         return;
       }
 
-      if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-        mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::RESIZE, event.window.windowID, event.window.data1, event.window.data2));
+      if(event.type == SDL_WINDOWEVENT) {
+        switch(event.window.event){
+        case SDL_WINDOWEVENT_SIZE_CHANGED:
+          mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::RESIZE, event.window.windowID, event.window.data1, event.window.data2));
+          break;
+        case SDL_WINDOWEVENT_MOVED:
+          mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::MOVE, event.window.windowID, 0, 0, event.window.data1, event.window.data2));
+          break;
+        }
       }
 
       for(auto listener : mEventListeners) {

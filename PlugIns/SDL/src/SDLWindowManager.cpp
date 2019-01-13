@@ -34,8 +34,9 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  SDLWindow::SDLWindow(SDL_Window* window)
-    : mWindow(window)
+  SDLWindow::SDLWindow(const std::string& name, SDL_Window* window)
+    : Window(name)
+    , mWindow(window)
     , mGLContext(nullptr)
   {
   }
@@ -64,6 +65,13 @@ namespace Gsage {
 #endif
 
     return handle;
+  }
+
+  std::tuple<int, int> SDLWindow::getPosition() const
+  {
+    int x, y;
+    SDL_GetWindowPosition(mWindow, &x, &y);
+    return std::make_tuple(x, y);
   }
 
   void* SDLWindow::getGLContext()
@@ -153,15 +161,15 @@ namespace Gsage {
       }
     }
 
-    SDLWindow* wrapper = new SDLWindow(window);
+    SDLWindow* wrapper = new SDLWindow(name, window);
     if(sdlContext) {
       wrapper->mGLContext = sdlContext;
     }
 
     mWindowsMutex.lock();
+    WindowPtr res = WindowPtr(wrapper);
+    windowCreated(res);
     fireWindowEvent(WindowEvent::CREATE, wrapper->getWindowHandle(), width, height);
-    mWindows.push_back(WindowPtr(static_cast<Window*>(wrapper)));
-    auto res = mWindows[mWindows.size()-1];
     mWindowsMutex.unlock();
     return res;
   }
@@ -169,15 +177,9 @@ namespace Gsage {
   bool SDLWindowManager::destroyWindow(WindowPtr window)
   {
     mWindowsMutex.lock();
-    auto result = std::find(mWindows.begin(), mWindows.end(), window);
-    if(result == mWindows.end()) {
-      mWindowsMutex.unlock();
-      return false;
-    }
-    fireWindowEvent(WindowEvent::CLOSE, window->getWindowHandle());
-    mWindows.erase(result);
+    bool res = windowDestroyed(window);
     mWindowsMutex.unlock();
-    return true;
+    return res;
   }
 
 }

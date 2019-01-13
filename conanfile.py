@@ -5,9 +5,16 @@ from distutils.version import LooseVersion
 
 from conans import ConanFile, CMake, tools
 
+
+# read version
+git = tools.Git(".")
+git.run("pull origin master --tags")
+version = git.run("describe --tags")
+
+
 class GsageConan(ConanFile):
     name = "gsage"
-    version = "1.0"
+    version = version
     license = "MIT"
     url = "https://github.com/gsage/engine"
     settings = "os", "compiler", "build_type", "arch"
@@ -28,12 +35,14 @@ class GsageConan(ConanFile):
         "with_lua_version=luajit-2.0.5",
         "with_recast=True",
         "with_metal=False",
+        "cef:use_sandbox=True",
     )
     generators = "cmake"
     requires = (
         ("msgpack/2.1.3@gsage/master",),
         ("SDL2/2.0.8@gsage/master",),
-        ("gtest/1.8.0@lasote/stable",),
+        ("gtest/1.8.1@lasote/stable",),
+        ("cef/3.3239.1709.g093cae4@gsage/master",),
     )
 
     def source(self):
@@ -74,9 +83,13 @@ class GsageConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
+        (major_version, minor_version, build_version) = version.split(".")
         options = {
             "CMAKE_INSTALL_PREFIX": "./sdk",
             "CMAKE_BUILD_TYPE": self.settings.build_type,
+            "GSAGE_VERSION_MAJOR": major_version,
+            "GSAGE_VERSION_MINOR": minor_version,
+            "GSAGE_VERSION_BUILD": os.environ.get("APPVEYOR_BUILD_VERSION", os.environ.get("GSAGE_VERSION_BUILD", build_version)),
         }
 
         if self.options.with_ogre != "disabled":
@@ -111,7 +124,14 @@ class GsageConan(ConanFile):
 
     def imports(self):
         self.copy("*.dll", dst="build/bin", src="bin")
+        self.copy("*.so", dst="build/bin", src="bin")
         self.copy("*.dylib", dst="build/bin", src="lib")
+        self.copy("*.bin", dst="build/bin", src="bin")
+        self.copy("*.dat", dst="build/bin", src="bin")
+        self.copy("*.pak", dst="build/bin", src="bin")
+        self.copy("locales", dst="build/bin", src="bin")
+        self.copy("chrome-sandbox", dst="build/bin", src="bin")
+        self.copy("*.framework/*", dst="build/bin/Frameworks", src="lib")
         self.copy("libluajit.*", dst="resources/luarocks/lib", src="lib")
         self.copy("luajit", dst="resources/luarocks/bin", src="bin")
         self.copy("*.*", dst="resources/luarocks/etc", src="etc")

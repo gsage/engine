@@ -165,11 +165,22 @@ namespace Gsage {
           "getGeometry", sol::overload(
             (GeomPtr(OgreRenderSystem::*)(const BoundingBox&, int)) &OgreRenderSystem::getGeometry,
             (GeomPtr(OgreRenderSystem::*)(std::vector<std::string>)) &OgreRenderSystem::getGeometry
-          )
+          ),
+          "createTexture", &OgreRenderSystem::createTexture,
+          "getTexture", &OgreRenderSystem::getTexture,
+          "deleteTexture", &OgreRenderSystem::deleteTexture
       );
 
       lua["ogre"] = lua.create_table_with(
           "PF_R8G8B8A8", Ogre::PF_R8G8B8A8,
+          "TU_DEFAULT", Ogre::TU_DEFAULT,
+          "TU_RENDERTARGET", Ogre::TU_RENDERTARGET,
+          "TEX_TYPE_1D", Ogre::TEX_TYPE_1D,
+          "TEX_TYPE_2D", Ogre::TEX_TYPE_2D,
+          "TEX_TYPE_3D", Ogre::TEX_TYPE_3D,
+          "TEX_TYPE_CUBE_MAP", Ogre::TEX_TYPE_CUBE_MAP,
+          "TEX_TYPE_2D_ARRAY", Ogre::TEX_TYPE_2D_ARRAY,
+          "TEX_TYPE_2D_RECT", Ogre::TEX_TYPE_2D_RECT,
 #if OGRE_VERSION_MAJOR == 2
           "OT_POINT_LIST", Ogre::OT_POINT_LIST,
           "OT_LINE_LIST", Ogre::OT_LINE_LIST,

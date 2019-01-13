@@ -90,8 +90,6 @@ namespace Gsage {
         continue;
       }
 
-      LOG(INFO) << mesh->getName();
-
       addedShared = false;
 
       // Run through the submeshes again, adding the data into the arrays

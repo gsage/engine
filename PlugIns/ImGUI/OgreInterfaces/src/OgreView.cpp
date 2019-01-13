@@ -86,19 +86,22 @@ namespace Gsage {
     RenderTargetPtr renderTarget = mRender->getRenderTarget(mTextureID);
 
     ImGuiIO& io = ImGui::GetIO();
-    if (io.WantCaptureMouse) {
-      io.WantCaptureMouse = !renderTarget->isMouseOver();
-    }
-
-    if(widthChange || heightChange) {
-      renderTarget->setDimensions(mWidth, mHeight);
-    }
-
-		ImVec2 size = ImGui::GetIO().DisplaySize;
+    ImVec2 size = io.DisplaySize;
     bool posChange = pos.x != mPosition.x || pos.y != mPosition.y;
 
     mPosition = pos;
-    renderTarget->setPosition(pos.x, pos.y);
+
+    if(renderTarget) {
+      if (io.WantCaptureMouse) {
+        io.WantCaptureMouse = !renderTarget->isMouseOver();
+      }
+
+      if(widthChange || heightChange) {
+        renderTarget->setDimensions(mWidth, mHeight);
+      }
+
+      renderTarget->setPosition(pos.x, pos.y);
+    }
 
 #if OGRE_VERSION >= 0x020100
     if(widthChange || heightChange || posChange) {

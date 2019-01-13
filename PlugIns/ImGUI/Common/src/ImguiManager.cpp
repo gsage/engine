@@ -329,11 +329,6 @@ namespace Gsage {
     ImGuiIO& io = ImGui::GetIO();
     io.KeysDown[e.key] = e.getType() == KeyboardEvent::KEY_DOWN;
 
-    if(e.text > 0)
-    {
-        io.AddInputCharacter((unsigned short)e.text);
-    }
-
     // Read keyboard modifiers inputs
     io.KeyCtrl = e.isModifierDown(KeyboardEvent::Ctrl);
     io.KeyShift = e.isModifierDown(KeyboardEvent::Shift);

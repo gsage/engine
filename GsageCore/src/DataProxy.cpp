@@ -186,6 +186,10 @@ namespace Gsage {
     return DataProxy(new JsonValueWrapper(object));
   }
 
+  DataProxy DataProxy::create(const sol::object& object) {
+    return DataProxy(new SolTableWrapper(object));
+  }
+
   DataProxy DataProxy::create(DataWrapper::WrappedType type) {
     switch(type) {
       case DataWrapper::LUA_TABLE:
@@ -200,6 +204,10 @@ namespace Gsage {
   }
 
   DataProxy DataProxy::wrap(sol::table& object) {
+    return DataProxy::create(object);
+  }
+
+  DataProxy DataProxy::wrap(sol::object& object) {
     return DataProxy::create(object);
   }
 

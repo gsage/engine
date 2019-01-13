@@ -13,7 +13,8 @@
     "stats": "統計",
     "assets": "アセット",
     "scene explorer": "シーンエクスプローラ",
-    "viewport": "シーン"
+    "viewport": "シーン",
+    "script_editor": "スクリプト"
   },
 
   "console": {

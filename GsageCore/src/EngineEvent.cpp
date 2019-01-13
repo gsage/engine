@@ -29,35 +29,37 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const Event::Type EngineEvent::LUA_STATE_CHANGE = "luaStateChange";
+  const Event::Type EngineEvent::LUA_STATE_CHANGE = "EngineEvent::LUA_STATE_CHANGE";
 
-  const Event::Type EngineEvent::SHUTDOWN = "shutdown";
+  const Event::Type EngineEvent::SHUTDOWN = "EngineEvent::SHUTDOWN";
 
-  const Event::Type EngineEvent::STOPPING = "stopping";
+  const Event::Type EngineEvent::STOPPING = "EngineEvent::STOPPING";
 
   const Event::Type EngineEvent::UPDATE = "EngineEvent::UPDATE";
 
-  const Event::Type EntityEvent::REMOVE = "entityDeleted";
+  const Event::Type EntityEvent::REMOVE = "EntityEvent::REMOVE";
 
-  const Event::Type EntityEvent::CREATE = "entityCreated";
+  const Event::Type EntityEvent::CREATE = "EntityEvent::CREATE";
 
   const Event::Type SettingsEvent::UPDATE = "SettingsEvent::UPDATE";
 
-  const Event::Type SystemChangeEvent::SYSTEM_ADDED = "systemAdded";
+  const Event::Type SystemChangeEvent::SYSTEM_ADDED = "SystemChangeEvent::SYSTEM_ADDED";
 
-  const Event::Type SystemChangeEvent::SYSTEM_REMOVED = "systemRemoved";
+  const Event::Type SystemChangeEvent::SYSTEM_REMOVED = "SystemChangeEvent::SYSTEM_REMOVED";
 
-  const Event::Type SelectEvent::OBJECT_SELECTED = "objectSelected";
+  const Event::Type SelectEvent::OBJECT_SELECTED = "SystemChangeEvent::OBJECT_SELECTED";
 
-  const Event::Type SelectEvent::ROLL_OVER = "rollOver";
+  const Event::Type SelectEvent::ROLL_OVER = "SelectEvent::ROLL_OVER";
 
-  const Event::Type SelectEvent::ROLL_OUT = "rollOut";
+  const Event::Type SelectEvent::ROLL_OUT = "SelectEvent::ROLL_OUT";
 
-  const Event::Type WindowEvent::CREATE = "create";
+  const Event::Type WindowEvent::CREATE = "WindowEvent::CREATE";
 
-  const Event::Type WindowEvent::RESIZE = "resize";
+  const Event::Type WindowEvent::RESIZE = "WindowEvent::RESIZE";
 
-  const Event::Type WindowEvent::CLOSE = "close";
+  const Event::Type WindowEvent::CLOSE = "WindowEvent::CLOSE";
+
+  const Event::Type WindowEvent::MOVE = "WindowEvent::MOVE";
 
   EngineEvent::EngineEvent(Event::ConstType type) : Event(type)
   {
@@ -98,11 +100,13 @@ namespace Gsage {
   {
   }
 
-  WindowEvent::WindowEvent(Event::ConstType type, size_t pHandle, unsigned int pWidth, unsigned int pHeight)
+  WindowEvent::WindowEvent(Event::ConstType type, size_t pHandle, unsigned int pWidth, unsigned int pHeight, int pX, int pY)
     : Event(type)
     , handle(pHandle)
     , width(pWidth)
     , height(pHeight)
+    , x(pX)
+    , y(pY)
   {
   }
 

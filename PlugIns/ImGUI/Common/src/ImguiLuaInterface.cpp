@@ -477,6 +477,8 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiStyleVar_ItemSpacing");
     lua_pushnumber(L, ImGuiStyleVar_WindowPadding);
     lua_setglobal(L, "ImGuiStyleVar_WindowPadding");
+    lua_pushnumber(L, ImGuiStyleVar_WindowRounding);
+    lua_setglobal(L, "ImGuiStyleVar_WindowRounding");
     lua_pushnumber(L, ImGuiKey_Tab);
     lua_setglobal(L, "ImGuiKey_Tab");
     lua_pushnumber(L, ImGuiKey_LeftArrow);
@@ -602,8 +604,13 @@ namespace Gsage {
       ImGui::PushStyleColor(idx, ImGui::ColorConvertU32ToFloat4(col));
     };
 
-    imgui["Icon"] = [] (unsigned short code) {
-      return ImGui::Text(u8"\uE000");
+    imgui["DisplaySize"] = [] () {
+      ImVec2 size = ImGui::GetIO().DisplaySize;
+      return std::make_tuple(size.x, size.y);
+    };
+
+    imgui["SetWantCaptureMouse"] = [](bool value) {
+      ImGui::GetIO().WantCaptureMouse = value;
     };
   }
 }

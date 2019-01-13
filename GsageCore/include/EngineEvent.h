@@ -134,12 +134,18 @@ namespace Gsage {
        * Window closed
        */
       static const Event::Type CLOSE;
+      /**
+       * Window moved
+       */
+      static const Event::Type MOVE;
 
-      WindowEvent(Event::ConstType type, size_t handle, unsigned int width = 0, unsigned int height = 0);
+      WindowEvent(Event::ConstType type, size_t handle, unsigned int width = 0, unsigned int height = 0, int x = 0, int y = 0);
       virtual ~WindowEvent();
 
       unsigned int width;
       unsigned int height;
+      int x;
+      int y;
       size_t handle;
   };
 

@@ -60,6 +60,27 @@ namespace Gsage {
       static void init(FileLoader::Encoding format, const DataProxy& environment);
 
       /**
+       * Load raw file
+       *
+       * @param path path to file
+       * @param dest std::string
+       */
+      bool load(const std::string& path, std::string& dest, std::ios_base::openmode mode = std::ios_base::in) const;
+
+      /**
+       * Get file stream
+       */
+      std::ifstream stream(const std::string& path) const;
+
+      /**
+       * Write string to file
+       * @param path path to file
+       * @param str string to save
+       * @param rootDir directory to dump the file to
+       */
+      bool dump(const std::string& path, const std::string& str, const std::string& rootDir = "") const;
+
+      /**
        * Load file with environment and params
        *
        * @param path: path to file
@@ -92,7 +113,7 @@ namespace Gsage {
       void dump(const std::string& path, const DataProxy& value) const;
 
     private:
-      std::pair<std::string, bool> loadFile(const std::string& path) const;
+      std::pair<std::string, bool> loadFile(const std::string& path, std::ios_base::openmode mode = std::ios_base::in) const;
       bool parse(const std::string& data, DataProxy& dest) const;
 
       Encoding mFormat;

@@ -48,6 +48,7 @@ THE SOFTWARE.
 #include "EventDispatcher.h"
 #include "ThreadSafeQueue.h"
 #include "ObjectMutation.h"
+#include "ManualTextureManager.h"
 
 #include "Definitions.h"
 #if OGRE_VERSION >= 0x020100
@@ -185,6 +186,29 @@ namespace Gsage
        * @returns GeomPtr
        */
       GeomPtr getGeometry(std::vector<std::string> entities);
+
+      /**
+       * Create texture manually
+       *
+       * @param handle texture id
+       * @param parameters variable parameters that can be used for texture creation
+       */
+      virtual TexturePtr createTexture(RenderSystem::TextureHandle handle, const DataProxy& parameters);
+
+      /**
+       * Get texture by name
+       *
+       * @param handle texture id
+       */
+      virtual TexturePtr getTexture(RenderSystem::TextureHandle handle);
+
+      /**
+       * Delete texture by handle
+       *
+       * @param handle texture id
+       * @returns true if succeed
+       */
+      virtual bool deleteTexture(RenderSystem::TextureHandle handle);
 
       // --------------------------------------------------------------------------------
       // Ogre::RenderQueueListener implementation
@@ -416,6 +440,8 @@ namespace Gsage
       OgrePlugins mOgrePlugins;
 #endif
       ThreadSafeQueue<ObjectMutation> mMutationQueue;
+
+      ManualTextureManager mManualTextureManager;
   };
 }
 

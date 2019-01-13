@@ -45,9 +45,9 @@ namespace Gsage {
   {
     std::string workdir = engine->env().get("workdir", ".");
     mFileExtension    = config.get(CONFIG_SECTION + ".extension", "json");
-    mCharactersFolder = workdir + GSAGE_PATH_SEPARATOR + config.get(CONFIG_SECTION + ".charactersFolder", ".");
-    mLevelsFolder     = workdir + GSAGE_PATH_SEPARATOR + config.get(CONFIG_SECTION + ".levelsFolder", ".");
-    mSavesFolder      = workdir + GSAGE_PATH_SEPARATOR + config.get(CONFIG_SECTION + ".savesFolder", ".");
+    mCharactersFolder = config.get(CONFIG_SECTION + ".charactersFolder", ".");
+    mLevelsFolder     = config.get(CONFIG_SECTION + ".levelsFolder", ".");
+    mSavesFolder      = config.get(CONFIG_SECTION + ".savesFolder", ".");
   }
 
   GameDataManager::~GameDataManager()

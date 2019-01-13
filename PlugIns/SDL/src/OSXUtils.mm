@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #include "OSXUtils.h"
 #import <AppKit/NSWindow.h>
+#import <Cocoa/Cocoa.h>
+#import <objc/runtime.h>
 
 namespace Gsage {
 
@@ -37,3 +39,47 @@ namespace Gsage {
     return (unsigned long)view;
   }
 }
+
+
+namespace {
+
+BOOL g_handling_send_event = false;
+
+}  // namespace
+
+
+@interface NSApplication (GsageApplication)
+
+- (BOOL)isHandlingSendEvent;
+- (void)setHandlingSendEvent:(BOOL)handlingSendEvent;
+- (void)_swizzled_sendEvent:(NSEvent*)event;
+
+@end
+
+@implementation NSApplication (GsageApplication)
+
+// This selector is called very early during the application initialization.
++ (void)load {
+  // Swap NSApplication::sendEvent with _swizzled_sendEvent.
+  Method original = class_getInstanceMethod(self, @selector(sendEvent));
+  Method swizzled =
+      class_getInstanceMethod(self, @selector(_swizzled_sendEvent));
+  method_exchangeImplementations(original, swizzled);
+}
+
+- (BOOL)isHandlingSendEvent {
+  return g_handling_send_event;
+}
+
+- (void)setHandlingSendEvent:(BOOL)handlingSendEvent {
+  g_handling_send_event = handlingSendEvent;
+}
+
+- (void)_swizzled_sendEvent:(NSEvent*)event {
+  //CefScopedSendingEvent sendingEventScoper;
+  // Calls NSApplication::sendEvent due to the swizzling.
+  [self _swizzled_sendEvent:event];
+}
+
+@end
+

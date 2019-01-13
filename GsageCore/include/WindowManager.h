@@ -37,15 +37,29 @@ namespace Gsage {
   class Window
   {
     public:
+      Window(const std::string& name) : mName(name) {};
       /**
        * Get window handle
        */
       virtual unsigned long long getWindowHandle() = 0;
 
       /**
-       *
+       * Get openGL context
        */
       virtual void* getGLContext() = 0;
+
+      /**
+       * Gets window name
+       */
+      inline const std::string& getName() const { return mName; }
+
+      /**
+       * Gets window position
+       */
+      virtual std::tuple<int, int> getPosition() const = 0;
+
+    private:
+      std::string mName;
   };
 
   /**
@@ -105,8 +119,21 @@ namespace Gsage {
        * @param height current window height
        */
       virtual void fireWindowEvent(Event::ConstType type, unsigned long handle, unsigned int width = 0, unsigned int height = 0);
+
+      /**
+       * Get window by name
+       *
+       * @param name Window name
+       *
+       * @returns WindowPtr if found
+       */
+      virtual WindowPtr getWindow(const std::string& name);
     protected:
       const std::string mType;
+      std::map<std::string, WindowPtr> mWindows;
+
+      void windowCreated(WindowPtr window);
+      bool windowDestroyed(WindowPtr window);
   };
 
   typedef std::shared_ptr<WindowManager> WindowManagerPtr;
