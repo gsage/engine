@@ -96,6 +96,10 @@ function ImguiInterface:removeView(name, view)
 
   local removed = imgui.manager:removeView(name, view)
   self.views[name] = nil
+
+  if view.destroy then
+    view:destroy()
+  end
   return removed
 end
 

@@ -168,6 +168,8 @@ namespace Gsage {
         KC_NEXTTRACK,
         KC_NUMPADENTER,
         KC_RCONTROL,
+        KC_LALT,
+        KC_RALT,
         KC_MUTE,
         KC_CALCULATOR,
         KC_PLAYPAUSE,
@@ -207,6 +209,7 @@ namespace Gsage {
         KC_MEDIASELECT,
       };
 
+      KeyboardEvent() {}
       KeyboardEvent(const std::string& type, const Key& key, const unsigned int text, const unsigned int modifierState);
       virtual ~KeyboardEvent();
 
@@ -222,6 +225,13 @@ namespace Gsage {
        * Get modifier state flags
        */
       unsigned int getModifiersState() const;
+
+      static int getNativeKey(unsigned int key);
+
+      /**
+       * Get native key
+       */
+      int getNativeKey() const;
     private:
       unsigned long modifierState;
   };
@@ -234,6 +244,7 @@ namespace Gsage {
     public:
       static const Event::Type INPUT;
 
+      TextInputEvent() {};
       TextInputEvent(const std::string& type, const char* text);
       virtual ~TextInputEvent();
 
@@ -242,8 +253,10 @@ namespace Gsage {
        * @return utf8 chars array
        */
       const char* getText() const;
+
+      KeyboardEvent::Key key;
     private:
-      const char* mUTF8Chars;
+      char mUTF8Chars[32];
   };
 }
 

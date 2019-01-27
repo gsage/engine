@@ -263,6 +263,11 @@ namespace Gsage {
         return false;
       }
       mRoot->setRenderSystem(renderSystem);
+#if GSAGE_PLATFORM==GSAGE_APPLE && defined(WITH_METAL) && OGRE_VERSION >= 0x020100
+      if(renderSystem->getFriendlyName() == "Metal_RS") {
+        mManualTextureManager.setDefaultPixelFormat(Ogre::PF_X8R8G8B8);
+      }
+#endif
     } else {
       LOG(ERROR) << "No \"renderSystem\" configuration found";
       return false;
@@ -450,6 +455,8 @@ namespace Gsage {
     if(continueRendering) {
       continueRendering = mRoot->renderOneFrame();
     }
+
+    mManualTextureManager.updateDirtyTexures();
 
     if(!continueRendering)
       mEngine->fireEvent(EngineEvent(EngineEvent::SHUTDOWN));
@@ -647,6 +654,21 @@ namespace Gsage {
     geom->bmax = new float[3]{max.x, max.y, max.z};
 
     return geom;
+  }
+
+  TexturePtr OgreRenderSystem::createTexture(RenderSystem::TextureHandle handle, const DataProxy& parameters)
+  {
+    return mManualTextureManager.createTexture(handle, parameters);
+  }
+
+  TexturePtr OgreRenderSystem::getTexture(RenderSystem::TextureHandle handle)
+  {
+    return mManualTextureManager.getTexture(handle);
+  }
+
+  bool OgreRenderSystem::deleteTexture(RenderSystem::TextureHandle handle)
+  {
+    return mManualTextureManager.deleteTexture(handle);
   }
 
   void OgreRenderSystem::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation, bool& skipThisInvocation)

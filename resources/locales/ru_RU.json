@@ -11,7 +11,8 @@
     "scene explorer": "Дерево объектов",
     "recast": "Recast навигация",
     "settings": "Настройки",
-    "viewport": "Сцена"
+    "viewport": "Сцена",
+    "script_editor": "Редактор скриптов"
   },
 
   "console": {

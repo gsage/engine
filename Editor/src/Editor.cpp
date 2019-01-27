@@ -46,8 +46,8 @@ namespace Gsage {
   bool Editor::initialize(const std::string& resourceFolder)
   {
     mResourcePath = resourceFolder;
-    if(!FileLoader::getSingletonPtr()->load(mResourcePath + GSAGE_PATH_SEPARATOR + GLOBAL_STATE_FILE, DataProxy(), mGlobalEditorState)) {
-      if(!FileLoader::getSingletonPtr()->load(mResourcePath + GSAGE_PATH_SEPARATOR + DEFAULT_STATE_FILE, DataProxy(), mGlobalEditorState)) {
+    if(!FileLoader::getSingletonPtr()->load(GLOBAL_STATE_FILE, DataProxy(), mGlobalEditorState)) {
+      if(!FileLoader::getSingletonPtr()->load(DEFAULT_STATE_FILE, DataProxy(), mGlobalEditorState)) {
         LOG(WARNING) << "No saved global state";
       }
     }

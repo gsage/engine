@@ -70,11 +70,14 @@ Most of dependencies are vendored by Conan.
 * [easylogging](https://muflihun.github.io/easyloggingpp/).
 * [sol2](https://github.com/ThePhD/sol2).
 * [sole](https://github.com/r-lyeh-archived/sole).
+* [CEF](https://bitbucket.org/chromiumembedded/cef).
+* [inja](https://github.com/pantor/inja).
 
 ### Optional
 
 * [libRocket](https://github.com/libRocket/libRocket) -- RocketUI.
-* [ogre 1.9](http://www.ogre3d.org/) -- OgreBundle1.9 plugin.
+* [ogre 1.9/2.1](http://www.ogre3d.org/) -- Ogre plugin (2.1 is still
+  unstable).
 * [Particle Universe](https://github.com/scrawl/particleuniverse) --
   ParticleUniverse plugin.
 * OIS -- from ogre dependencies.

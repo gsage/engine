@@ -352,6 +352,8 @@ namespace Gsage {
     typedef std::map<std::string, Dockstate> Docks;
 
     Docks docks;
+    // Workspace size;
+    ImVec2 size;
   };
 
   /**
@@ -471,6 +473,7 @@ namespace Gsage {
       LocationToLayout mLocationToLayout;
 
       DockPtr mRootDock;
+      ImVec2 mSize;
   };
 
   /**

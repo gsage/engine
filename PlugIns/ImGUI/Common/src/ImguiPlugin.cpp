@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "GsageFacade.h"
 #include "ImguiLuaInterface.h"
 #include "ImguiEvent.h"
+#include "ImguiImage.h"
 
 #include <imgui.h>
 
@@ -83,8 +84,22 @@ namespace Gsage {
         "CONTEXT_CREATED", sol::var(ImguiEvent::CONTEXT_CREATED)
     );
 
+    lua.new_usertype<ImguiImage>("ImguiImage",
+        "new", sol::no_constructor,
+        "render", &ImguiImage::render,
+        "texture", &ImguiImage::getTexture
+    );
+
     ImguiLuaInterface::addLuaBindings(lua);
     lua["imgui"]["manager"] = &mUIManager;
+
+    lua["imgui"]["Image"] = [&](const std::string& name) -> std::shared_ptr<ImguiImage> {
+      EngineSystem* system = mFacade->getEngine()->getSystem("render");
+      if(!system) {
+        return nullptr;
+      }
+      return std::make_shared<ImguiImage>(name, (RenderSystem*)system);
+    };
     mUIManager.setLuaState(mLuaInterface->getState());
   }
 }

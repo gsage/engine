@@ -1,11 +1,12 @@
 {
-  "projectManager":
+  "projectWizard":
   {
     "defaultProjectImage": "images/blank.png",
     "projectTemplates":
     {
-      "blank": {"image": "../../images/blank.png", "name": "Blank project", "description": "Blank project. It won't create any project settings, won't load any default models"},
-      "actionRpg": {"image": "../../images/rpg.png", "name": "Action RPG", "description": "Default settings for action RPG project with isometric view. Will set up isometric camera controller, add default models." }
+      "preview": {"image": "./images/blank.png", "name": "Preview", "description": "Editor functions preview"},
+      "blank": {"image": "./images/blank.png", "name": "Blank project", "description": "Blank project. It won't create any project settings, won't load any default models"},
+      "actionRpg": {"image": "./images/rpg.png", "name": "Action RPG", "description": "Default settings for action RPG project with isometric view. Will set up isometric camera controller, add default models." }
     },
     "templatesFolder": "../Resources/editor/projectTemplates"
   },
@@ -30,6 +31,10 @@
       "i18n",
       "luafilesystem"
     ]
+  },
+
+  "cef": {
+    "webRoot": "editor/webviews"
   },
 
   "imgui": {
@@ -118,7 +123,8 @@
     "@PLUGINS_DIRECTORY@/ImGUIPlugin",
     "@PLUGINS_DIRECTORY@/ImGUIOgreRenderer",
     "@PLUGINS_DIRECTORY@/SDLPlugin",
-    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin"
+    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin",
+    "@PLUGINS_DIRECTORY@/CEFPlugin"
   ],
 
   "render":

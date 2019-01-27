@@ -68,7 +68,13 @@ namespace Gsage {
         }
 
         mRouter[binding][mNextID] = [this](EventDispatcher* target, const Event& event, long id) -> bool {
-          auto res = mHandler(id, std::ref(static_cast<const C&>(event)), target);
+          sol::function_result res;
+          try {
+            res = mHandler(id, std::ref(static_cast<const C&>(event)), target);
+          } catch (...) {
+            LOG(WARNING) << "Failed to call " << event.getType() << " lua listener: unknown error";
+            return false;
+          }
           std::string error;
           if(!res.valid()) {
             sol::error err = res;

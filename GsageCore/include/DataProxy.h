@@ -252,6 +252,13 @@ namespace Gsage {
       static DataProxy create(const sol::table& object);
 
       /**
+       * Wrap DataProxy around sol::object
+       *
+       * @param object object to wrap
+       */
+      static DataProxy create(const sol::object& object);
+
+      /**
        * Create DataProxy with Json::Value copy
        *
        * @param object object to copy from
@@ -279,6 +286,13 @@ namespace Gsage {
        * @param object object to wrap
        */
       static DataProxy wrap(Json::Value& object);
+
+      /**
+       * Wrap DataProxy around sol::object
+       *
+       * @param object object to wrap
+       */
+      static DataProxy wrap(sol::object& object);
 
       DataProxy(DataWrapper* dataWrapper);
       DataProxy(DataWrapperPtr dataWrapper);

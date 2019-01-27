@@ -31,8 +31,8 @@ describe("#ogre 3D primitives", function()
     describe("operation results equal for", function()
       for _, func in pairs({"getYaw", "getPitch", "getRoll"}) do
         it(func, function()
-          local iv = internal[func](internal)
-          local ov = ogre[func](ogre)
+          local iv = internal[func](internal, true)
+          local ov = ogre[func](ogre, true)
 
           assert.equal(approximate(ov.radians, 6), approximate(iv.radians, 6))
           assert.equal(approximate(ov.degrees, 4), approximate(iv.degrees, 4))

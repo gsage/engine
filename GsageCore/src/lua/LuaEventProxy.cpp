@@ -95,7 +95,14 @@ namespace Gsage  {
           continue;
         }
         std::string error;
-        auto res = (*callback)(event);
+        sol::function_result res;
+        try {
+          res = (*callback)(event);
+        } catch (...) {
+          LOG(WARNING) << "Failed to call " << event.getType() << " lua listener: unknown error";
+          continue;
+        }
+
         if(!res.valid()) {
           sol::error err = res;
           error = err.what();

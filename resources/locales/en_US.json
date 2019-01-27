@@ -14,7 +14,8 @@
     "scene explorer": "Scene Explorer",
     "viewport": "Viewport",
     "dock states": "Dock states",
-    "tools": "Tools"
+    "tools": "Tools",
+    "script_editor": "Script"
   },
 
   "tools": {
@@ -59,6 +60,10 @@
     "position": "Position",
     "rotation": "Rotation",
     "scale": "Scale"
+  },
+
+  "script_editor": {
+    "file_path": "Open File"
   },
 
   "recast": {

@@ -81,6 +81,9 @@ namespace Gsage {
             return new ImguiRendererV1();
           }
       );
+    } else {
+      LOG(ERROR) << "Failed to register imgui ogre interface: imgui manager is not installed";
+      return false;
     }
     return true;
   }
@@ -137,27 +140,27 @@ namespace Gsage {
   }
 }
 
-Gsage::ImguiOgrePlugin* imguiPlugin = NULL;
+Gsage::ImguiOgrePlugin* imguiOgrePlugin = NULL;
 
 extern "C" bool PluginExport dllStartPlugin(Gsage::GsageFacade* facade)
 {
-  if(imguiPlugin != NULL)
+  if(imguiOgrePlugin != NULL)
   {
     return false;
   }
-  imguiPlugin = new Gsage::ImguiOgrePlugin();
-  return facade->installPlugin(imguiPlugin);
+  imguiOgrePlugin = new Gsage::ImguiOgrePlugin();
+  return facade->installPlugin(imguiOgrePlugin);
 }
 
 extern "C" bool PluginExport dllStopPlugin(Gsage::GsageFacade* facade)
 {
-  if(imguiPlugin == NULL)
+  if(imguiOgrePlugin == NULL)
     return true;
 
-  bool res = facade->uninstallPlugin(imguiPlugin);
+  bool res = facade->uninstallPlugin(imguiOgrePlugin);
   if(!res)
     return false;
-  delete imguiPlugin;
-  imguiPlugin = NULL;
+  delete imguiOgrePlugin;
+  imguiOgrePlugin = NULL;
   return true;
 }

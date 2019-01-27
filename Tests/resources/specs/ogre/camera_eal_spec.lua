@@ -30,7 +30,7 @@ describe("test camera eal #ogre", function()
   })
 
   it("should properly register eal for the orbit camera", function()
-    local orbit = camera:create('orbit', 'testcamera', {target=ninja.id, cameraOffset=Vector3.new(0, 4, 0), distance=20})
+    local orbit = camera:create('orbit', 'orbit', {target=ninja.id, cameraOffset=Vector3.new(0, 4, 0), distance=20})
     assert.is_not.is_nil(orbit.attach)
     local s = spy.on(orbit, "follow")
     -- attach camera and wait for update

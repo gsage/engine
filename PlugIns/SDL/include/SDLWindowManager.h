@@ -37,7 +37,7 @@ namespace Gsage {
   class SDLWindow : public Window
   {
     public:
-      SDLWindow(SDL_Window* window);
+      SDLWindow(const std::string& name, SDL_Window* window);
       virtual ~SDLWindow();
 
       /**
@@ -49,6 +49,11 @@ namespace Gsage {
        * Get GL context
        */
       void* getGLContext();
+
+      /**
+       * Get window position
+       */
+      std::tuple<int, int> getPosition() const;
     private:
       friend class SDLWindowManager;
       SDL_Window* mWindow;
@@ -92,9 +97,6 @@ namespace Gsage {
        */
       virtual bool destroyWindow(WindowPtr window);
     private:
-      typedef std::vector<WindowPtr> Windows;
-      Windows mWindows;
-
       std::mutex mWindowsMutex;
   };
 }

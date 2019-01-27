@@ -17,6 +17,7 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
 
   ${LUAJIT_INCLUDE_DIR}
+  ${INJA_INCLUDE_DIRS}
   ${MSGPACK_INCLUDE_DIRS}
 )
 
@@ -29,6 +30,7 @@ set(LIBS
   easyloggingpp
   cpp-channel
   ${LUAJIT_LIBRARIES}
+  ${INJA_LIBRARIES}
   ${MSGPACK_LIBRARIES})
 
 if(APPLE)

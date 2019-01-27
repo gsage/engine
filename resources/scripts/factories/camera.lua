@@ -111,6 +111,7 @@ camera:register("orbit", function(name, settings)
       }
     }
   }
+
   local e = data:createEntity(config)
   if not e then
     return nil

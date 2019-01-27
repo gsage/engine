@@ -109,6 +109,9 @@
     },
     "window":
     {
+      "defaultCamera": {
+        "name": "main"
+      },
       "viewport": {
         "renderQueueSequence": [0, 5, 25, 50, 100, {"id": 101, "suppressShadows": true}],
         "backgroundColor": "#000000"

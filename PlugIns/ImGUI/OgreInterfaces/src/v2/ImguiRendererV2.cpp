@@ -143,6 +143,9 @@ namespace Gsage {
 
     datablock->setTexture(Ogre::PBSM_DIFFUSE, 0, mFontTex);
     datablock->setTextureUvSource(0, 0);
+    Ogre::HlmsSamplerblock samplerblock;
+    samplerblock.setFiltering(Ogre::TFO_NONE);
+    datablock->setSamplerblock(0, samplerblock);
   }
 
   ImguiMovableObject* ImguiRendererV2::createImguiMovableObject()

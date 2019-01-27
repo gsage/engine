@@ -63,7 +63,9 @@ namespace Gsage {
       virtual const std::string& getName() const = 0;
       /**
        * Install plugin into the engine
-       * @param engine Engine instance
+       *
+       * @param facade GsageFacade instance
+       * @param luaInterface LuaInterface instance
        */
       virtual void initialize(GsageFacade* facade, LuaInterface* luaInterface = 0) { mFacade = facade; mLuaInterface = luaInterface; }
 

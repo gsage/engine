@@ -213,7 +213,6 @@ namespace Gsage {
         "lastSysCPU", &ResourceMonitor::Stats::lastSysCPU,
         "lastUserCPU", &ResourceMonitor::Stats::lastUserCPU
     );
-
     lua.new_usertype<GsageFacade>("Facade",
         "new", sol::no_constructor,
         "shutdown", &GsageFacade::shutdown,
@@ -227,10 +226,22 @@ namespace Gsage {
         "loadPlugin", &GsageFacade::loadPlugin,
         "unloadPlugin", &GsageFacade::unloadPlugin,
         "createSystem", &GsageFacade::createSystem,
+        "getWindowManager", &GsageFacade::getWindowManager,
         "addUpdateListener", &GsageFacade::addUpdateListener,
         "BEFORE_RESET", sol::var(GsageFacade::BEFORE_RESET),
         "RESET", sol::var(GsageFacade::RESET),
         "LOAD", sol::var(GsageFacade::LOAD)
+    );
+
+    lua.new_usertype<WindowManager>("WindowManager",
+        "new", sol::no_constructor,
+        "getWindow", &WindowManager::getWindow
+    );
+
+    lua.new_usertype<Window>("Window",
+        "new", sol::no_constructor,
+        "getWindowHandle", &Window::getWindowHandle,
+        "getPosition", &Window::getPosition
     );
 
     lua.new_usertype<Reflection>("Reflection",
@@ -369,6 +380,12 @@ namespace Gsage {
          }
     );
 
+    lua.new_usertype<Texture>("Texture",
+        "valid", sol::property(&Texture::isValid),
+        "setSize", &Texture::setSize,
+        "hasData", &Texture::hasData
+    );
+
     // --------------------------------------------------------------------------------
     // Systems
 
@@ -385,6 +402,13 @@ namespace Gsage {
 
     lua.new_usertype<MovementSystem>("MovementSystem",
         sol::base_classes, sol::bases<EngineSystem>()
+    );
+
+    lua.new_usertype<RenderSystem>("RenderSystem",
+        "new", sol::no_constructor,
+        "createTexture", &RenderSystem::createTexture,
+        "getTexture", &RenderSystem::getTexture,
+        "deleteTexture", &RenderSystem::deleteTexture
     );
 
     // --------------------------------------------------------------------------------
@@ -484,7 +508,8 @@ namespace Gsage {
 
     lua.new_usertype<Engine>("Engine",
         sol::base_classes, sol::bases<EventDispatcher>(),
-        "settings", sol::property(&Engine::settings)
+        "settings", sol::property(&Engine::settings),
+        "env", sol::property(&Engine::env)
     );
 
     lua["Engine"]["removeEntity"] = (bool(Engine::*)(const std::string& id))&Engine::removeEntity;
@@ -517,7 +542,24 @@ namespace Gsage {
             return self->createEntity(name, params);
           },
           (Entity*(GameDataManager::*)(DataProxy))&GameDataManager::createEntity
-        )
+        ),
+        "read", [] (GameDataManager* self, const std::string& path) {
+          std::string res;
+          if(!FileLoader::getSingletonPtr()->load(path, res)) {
+            return std::make_tuple(res, false);
+          }
+          return std::make_tuple(res, true);
+        },
+        "readJSON", [&] (GameDataManager* self, const std::string& path) {
+          DataProxy res = DataProxy::create(lua.create_table());
+          if(!FileLoader::getSingletonPtr()->load(path, DataProxy(), res)) {
+            return std::make_tuple(res, false);
+          }
+          return std::make_tuple(res, true);
+        },
+        "write", [] (GameDataManager* self, const std::string& path, const std::string& data, const std::string& rootDir) {
+          return FileLoader::getSingletonPtr()->dump(path, data, rootDir);
+        }
     );
 
     lua.new_usertype<LuaEventProxy>("LuaEventProxy",
@@ -534,7 +576,8 @@ namespace Gsage {
 
     // events
 
-    lua.new_usertype<Event>("BaseEvent",
+    lua.new_usertype<Event>("Event",
+        "new", sol::constructors<sol::types<Event::ConstType>>(),
         "type", sol::property(&Event::getType)
     );
 
@@ -581,6 +624,12 @@ namespace Gsage {
         "KEY_UP", sol::var(KeyboardEvent::KEY_UP)
     );
 
+    registerEvent<TextInputEvent>("TextInputEvent",
+        "onInput",
+        sol::base_classes, sol::bases<Event>(),
+        "INPUT", sol::var(TextInputEvent::INPUT)
+    );
+
     registerEvent<EntityEvent>("EntityEvent",
         "onEntity",
         sol::base_classes, sol::bases<Event>(),
@@ -594,6 +643,20 @@ namespace Gsage {
         sol::base_classes, sol::bases<Event>(),
         "STOPPING", sol::var(EngineEvent::STOPPING),
         "SHUTDOWN", sol::var(EngineEvent::SHUTDOWN)
+    );
+
+    registerEvent<WindowEvent>("WindowEvent",
+        "onWindow",
+        sol::base_classes, sol::bases<Event>(),
+        "CLOSE", sol::var(WindowEvent::CLOSE),
+        "RESIZE", sol::var(WindowEvent::RESIZE),
+        "MOVE", sol::var(WindowEvent::MOVE),
+        "CREATE", sol::var(WindowEvent::CREATE),
+        "x", &WindowEvent::x,
+        "y", &WindowEvent::y,
+        "width", &WindowEvent::width,
+        "height", &WindowEvent::height,
+        "handle", &WindowEvent::handle
     );
 
     lua.create_table("Keys");
@@ -751,9 +814,9 @@ namespace Gsage {
         "onMouse",
         sol::base_classes, sol::bases<Event>(),
         "button", sol::readonly(&MouseEvent::button),
-        "x", sol::readonly(&MouseEvent::mouseX),
-        "y", sol::readonly(&MouseEvent::mouseY),
-        "z", sol::readonly(&MouseEvent::mouseZ),
+        "x", &MouseEvent::mouseX,
+        "y", &MouseEvent::mouseY,
+        "z", &MouseEvent::mouseZ,
         "relX", sol::readonly(&MouseEvent::relativeX),
         "relY", sol::readonly(&MouseEvent::relativeY),
         "relZ", sol::readonly(&MouseEvent::relativeZ),
@@ -817,6 +880,19 @@ namespace Gsage {
     lua["game"] = mInstance;
     lua["core"] = mInstance->getEngine();
     lua["data"] = mInstance->getGameDataManager();
+    std::stringstream ss;
+    ss << GSAGE_VERSION_MAJOR << "." << GSAGE_VERSION_MINOR << "." << GSAGE_VERSION_BUILD;
+
+    lua["gsageVersion"] = ss.str();
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    lua["gsagePlatform"] = "apple";
+#elif GSAGE_PLATFORM == GSAGE_LINUX
+    lua["gsagePlatform"] = "linux";
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+    lua["gsagePlatform"] = "win32";
+#else
+    lua["gsagePlatform"] = "other";
+#endif
 
     // some utility functions
     lua["md5Hash"] = [] (const std::string& value) -> size_t {return std::hash<std::string>()(value);};

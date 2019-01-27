@@ -245,6 +245,13 @@ namespace Gsage
       void addUpdateListener(UpdateListener* listener);
 
       /**
+       * Stop listening for updates for the specified object
+       * @param listener Pointer to the UpdateListener
+       * @returns true if removal succeed
+       */
+      bool removeUpdateListener(UpdateListener* listener);
+
+      /**
        * Set lua state to use in the lua interface and systems
        * @param lua_State Lua state pointer
        * @param initialize initialize lua interface and update ui managers

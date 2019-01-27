@@ -26,8 +26,50 @@ THE SOFTWARE.
 
 #include "FileLoader.h"
 #include <assert.h>
+#include <nlohmann/json.hpp>
+#include <inja/inja.hpp>
 
 namespace Gsage {
+  inline nlohmann::json jsonContext(const DataProxy& dp)
+  {
+    nlohmann::json result;
+    switch(dp.getStoredType()) {
+      case DataWrapper::Object:
+        result = nlohmann::json::object();
+        for(auto pair : dp) {
+          result[pair.first] = jsonContext(pair.second);
+        }
+        break;
+      case DataWrapper::Array:
+        result = nlohmann::json::array();
+        for(auto pair : dp) {
+          result.push_back(jsonContext(pair.second));
+        }
+        break;
+      case DataWrapper::Int:
+        result = nlohmann::json(dp.as<int>());
+        break;
+      case DataWrapper::UInt:
+        result = nlohmann::json(dp.as<unsigned int>());
+        break;
+      case DataWrapper::Float:
+        result = nlohmann::json(dp.as<float>());
+        break;
+      case DataWrapper::Double:
+        result = nlohmann::json(dp.as<double>());
+        break;
+      case DataWrapper::String:
+        result = nlohmann::json(dp.as<std::string>());
+        break;
+      case DataWrapper::Bool:
+        result = nlohmann::json(dp.as<bool>());
+        break;
+      default:
+        return nlohmann::json(nullptr);
+    }
+    return result;
+  }
+
   FileLoader* FileLoader::mInstance = 0;
 
   FileLoader FileLoader::getSingleton()
@@ -55,6 +97,41 @@ namespace Gsage {
 
   FileLoader::~FileLoader()
   {
+  }
+
+  bool FileLoader::load(const std::string& path, std::string& dest, std::ios_base::openmode mode) const
+  {
+    auto pair = loadFile(path, mode);
+    if(!pair.second) {
+      return false;
+    }
+
+    dest = pair.first;
+    return true;
+  }
+
+  bool FileLoader::loadTemplate(const std::string& path, std::string& dest, const DataProxy& context) const
+  {
+    std::string data;
+    if(!load(path, data)) {
+      return false;
+    }
+
+    nlohmann::json ctx = jsonContext(context);
+    try {
+      dest = inja::render(data, ctx);
+    } catch (std::runtime_error err) {
+      LOG(ERROR) << "Failed to render template " << err.what();
+      return false;
+    }
+    return true;
+  }
+
+  std::ifstream FileLoader::stream(const std::string& path) const
+  {
+    std::stringstream ss;
+    ss << mEnvironment.get("workdir", ".") << GSAGE_PATH_SEPARATOR << path;
+    return std::ifstream(ss.str());
   }
 
   bool FileLoader::load(const std::string& path, const DataProxy& params, DataProxy& dest) const
@@ -95,15 +172,36 @@ namespace Gsage {
         type = DataWrapper::MSGPACK_OBJECT;
         break;
     }
-    Gsage::dump(value, path, type);
+    std::string str = Gsage::dumps(value, type);
+    dump(path, str);
   }
 
-  std::pair<std::string, bool> FileLoader::loadFile(const std::string& path) const
+  bool FileLoader::dump(const std::string& path, const std::string& str, const std::string& rootDir) const
   {
-    std::ifstream stream(path);
+    std::stringstream ss;
+    if(!rootDir.empty()) {
+      ss << rootDir << GSAGE_PATH_SEPARATOR;
+    }
+    ss << path;
+    std::ofstream os(ss.str());
+    if(!os)
+      return false;
+
+    os << str;
+    os.close();
+    return true;
+  }
+
+  std::pair<std::string, bool> FileLoader::loadFile(const std::string& path, std::ios_base::openmode mode) const
+  {
+    // TODO: additional lookup folders
+    std::stringstream ss;
+    ss << mEnvironment.get("workdir", ".") << GSAGE_PATH_SEPARATOR << path;
+    std::ifstream stream(ss.str(), mode);
     std::string res;
     bool success = true;
     if(!stream) {
+      LOG(ERROR) << "Failed to read file: " << ss.str();
       return std::make_pair("", false);
     }
     try
