@@ -23,3 +23,4 @@ if(${RECAST_FOUND})
 endif(${RECAST_FOUND})
 
 add_subdirectory(ImGUI)
+add_subdirectory(CEF)

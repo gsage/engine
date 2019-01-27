@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2019 Artem Chernyshev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
+
+#include <Ogre.h>
 #include <OgreCommon.h>
 #include <OgreImage.h>
 #include <OgreVector3.h>

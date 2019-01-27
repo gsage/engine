@@ -33,7 +33,7 @@ function ToolsView:__call()
     imgui.Button(icons.undo)
     if imgui.IsItemHovered() then
         imgui.BeginTooltip();
-        imgui.Text(lm("tools.tooltips.redo"));
+        imgui.Text(lm("tools.tooltips.undo"));
         imgui.EndTooltip();
     end
     imgui.SameLine(0, 2)
@@ -41,7 +41,7 @@ function ToolsView:__call()
     imgui.Button(icons.redo)
     if imgui.IsItemHovered() then
         imgui.BeginTooltip();
-        imgui.Text(lm("tools.tooltips.undo"));
+        imgui.Text(lm("tools.tooltips.redo"));
         imgui.EndTooltip();
     end
     imgui.SameLine(0, 2)

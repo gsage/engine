@@ -52,24 +52,11 @@ namespace Gsage {
 
       child.put("active", pair.second.active);
       child.put("opened", pair.second.opened);
+
     }
+    res.put("size", state.size);
     return res;
   }
-
-/*
-      float ratio;
-
-      std::string children[2];
-      std::string next;
-      std::string prev;
-      std::string parent;
-
-      Dock::Layout layout;
-      Dock::Location location;
-
-      bool active;
-      bool opened;
- */
 
   static ImGuiDockspaceState loadState(DataProxy dp)
   {
@@ -100,6 +87,7 @@ namespace Gsage {
       res.docks[pair.first] = dockstate;
     }
 
+    res.size = dp.get("size", ImVec2(0, 0));
     return res;
   }
 }

@@ -86,8 +86,10 @@ namespace Gsage {
        * Call signall
        * @param dispatcher pointer to dispatcher which calls this signal
        * @param event to pass
+       *
+       * @returns count of handlers that processed response
        */
-      void operator()(EventDispatcher* dispatcher, const Event& event);
+      int operator()(EventDispatcher* dispatcher, const Event& event);
 
       /**
        *Disconnect one callback identified by priority and id
@@ -110,8 +112,9 @@ namespace Gsage {
       typedef std::string Type;
       typedef const std::string& ConstType;
 
-      Event(ConstType type) : mType(type) {};
-      virtual ~Event() {};
+      Event() {}
+      Event(ConstType type) : mType(type) {}
+      virtual ~Event() {}
 
       /**
        * Get event type
@@ -146,8 +149,10 @@ namespace Gsage {
        * Dispatch event to all subscribers of the type, defined in the event.
        *
        * @param event Abstract event
+       *
+       * @returns count of handers that processed the response
        */
-      void fireEvent(const Event& event);
+      int fireEvent(const Event& event);
 
       /**
        * Remove all listeners from this event dispatcher

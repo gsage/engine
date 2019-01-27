@@ -5,9 +5,22 @@ macro(configure)
     set(BINARY_OUTPUT_DIR ${PROJECT_BINARY_DIR}/bin)
   endif(DEFINED ENV{BINARY_OUTPUT_DIR})
 
+  if(DEFINED ENV{GSAGE_VERSION_MAJOR})
+    set(GSAGE_VERSION_MAJOR $ENV{GSAGE_VERSION_MAJOR})
+  endif(DEFINED ENV{GSAGE_VERSION_MAJOR})
+
+  if(DEFINED ENV{GSAGE_VERSION_MINOR})
+    set(GSAGE_VERSION_MINOR $ENV{GSAGE_VERSION_MINOR})
+  endif(DEFINED ENV{GSAGE_VERSION_MINOR})
+
+  if(DEFINED ENV{GSAGE_VERSION_BUILD})
+    set(GSAGE_VERSION_BUILD $ENV{GSAGE_VERSION_BUILD})
+  endif(DEFINED ENV{GSAGE_VERSION_BUILD})
+
   if(WITH_METAL)
     add_definitions("-DWITH_METAL")
   endif(WITH_METAL)
+  add_definitions(-DGSAGE_VERSION_MAJOR="${GSAGE_VERSION_MAJOR}" -DGSAGE_VERSION_MINOR="${GSAGE_VERSION_MINOR}" -DGSAGE_VERSION_BUILD="${GSAGE_VERSION_BUILD}")
 
   if(NOT EXISTS BINARY_OUTPUT_DIR)
     file(MAKE_DIRECTORY ${BINARY_OUTPUT_DIR})
@@ -115,7 +128,8 @@ macro(gsage_plugin plugin_name)
   if(APPLE)
     set_target_properties(${plugin_name}
       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
-      INSTALL_RPATH "@rpath"
+      INSTALL_RPATH "@rpath;@executable_path/../"
+      LINK_FLAGS "-Wl,-F${PROJECT_BINARY_DIR}/bin/Frameworks/"
     )
   endif(APPLE)
 endmacro()
@@ -131,12 +145,44 @@ macro(gsage_includes)
   )
 endmacro()
 
+macro(cef_helper_app executable_name)
+  add_executable(${executable_name} ${ARGN})
+
+  if(APPLE)
+    set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
+    set(BINARY_OUTPUT_DIR "${BINARY_OUTPUT_DIR}/Frameworks")
+
+    set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
+
+    set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
+    set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
+    set_target_properties(${executable_name}
+      PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+      INSTALL_RPATH "@rpath;@executable_path/../"
+      LINK_FLAGS "-Wl,-F${PROJECT_BINARY_DIR}/bin/Frameworks/"
+    )
+    set(APP_CONTENTS "${BINARY_OUTPUT_DIR}/${executable_name}.app/Contents")
+    set(APP_FRAMEWORKS_DIRECTORY "${APP_CONTENTS}/Frameworks")
+
+    add_custom_command(TARGET ${executable_name} POST_BUILD
+      COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
+    )
+  endif(APPLE)
+
+  if(MINGW OR UNIX)
+    set(EXECUTABLE_OUTPUT_PATH "${BINARY_OUTPUT_DIR}")
+  endif(MINGW OR UNIX)
+endmacro()
+
 macro(gsage_executable executable_name)
   add_executable(${executable_name} ${ARGN})
 
   if(APPLE)
     set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
+
+    set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
 
     set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
     set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
@@ -146,7 +192,7 @@ macro(gsage_executable executable_name)
     set(APP_RESOURCES_DIRECTORY "${APP_CONTENTS}/Resources")
 
     add_custom_command(TARGET ${executable_name} POST_BUILD
-      COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s $ENV{OGRE_HOME}/lib/${CMAKE_BUILD_TYPE}/ ${APP_FRAMEWORKS_DIRECTORY}
+      COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
     )
     add_custom_command(TARGET ${executable_name} POST_BUILD
       COMMAND [ -L ${APP_RESOURCES_DIRECTORY} ] || ln -s ${PROJECT_SOURCE_DIR}/resources/ ${APP_RESOURCES_DIRECTORY}

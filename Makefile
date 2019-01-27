@@ -94,7 +94,7 @@ functional: build
 	@$(FUNCTIONAL_CMD) -o gtest $(TEST_PARAMS) --exclude-tags benchmark --no-auto-insulate
 
 benchmark: build
-	@$(FUNCTIONAL_CMD) -o gtest $(TEST_PARAMS) --t benchmark
+	@$(FUNCTIONAL_CMD) -o gtest $(TEST_PARAMS) --t benchmark --no-auto-insulate
 
 run: build
 	@$(RUN_CMD)
@@ -102,7 +102,7 @@ run: build
 editor: build
 	@$(EDITOR_CMD)
 
-ci: upload-deps build unit functional
+ci: build unit functional
 
 all: build unit
 

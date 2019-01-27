@@ -57,6 +57,24 @@ namespace Gsage {
   {
   }
 
+  bool FileLoader::load(const std::string& path, std::string& dest, std::ios_base::openmode mode) const
+  {
+    auto pair = loadFile(path, mode);
+    if(!pair.second) {
+      return false;
+    }
+
+    dest = pair.first;
+    return true;
+  }
+
+  std::ifstream FileLoader::stream(const std::string& path) const
+  {
+    std::stringstream ss;
+    ss << mEnvironment.get("workdir", ".") << GSAGE_PATH_SEPARATOR << path;
+    return std::ifstream(ss.str());
+  }
+
   bool FileLoader::load(const std::string& path, const DataProxy& params, DataProxy& dest) const
   {
     DataProxy p = merge(mEnvironment, params);
@@ -95,15 +113,36 @@ namespace Gsage {
         type = DataWrapper::MSGPACK_OBJECT;
         break;
     }
-    Gsage::dump(value, path, type);
+    std::string str = Gsage::dumps(value, type);
+    dump(path, str);
   }
 
-  std::pair<std::string, bool> FileLoader::loadFile(const std::string& path) const
+  bool FileLoader::dump(const std::string& path, const std::string& str, const std::string& rootDir) const
   {
-    std::ifstream stream(path);
+    std::stringstream ss;
+    if(!rootDir.empty()) {
+      ss << rootDir << GSAGE_PATH_SEPARATOR;
+    }
+    ss << path;
+    std::ofstream os(ss.str());
+    if(!os)
+      return false;
+
+    os << str;
+    os.close();
+    return true;
+  }
+
+  std::pair<std::string, bool> FileLoader::loadFile(const std::string& path, std::ios_base::openmode mode) const
+  {
+    // TODO: additional lookup folders
+    std::stringstream ss;
+    ss << mEnvironment.get("workdir", ".") << GSAGE_PATH_SEPARATOR << path;
+    std::ifstream stream(ss.str(), mode);
     std::string res;
     bool success = true;
     if(!stream) {
+      LOG(ERROR) << "Failed to read file: " << ss.str();
       return std::make_pair("", false);
     }
     try

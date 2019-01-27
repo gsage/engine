@@ -79,7 +79,7 @@ Console = class(ImguiWindow, function(self, maxInput, docked)
 
   self.log = {}
   self:info(lm("console.welcome"))
-  self:info(lm("console.version", {version = game.version or "unknown"}))
+  self:info(lm("console.version", {version = gsageVersion .. " " .. gsagePlatform}))
 
   log.proxy:subscribe("console", function(message)
     local level = LogEntry.LEVEL_MAP[message.level] or "UNKNOWN"

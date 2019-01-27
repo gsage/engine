@@ -111,7 +111,7 @@ namespace Gsage {
       delete mLuaInterface;
   }
 
-  bool GsageFacade::initialize(const std::string& rsageConfigPath,
+  bool GsageFacade::initialize(const std::string& configFile,
       const std::string& resourcePath,
       DataProxy* configOverride,
       FileLoader::Encoding configEncoding)
@@ -119,15 +119,13 @@ namespace Gsage {
     assert(mStarted == false);
     mStarted = true;
 
-    std::string configPath = resourcePath + GSAGE_PATH_SEPARATOR + rsageConfigPath;
-
     DataProxy environment;
     environment.put("workdir", resourcePath);
-    FileLoader::init(configEncoding, DataProxy());
+    FileLoader::init(configEncoding, environment);
 
-    if(!FileLoader::getSingletonPtr()->load(configPath, DataProxy(), mConfig))
+    if(!FileLoader::getSingletonPtr()->load(configFile, DataProxy(), mConfig))
     {
-      LOG(ERROR) << "Failed to load file " << configPath;
+      LOG(ERROR) << "Failed to load file " << configFile;
       return false;
     }
 
@@ -137,7 +135,7 @@ namespace Gsage {
       el::Loggers::reconfigureLogger("default", conf);
     }
 
-    LOG(INFO) << "Starting game, config:\n\t" << configPath;
+    LOG(INFO) << "Starting game, config:\n\t" << configFile;
 
     if (configOverride != 0)
     {
@@ -459,6 +457,18 @@ namespace Gsage {
   void GsageFacade::addUpdateListener(UpdateListener* listener)
   {
     mUpdateListeners.push_back(listener);
+  }
+
+  bool GsageFacade::removeUpdateListener(UpdateListener* listener)
+  {
+    for(size_t i = 0; i < mUpdateListeners.size(); i++) {
+      if(mUpdateListeners[i] == listener) {
+        mUpdateListeners.erase(mUpdateListeners.begin() + i);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   void GsageFacade::removeInputFactory(const std::string& id)

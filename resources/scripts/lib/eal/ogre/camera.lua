@@ -179,7 +179,9 @@ local function freeCamera(cls)
   end)
 
   cls.onDestroy(function(self)
-    self.unbindEvents()
+    if self.unbindEvents then
+      self.unbindEvents()
+    end
   end)
 
   function cls:update(time)
@@ -298,7 +300,9 @@ local function orbitCamera(cls)
 
   cls.onDestroy(function(self)
     self:setTarget(nil)
-    self.unbindEvents()
+    if self.unbindEvents then
+      self.unbindEvents()
+    end
   end)
 
   function cls:follow(render)
@@ -322,12 +326,12 @@ local function orbitCamera(cls)
       self.center.z + math.sin(teta) * math.sin(phi) * self.distance
     )
 
-    local delta = math.asin(math.cos(teta)) - self.pitchNode.orientation:getPitch().radians
+    local delta = math.asin(math.cos(teta)) - self.pitchNode.orientation:getPitch(true).radians
 
     self.render.position = position
     self.render:lookAt(self.center * Vector3.new(1, 0, 1) + Vector3.new(0, position.y, 0))
     if delta ~= 0 then
-      self.pitchNode:pitch(Radian.new(delta))
+      self.pitchNode:pitch(Radian.new(delta), OgreNode.TS_LOCAL)
     end
   end
 

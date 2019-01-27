@@ -61,17 +61,17 @@ namespace Gsage {
     return res;
   }
 
-  void EventDispatcher::fireEvent(const Event& event)
+  int EventDispatcher::fireEvent(const Event& event)
   {
     if(!hasListenersForType(event.getType())) {
-      return;
+      return 0;
     }
 
     EventSignal* s = nullptr;
     mMutationMutex.lock();
     s = mSignals[event.getType()];
     mMutationMutex.unlock();
-    (*s)(this, event);
+    return (*s)(this, event);
   }
 
   void EventDispatcher::removeAllListeners()
@@ -110,18 +110,22 @@ namespace Gsage {
     return EventConnection(this, priority, id);
   }
 
-  void EventSignal::operator()(EventDispatcher* dispatcher, const Event& event)
+  int EventSignal::operator()(EventDispatcher* dispatcher, const Event& event)
   {
+    int handleCount = 0;
     for(auto pair : mConnections)
     {
       for(auto p : pair.second)
       {
+        handleCount++;
         if(!p.second(dispatcher, event))
         {
-          return;
+          return handleCount;
         }
       }
     }
+
+    return handleCount;
   }
 
   void EventSignal::disconnect(int priority, int id)

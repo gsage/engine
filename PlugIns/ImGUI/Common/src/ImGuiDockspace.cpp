@@ -282,6 +282,34 @@ namespace Gsage {
 
     mBounds = ImRect(mPos, mPos + mSize);
 
+    if(!mResized) {
+      float ratio = mRatio;
+      switch(mLayout) {
+        case Horizontal:
+          if(mChildren[0]->mSize.x != 0 && mChildren[1]->mSize.x != 0) {
+            if(mChildren[0]->mSize.x < mChildren[1]->mSize.x) {
+              ratio = (mChildren[0]->mSize.x + mStyle.splitterThickness) / mSize.x;
+            } else {
+              ratio = (mSize.x - mChildren[1]->mSize.x) / mSize.x;
+            }
+          }
+          break;
+        case Vertical:
+          if(mChildren[0]->mSize.y != 0 && mChildren[1]->mSize.y != 0) {
+            if(mChildren[0]->mSize.y < mChildren[1]->mSize.y) {
+              ratio = (mChildren[0]->mSize.y + mStyle.splitterThickness) / mSize.y;
+            } else {
+              ratio = (mSize.y - mChildren[1]->mSize.y) / mSize.y;
+            }
+          }
+          break;
+        default:
+          break;
+      }
+      mRatio = ImMin(ratio, 0.95f);
+      mRatio = ImMax(mRatio, 0.05f);
+    }
+
     updateChildren();
   }
 
@@ -360,6 +388,8 @@ namespace Gsage {
       tmp->setActive(false);
       tmp = tmp->getNextTab();
     }
+    if(mParent)
+      mParent->updateChildren();
   }
 
   bool Dock::visible() const
@@ -542,6 +572,8 @@ namespace Gsage {
       s.docks[pair.first] = ImGuiDockspaceState::Dockstate(pair.second);
     }
 
+    s.size = mSize;
+
     return s;
   }
 
@@ -555,6 +587,11 @@ namespace Gsage {
       if(!dock) {
         dock = createDock(pair.first.c_str());
       }
+    }
+
+    ImVec2 ratioMultiplier(1.0f, 1.0f);
+    if(mSize.x != 0 && mSize.y != 0 && state.size.x != 0 && state.size.y != 0) {
+      ratioMultiplier = mSize / state.size;
     }
 
     for(auto pair : state.docks) {
@@ -574,16 +611,23 @@ namespace Gsage {
       dock->mLocation = pair.second.location;
       dock->mLayout = pair.second.layout;
       dock->mRatio = pair.second.ratio;
+      if(dock->mLayout == Dock::Horizontal) {
+        dock->mRatio *= ratioMultiplier.x;
+      } else {
+        dock->mRatio *= ratioMultiplier.y;
+      }
       dock->mOpened = pair.second.opened;
 
       if(dock->getLocation() == Dock::Root) {
         mRootDock = dock;
       }
     }
+    setDimensions(ImVec2(0, 0), state.size);
   }
 
   void ImGuiDockspace::setDimensions(ImVec2 pos, ImVec2 size)
   {
+    mSize = size;
     if(mRootDock == nullptr) {
       return;
     }

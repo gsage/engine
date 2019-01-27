@@ -38,10 +38,10 @@ local EALManager = class(function(self)
     elseif event.type == EntityEvent.REMOVE then
       -- invalidate linked entity
       local e = self.entities[event.id]
-      e:__destroy()
       if e then
         e.entity = nil
         self.entities[event.id] = nil
+        e:__destroy()
       end
     end
     return true

@@ -32,6 +32,10 @@
     ]
   },
 
+  "cef": {
+    "webRoot": "editor/webviews"
+  },
+
   "imgui": {
     "renderTargetWhitelist": [
       "Editor"
@@ -118,7 +122,8 @@
     "@PLUGINS_DIRECTORY@/ImGUIPlugin",
     "@PLUGINS_DIRECTORY@/ImGUIOgreRenderer",
     "@PLUGINS_DIRECTORY@/SDLPlugin",
-    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin"
+    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin",
+    "@PLUGINS_DIRECTORY@/CEFPlugin"
   ],
 
   "render":

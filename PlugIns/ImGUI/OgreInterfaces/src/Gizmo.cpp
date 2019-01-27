@@ -90,6 +90,7 @@ namespace Gsage {
     if(!extractMatrix(model, &mModelMatrix[0], 16))
       return;
 
+    ImGui::PushStyleColor(ImGuiCol_Border, 0);
     ImGuizmo::BeginFrame();
     ImGuizmo::Enable(mEnabled);
 
@@ -99,6 +100,7 @@ namespace Gsage {
     ImGuizmo::Manipulate(&v[0], &p[0], mOperation, mMode, &mModelMatrix[0], &delta[0]);
 
      if (!ImGuizmo::IsUsing()) {
+       ImGui::PopStyleColor();
       return;
     }
 
@@ -121,6 +123,7 @@ namespace Gsage {
       node->rotate(Ogre::Vector3::UNIT_Z, Ogre::Degree(deltaRotation[2]), Ogre::SceneNode::TS_WORLD);
     }
     ImGuizmo::EndFrame();
+    ImGui::PopStyleColor();
   }
 
   void Gizmo::enable(bool value)
