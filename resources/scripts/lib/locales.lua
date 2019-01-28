@@ -8,6 +8,7 @@ LocalizationManager = class(function(self)
   local f = getResourcePath("locales/")
   self.MISSING = "<missing>"
   self.availableLocales = {}
+  self.localeData = {}
   local locales = {}
   local files = {}
 
@@ -39,9 +40,11 @@ LocalizationManager = class(function(self)
 
       locales[basename] = data
       self.availableLocales[#self.availableLocales + 1] = localeInfo
+      self.localeData = data
     else
       log.error("Failed to parse locale " .. fullPath)
     end
+
   end
   i18n.load(locales)
   i18n.setLocale('en_US')
@@ -59,6 +62,10 @@ end
 
 function LocalizationManager:__call(...)
   return (i18n(table.unpack({...})) or self.MISSING)
+end
+
+function LocalizationManager:getCurrentLocaleData()
+  return self.localeData[self:getLocale()] or {}
 end
 
 local lm = LocalizationManager()

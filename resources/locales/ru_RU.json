@@ -15,6 +15,95 @@
     "script_editor": "Редактор скриптов"
   },
 
+  "plugins": {
+    "description": {
+      "OgrePlugin": "Позволяет рендерить окно с помощью OGRE 1.9 или 2.1. Единственная система для рендеринга в данный момент.",
+      "SDLPlugin": "Позволяет использовать SDL для обработки ввода и для создания окон и работы с ними.",
+      "CEFPlugin": "Добавляет возможность открывать веб страницы и отображать их в текстуру render системы, используя Chrome Embeddable Framework. Довольно громоздская зависимость.",
+      "ImGUIPlugin": "Dear-Imgui библиотека для отрисовки интерфейсов. Не рекомендуется использовать ее в релизных сборках игры.",
+      "OisInputPlugin": "Позволяет обрабатывать ввод при помощи библиотеки OIS. Не работает с окнами, созданными при помощи SDL, можно использовать только с окнами, которые были созданы OGRE.",
+      "RecastNavigationPlugin": "Позволяет строить навигационные карты и пути по ним используя Recast и Detour.",
+      "RocketUIPlugin": "LibRocket библиотека для отрисовки интерфейсов"
+    }
+  },
+
+  "wizard": {
+    "create_project": "Создать новый проект",
+    "recent_projects": "Последние проекты",
+    "open_project": "Открыть проект",
+    "project": {
+      "opened": "Последний доступ",
+      "path": "Путь"
+    },
+    "recent": {
+      "no_projects": "Нет проектов"
+    },
+    "projects": {
+      "blank": {
+        "name": "Пустой проект",
+        "description": "Пустой проект без скриптов поведения и моделей"
+      },
+      "actionRPG": {
+        "name": "Ролевая Игра",
+        "description": "Стартовый проект для создания ролевой игры с изометрической камерой"
+      }
+    },
+    "create": {
+      "next": "Далее",
+      "back": "Назад",
+      "location": "Расположение",
+      "plugins": "Плагины",
+      "summary": "Завершение",
+      "browse": "Обзор",
+      "systems": "Системы",
+      "managers": "Менеджеры",
+
+      "plugins_config": {
+        "description": "Настройте плагины, которые будут использоваться в релизной версии игры",
+        "installed": "Установить",
+        "not_installed": "Не устанавливать"
+      },
+
+      "systems_config": {
+        "no_systems": "Нет доступных систем",
+        "not_set": "Не выбрано",
+        "no_managers": "Нет доступных менеджеров"
+      },
+
+      "summary_config": {
+        "window_manager": "Использовать менеджер окон ",
+        "no_window_manager": "Не использовать менеджер окон",
+        "input_manager": "Использовать менеджер ввода ",
+        "no_input_manager": "Не использовать менеджер ввода"
+      },
+
+      "description_location": "Создать новый проект",
+      "description_plugins": "Установка плагинов",
+      "description_systems": "Настройка систем",
+      "description_summary": "Итоговые настройки",
+      "description_managers": "Настройка менеджеров",
+
+      "project_name": "Имя проекта",
+      "project_folder": "Путь",
+      "project_icon": "Иконка",
+
+      "errors": {
+        "name_empty": "Не задано имя проекта",
+        "path_empty": "Не задан путь проекта"
+      },
+
+      "progress_title": "Создание проекта",
+      "progress": {
+        "file_copied": "Копирование %{flow}",
+        "file_copy_failed": "Ошибка копирования %{flow}",
+        "folder_created": "Создание папки %{path}",
+        "writing_project_file": "Создание файла проекта",
+        "writing_configs": "Запись настроек",
+        "opening_project": "Открываю..."
+      }
+    }
+  },
+
   "console": {
     "welcome": "Добро пожаловать в консоль",
     "version": "Версия движка: %{version}",

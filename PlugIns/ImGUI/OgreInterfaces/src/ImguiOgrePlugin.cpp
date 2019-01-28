@@ -41,6 +41,7 @@ THE SOFTWARE.
 #endif
 #include "v1/ImguiRendererV1.h"
 #include "systems/OgreRenderSystem.h"
+#include "ImGuiConverters.h"
 
 #include "sol.hpp"
 
@@ -90,22 +91,31 @@ namespace Gsage {
 
   void ImguiOgrePlugin::uninstallImpl()
   {
-    ImguiManager* m = static_cast<ImguiManager*>(mFacade->getUIManager(ImguiManager::TYPE));
-    m->removeRendererFactory(OgreRenderSystem::ID);
+    UIManager* manager = mFacade->getUIManager(ImguiManager::TYPE);
+    if(!manager) {
+      return;
+    }
+
+    static_cast<ImguiManager*>(manager)->removeRendererFactory(OgreRenderSystem::ID);
   }
 
   void ImguiOgrePlugin::setupLuaBindings()
   {
     sol::state_view& lua = *mLuaInterface->getSolState();
-    lua["imgui"]["createOgreView"] = [&] () -> std::shared_ptr<OgreView>{
+    lua["imgui"]["createOgreView"] = [&] (const std::string& bgColour) -> std::shared_ptr<OgreView>{
       OgreRenderSystem* render = mFacade->getEngine()->getSystem<OgreRenderSystem>();
       if(render == 0) {
-        return std::shared_ptr<OgreView>(nullptr);
+        return nullptr;
       }
-      return std::shared_ptr<OgreView>(new OgreView(render));
+      ImVec4 col;
+      if(!(typename TranslatorBetween<std::string, ImVec4>::type().to(bgColour, col))) {
+        return nullptr;
+      }
+      return std::make_shared<OgreView>(render, col);
     };
     lua.new_usertype<OgreView>("OgreView",
         "setTextureID", &OgreView::setTextureID,
+        "setTexture", &OgreView::setTexture,
         "render", &OgreView::render
     );
 

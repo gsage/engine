@@ -150,6 +150,11 @@ macro(cef_helper_app executable_name)
 
   if(APPLE)
     set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_target_properties(${executable_name}
+      PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+      INSTALL_RPATH "@rpath;@executable_path/../"
+      LINK_FLAGS "-Wl,-F${PROJECT_BINARY_DIR}/bin/Frameworks/"
+    )
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
     set(BINARY_OUTPUT_DIR "${BINARY_OUTPUT_DIR}/Frameworks")
 
@@ -157,14 +162,8 @@ macro(cef_helper_app executable_name)
 
     set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
     set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
-    set_target_properties(${executable_name}
-      PROPERTIES BUILD_WITH_INSTALL_RPATH 1
-      INSTALL_RPATH "@rpath;@executable_path/../"
-      LINK_FLAGS "-Wl,-F${PROJECT_BINARY_DIR}/bin/Frameworks/"
-    )
     set(APP_CONTENTS "${BINARY_OUTPUT_DIR}/${executable_name}.app/Contents")
     set(APP_FRAMEWORKS_DIRECTORY "${APP_CONTENTS}/Frameworks")
-
     add_custom_command(TARGET ${executable_name} POST_BUILD
       COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
     )
@@ -180,6 +179,7 @@ macro(gsage_executable executable_name)
 
   if(APPLE)
     set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set(MACOSX_BUNDLE_BUNDLE_NAME "${executable_name}")
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
 
     set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
@@ -229,6 +229,5 @@ macro(process_templates)
     endif(OGRE_FOUND)
   endif(APPLE)
   configure_file(resources/testConfig.json.in ${gsage_SOURCE_DIR}/resources/testConfig.json)
-  configure_file(resources/gameConfig.json.in ${gsage_SOURCE_DIR}/resources/gameConfig.json)
   configure_file(resources/editorConfig.json.in ${gsage_SOURCE_DIR}/resources/editorConfig.json)
 endmacro()

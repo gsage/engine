@@ -395,6 +395,13 @@ namespace Gsage
        */
       bool handleWindowResized(EventDispatcher* sender, const Event& event);
 
+      /**
+       * Handle settings update
+       * @param sender Engine
+       * @param event EngineEvent
+       */
+      bool handleEnvUpdate(EventDispatcher* sender, const Event& event);
+
       bool installPlugin(const std::string& name);
 
       GeomPtr getGeometry(OgreEntities entities);

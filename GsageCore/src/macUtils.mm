@@ -125,6 +125,23 @@ void* mac_loadDylib(const char* name)
   return dlopen(fullPath.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 }
 
+void mac_getBundlePath(char* path, size_t size)
+{
+  CFBundleRef mainBundle = CFBundleGetMainBundle();
+  assert(mainBundle);
+
+  CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
+  assert(mainBundleURL);
+
+  CFStringRef cfStringRef = CFURLCopyFileSystemPath( mainBundleURL, kCFURLPOSIXPathStyle);
+  assert(cfStringRef);
+
+  CFStringGetFileSystemRepresentation(cfStringRef, path, size);
+
+  CFRelease(mainBundleURL);
+  CFRelease(cfStringRef);
+}
+
 std::string macBundlePath()
 {
   char path[1024];

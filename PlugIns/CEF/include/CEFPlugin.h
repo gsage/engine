@@ -63,26 +63,58 @@ namespace Gsage {
       bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect) OVERRIDE;
       void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList &dirtyRects, const void *buffer, int width, int height) OVERRIDE;
       void setTexture(TexturePtr texture);
-      inline void setScreenPosition(int x, int y) { mX = x; mY = y; }
     private:
       TexturePtr mTexture;
     public:
       IMPLEMENT_REFCOUNTING(RenderHandler);
-      int mX;
-      int mY;
   };
 
-  class BrowserClient : public CefClient
+  class Webview;
+
+  class BrowserClient : public CefClient, public CefLoadHandler, public CefDialogHandler
   {
     public:
-      BrowserClient(RenderHandler* renderHandler, CEFPlugin* cef);
+      BrowserClient(RenderHandler* renderHandler, CEFPlugin* cef, Webview* webview);
 
       virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE;
 
-      bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message) OVERRIDE;
+      CefRefPtr<CefDialogHandler> GetDialogHandler() OVERRIDE {
+        return this;
+      }
+
+      bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId sourceProcess, CefRefPtr<CefProcessMessage> message) OVERRIDE;
+
+      /**
+       * Sets next page template data
+       *
+       * @param data lua table or json object to use for template rendering
+       */
+      inline void setPageData(const DataProxy& data) { 
+        std::lock_guard<std::mutex> lock(mPageDataLock);
+        mPageData = data;
+      }
+
+      /**
+       * Returns next page template data
+       */
+      inline const DataProxy& getPageData() {
+        std::lock_guard<std::mutex> lock(mPageDataLock);
+        return mPageData;
+      }
+
+      inline CefRefPtr<CefLoadHandler> GetLoadHandler() OVERRIDE { return this; };
+
+      void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode) OVERRIDE;
+
+      void OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefLoadHandler::TransitionType transitionType) OVERRIDE;
+
+      bool OnFileDialog(CefRefPtr<CefBrowser> browser, CefDialogHandler::FileDialogMode mode, const CefString& title, const CefString& defaultFilePath, const std::vector<CefString>& acceptFilters, int selectedAcceptFilter, CefRefPtr<CefFileDialogCallback> callback) OVERRIDE;
     private:
       CefRefPtr<CefRenderHandler> mRenderHandler;
       CEFPlugin* mCef;
+      Webview* mWebview;
+      DataProxy mPageData;
+      std::mutex mPageDataLock;
 
       IMPLEMENT_REFCOUNTING(BrowserClient);
   };
@@ -91,9 +123,13 @@ namespace Gsage {
   /**
    * Single CEF page
    */
-  class Webview : public EventSubscriber<Webview>
+  class Webview : public EventSubscriber<Webview>, public EventDispatcher
   {
     public:
+      static const Event::Type PAGE_LOADED;
+
+      static const Event::Type PAGE_LOADING;
+
       static const Event::Type MOUSE_LEAVE;
 
       typedef ThreadSafeQueue<Event> Events;
@@ -129,37 +165,77 @@ namespace Gsage {
        */
       void updateTexture(TexturePtr texture);
 
-      inline void setCefWasStopped() { 
+      inline void setCefWasStopped() {
         mCefWasStopped = true;
         mBrowser = nullptr;
         mClient = nullptr;
         mRenderHandler = nullptr;
       }
 
+      void renderPage(const std::string& page, const DataProxy& data);
+
+      /**
+       * Events input
+       */
+
+      /**
+       * Receive basic event
+       * Should be called by the wrapper
+       * Event is pushed to the event queue and consumed on the next Webview::processEvents call
+       */
       void pushEvent(Event event);
+      /**
+       * Receive keyboard event
+       * Should be called by the wrapper
+       * Event is pushed to the event queue and consumed on the next Webview::processEvents call
+       */
       void pushEvent(KeyboardEvent event);
+      /**
+       * Receive text input event
+       * Should be called by the wrapper
+       * Event is pushed to the event queue and consumed on the next Webview::processEvents call
+       */
       void pushEvent(TextInputEvent event);
+      /**
+       * Receive text input event
+       * Should be called by the wrapper
+       * Event is pushed to the event queue and consumed on the next Webview::processEvents call
+       */
       void pushEvent(MouseEvent event);
 
+      /**
+       * Consume all pushed events
+       */
       void processEvents();
 
+      /**
+       * Queue outgoing events to be send out during the next Webview::sendEvents call
+       */
+      void queueEvent(Event event);
+
+      /**
+       * Send out all queued events
+       */
+      void sendEvents();
+
+      void executeJavascript(const std::string& script);
+
+      void setZoom(float factor);
+
+      /**
+       * Get window this webview rendering to
+       */
+      WindowPtr getWindow();
+    private:
       void handleMouseEvent(const MouseEvent& event);
 
       void handleKeyboardEvent(const KeyboardEvent& event);
 
       void handleInput(const TextInputEvent& event);
 
-      void setScreenPosition(unsigned int x, unsigned int y) { mRenderHandler->setScreenPosition(x, y); }
-
-      void executeJavascript(const std::string& script);
-
-    private:
       bool wasResized(EventDispatcher* sender, const Event& e);
 
       bool mCefWasStopped;
-
-      int mMouseX;
-      int mMouseY;
 
       CefRefPtr<BrowserClient> mClient;
       CefRefPtr<CefBrowser> mBrowser;
@@ -171,7 +247,15 @@ namespace Gsage {
       MouseEvents mMouseEvents;
       KeyboardEvents mKeyboardEvents;
       TextInputEvents mTextInputEvents;
+      float mZoom;
 
+      Events mOutgoingEvents;
+      unsigned long long mWindowHandle;
+
+      std::string mPage;
+
+      int mMouseX;
+      int mMouseY;
       int mMouseModifiers;
   };
 
@@ -187,6 +271,7 @@ namespace Gsage {
         PendingMessage(CefRefPtr<CefProcessMessage> pMsg) : msg(pMsg) {}
         SignalChannel channel;
         CefRefPtr<CefProcessMessage> msg;
+        std::string result;
       };
 
       /**
@@ -194,13 +279,13 @@ namespace Gsage {
        */
       class MessageHandler {
         public:
-          virtual DataProxy execute(CefRefPtr<CefProcessMessage> msg) = 0;
+          virtual std::string execute(CefRefPtr<CefProcessMessage> msg) = 0;
       };
 
       class LuaMessageHandler : public MessageHandler {
         public:
           LuaMessageHandler(sol::function callback);
-          DataProxy execute(CefRefPtr<CefProcessMessage> msg);
+          std::string execute(CefRefPtr<CefProcessMessage> msg);
         private:
           sol::function mCallback;
       };
@@ -270,31 +355,50 @@ namespace Gsage {
       void runInMainThread(CEFPlugin::Task cb);
 
       /**
+       * Runs lambda in the render thread
+       *
+       * @param cb function
+       */
+      void runInRenderThread(CEFPlugin::Task cb);
+
+      /**
        * Handles a message from another process
        *
        * @param msg Message
        *
-       * @return true if succeed
+       * @return json, true if succeed
        */
-      bool handleProcessMessage(CefRefPtr<CefProcessMessage> msg);
+      std::tuple<std::string, bool> handleProcessMessage(CefRefPtr<CefProcessMessage> msg);
 
       /**
        * UpdateListener implementation
        */
       void update(double time);
 
+      /**
+       * Used in webview
+       */
+      inline GsageFacade* getFacade() { return mFacade; }
+
     private:
+      bool initialize();
+      void stop();
+      void doMessageLoop();
+      std::tuple<std::string, bool> handleProcessMessageSync(CefRefPtr<CefProcessMessage> msg);
+
       std::map<std::string, WebviewPtr> mViews;
       std::thread mCefRunner;
       std::atomic<bool> mRunning;
       std::mutex mViewsLock;
 
       Tasks mTasks;
+      Tasks mRenderThreadTasks;
       Messages mMessages;
 
       typedef std::map<std::string, MessageHandlerPtr> MessageHandlers;
       MessageHandlers mMessageHandlers;
 
+      bool mAsyncMode;
   };
 }
 

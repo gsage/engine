@@ -41,6 +41,10 @@ THE SOFTWARE.
 
 #include "EngineEvent.h"
 
+#if GSAGE_PLATFORM == GSAGE_APPLE
+#include "macUtils.h"
+#endif
+
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -122,45 +126,35 @@ namespace Gsage {
     DataProxy environment;
     environment.put("workdir", resourcePath);
     FileLoader::init(configEncoding, environment);
+    DataProxy config;
 
-    if(!FileLoader::getSingletonPtr()->load(configFile, DataProxy(), mConfig))
+    if(!FileLoader::getSingletonPtr()->load(configFile, DataProxy(), config))
     {
       LOG(ERROR) << "Failed to load file " << configFile;
       return false;
     }
 
-    auto logConfig = mConfig.get<std::string>("logConfig");
-    if (logConfig.second) {
-      el::Configurations conf(resourcePath + GSAGE_PATH_SEPARATOR + logConfig.first);
-      el::Loggers::reconfigureLogger("default", conf);
-    }
-
-    LOG(INFO) << "Starting game, config:\n\t" << configFile;
+    LOG(INFO) << "Starting GSAGE, config:\n\t" << configFile;
 
     if (configOverride != 0)
     {
-      mergeInto(mConfig, *configOverride);
+      mergeInto(config, *configOverride);
     }
 
     addEventListener(&mEngine, EngineEvent::SHUTDOWN, &GsageFacade::onEngineShutdown);
+    addEventListener(&mEngine, EngineEvent::LUA_STATE_CHANGE, &GsageFacade::onLuaStateChange);
 
-    auto inputHandler = mConfig.get<std::string>("inputHandler");
-    if(inputHandler.second) {
-      LOG(INFO) << "Using input handler " << inputHandler.first;
-      mInputManager.useFactory(inputHandler.first);
-    }
-
-    if(!mEngine.initialize(mConfig, environment))
+    if(!mEngine.initialize(config, environment))
       return false;
 
-    mGameDataManager = new GameDataManager(&mEngine, mConfig);
+    mGameDataManager = new GameDataManager(&mEngine);
     mLuaInterface->setResourcePath(resourcePath);
-    if(mConfig.get<bool>("startLuaInterface", true)) {
+    if(config.get<bool>("startLuaInterface", true)) {
       mLuaInterface->initialize(mLuaState);
       // execute lua package manager, if it's enabled
-      auto pair = mConfig.get<DataProxy>("packager");
+      auto pair = config.get<DataProxy>("packager");
 
-      auto scriptsPath = mConfig.get<std::string>("scriptsPath", resourcePath);
+      auto scriptsPath = config.get<std::string>("scriptsPath", resourcePath);
       if(pair.second) {
         DataProxy deps = pair.first.get("deps", DataProxy::create(DataWrapper::JSON_OBJECT));
         std::string scriptPath = pair.first.get(
@@ -174,16 +168,68 @@ namespace Gsage {
       }
     }
 
-    if(mConfig.count(PLUGINS_SECTION) != 0)
-    {
-      for(auto& pair : mConfig.get<DataProxy>(PLUGINS_SECTION).first)
-      {
-        loadPlugin(pair.second.as<std::string>());
+    if(!configure(config)) {
+      return false;
+    }
+
+    auto scriptsPath = config.get<std::string>("scriptsPath", resourcePath);
+    auto startupScript = config.get<std::string>("startupScript");
+    if(startupScript.second) {
+      mStartupScript = scriptsPath + GSAGE_PATH_SEPARATOR + startupScript.first;
+    }
+    return true;
+  }
+
+  bool GsageFacade::configure(const DataProxy& configuration)
+  {
+    mPluginsFolders.clear();
+    auto pluginsFolders = configuration.get<DataProxy>("pluginsFolders");
+    if(pluginsFolders.second) {
+      for(auto& pair : pluginsFolders.first) {
+        mPluginsFolders.push_back(pair.second.as<std::string>());
       }
     }
 
-    auto windowManager = mConfig.get<DataProxy>("windowManager");
-    if(windowManager.second) {
+    std::string resourcePath = mEngine.env().get("workdir", "");
+    auto logConfig = configuration.get<std::string>("logConfig");
+    if (logConfig.second) {
+      std::string fullLogConfigPath = resourcePath + GSAGE_PATH_SEPARATOR + logConfig.first;
+      if(mFilesystem.exists(fullLogConfigPath)) {
+        el::Configurations conf(fullLogConfigPath);
+        el::Loggers::reconfigureLogger("default", conf);
+      }
+    }
+
+    std::map<std::string, bool> installedPlugins;
+    if(configuration.count(PLUGINS_SECTION) != 0)
+    {
+      for(auto& pair : configuration.get<DataProxy>(PLUGINS_SECTION).first)
+      {
+        std::string path = pair.second.as<std::string>();
+        if(!loadPlugin(path, true)) {
+          return false;
+        }
+        installedPlugins[path] = true;
+      }
+    }
+
+    // unload no longer used plugins
+    for(auto& pair : mLibraries) {
+      if(!installedPlugins[pair.first]) {
+        LOG(INFO) << "Unloading no longer used plugin " << pair.first;
+        unloadPlugin(pair.first);
+      }
+    }
+
+    // note that old windows will still use old inputHandler
+    auto inputHandler = configuration.get<std::string>("inputHandler");
+    if(inputHandler.second && inputHandler.first != mConfig.get<std::string>("inputHandler", "")) {
+      LOG(INFO) << "Using input handler " << inputHandler.first;
+      mInputManager.useFactory(inputHandler.first);
+    }
+
+    auto windowManager = configuration.get<DataProxy>("windowManager");
+    if(windowManager.second && mConfig.get("windowManager.type", "") != configuration.get("windowManager.type", "")) {
       auto type = windowManager.first.get<std::string>("type");
       if(!type.second) {
         LOG(ERROR) << "Malformed window manager config was provided";
@@ -205,36 +251,63 @@ namespace Gsage {
       LOG(INFO) << "Using " << type.first << " window manager";
     }
 
-    auto systems = mConfig.get<DataProxy>("systems");
+    auto systems = configuration.get<DataProxy>("systems");
+    std::map<std::string, bool> installedSystems;
     if(systems.second) {
       for(auto pair : systems.first) {
-        auto id = pair.second.getValue<std::string>();
-        if(!id.second) {
-          LOG(WARNING) << "Empty system factory id";
+        auto st = pair.second.getValue<std::string>();
+        if(!st.second) {
+          LOG(WARNING) << "Empty system type";
           continue;
         }
 
-        EngineSystem* system = mSystemManager.create(id.first, false);
-        if(!system) {
-          LOG(ERROR) << "Failed to create system of type \"" << id.first << "\"";
+        std::string systemType = st.first;
+        auto id = configuration.get<std::string>(std::string("systemTypes.") + systemType);
+        if(!id.second) {
+          LOG(INFO) << "Skipping system create " << st.first << ", no system type is defined";
           continue;
         }
-        system->setFacadeInstance(this);
-        if(!mEngine.configureSystem(system->getName())) {
+
+        EngineSystem* system = mEngine.getSystem(systemType);
+        if(!system || system->getKind() != id.first) {
+          if(system) {
+            LOG(TRACE) << "Recreate " << systemType << " system, installing another implementation: " << system->getKind() << "->" << id.first;
+            mEngine.removeSystem(systemType);
+          }
+
+          system = mSystemManager.create(id.first, false);
+          if(!system) {
+            LOG(ERROR) << "Failed to create system of type \"" << id.first << "\"";
+            continue;
+          }
+          system->setFacadeInstance(this);
+          LOG(TRACE) << "Installed system " << systemType << " " << id.first;
+        }
+
+        if(!mEngine.configureSystem(systemType, configuration.get(systemType, DataProxy()))) {
+          LOG(ERROR) << "Failed to configure engine system " << systemType;
           return false;
         }
+        installedSystems[systemType] = true;
+      }
+    }
+
+    // uninstall not used systems
+    for(auto& pair : mEngine.getSystems()) {
+      if(!installedSystems[pair.first]) {
+        LOG(TRACE) << "Uninstalling no longer used system " << pair.first;
+        mEngine.removeSystem(pair.first);
       }
     }
 
     for(auto pair : mUIManagers) {
-      pair.second->initialize(&mEngine, mLuaInterface->getState());
+      if(!pair.second->initialized()) {
+        pair.second->initialize(&mEngine, mLuaInterface->getState());
+      }
     }
 
-    auto scriptsPath = mConfig.get<std::string>("scriptsPath", resourcePath);
-    auto startupScript = mConfig.get<std::string>("startupScript");
-    if(startupScript.second) {
-      mStartupScript = scriptsPath + GSAGE_PATH_SEPARATOR + startupScript.first;
-    }
+    mGameDataManager->configure(configuration);
+    mConfig = configuration;
     return true;
   }
 
@@ -265,7 +338,6 @@ namespace Gsage {
 
   bool GsageFacade::update()
   {
-
     if(!mStartupScriptRun)
     {
       if(!mStartupScript.empty())
@@ -274,18 +346,22 @@ namespace Gsage {
     }
 
     auto now = std::chrono::high_resolution_clock::now();
-
-    double frameTime = std::chrono::duration_cast<std::chrono::duration<double>>(now - mPreviousUpdateTime).count();
+    std::chrono::duration<double> frameTime(now - mPreviousUpdateTime);
 
     for(auto& listener : mUpdateListeners)
     {
-      listener->update(frameTime);
+      listener->update(frameTime.count());
     }
+
     // update engine
-    mEngine.update(frameTime);
-    mInputManager.update(frameTime);
+    mEngine.update(frameTime.count());
+    mInputManager.update(frameTime.count());
+    mFilesystem.update(frameTime.count());
     mPreviousUpdateTime = now;
-    std::this_thread::sleep_for(std::chrono::microseconds((long)(6000 - frameTime)));
+    std::chrono::duration<double> maxTime(1.0/60.0);
+    if(maxTime > frameTime) {
+      std::this_thread::sleep_for(maxTime - frameTime);
+    }
 
     return !mStopped;
   }
@@ -387,12 +463,66 @@ namespace Gsage {
     return true;
   }
 
+  bool GsageFacade::onLuaStateChange(EventDispatcher* sender, const Event& event)
+  {
+    for(auto name : mPluginOrder) {
+      mInstalledPlugins[name]->setupLuaBindings();
+    }
+    return true;
+  }
+
+  std::string GsageFacade::getFullPluginPath(const std::string& name) const {
+    std::string fullPath;
+    for(auto& folder : mPluginsFolders) {
+      std::stringstream ss;
+#if GSAGE_PLATFORM == GSAGE_APPLE
+      char bundlePath[1024];
+      mac_getBundlePath(bundlePath, 1024);
+      ss << bundlePath << GSAGE_PATH_SEPARATOR;
+#endif
+      ss << folder << GSAGE_PATH_SEPARATOR << name;
+      fullPath = ss.str();
+#if GSAGE_PLATFORM == GSAGE_WIN32
+      ss << ".dll";
+#elif GSAGE_PLATFORM == GSAGE_APPLE
+      ss << ".dylib";
+#elif GSAGE_PLATFORM == GSAGE_LINUX
+      ss << ".so";
+#endif
+      if(mFilesystem.exists(ss.str())) {
+        return fullPath;
+      }
+    }
+    return "";
+  }
+
   bool GsageFacade::loadPlugin(const std::string& path)
   {
+    return loadPlugin(path, false);
+  }
+
+  bool GsageFacade::loadPlugin(const std::string& path, bool skipLoaded)
+  {
+
+    if(mPluginsFolders.size() == 0) {
+      LOG(ERROR) << "Failed to install plugin " << path << ": no pluginsFolders defined";
+      return false;
+    }
+
+    std::string fullPath = getFullPluginPath(path);
+    if(fullPath.empty()) {
+      LOG(ERROR) << "Failed to find plugin library " << path << " tried paths:\n" << join(mPluginsFolders, '\n');
+      return false;
+    }
+
+    size_t c = mLibraries.count(path);
+    if(skipLoaded && c != 0) {
+      return true;
+    }
+
     DynLib* lib = 0;
-    if(mLibraries.count(path) == 0)
-    {
-      lib = new DynLib(path);
+    if(c == 0){
+      lib = new DynLib(fullPath);
 
       if(!lib->load())
       {
@@ -495,5 +625,10 @@ namespace Gsage {
   {
     mEngine.fireEvent(event);
     return true;
+  }
+
+  const GsageFacade::PluginOrder& GsageFacade::getInstalledPlugins() const
+  {
+    return mPluginOrder;
   }
 }

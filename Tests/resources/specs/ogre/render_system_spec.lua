@@ -32,7 +32,7 @@ describe("#ogre render system", function()
         height = 240,
         group = "General",
         textureType = ogre.TEX_TYPE_2D,
-        depth = 0,
+        depth = 1,
         numMipmaps = 0,
         pixelFormat = ogre.PF_R8G8B8A8,
         usage = TU_RENDERTARGET,

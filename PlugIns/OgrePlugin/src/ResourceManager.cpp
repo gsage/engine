@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "ResourceManager.h"
 #include "Logger.h"
+#include "GsageFacade.h"
 
 #if OGRE_VERSION >= 0x020100
 #include "ogre/v2/HlmsUnlit.h"
@@ -61,9 +62,10 @@ namespace Gsage {
     return std::make_tuple(path, type);
   }
 
-  ResourceManager::ResourceManager(const std::string& workdir)
+  ResourceManager::ResourceManager(GsageFacade* facade, const std::string& workdir)
     : mWorkdir(workdir)
     , mHlmsLoaded(false)
+    , mFacade(facade)
   {
 
   }
@@ -73,6 +75,32 @@ namespace Gsage {
     // cleanup resources here
   }
 
+  void ResourceManager::setAdditionalResourceFolders(const DataProxy& folders)
+  {
+    int index = 0;
+    bool changed = false;
+    for(auto& pair : folders) {
+      const std::string folder = pair.second.as<std::string>();
+      if(index >= mResourceFolders.size()) {
+        mResourceFolders.push_back(folder);
+        changed = true;
+      } else if(mResourceFolders[index] != folder) {
+        changed = true;
+        mResourceFolders[index] = folder;
+      }
+      index++;
+    }
+
+    if(!changed) {
+      return;
+    }
+
+    unload();
+    DataProxy resources;
+    // This is used to trigger immediate HLMS reload
+    load(resources);
+  }
+
   bool ResourceManager::load(const DataProxy& resources)
   {
     Ogre::ResourceGroupManager& orgm = Ogre::ResourceGroupManager::getSingleton();
@@ -80,7 +108,7 @@ namespace Gsage {
     std::string section;
     std::string path;
     std::string workdir = mWorkdir;
-    resources.read("workdir", workdir);
+    bool customWorkdir = resources.read("workdir", workdir);
 
 #if OGRE_VERSION >= 0x020100
     if(!mHlmsLoaded) {
@@ -115,7 +143,21 @@ namespace Gsage {
 
       for(auto& config : pair.second)
       {
-        std::tie(path, type) = processPath(config.second.as<std::string>(), workdir);
+        bool gotResourceFolder = false;
+        if(!customWorkdir) {
+          // autodetect proper resource folder
+          for(auto& f : mResourceFolders) {
+            std::tie(path, type) = processPath(config.second.as<std::string>(), f);
+            if(mFacade->filesystem()->exists(path)) {
+              gotResourceFolder = true;
+              break;
+            }
+          }
+        }
+
+        if(!gotResourceFolder) {
+          std::tie(path, type) = processPath(config.second.as<std::string>(), workdir);
+        }
         LOG(INFO) << "Adding resource location " << path;
         orgm.addResourceLocation(path, type, section, true, path.find(".zip") != std::string::npos);
       }
@@ -148,6 +190,10 @@ namespace Gsage {
   {
     for(auto& pair : resources)
     {
+      if(pair.first == "workdir") {
+        continue;
+      }
+
       try {
         unload(pair.first);
       } catch(Ogre::Exception& e) {

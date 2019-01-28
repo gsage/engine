@@ -1,0 +1,38 @@
+{
+  "coreSystems": {
+    "script": ["lua"],
+    "movement": ["3dmovement"]
+  },
+  "pluginsInfo": {
+    "OgrePlugin": {
+      "systems": {
+        "render": ["ogre"]
+      }
+    },
+    "SDLPlugin": {
+      "managers": {
+        "input": ["sdl"],
+        "window": ["sdl"]
+      }
+    },
+    "CEFPlugin": {
+    },
+    "ImGUIPlugin": {
+    },
+    "OisInputPlugin": {
+      "managers": {
+        "input": "OIS"
+      }
+    },
+    "RecastNavigationPlugin": {
+      "systems": {
+        "navigation": ["recast"]
+      }
+    },
+    "RocketUIPlugin": {
+      "depends": {
+        "OgrePlugin": "<=1.9.0"
+      }
+    }
+  }
+}

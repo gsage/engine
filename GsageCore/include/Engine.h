@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include "GsageDefinitions.h"
 #include "Entity.h"
 #include "EngineSystem.h"
+#include "EngineEvent.h"
 
 #include "ObjectPool.h"
 #include <map>
@@ -109,11 +110,18 @@ namespace Gsage
        */
       bool addSystem(const std::string& name, EngineSystem* system, bool configure = true);
       /**
-       * Configure system (call initialize method)
+       * Configure system (call initialize and configure methods)
        * @param name system name to configure
        * @returns true if succeed
        */
       bool configureSystem(const std::string& name);
+      /**
+       * Configure system (call initialize method)
+       * @param name system name to configure
+       * @param config new system config
+       * @returns true if succeed
+       */
+      bool configureSystem(const std::string& name, const DataProxy& config);
       /**
        * Check that engine has specified system
        * @param name System name
@@ -246,12 +254,24 @@ namespace Gsage
       /**
        * Get environment
        */
-      const DataProxy& env() const { return mEnvironment; }
+      inline const DataProxy& env() const { return mEnvironment; }
 
       /**
        * Get settings
        */
-      const DataProxy& settings() const { return mConfiguration; }
+      inline const DataProxy& settings() const { return mConfiguration; }
+
+      /**
+       * Update global configuration property
+       *
+       * @param key Config key
+       * @param value Config value
+       */
+      template<class T>
+      void setEnv(const std::string& key, T value) {
+        mEnvironment.put(key, value);
+        fireEvent(EngineEvent(EngineEvent::ENV_UPDATED));
+      }
 
       /**
        * Shutdown the engine
@@ -269,20 +289,19 @@ namespace Gsage
        */
       struct QueuedCallback {
         QueuedCallback(MainThreadCallback func) : func(func) {
-          waitLock.lock();
+          channel = std::make_shared<SignalChannel>();
         }
         MainThreadCallback func;
-        std::mutex waitLock;
+        std::shared_ptr<SignalChannel> channel;
 
         void wait() {
-          waitLock.lock();
-          waitLock.unlock();
+          channel->recv();
         }
 
         void execute()
         {
           func();
-          waitLock.unlock();
+          channel->send(ChannelSignal::DONE);
         }
         private:
           QueuedCallback(const QueuedCallback&);

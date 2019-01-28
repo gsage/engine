@@ -445,13 +445,17 @@ namespace Gsage {
        * @param traverse split key by . and put childs for each key part
        */
       template<typename T>
-      void put(const std::string& key, const T& value)
+      void put(const std::string& key, const T& value, bool traverse = true)
       {
-        std::vector<std::string> parts = split(key, '.');
-        std::string lastPart = parts[parts.size() - 1];
-        parts.pop_back();
-        DataWrapperPtr wrapper = parts.size() > 0 ? traverseWrite(parts) : mDataWrapper;
-        putImpl(wrapper, lastPart, value);
+        if(traverse) {
+          std::vector<std::string> parts = split(key, '.');
+          std::string lastPart = parts[parts.size() - 1];
+          parts.pop_back();
+          DataWrapperPtr wrapper = parts.size() > 0 ? traverseWrite(parts) : mDataWrapper;
+          putImpl(wrapper, lastPart, value);
+        } else {
+          putImpl(mDataWrapper, key, value);
+        }
       }
 
       /**
@@ -459,9 +463,10 @@ namespace Gsage {
        *
        * @param key array index
        * @param value value to put
+       * @param traverse is no op for this method
        */
       template<typename T>
-      void put(int key, const T& value)
+      void put(int key, const T& value, bool traverse = false)
       {
         putImpl(mDataWrapper, key, value);
       }
@@ -599,23 +604,23 @@ namespace Gsage {
       {
         switch(value.getStoredType()) {
           case DataWrapper::String:
-            dest.put(key, value.as<std::string>());
+            dest.put(key, value.as<std::string>(), false);
             break;
           case DataWrapper::Double:
-            dest.put(key, value.as<double>());
+            dest.put(key, value.as<double>(), false);
             break;
           case DataWrapper::Int:
-            dest.put(key, value.as<int>());
+            dest.put(key, value.as<int>(), false);
             break;
           case DataWrapper::UInt:
-            dest.put(key, value.as<unsigned int>());
+            dest.put(key, value.as<unsigned int>(), false);
             break;
           case DataWrapper::Bool:
-            dest.put(key, value.as<bool>());
+            dest.put(key, value.as<bool>(), false);
             break;
           case DataWrapper::Array:
           case DataWrapper::Object:
-            flags & Merge ? dest.mergeChild(key, value) : dest.put(key, value);
+            flags & Merge ? dest.mergeChild(key, value) : dest.put(key, value, false);
             break;
           default:
             return false;

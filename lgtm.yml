@@ -1,0 +1,8 @@
+path_classifiers:
+  docs:
+    - cd docs && make html
+extraction:
+  cpp:
+    index:
+      build_command:
+        make unit functional

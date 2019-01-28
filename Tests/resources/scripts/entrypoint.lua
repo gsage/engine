@@ -1,14 +1,29 @@
 
 package.path =  TRESOURCES .. '/scripts/?.lua' ..
-                               ';' .. getResourcePath('scripts/?.lua') ..
-                               ';' .. getResourcePath('behaviors/trees/?.lua') ..
-                               ';' .. getResourcePath('behaviors/?.lua') .. package.path
+                               ';' .. getResourcePath('scripts/?.lua');
 
-local version = _VERSION:match("%d+%.%d+")
-package.path = ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?.lua') ..
-               ';' .. getResourcePath('luarocks/packages/share/lua/' .. version .. '/?/init.lua') .. ';' .. package.path
-package.cpath = getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.so') .. ';' ..
-                getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.dll') .. ';' .. package.cpath
+local path = require 'lib.path'
+path:addDefaultPaths()
+
+-- fake editor interface
+local editorState = {
+  dockState = {
+    dummy = 1
+  }
+}
+editor = {
+  getGlobalState = function()
+    return editorState
+  end,
+
+  putToGlobalState = function(key, value)
+    editorState[key] = value
+  end,
+
+  saveGlobalState = function()
+    return true
+  end
+}
 
 local async = require 'lib.async'
 local exitCode = 0
@@ -95,12 +110,12 @@ local runTests = function()
 end
 
 function main()
-  game:loadPlugin(PLUGINS_DIR .. "/Input")
+  game:loadPlugin("Input")
   if os.getenv("OGRE_ENABLED") ~= "0" then
-    local hasOgre = game:loadPlugin(PLUGINS_DIR .. "/OgrePlugin")
+    local hasOgre = game:loadPlugin("OgrePlugin")
     if hasOgre then
-      game:loadPlugin(PLUGINS_DIR .. "/ImGUIPlugin")
-      game:loadPlugin(PLUGINS_DIR .. "/ImGUIOgreRenderer")
+      game:loadPlugin("ImGUIPlugin")
+      game:loadPlugin("ImGUIOgreRenderer")
       game:createSystem("ogre")
       core:render():configure({
         colourAmbient = "0x403030",
@@ -150,9 +165,9 @@ end
 local shutdownCoroutine = coroutine.create(shutdown)
 coroutine.resume(shutdownCoroutine)
 
-local success, _ = pcall(main)
+local success, err = pcall(main)
 if not success then
-  print("Tests error: " .. tostring(exitCode))
+  print("Tests error, exit code: " .. tostring(exitCode) .. ", err:", err)
   exitCode = 1
   game:shutdown(exitCode)
 end

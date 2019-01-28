@@ -17,6 +17,90 @@
     "script_editor": "スクリプト"
   },
 
+  "wizard": {
+    "create_project": "新プロジェクト",
+    "recent_projects": "最近プロジェクト",
+    "open_project": "プロジェクトを開く",
+    "project": {
+      "opened": "最後に開いた",
+      "path": "パス"
+    },
+    "recent": {
+      "no_projects": "最近のプロジェクトはありません"
+    },
+    "projects": {
+      "_preview": {
+        "name": "Preview",
+        "description": "Editor functions preview"
+      },
+      "blank": {
+        "name": "空白のプロジェクト",
+        "description": "空白のプロジェクト. プロジェクト設定は作成されず、デフォルトモデルはロードされません。"
+      },
+      "actionRPG": {
+        "name": "アクション「RPG」",
+        "description": "アイソメビューを使用したアクションRPGプロジェクトのデフォルト設定。 等尺性カメラコントローラーをセットアップし、デフォルトモデルを追加します。"
+      }
+    },
+    "create": {
+      "next": "次",
+      "back": "前",
+      "cancel": "キャンエル",
+      "complete": "クリエート",
+      "location": "ロケーション",
+      "plugins": "プラグイン",
+      "summary": "要約",
+      "browse": "ブラウズ",
+      "systems": "システム",
+      "managers": "マネジャー",
+
+      "plugins_config": {
+        "description": "プラグインを設定する",
+        "installed": "インストール",
+        "not_installed": "インストールしない",
+        "depends": "プラグインの依存"
+      },
+
+      "systems_config": {
+        "no_systems": "システム無し",
+        "not_set": "無し",
+        "no_managers": "マナガール無し"
+      },
+
+      "summary_config": {
+        "window_manager": "ウィンドウマネージャを使う ",
+        "no_window_manager": "ウィンドウマネージャを使うない",
+        "input_manager": "入力ウマネージャを使う ",
+        "no_input_manager": "入力ウマネージャを使うない"
+      },
+
+      "description_location": "新しいプロジェクトを作成する",
+      "description_plugins": "プラグインをインストールする",
+      "description_summary": "コンプリート",
+      "description_systems": "システムを設定する",
+      "description_managers": "マナガールを設定する",
+
+      "project_name": "プロジェクト名",
+      "project_folder": "プロジェクトパース",
+      "project_icon": "アイコン",
+
+      "errors": {
+        "name_empty": "プロジェクト名が空です",
+        "path_empty": "プロジェクトパスが空です"
+      },
+
+      "progress_title": "プロジェクトを作成する",
+      "progress": {
+        "file_copied": "ファイルをコピーする %{flow}",
+        "file_copy_failed": "ファイルのコピーに失敗しました %{flow}",
+        "folder_created": "フォルダが作成されました %{path}",
+        "writing_project_file": "プロジェクトファイルを書く",
+        "writing_configs": "設定を書く",
+        "opening_project": "プロジェクトを開くする..."
+      }
+    }
+  },
+
   "console": {
     "welcome": "「Lua Console」にようこそ！",
     "version": "エンジン稿: %{version}",

@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include "DataProxy.h"
 #include "EventDispatcher.h"
+#include <channel>
 
 namespace Gsage {
   /**
@@ -37,6 +38,19 @@ namespace Gsage {
   class Window
   {
     public:
+      enum DialogMode {
+        FILE_DIALOG_OPEN,
+        FILE_DIALOG_OPEN_MULTIPLE,
+        FILE_DIALOG_OPEN_FOLDER,
+        FILE_DIALOG_SAVE
+      };
+
+      enum DialogStatus {
+        OKAY,
+        CANCEL,
+        FAILURE
+      };
+
       Window(const std::string& name) : mName(name) {};
       /**
        * Get window handle
@@ -58,6 +72,32 @@ namespace Gsage {
        */
       virtual std::tuple<int, int> getPosition() const = 0;
 
+      /**
+       * Sets window position
+       *
+       * @param x
+       * @param y
+       */
+      virtual void setPosition(int x, int y) = 0;
+
+      /**
+       * Get window size
+       */
+      virtual std::tuple<int, int> getSize() = 0;
+
+      /**
+       * Set window size
+       *
+       * @param width
+       * @param height
+       */
+      virtual void setSize(int width, int height) = 0;
+
+      /**
+       * Get display size information
+       */
+      virtual std::tuple<int, int, int, int> getDisplayBounds() = 0;
+
     private:
       std::string mName;
   };
@@ -73,6 +113,9 @@ namespace Gsage {
   class WindowManager : public EventDispatcher
   {
     public:
+      typedef std::tuple<std::vector<std::string>, Window::DialogStatus, std::string> DialogResult;
+      typedef std::function<void(DialogResult)> DialogCallback;
+
       WindowManager(const std::string& type);
       virtual ~WindowManager();
 
@@ -128,12 +171,43 @@ namespace Gsage {
        * @returns WindowPtr if found
        */
       virtual WindowPtr getWindow(const std::string& name);
+      /**
+       * Get window by handle
+       *
+       * @param handle
+       *
+       * @returns WindowPtr if found
+       */
+      virtual WindowPtr getWindow(const unsigned long long handle);
+      /**
+       * Opens file dialog, blocking operation on OSX
+       *
+       * @param mode Dialog mode
+       * @param title Dialog title
+       * @param defaultFilePath Default file path
+       * @param filters Filters
+       *
+       * @returns std::tuple: files, status, error
+       */
+      DialogResult openDialog(
+        Window::DialogMode mode,
+        const std::string& title,
+        const std::string& defaultFilePath,
+        const std::vector<std::string> filters
+      );
     protected:
       const std::string mType;
       std::map<std::string, WindowPtr> mWindows;
 
       void windowCreated(WindowPtr window);
       bool windowDestroyed(WindowPtr window);
+
+      DialogResult openDialogSync(
+        Window::DialogMode mode,
+        const std::string& title,
+        const std::string& defaultFilePath,
+        const std::vector<std::string> filters
+      );
   };
 
   typedef std::shared_ptr<WindowManager> WindowManagerPtr;

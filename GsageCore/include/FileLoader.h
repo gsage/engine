@@ -28,8 +28,14 @@ THE SOFTWARE.
 */
 
 #include "DataProxy.h"
+#include <nlohmann/json.hpp>
+#include <inja/inja.hpp>
+#include <sol_forward.hpp>
 
 namespace Gsage {
+  /**
+   * FS wrapper
+   */
   class FileLoader
   {
     public:
@@ -52,6 +58,23 @@ namespace Gsage {
       static FileLoader* getSingletonPtr();
 
       /**
+       * Add resource search folder
+       *
+       * @param index folder priority
+       * @param path folder path
+       */
+      void addSearchFolder(int index, const std::string& path);
+
+      /**
+       * Remove resource search folder
+       *
+       * @param path folder path
+       *
+       * @returns true if removed anything
+       */
+      bool removeSearchFolder(const std::string& path);
+
+      /**
        * Initialize file loader instance
        *
        * @param format: format to use for the file loading
@@ -66,6 +89,22 @@ namespace Gsage {
        * @param dest std::string
        */
       bool load(const std::string& path, std::string& dest, std::ios_base::openmode mode = std::ios_base::in) const;
+
+      /**
+       * Load file and process template
+       *
+       * @param path path to file
+       * @param dest std::string
+       * @param context template context
+       */
+      bool loadTemplate(const std::string& path, std::string& dest, const DataProxy& context);
+
+      /**
+       * Add lua filter to file template engine
+       *
+       * @param function: Callback function
+       */
+      void addTemplateCallback(const std::string& name, int argsNumber, sol::function function);
 
       /**
        * Get file stream
@@ -116,8 +155,13 @@ namespace Gsage {
       std::pair<std::string, bool> loadFile(const std::string& path, std::ios_base::openmode mode = std::ios_base::in) const;
       bool parse(const std::string& data, DataProxy& dest) const;
 
+      typedef std::map<int, std::string> ResourceFolders;
+
+      ResourceFolders mResourceSearchFolders;
       Encoding mFormat;
       DataProxy mEnvironment;
+
+      inja::Environment* mInjaEnv;
 
       static FileLoader* mInstance;
   };

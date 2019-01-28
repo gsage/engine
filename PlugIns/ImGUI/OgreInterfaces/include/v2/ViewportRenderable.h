@@ -35,6 +35,7 @@ THE SOFTWARE.
 
 #include "Definitions.h"
 #include "imgui.h"
+#include "systems/RenderSystem.h"
 
 namespace Gsage {
   class ImguiRendererV1;
@@ -46,9 +47,25 @@ namespace Gsage {
       virtual ~ViewportRenderData();
 
       /**
-       * Update dimensions
+       * Update position
        */
-      void update(ImVec2 pos, ImVec2 size);
+      void updatePos(ImVec2 pos);
+
+      /**
+       * Update size
+       */
+      void updateSize(ImVec2 size);
+
+      /**
+       * Update UV
+       */
+      void updateUVs(const Texture::UVs& uvs);
+
+      /**
+       * Update vertex buffer
+       */
+      void updateVertexBuffer();
+
       /**
        * Set viewport datablock
        */
@@ -71,6 +88,9 @@ namespace Gsage {
       Ogre::String mTextureName;
 
       Ogre::TextureUnitState* mTexUnitState;
+      ImVec2 mPos;
+      ImVec2 mSize;
+
       bool mDirty;
   };
 }

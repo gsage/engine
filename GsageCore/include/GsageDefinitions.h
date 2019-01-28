@@ -87,7 +87,7 @@ namespace Gsage {
     FAILURE
   };
 
-  typedef cpp::channel<ChannelSignal> SignalChannel;
+  typedef cpp::channel<ChannelSignal, 32> SignalChannel;
 }
 
 #define GSAGE_UNSUPPORTED 0

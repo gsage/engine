@@ -46,8 +46,14 @@ namespace Gsage
   class GameDataManager
   {
     public:
-      GameDataManager(Engine* engine, const DataProxy& config);
+      GameDataManager(Engine* engine);
       virtual ~GameDataManager();
+
+      /**
+       * Set game data manager configuration
+       * @param config Config
+       */
+      void configure(const DataProxy& config);
 
       /**
        * Create initial save file
@@ -104,19 +110,19 @@ namespace Gsage
       /**
        * Get file extension
        */
-      const std::string& getFileExtension() { return mFileExtension; }
+      inline const std::string& getFileExtension() const { return mFileExtension; }
       /**
        * Get characters folder path
        */
-      const std::string& getCharactersFolder() { return mCharactersFolder; }
+      inline const std::string& getCharactersFolder() const { return mCharactersFolder; }
       /**
        * Get locations folder
        */
-      const std::string& getLevelsFolder() { return mLevelsFolder; }
+      inline const std::string& getLevelsFolder() const { return mLevelsFolder; }
       /**
        * Get save data folder
        */
-      const std::string& getSavesFolder() { return mSavesFolder; }
+      inline const std::string& getSavesFolder() const { return mSavesFolder; }
 
       /**
        * Load area, without loading characters

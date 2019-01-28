@@ -1,11 +1,11 @@
 {
-  "projectManager":
+  "projectWizard":
   {
     "defaultProjectImage": "images/blank.png",
     "projectTemplates":
     {
-      "blank": {"image": "../../images/blank.png", "name": "Blank project", "description": "Blank project. It won't create any project settings, won't load any default models"},
-      "actionRpg": {"image": "../../images/rpg.png", "name": "Action RPG", "description": "Default settings for action RPG project with isometric view. Will set up isometric camera controller, add default models." }
+      "blank": {"image": "./images/blank.png"},
+      "actionRPG": {"image": "./images/rpg.png"}
     },
     "templatesFolder": "../Resources/editor/projectTemplates"
   },
@@ -21,8 +21,11 @@
   "logConfig": "log.cfg",
   "startupScript": "scripts/entrypoints/editor.lua",
   "inputHandler": "SDL",
+  "systemTypes": {
+    "render": "ogre"
+  },
   "systems": [
-    "ogre", "3dmovement", "recast", "dynamicStats", "lua"
+    "render"
   ],
   "packager": {
     "deps": [
@@ -33,6 +36,7 @@
   },
 
   "cef": {
+    "dedicatedThread": true,
     "webRoot": "editor/webviews"
   },
 
@@ -90,8 +94,8 @@
       "default": {
         "file": "fonts/Koruri-Regular.ttf",
         "size": 20,
-        "oversampleH": 3,
-        "oversampleV": 3,
+        "oversampleH": 1,
+        "oversampleV": 1,
         "glyphRanges": [
           [57344, 60239]
         ]
@@ -100,8 +104,8 @@
         "merge": true,
         "file": "fonts/MaterialIcons-Regular.ttf",
         "size": 20,
-        "oversampleH": 3,
-        "oversampleV": 3,
+        "oversampleH": 1,
+        "oversampleV": 1,
         "noDefaultRanges": true,
         "glyphRanges": [
           [57344, 60239]
@@ -116,14 +120,15 @@
     "type": "SDL"
   },
 
+  "pluginsFolders": ["@PLUGINS_DIRECTORY@"],
+
   "plugins":
   [
-    "@PLUGINS_DIRECTORY@/OgrePlugin",
-    "@PLUGINS_DIRECTORY@/ImGUIPlugin",
-    "@PLUGINS_DIRECTORY@/ImGUIOgreRenderer",
-    "@PLUGINS_DIRECTORY@/SDLPlugin",
-    "@PLUGINS_DIRECTORY@/RecastNavigationPlugin",
-    "@PLUGINS_DIRECTORY@/CEFPlugin"
+    "OgrePlugin",
+    "ImGUIPlugin",
+    "ImGUIOgreRenderer",
+    "SDLPlugin",
+    "CEFPlugin"
   ],
 
   "render":
@@ -171,8 +176,8 @@
       },
       "workspaceName": "editor",
       "name": "Editor",
-      "width": 1920,
-      "height": 1200,
+      "width": 1024,
+      "height": 830,
       "useWindowManager": true,
       "resizable": true,
       "params":

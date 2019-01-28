@@ -101,9 +101,15 @@ namespace Gsage {
   class GSAGE_API Texture : public EventDispatcher
   {
     public:
+      typedef std::tuple<Gsage::Vector2, Gsage::Vector2, Gsage::Vector2, Gsage::Vector2> UVs;
+
       static const Event::Type RESIZE;
 
-      Texture();
+      static const Event::Type RECREATE;
+
+      static const Event::Type UV_UPDATE;
+
+      Texture(const std::string& name);
       virtual ~Texture();
 
       /**
@@ -125,6 +131,12 @@ namespace Gsage {
       virtual void setSize(int width, int height);
 
       /**
+       * Get texture width
+       */
+      inline Gsage::Vector2 getSrcSize() const { return Gsage::Vector2(mBufferWidth, mBufferHeight); }
+
+
+      /**
        * Get texture size
        */
       inline std::tuple<int, int> getSize() const { return std::make_tuple(mWidth, mHeight); };
@@ -137,7 +149,29 @@ namespace Gsage {
       inline bool isValid() const { return mValid; }
 
       virtual bool hasData() const = 0;
+
+      inline const std::string& getName() const { return mHandle; }
+
+      /**
+       * Get UV to use
+       */
+      Texture::UVs getUVs() const;
+
+      /**
+       * Set UV to use
+       *
+       * @param tl Top left corner
+       * @param bl Bottom left corner
+       * @param tr Top right corner
+       * @param br Bottom right corner
+       */
+      void setUVs(const Gsage::Vector2& tl, const Gsage::Vector2& bl, const Gsage::Vector2& tr, const Gsage::Vector2& br);
     protected:
+      Gsage::Vector2 mUVTL;
+      Gsage::Vector2 mUVBL;
+      Gsage::Vector2 mUVTR;
+      Gsage::Vector2 mUVBR;
+
       bool mValid;
       int mWidth;
       int mHeight;
@@ -147,6 +181,8 @@ namespace Gsage {
 
       char* mBuffer;
       size_t mSize;
+
+      std::string mHandle;
   };
 
   typedef std::shared_ptr<Texture> TexturePtr;
@@ -155,6 +191,7 @@ namespace Gsage {
   {
     public:
       typedef std::string TextureHandle;
+
       RenderSystem();
       virtual ~RenderSystem();
 

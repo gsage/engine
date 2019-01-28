@@ -95,7 +95,7 @@ namespace Gsage {
   {
     ImGuiDockspaceStyle style;
     style.splitterThickness = 4.0f;
-    style.tabbarHeight = 35.0f;
+    style.tabbarHeight = 26.0f;
     style.tabbarTextMargin = 15.0f;
     style.tabbarPadding = 1.0f;
     style.windowRounding = ImGui::GetStyle().WindowRounding;
@@ -282,7 +282,7 @@ namespace Gsage {
 
     mBounds = ImRect(mPos, mPos + mSize);
 
-    if(!mResized) {
+    if(!mResized && size.x > 0 && size.y > 0) {
       float ratio = mRatio;
       switch(mLayout) {
         case Horizontal:
@@ -1002,6 +1002,11 @@ namespace Gsage {
 
   void ImGuiDockspaceRenderer::end()
   {
+    if(mPopClipRect) {
+      ImGui::PopClipRect();
+      mPopClipRect = false;
+    }
+
     switch(mEndCommand) {
       case End_Window:
         ImGui::End();
@@ -1021,6 +1026,10 @@ namespace Gsage {
     handleDragging();
     splitters();
     mStateWasUpdated = false;
+    if(mPopClipRect) {
+      ImGui::PopClipRect();
+      mPopClipRect = false;
+    }
   }
 
 

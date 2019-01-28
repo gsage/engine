@@ -4,7 +4,8 @@ FILE(GLOB headers include/*h include/*/*h)
 FILE(GLOB sources src/*.cpp src/*/*.cpp)
 
 if(APPLE)
-  FILE(GLOB mac_sources src/*.mm)
+  file(GLOB mac_sources src/*.mm src/*/*.mm)
+  set_source_files_properties(${mac_sources} PROPERTIES COMPILE_FLAGS "-x objective-c++")
   set(sources ${sources} ${mac_sources})
 endif(APPLE)
 
@@ -15,9 +16,12 @@ include_directories(
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
   ${gsage_SOURCE_DIR}/Vendor/cpp-channel/include
+  ${gsage_SOURCE_DIR}/Vendor/tinyfiledialogs/
 
   ${LUAJIT_INCLUDE_DIR}
+  ${INJA_INCLUDE_DIRS}
   ${MSGPACK_INCLUDE_DIRS}
+  ${POCO_INCLUDE_DIRS}
 )
 
 add_library(${LIB_NAME} SHARED ${headers} ${sources})
@@ -28,8 +32,12 @@ set(LIBS
   jsoncpp
   easyloggingpp
   cpp-channel
+  tinyfiledialogs
   ${LUAJIT_LIBRARIES}
-  ${MSGPACK_LIBRARIES})
+  ${INJA_LIBRARIES}
+  ${MSGPACK_LIBRARIES}
+  ${POCO_LIBRARIES}
+)
 
 if(APPLE)
   set(LIBS ${LIBS}

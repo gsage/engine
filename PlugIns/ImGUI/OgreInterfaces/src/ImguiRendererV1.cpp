@@ -62,7 +62,7 @@ THE SOFTWARE.
 #endif
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
-#include "OSXUtils.h"
+#include "OSX/Utils.h"
 #endif
 
 
@@ -99,6 +99,10 @@ namespace Gsage {
     ImguiOgreRenderer::initialize(engine, L);
 #if OGRE_VERSION >= 0x020100
     mPsoCache = OGRE_NEW Ogre::PsoCacheHelper(mSceneMgr->getDestinationRenderSystem());
+    sol::state_view lua(L);
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    lua["imgui"]["Scale"] = GetScreenScaleFactor();
+#endif
 #endif
   }
 
@@ -168,7 +172,6 @@ namespace Gsage {
           continue;
         }
 #endif
-
         //create renderables if necessary
         if (numberDraws >= mRenderables.size())
         {
@@ -205,7 +208,6 @@ namespace Gsage {
         } else {
 #endif
           texUnitState = mTexUnit;
-          //update their vertex buffers
           renderable->updateVertexData(vtxBuf, &idxBuf[startIdx], drawList->VtxBuffer.Size, drawCmd->ElemCount);
 #if OGRE_VERSION >= 0x020100
         }
@@ -216,9 +218,7 @@ namespace Gsage {
         vp->getActualDimensions(vpLeft, vpTop, vpWidth, vpHeight);
         float factor = 1.0f;
 #if GSAGE_PLATFORM == GSAGE_APPLE
-        if(mSceneMgr->getDestinationRenderSystem()->getName() == "Metal Rendering Subsystem") {
-          factor = GetScreenScaleFactor();
-        }
+        factor = GetScreenScaleFactor();
 #endif
 
         int scLeft = drawCmd->ClipRect.x;

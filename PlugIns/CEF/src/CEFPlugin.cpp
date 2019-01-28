@@ -31,6 +31,7 @@ THE SOFTWARE.
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #define WindowHandle NSView*
+#include "OSX/Utils.h"
 #elif GSAGE_PLATFORM == GSAGE_LINUX
 #define WindowHandle unsigned long long
 #elif GSAGE_PLATFORM == GSAGE_WIN32
@@ -50,28 +51,11 @@ std::locale::id std::codecvt<char16_t, char, _Mbstatet>::id;
 #endif
 
 namespace Gsage {
-  inline bool ends_with(std::string const & value, std::string const & ending)
+  inline bool endsWith(std::string const & value, std::string const & ending)
   {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
   }
-
-  class ClientCefResourceHandler : public CefResourceHandler {
-    public:
-      ClientCefResourceHandler()
-      {
-
-      }
-
-      bool ProcessRequest(CefRefPtr<CefRequest> request,
-          CefRefPtr<CefCallback> callback) override {
-        CEF_REQUIRE_IO_THREAD();
-        CefRefPtr<CefPostData> post = request->GetPostData();
-        LOG(INFO) << "Data " << post;
-        return true;
-      }
-      IMPLEMENT_REFCOUNTING(ClientCefResourceHandler);
-  };
 
   class ClientSchemeHandlerFactory : public CefSchemeHandlerFactory {
     public:
@@ -98,27 +82,43 @@ namespace Gsage {
         CefURLParts urlParts;
         CefParseURL(request->GetURL(), urlParts);
 
-        std::string html_content;
+        std::string content;
         std::string contentType = "application/octet-stream";
 
         std::string filepath = mWebRoot + CefString(&urlParts.path).ToString();
         LOG(INFO) << "Loading file " << filepath << " " << CefString(&urlParts.path).ToString();
-        if(!FileLoader::getSingletonPtr()->load(filepath, html_content, std::ios_base::binary)) {
-          html_content = "<html><body><h2>Failed to load view</h2></body></html>";
-          LOG(WARNING) << "Failed to load view " << filepath;
+        volatile bool success = false;
+        if(endsWith(filepath, ".template")) {
+          CefClient* client = browser->GetHost()->GetClient().get();
+          DataProxy pageData;
+          if(client) {
+            pageData = static_cast<BrowserClient*>(client)->getPageData();
+          }
+          // Template must be loaded in the main thread as template rendering can call Lua callbacks
+          mFacade->getEngine()->executeInMainThread([&](){
+              success = FileLoader::getSingletonPtr()->loadTemplate(filepath, content, pageData);
+          })->wait();
+          contentType = "text/html";
+        } else {
+          success = FileLoader::getSingletonPtr()->load(filepath, content, std::ios_base::binary);
+        }
+
+        if(!success || content.empty()) {
+          LOG(WARNING) << "Nothing to load for " << filepath;
+          return nullptr;
         }
 
         for(auto pair : mContentTypes) {
-          if(ends_with(filepath, pair.first)) {
+          if(endsWith(filepath, pair.first)) {
             contentType = pair.second;
           }
         }
 
-        // Create a stream reader for |html_content|.
+        // Create a stream reader for |content|.
         CefRefPtr<CefStreamReader> stream =
           CefStreamReader::CreateForData(
-              static_cast<void*>(const_cast<char*>(html_content.c_str())),
-              html_content.size());
+              static_cast<void*>(const_cast<char*>(content.c_str())),
+              content.size());
 
         // Constructor for HTTP status code 200 and no custom response headers.
         // There’s also a version of the constructor for custom status code and response headers.
@@ -136,8 +136,6 @@ namespace Gsage {
 
   RenderHandler::RenderHandler(TexturePtr texture)
     : mTexture(texture)
-    , mX(0)
-    , mY(0)
   {
   }
 
@@ -149,7 +147,7 @@ namespace Gsage {
   {
     unsigned int width, height;
     std::tie(width, height) = mTexture->getSize();
-    rect = CefRect(mX, mY, width, height);
+    rect = CefRect(0, 0, width, height);
     return true;
   }
 
@@ -167,9 +165,10 @@ namespace Gsage {
     mTexture = texture;
   }
 
-  BrowserClient::BrowserClient(RenderHandler* renderHandler, CEFPlugin* cef)
+  BrowserClient::BrowserClient(RenderHandler* renderHandler, CEFPlugin* cef, Webview* webview)
     : mRenderHandler(renderHandler)
     , mCef(cef)
+    , mWebview(webview)
   {
   }
 
@@ -180,8 +179,105 @@ namespace Gsage {
 
   bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId sourceProcess, CefRefPtr<CefProcessMessage> msg)
   {
-    return mCef->handleProcessMessage(msg->Copy());
+    std::string json;
+    bool success;
+    std::tie(json, success) = mCef->handleProcessMessage(msg->Copy());
+
+    if(msg->GetName() == "fn") {
+      CefRefPtr<CefProcessMessage> response = CefProcessMessage::Create("JSResponse");
+      CefRefPtr<CefListValue> args = response->GetArgumentList();
+      args->SetInt(0, msg->GetArgumentList()->GetInt(0));
+      args->SetString(1, json);
+      browser->SendProcessMessage(sourceProcess, response);
+    }
+    return success;
   }
+
+  void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode)
+  {
+    if(httpStatusCode < 400) {
+      mWebview->queueEvent(Event(Webview::PAGE_LOADED));
+      browser->GetHost()->SetFocus(true);
+      browser->GetHost()->SendFocusEvent(true);
+    }
+  }
+
+  void BrowserClient::OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefLoadHandler::TransitionType transitionType)
+  {
+    mWebview->queueEvent(Event(Webview::PAGE_LOADING));
+  }
+
+  bool BrowserClient::OnFileDialog(CefRefPtr<CefBrowser> browser, CefDialogHandler::FileDialogMode mode, const CefString& title, const CefString& defaultFilePath, const std::vector<CefString>& acceptFilters, int selectedAcceptFilter, CefRefPtr<CefFileDialogCallback> callback)
+  {
+    std::shared_ptr<SignalChannel> channel = std::make_shared<SignalChannel>();
+    mCef->runInRenderThread([&] () {
+      auto c = channel;
+      Window::DialogMode dialogMode;
+      switch(mode & FILE_DIALOG_TYPE_MASK) {
+        case FILE_DIALOG_OPEN:
+          dialogMode = Window::DialogMode::FILE_DIALOG_OPEN;
+          break;
+        case FILE_DIALOG_OPEN_MULTIPLE:
+          dialogMode = Window::DialogMode::FILE_DIALOG_OPEN_MULTIPLE;
+          break;
+        case FILE_DIALOG_OPEN_FOLDER:
+          dialogMode = Window::DialogMode::FILE_DIALOG_OPEN_FOLDER;
+          break;
+        case FILE_DIALOG_SAVE:
+          dialogMode = Window::DialogMode::FILE_DIALOG_SAVE;
+          break;
+        default:
+          LOG(ERROR) << "Failed to handle dialog mode " << (mode & FILE_DIALOG_TYPE_MASK);
+          c->send(ChannelSignal::FAILURE);
+          return;
+      }
+
+      std::vector<std::string> filters;
+      for(auto& s : acceptFilters) {
+        filters.push_back(s.ToString());
+      }
+
+      WindowManagerPtr windowManager = mCef->getFacade()->getWindowManager();
+      std::string err;
+      std::vector<std::string> files;
+
+      Window::DialogStatus status;
+
+      std::tie(files, status, err) = windowManager->openDialog(
+          dialogMode,
+          title.ToString(),
+          defaultFilePath.ToString(),
+          filters
+      );
+      std::vector<CefString> filePaths;
+      std::vector<std::string>::const_iterator it = files.begin();
+      for (; it != files.end(); ++it) {
+        filePaths.push_back(CefString((*it).c_str()));
+      }
+
+      switch(status) {
+        case Window::DialogStatus::OKAY:
+          callback->Continue(selectedAcceptFilter, filePaths);
+          break;
+        case Window::DialogStatus::FAILURE:
+          LOG(ERROR) << "Failed to run file dialog " << err;
+        case Window::DialogStatus::CANCEL:
+          callback->Cancel();
+          break;
+      }
+
+      c->send(ChannelSignal::DONE);
+    });
+
+    if(channel->recv() != ChannelSignal::DONE) {
+      LOG(ERROR) << "Failed to open dialog";
+    }
+    return true;
+  }
+
+  const Event::Type Webview::PAGE_LOADED = "Webview::PAGE_LOADED";
+
+  const Event::Type Webview::PAGE_LOADING = "Webview::PAGE_LOADING";
 
   const Event::Type Webview::MOUSE_LEAVE = "Webview::MOUSE_LEAVE";
 
@@ -191,6 +287,8 @@ namespace Gsage {
     , mMouseModifiers(0)
     , mMouseX(0)
     , mMouseY(0)
+    , mZoom(0)
+    , mWindowHandle(0)
   {
   }
 
@@ -208,21 +306,21 @@ namespace Gsage {
     }
 
     std::string page = options.get("page", "");
-    if(page.empty()) {
-      LOG(ERROR) << "Required parameter page is missing";
-      return false;
-    }
+    mPage = page;
     CefWindowInfo windowInfo;
     CefBrowserSettings browserSettings;
     browserSettings.windowless_frame_rate = 60;
 
+    mWindowHandle = windowHandle;
     windowInfo.SetAsWindowless((WindowHandle)windowHandle);
 
     LOG(INFO) << "Rendering webview to texture";
     mRenderHandler = new RenderHandler(texture);
-    addEventListener(texture.get(), Texture::RESIZE, &Webview::wasResized, 0);
-    mClient = new BrowserClient(mRenderHandler.get(), mCef);
+    EventSubscriber::addEventListener(texture.get(), Texture::RESIZE, &Webview::wasResized, 0);
+    mClient = new BrowserClient(mRenderHandler.get(), mCef, this);
+    mClient->setPageData(options.get("pageData", DataProxy()));
 
+    // TODO: replace main thread runners with some generic implementation
     std::shared_ptr<SignalChannel> channel = std::make_shared<SignalChannel>();
     mCef->runInMainThread([&] () {
       auto c = channel;
@@ -253,8 +351,37 @@ namespace Gsage {
       return;
     }
 
-    CefRefPtr<CefFrame> frame = mBrowser->GetMainFrame();
-    frame->ExecuteJavaScript(script, frame->GetURL(), 0);
+    // JS should be excuted from the main thread only
+    std::shared_ptr<SignalChannel> channel = std::make_shared<SignalChannel>();
+    mCef->runInMainThread([&] () {
+      auto c = channel;
+      CefRefPtr<CefFrame> frame = mBrowser->GetMainFrame();
+      frame->ExecuteJavaScript(script, frame->GetURL(), 0);
+      c->send(ChannelSignal::DONE);
+    });
+
+    channel->recv();
+  }
+
+  void Webview::setZoom(float zoom)
+  {
+    mZoom = zoom;
+    mBrowser->GetHost()->SetZoomLevel(zoom);
+  }
+
+  WindowPtr Webview::getWindow()
+  {
+    if(mWindowHandle == 0) {
+      return nullptr;
+    }
+
+    return mCef->getFacade()->getWindowManager()->getWindow(mWindowHandle);
+  }
+
+  void Webview::renderPage(const std::string& page, const DataProxy& data)
+  {
+    mBrowser->GetMainFrame()->LoadURL(page);
+    mClient->setPageData(data);
   }
 
   void Webview::pushEvent(Event event)
@@ -326,6 +453,25 @@ namespace Gsage {
         if(mMouseEvents.get(event)) {
           handleMouseEvent(event);
         }
+      }
+    }
+  }
+
+  void Webview::queueEvent(Event event)
+  {
+    mOutgoingEvents << event;
+    if(event.getType() == Webview::PAGE_LOADED) {
+      mBrowser->GetHost()->SetZoomLevel(mZoom);
+    }
+  }
+
+  void Webview::sendEvents()
+  {
+    size_t count = mOutgoingEvents.size();
+    Event event;
+    for(size_t i = 0; i < count; i++) {
+      if(mOutgoingEvents.get(event)) {
+        fireEvent(event);
       }
     }
   }
@@ -439,17 +585,16 @@ namespace Gsage {
 
   }
 
-  DataProxy CEFPlugin::LuaMessageHandler::execute(CefRefPtr<CefProcessMessage> msg)
+  std::string CEFPlugin::LuaMessageHandler::execute(CefRefPtr<CefProcessMessage> msg)
   {
-    DataProxy result;
     if(!mCallback.valid())
     {
       LOG(ERROR) << "Failed to call lua callback";
-      return result;
+      return "null";
     }
 
     auto args = msg->GetArgumentList();
-    DataProxy arguments = loads(args->GetString(1).ToString(), DataWrapper::JSON_OBJECT);
+    DataProxy arguments = loads(args->GetString(2).ToString(), DataWrapper::JSON_OBJECT);
 
     std::vector<sol::object> mObjects;
     sol::table t = sol::state_view(mCallback.lua_state()).create_table();
@@ -462,27 +607,49 @@ namespace Gsage {
       mObjects.push_back((*iter).second);
     }
 
+    std::string result = "null";
     try {
       sol::function_result res = mCallback(sol::as_args(mObjects));
-      sol::object value = res;
-      if(value.get_type() == sol::type::table) {
-        result = DataProxy::create(value.as<sol::table>());
-      }
+
       if(!res.valid()) {
         sol::error err = res;
         LOG(ERROR) << "Failed to call lua callback " << err.what();
-        return result;
+        return "null";
       }
-    } catch(...) {
-      LOG(ERROR) << "Failed to handle CEF message";
-      return result;
-    }
 
+      sol::object value = res;
+      DataProxy data;
+      switch(value.get_type()) {
+        case sol::type::table:
+          data.put("retval", DataProxy::create(value.as<sol::table>()));
+          break;
+        case sol::type::string:
+          data.put("retval", value.as<std::string>());
+          break;
+        case sol::type::boolean:
+          data.put("retval", value.as<bool>());
+          break;
+        case sol::type::number:
+          data.put("retval", value.as<double>());
+          break;
+        default:
+          // skipped
+          break;
+      }
+      result = dumps(data, DataWrapper::JSON_OBJECT);
+    } catch(sol::error& err) {
+      LOG(ERROR) << "Failed to handle CEF message: " << err.what();
+    } catch(const std::exception& e) {
+      LOG(ERROR) << "Failed to handle CEF message: " << e.what();
+    } catch(...) {
+      LOG(ERROR) << "Failed to handle CEF message: unknown error";
+    }
 
     return result;
   }
 
   CEFPlugin::CEFPlugin()
+    : mAsyncMode(false)
   {
   }
 
@@ -497,101 +664,38 @@ namespace Gsage {
 
   bool CEFPlugin::installImpl()
   {
-    std::shared_ptr<SignalChannel> channel = std::make_shared<SignalChannel>();
-    bool succeed = false;
-    mCefRunner = std::thread([&] () {
-      {
-        // save ref in this scope
-        auto c = channel;
-        mRunning.store(true);
-#if GSAGE_PLATFORM == GSAGE_WIN32
-        CefMainArgs args(0);
-#else
-        CefMainArgs args(0, nullptr);
-#endif
-        {
-          int result = CefExecuteProcess(args, nullptr, nullptr);
-          if(result >= 0) {
+    mAsyncMode = mFacade->getEngine()->settings().get("cef.dedicatedThread", false);
+
+    bool success = false;
+    if(mAsyncMode) {
+      std::shared_ptr<SignalChannel> channel = std::make_shared<SignalChannel>();
+      mCefRunner = std::thread([&] () {
+          // save ref in this scope
+          auto c = channel;
+          mRunning.store(true);
+          if(initialize()) {
+            channel->send(ChannelSignal::DONE);
+          } else {
             channel->send(ChannelSignal::FAILURE);
-            return;
           }
-        }
-
-        CefSettings settings;
-        settings.windowless_rendering_enabled = true;
-        settings.multi_threaded_message_loop = false;
-        settings.external_message_pump = true;
-#if GSAGE_PLATFORM == GSAGE_APPLE
-        char path[PATH_MAX];
-        CFBundleRef mainBundle = CFBundleGetMainBundle();
-        CFURLRef frameworksURL = CFBundleCopyPrivateFrameworksURL(mainBundle);
-        if (!CFURLGetFileSystemRepresentation(frameworksURL, TRUE, (UInt8 *)path, PATH_MAX))
-        {
-          channel->send(ChannelSignal::FAILURE);
-          return;
-        }
-
-        std::stringstream ss;
-        ss << path << "/cef.helper.app/Contents/MacOS/cef.helper";
-        CefString(&settings.browser_subprocess_path).FromASCII(ss.str().c_str());
-#elif GSAGE_PLATFORM == GSAGE_LINUX
-        char path[1024];
-        std::stringstream ss;
-        if(getcwd(path, 1024))
-          ss << path;
-
-        ss << "/" << "cef.helper";
-        CefString(&settings.browser_subprocess_path).FromASCII(ss.str().c_str());
-#elif GSAGE_PLATFORM == GSAGE_WIN32
-        char filename[] = "cef.helper.exe";
-        char fullFilename[MAX_PATH];
-        GetFullPathName(filename, MAX_PATH, fullFilename, nullptr);
-
-        LOG(INFO) << fullFilename;
-        CefString(&settings.browser_subprocess_path).FromASCII(fullFilename);
-#endif
-        bool result = CefInitialize(args, settings, nullptr, nullptr);
-        if(!result) {
-          channel->send(ChannelSignal::FAILURE);
-          return;
-        }
-
-        succeed = true;
-        channel->send(ChannelSignal::DONE);
-      }
-
-      CefRegisterSchemeHandlerFactory("client", "views", new ClientSchemeHandlerFactory(mFacade));
-      std::chrono::milliseconds waitTime(10);
-      Task task;
-      while(mRunning.load()) {
-        CefDoMessageLoopWork();
-
-        if(mTasks.get(task)) {
-          task();
-        }
-
-        {
-          std::lock_guard<std::mutex> lock(mViewsLock);
-          for(auto pair : mViews) {
-            pair.second->processEvents();
+          std::chrono::milliseconds waitTime(10);
+          while(mRunning.load()) {
+            doMessageLoop();
+            std::this_thread::sleep_for(waitTime);
           }
-        }
-        std::this_thread::sleep_for(waitTime);
-      }
-      {
-        std::lock_guard<std::mutex> lock(mViewsLock);
-        for(auto pair : mViews) {
-          pair.second->setCefWasStopped();
-        }
-        mViews.clear();
-      }
-      CefShutdown();
-    });
+          stop();
+      });
 
-    channel->recv();
-    mFacade->addUpdateListener(this);
+      success = channel->recv() == ChannelSignal::DONE;
+    } else {
+      success = initialize();
+    }
 
-    return succeed;
+    if(success) {
+      mFacade->addUpdateListener(this);
+    }
+
+    return success;
   }
 
   void CEFPlugin::uninstallImpl()
@@ -603,8 +707,12 @@ namespace Gsage {
 
       lua["cef"] = sol::lua_nil;
     }
-    mRunning.store(false);
-    mCefRunner.join();
+    if(mAsyncMode && mRunning.load()) {
+      mRunning.store(false);
+      mCefRunner.join();
+    } else {
+      stop();
+    }
   }
 
   void CEFPlugin::setupLuaBindings() {
@@ -620,18 +728,22 @@ namespace Gsage {
       );
 
       lua.new_usertype<Webview>("CEFWebview",
+        sol::base_classes, sol::bases<EventDispatcher>(),
         "new", sol::no_constructor,
         "renderToTexture", &Webview::renderToTexture,
         "updateTexture", &Webview::updateTexture,
         "executeJavascript", &Webview::executeJavascript,
-        "setScreenPosition", &Webview::setScreenPosition,
+        "setZoom", &Webview::setZoom,
+        "renderPage", &Webview::renderPage,
         "pushEvent", sol::overload(
           (void(Webview::*)(MouseEvent))&Webview::pushEvent,
           (void(Webview::*)(KeyboardEvent))&Webview::pushEvent,
           (void(Webview::*)(TextInputEvent))&Webview::pushEvent,
           (void(Webview::*)(Event))&Webview::pushEvent
         ),
-        "MOUSE_LEAVE", sol::var(Webview::MOUSE_LEAVE)
+        "MOUSE_LEAVE", sol::var(Webview::MOUSE_LEAVE),
+        "PAGE_LOADING", sol::var(Webview::PAGE_LOADING),
+        "PAGE_LOADED", sol::var(Webview::PAGE_LOADED)
       );
 
       lua["cef"] = this;
@@ -640,33 +752,63 @@ namespace Gsage {
 
   void CEFPlugin::runInMainThread(CEFPlugin::Task cb)
   {
-    mTasks << cb;
+    if(mAsyncMode) {
+      mTasks << cb;
+    } else {
+      cb();
+    }
   }
 
-  bool CEFPlugin::handleProcessMessage(CefRefPtr<CefProcessMessage> msg)
+  void CEFPlugin::runInRenderThread(CEFPlugin::Task cb)
   {
-    PendingMessagePtr pm = std::make_shared<PendingMessage>(msg);
-    mMessages << pm;
-    ChannelSignal result = pm->channel.recv();
-    return result == ChannelSignal::DONE;
+    if(mAsyncMode) {
+      mRenderThreadTasks << cb;
+    } else {
+      cb();
+    }
+  }
+
+  std::tuple<std::string, bool> CEFPlugin::handleProcessMessage(CefRefPtr<CefProcessMessage> msg)
+  {
+    if(mAsyncMode) {
+      PendingMessagePtr pm = std::make_shared<PendingMessage>(msg);
+      mMessages << pm;
+      ChannelSignal result = pm->channel.recv();
+      return std::make_tuple(pm->result, result == ChannelSignal::DONE);
+    }
+
+    return handleProcessMessageSync(msg);
   }
 
   void CEFPlugin::update(double time)
   {
-    int count = mMessages.size();
-    for(int i = 0; i < count; i++) {
-      PendingMessagePtr pm;
-      if(mMessages.get(pm)) {
-        std::string name = pm->msg->GetName().ToString();
-        if(name == "fn") {
-          auto args = pm->msg->GetArgumentList();
-          name = args->GetString(0).ToString();
-          if(mMessageHandlers.count(name) != 0) {
-            DataProxy result = mMessageHandlers[name]->execute(pm->msg);
+    if(mAsyncMode) {
+      int count = mMessages.size();
+      for(int i = 0; i < count; i++) {
+        PendingMessagePtr pm;
+        if(mMessages.get(pm)) {
+          bool success;
+          std::string result;
+          std::tie(result, success) = handleProcessMessageSync(pm->msg);
+          if(success) {
+            pm->result = result;
           }
         }
+        pm->channel.send(ChannelSignal::DONE);
       }
-      pm->channel.send(ChannelSignal::DONE);
+    }
+
+    for(auto& pair : mViews) {
+      pair.second->sendEvents();
+    }
+
+    Task task;
+    if(mRenderThreadTasks.get(task)) {
+      task();
+    }
+
+    if(!mAsyncMode) {
+      doMessageLoop();
     }
   }
 
@@ -697,6 +839,111 @@ namespace Gsage {
   void CEFPlugin::addLuaMessagehandler(const std::string& name, sol::function callback)
   {
     mMessageHandlers[name] = MessageHandlerPtr(new LuaMessageHandler(callback));
+  }
+
+  bool CEFPlugin::initialize()
+  {
+#if GSAGE_PLATFORM == GSAGE_WIN32
+    CefMainArgs args(0);
+#else
+    //int argc = 2;
+    //char* argv[2] = {"--off-screen-rendering-enabled", "--v=0"};
+    //CefMainArgs args(argc, &argv[0]);
+    CefMainArgs args(0, nullptr);
+#endif
+    {
+      int result = CefExecuteProcess(args, nullptr, nullptr);
+      if(result >= 0) {
+        return false;
+      }
+    }
+
+    CefSettings settings;
+    settings.windowless_rendering_enabled = true;
+    settings.multi_threaded_message_loop = false;
+    settings.external_message_pump = true;
+    settings.no_sandbox = true;
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    char path[PATH_MAX];
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFURLRef frameworksURL = CFBundleCopyPrivateFrameworksURL(mainBundle);
+    if (!CFURLGetFileSystemRepresentation(frameworksURL, TRUE, (UInt8 *)path, PATH_MAX))
+    {
+      return false;
+    }
+
+    std::stringstream ss;
+    ss << path << "/cef.helper.app/Contents/MacOS/cef.helper";
+    CefString(&settings.browser_subprocess_path).FromASCII(ss.str().c_str());
+#elif GSAGE_PLATFORM == GSAGE_LINUX
+    char path[1024];
+    std::stringstream ss;
+    if(getcwd(path, 1024))
+      ss << path;
+
+    ss << "/" << "cef.helper";
+    CefString(&settings.browser_subprocess_path).FromASCII(ss.str().c_str());
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+    char filename[] = "cef.helper.exe";
+    char fullFilename[MAX_PATH];
+    GetFullPathName(filename, MAX_PATH, fullFilename, nullptr);
+
+    CefString(&settings.browser_subprocess_path).FromASCII(fullFilename);
+#endif
+    {
+      bool result = CefInitialize(args, settings, nullptr, nullptr);
+      if(!result) {
+        return false;
+      }
+    }
+
+    CefRegisterSchemeHandlerFactory("client", "views", new ClientSchemeHandlerFactory(mFacade));
+    return true;
+  }
+
+  void CEFPlugin::stop()
+  {
+    {
+      std::lock_guard<std::mutex> lock(mViewsLock);
+      for(auto pair : mViews) {
+        pair.second->setCefWasStopped();
+      }
+      mViews.clear();
+    }
+    CefShutdown();
+  }
+
+  void CEFPlugin::doMessageLoop()
+  {
+    CefDoMessageLoopWork();
+
+    Task task;
+    if(mTasks.get(task)) {
+      task();
+    }
+
+    {
+      std::lock_guard<std::mutex> lock(mViewsLock);
+      for(auto pair : mViews) {
+        pair.second->processEvents();
+      }
+    }
+  }
+
+  std::tuple<std::string, bool> CEFPlugin::handleProcessMessageSync(CefRefPtr<CefProcessMessage> msg)
+  {
+    std::string name = msg->GetName().ToString();
+    std::string result;
+    bool success = false;
+    if(name == "fn") {
+      auto args = msg->GetArgumentList();
+      name = args->GetString(1).ToString();
+      if(mMessageHandlers.count(name) != 0) {
+        result = mMessageHandlers[name]->execute(msg);
+        success = true;
+      }
+    }
+    return std::make_tuple(result, success);
   }
 
   CEFPlugin* cefPlugin = NULL;

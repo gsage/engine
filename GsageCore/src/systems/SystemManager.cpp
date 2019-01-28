@@ -48,4 +48,13 @@ namespace Gsage {
 
     return mFactories[id]->create(mEngine, configure);
   }
+
+  std::string SystemManager::getSystemType(const std::string& id)
+  {
+    if(mFactories.count(id) == 0) {
+      return "";
+    }
+
+    return mFactories[id]->getSystemType();
+  }
 }

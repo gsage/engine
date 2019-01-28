@@ -54,6 +54,34 @@ namespace Gsage {
        * Get window position
        */
       std::tuple<int, int> getPosition() const;
+
+      /**
+       * Sets window position
+       *
+       * @param x
+       * @param y
+       */
+      virtual void setPosition(int x, int y);
+
+      /**
+       * Get window size
+       */
+      virtual std::tuple<int, int> getSize();
+
+      /**
+       * Set window size
+       *
+       * @param width
+       * @param height
+       */
+      void setSize(int width, int height);
+
+      /**
+       * Get display size information
+       * Selects the display which contains current window position
+       */
+      virtual std::tuple<int, int, int, int> getDisplayBounds();
+
     private:
       friend class SDLWindowManager;
       SDL_Window* mWindow;

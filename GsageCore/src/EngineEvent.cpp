@@ -37,6 +37,8 @@ namespace Gsage {
 
   const Event::Type EngineEvent::UPDATE = "EngineEvent::UPDATE";
 
+  const Event::Type EngineEvent::ENV_UPDATED = "EngineEvent::ENV_UPDATED";
+
   const Event::Type EntityEvent::REMOVE = "EntityEvent::REMOVE";
 
   const Event::Type EntityEvent::CREATE = "EntityEvent::CREATE";

@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "WindowManager.h"
 #include "EngineEvent.h"
+#include <tinyfiledialogs.h>
 
 namespace Gsage {
 
@@ -58,6 +59,16 @@ namespace Gsage {
     return mWindows[name];
   }
 
+  WindowPtr WindowManager::getWindow(const unsigned long long handle)
+  {
+    for(auto& pair : mWindows) {
+      if(pair.second->getWindowHandle() == handle) {
+        return pair.second;
+      }
+    }
+    return nullptr;
+  }
+
   void WindowManager::windowCreated(WindowPtr window)
   {
     mWindows[window->getName()] = window;
@@ -71,5 +82,53 @@ namespace Gsage {
       return true;
     }
     return false;
+  }
+
+  WindowManager::DialogResult WindowManager::openDialog(
+        Window::DialogMode mode,
+        const std::string& title,
+        const std::string& defaultFilePath,
+        const std::vector<std::string> filters)
+  {
+    return openDialogSync(mode, title, defaultFilePath, filters);
+  }
+
+  std::tuple<std::vector<std::string>, Window::DialogStatus, std::string> WindowManager::openDialogSync(
+      Window::DialogMode mode,
+      const std::string& title,
+      const std::string& defaultFilePath,
+      const std::vector<std::string> filters
+  )
+  {
+    std::vector<std::string> paths;
+    Window::DialogStatus status;
+    const char* outPath = NULL;
+
+    const char* f[256];
+    for(int i = 0; i < filters.size(); i++) {
+      f[i] = filters[i].c_str();
+    }
+
+    switch(mode) {
+      case Window::DialogMode::FILE_DIALOG_OPEN_MULTIPLE:
+      case Window::DialogMode::FILE_DIALOG_OPEN:
+        outPath = tinyfd_openFileDialog(&title[0], &defaultFilePath[0], filters.size(), &f[0], NULL, mode == Window::DialogMode::FILE_DIALOG_OPEN_MULTIPLE);
+        break;
+      case Window::DialogMode::FILE_DIALOG_OPEN_FOLDER:
+        outPath = tinyfd_selectFolderDialog(&title[0], &defaultFilePath[0]);
+        break;
+      case Window::DialogMode::FILE_DIALOG_SAVE:
+        outPath = tinyfd_saveFileDialog(&title[0], &defaultFilePath[0], filters.size(), &f[0], NULL);
+        break;
+    }
+
+    std::stringstream err;
+
+    if(outPath == NULL) {
+      return std::make_tuple(paths, Window::DialogStatus::CANCEL, "");
+    }
+
+    paths = split(std::string(outPath), '|');
+    return std::make_tuple(paths, Window::DialogStatus::OKAY, "");
   }
 }

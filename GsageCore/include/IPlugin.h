@@ -50,12 +50,12 @@ namespace Gsage {
   /**
    * Engine plugin interface
    */
-  class IPlugin : public EventSubscriber<IPlugin>
+  class IPlugin
   {
 
     public:
-      IPlugin() : mFacade(0), mLuaInterface(0) {};
-      virtual ~IPlugin() {};
+      IPlugin();
+      virtual ~IPlugin();
 
       /**
        * Get unique plugin name
@@ -74,6 +74,10 @@ namespace Gsage {
        */
       virtual bool install()
       {
+        if(mFacade->isInstalled(this->getName())) {
+          return true;
+        }
+
         if(!el::Loggers::hasLogger("default")) {
           el::Configurations defaultConf;
           el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
@@ -93,7 +97,6 @@ namespace Gsage {
           setupLuaBindings();
         }
 
-        addEventListener(mFacade->getEngine(), EngineEvent::LUA_STATE_CHANGE, &IPlugin::handleLuaStateUpdate);
         return true;
       }
 
@@ -107,7 +110,6 @@ namespace Gsage {
        */
       virtual void uninstall()
       {
-        removeEventListener(mFacade->getEngine(), EngineEvent::LUA_STATE_CHANGE, &IPlugin::handleLuaStateUpdate);
         uninstallImpl();
       }
 
@@ -121,10 +123,6 @@ namespace Gsage {
        */
       virtual void setupLuaBindings() {};
     protected:
-      bool handleLuaStateUpdate(EventDispatcher* sender, const Event& event) {
-        setupLuaBindings();
-        return true;
-      }
       GsageFacade* mFacade;
       LuaInterface* mLuaInterface;
   };

@@ -1,0 +1,61 @@
+{
+  "plugins": ["OgrePlugin", "SDLPlugin", "RecastNavigationPlugin"],
+  "managers": {
+    "input": "sdl",
+    "window": "sdl"
+  },
+  "systems": {
+    "render": "ogre",
+    "movement": "3dmovement",
+    "navigation": "recast",
+    "script": "lua"
+  },
+  "resources": [
+    {
+      "source": "folder",
+      "folder": "bundles/behaviors",
+      "install": "behaviors",
+      "type": "script",
+      "recoursive": true
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/characters/ninja.json",
+      "install": "characters/ninja.json"
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/characters/sinbad.json",
+      "install": "characters/sinbad.json"
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/characters/scripts/",
+      "install": "characters/scripts/",
+      "type": "script"
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/levels/",
+      "install": "levels"
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/materials/",
+      "install": "materials",
+      "type": "render"
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/models/{{version}}/",
+      "install": "models",
+      "type": "render"
+    },
+    {
+      "source": "folder",
+      "folder": "bundles/particles",
+      "install": "particles",
+      "type": "render"
+    }
+  ]
+}

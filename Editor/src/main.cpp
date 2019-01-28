@@ -44,6 +44,10 @@ THE SOFTWARE.
 #endif
 
 #include "sol.hpp"
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {

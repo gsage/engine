@@ -37,13 +37,22 @@ THE SOFTWARE.
 
 namespace Gsage {
 
+  inline bool endsWith(std::string const & value, std::string const & ending)
+  {
+    if (ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+  }
+
   const std::string GameDataManager::CONFIG_SECTION = "dataManager";
 
-  GameDataManager::GameDataManager(Engine* engine, const DataProxy& config)
+  GameDataManager::GameDataManager(Engine* engine)
     : mEngine(engine)
     , mCurrentSaveFile(0)
   {
-    std::string workdir = engine->env().get("workdir", ".");
+  }
+
+  void GameDataManager::configure(const DataProxy& config)
+  {
     mFileExtension    = config.get(CONFIG_SECTION + ".extension", "json");
     mCharactersFolder = config.get(CONFIG_SECTION + ".charactersFolder", ".");
     mLevelsFolder     = config.get(CONFIG_SECTION + ".levelsFolder", ".");
@@ -52,6 +61,9 @@ namespace Gsage {
 
   GameDataManager::~GameDataManager()
   {
+    if(mCurrentSaveFile) {
+      delete mCurrentSaveFile;
+    }
   }
 
   bool GameDataManager::initGame(const std::string& templateFile)
@@ -77,8 +89,14 @@ namespace Gsage {
   {
     resetSaveFile();
     DataProxy& root = getSaveFile();
+    std::string file;
+    if(endsWith(saveFile, std::string(".") + mFileExtension)) {
+      file = saveFile;
+    } else {
+      file = saveFile + "." + mFileExtension;
+    }
 
-    if(!FileLoader::getSingletonPtr()->load(saveFile + "." + mFileExtension, DataProxy(), root))
+    if(!FileLoader::getSingletonPtr()->load(file, DataProxy(), root))
       return initGame(saveFile);
 
     const std::string& area = root.get<std::string>("area", "none");
@@ -145,7 +163,13 @@ namespace Gsage {
     saveData.put("settings", settingsNode);
     saveData.put("characters", entitiesNode);
     saveData.put("placement." + currentArea, placementNode);
-    FileLoader::getSingletonPtr()->dump(saveFile + "." + mFileExtension, saveData);
+    std::string file;
+    if(endsWith(saveFile, std::string(".") + mFileExtension)) {
+      file = saveFile;
+    } else {
+      file = saveFile + "." + mFileExtension;
+    }
+    FileLoader::getSingletonPtr()->dump(file, saveData);
     return true;
   }
 
@@ -204,7 +228,14 @@ namespace Gsage {
   bool GameDataManager::loadArea(const std::string& area)
   {
     DataProxy areaInfo;
-    std::string path = mLevelsFolder + "/" + area + "." + mFileExtension;
+    std::string file;
+    if(endsWith(area, std::string(".") + mFileExtension)) {
+      file = area;
+    } else {
+      file = area + "." + mFileExtension;
+    }
+
+    std::string path = mLevelsFolder + "/" + file;
     LOG(INFO) << "Loading area " << path;
     if(!FileLoader::getSingletonPtr()->load(path, DataProxy(), areaInfo))
       return false;

@@ -41,6 +41,7 @@ THE SOFTWARE.
 #include "systems/SystemManager.h"
 #include "WindowManager.h"
 #include "WindowManagerFactory.h"
+#include "Filesystem.h"
 
 // forward declarations ------
 
@@ -90,6 +91,10 @@ namespace Gsage
        * @param gsageConfigPath Path to the file with facade settings
        */
       virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, DataProxy* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
+      /**
+       * Configure the engine and systems
+       */
+      virtual bool configure(const DataProxy& configuration);
       /**
        * Add new system in the engine
        */
@@ -215,10 +220,24 @@ namespace Gsage
       GameDataManager* getGameDataManager() { return mGameDataManager; }
 
       /**
+       * Lookup plugin file
+       *
+       * @param name plugin name
+       */
+      std::string getFullPluginPath(const std::string& name) const;
+
+      /**
        * Load plugin from dynamic library
        * @param path Path to the plugin
        */
       bool loadPlugin(const std::string& path);
+
+      /**
+       * Load plugin from dynamic library
+       * @param path Path to the plugin
+       * @param skipLoaded Flag that is used to skip installing plugins that were already loaded
+       */
+      bool loadPlugin(const std::string& path, bool skipLoaded);
 
       /**
        * Unload plugin
@@ -231,6 +250,12 @@ namespace Gsage
        * @param plugin Plugin instance
        */
       bool installPlugin(IPlugin* plugin);
+
+      /**
+       * Check if plugin is installed
+       * @param name Plugin name
+       */
+      inline const bool isInstalled(const std::string& name) const { return mInstalledPlugins.count(name) > 0; }
 
       /**
        * Remove plugin
@@ -322,13 +347,26 @@ namespace Gsage
        * @param event event to proxy
        */
       bool handleWindowManagerEvent(EventDispatcher* sender, const Event& event);
+
+      /**
+       * Get filesystem interface
+       */
+      inline Filesystem* filesystem() { return &mFilesystem; };
+
+      typedef std::list<std::string> PluginOrder;
+      /**
+       * Get installed plugins
+       */
+      const PluginOrder& getInstalledPlugins() const;
     protected:
       bool onEngineShutdown(EventDispatcher* sender, const Event& event);
+      bool onLuaStateChange(EventDispatcher* sender, const Event& event);
 
       bool mStarted;
       bool mStartupScriptRun;
       std::string mStartupScript;
       std::atomic<bool> mStopped;
+      std::vector<std::string> mPluginsFolders;
 
       DataProxy mConfig;
 
@@ -338,6 +376,7 @@ namespace Gsage
       InputManager mInputManager;
       SystemManager mSystemManager;
       GameDataManager* mGameDataManager;
+      Filesystem mFilesystem;
       WindowManagerPtr mWindowManager;
       WindowManagerFactory mWindowManagerFactory;
 
@@ -347,7 +386,6 @@ namespace Gsage
       typedef std::map<std::string, DynLib*> Libraries;
       Libraries mLibraries;
 
-      typedef std::list<std::string> PluginOrder;
       PluginOrder mPluginOrder;
 
       typedef std::map<std::string, IPlugin*> Plugins;

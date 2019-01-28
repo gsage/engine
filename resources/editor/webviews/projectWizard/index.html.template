@@ -1,0 +1,66 @@
+<html>
+    <head>
+      <script src="../js/jquery.js"></script>
+      <script src="./semantic.min.js"></script>
+      <link rel="stylesheet" href="./semantic.min.css">
+      <style>
+        body {
+          padding: 50px;
+        }
+
+        .project-image {
+          background-color: #3366cc !important;
+        }
+      </style>
+    </head>
+    <meta charset="utf-8">
+    <body>
+      <h1 class="ui header">
+        {{ lm("wizard.create_project") }}
+      </h1>
+      <div class="ui link raised cards">
+{% for key, value in wizard/projectTemplates %}
+        <div class="card" onclick="engine.startCreateWizard('{{key}}')">
+          <div class="image project-image">
+              <img src="{{ value/image }}">
+          </div>
+          <div class="content">
+            <div class="header">{{ lm3("wizard.projects", key, "name") }}</div>
+            <div class="description">
+                {{ lm3("wizard.projects", key, "description") }}
+            </div>
+          </div>
+        </div>
+{% endfor %}
+      </div>
+      <div class="ui divider"></div>
+      <div class="ui grid">
+        <div class="ui eight wide column">
+        <h2 class="ui header">
+          {{ lm("wizard.recent_projects") }}
+        </h2>
+{% if hasRecentProjects %}
+          <div class="ui middle aligned selection divided animated list">
+{% for project in recent %}
+            <div class="item" onclick="engine.openProject('{{ escapePath(project.path) }}')">
+              <div class="content">
+                <div class="header">{{ project/name }}</div>
+                <div class="description">{{ lm("wizard.project.opened") }} {{ project/opened }}</div>
+                <div class="description">{{ lm("wizard.project.path") }} {{ project/path }}</div>
+              </div>
+            </div>
+{% endfor %}
+        </div>
+{% else %}
+        <div>{{ lm("wizard.recent.no_projects") }}</div>
+{% endif %}
+      </div>
+      <div class="ui eight wide column">
+        <h2 class="ui header">
+          {{ lm("wizard.open_project") }}
+        </h2>
+        <button class="ui button primary" onclick="engine.browseProjects()">{{ lm("wizard.open_project") }}</button>
+      </div>
+    </div>
+    </body>
+</html>

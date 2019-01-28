@@ -71,18 +71,21 @@ function ImguiInterface:available()
 end
 
 -- add view to imgui render list
-function ImguiInterface:addView(name, view, docked, open, label)
+function ImguiInterface:addView(name, view, open, label)
   if not self:available() then
     return false
   end
 
   if type(view) == "function" then
-    view = ImguiWindowRender(view, label or name, docked, open)
+    view = ImguiWindowRender(view, label or name, open)
   end
 
-  local added = imgui.manager:addView(name, view, not(not docked))
+  local added = imgui.manager:addView(name, view)
   if not added then
     return false
+  end
+  if view.added then
+    view:added()
   end
   self.views[name] = view
   return true
@@ -96,6 +99,9 @@ function ImguiInterface:removeView(name, view)
 
   local removed = imgui.manager:removeView(name, view)
   self.views[name] = nil
+  if not removed then
+    log.error("failed to remove view " .. name)
+  end
 
   if view.destroy then
     view:destroy()

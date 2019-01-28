@@ -56,7 +56,7 @@ namespace Gsage {
     RenderSystem* renderSystem = (RenderSystem*)mEngine->getSystem("render");
     if(renderSystem == 0)
     {
-      LOG(ERROR) << "Failed to initialize RecastNavigationSystem, OgreRenderSystem not present in engine";
+      LOG(ERROR) << "Failed to initialize RecastNavigationSystem, RenderSystem not present in engine";
       return false;
     }
 
@@ -120,7 +120,7 @@ namespace Gsage {
       return false;
     }
 
-    // dynamic_cast is the only way here. This method should be called often so we should be fine
+    // dynamic_cast is the only way here. This method shouldn't be called often anyways
     RenderSystem* renderSystem = dynamic_cast<RenderSystem*>(es);
 
     LOG(INFO) << "Rebuilding navigation mesh";

@@ -25,7 +25,6 @@ THE SOFTWARE.
 */
 
 #include "Engine.h"
-#include "EngineEvent.h"
 
 #include "Component.h"
 
@@ -162,10 +161,11 @@ namespace Gsage
         mWorkers[workerName]->mSystemConfig = config;
         mWorkers[workerName]->start();
       }
-    }
-
-    if(!firstSetup || !dedicatedThread) {
-      bool res = s->initialize(config);
+    } else {
+      if(!s->isReady() && !s->initialize(config)) {
+        return false;
+      }
+      bool res = s->configure(config);
       if(!res) {
         return false;
       }
@@ -175,6 +175,11 @@ namespace Gsage
       fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_ADDED, name, s));
     }
     return true;
+  }
+
+  bool Engine::configureSystem(const std::string& name, const DataProxy& config) {
+    mConfiguration.put(name, config);
+    return configureSystem(name);
   }
 
   EngineSystem* Engine::getSystem(const std::string& name)
@@ -198,8 +203,10 @@ namespace Gsage
     fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_REMOVED, name, getSystem(name)));
 
     SystemNames::iterator it = std::find(mManagedByEngine.begin(), mManagedByEngine.end(), name);
-    if(it != mManagedByEngine.end())
+    if(it != mManagedByEngine.end()) {
+      mManagedByEngine.erase(it);
       delete mEngineSystems[name];
+    }
 
     mEngineSystems.erase(name);
     return true;

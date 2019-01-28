@@ -37,6 +37,53 @@ namespace Gsage {
   class OgreTexture : public Texture, public Ogre::Texture::Listener
   {
     public:
+      class ScalingPolicy
+      {
+        public:
+          ScalingPolicy(OgreTexture& texture);
+          virtual ~ScalingPolicy();
+          /**
+           * Update scaling policy
+           */
+          void update(int width, int height);
+
+          /**
+           * Should be called in the render loop
+           *
+           * @returns true if the texture was recreated
+           */
+          bool render();
+
+        protected:
+          /**
+           * Actual resize
+           */
+          virtual bool resize() = 0;
+
+          OgreTexture& mTexture;
+          int mWidth;
+          int mHeight;
+          bool mDirty;
+      };
+
+      class DefaultScalingPolicy : public ScalingPolicy
+      {
+        public:
+          DefaultScalingPolicy(OgreTexture& texture);
+        protected:
+          bool resize();
+      };
+
+      class AllocateScalingPolicy : public ScalingPolicy
+      {
+        public:
+          AllocateScalingPolicy(OgreTexture& texture, float scalingFactor);
+        protected:
+          bool resize();
+        private:
+          float mScalingFactor;
+      };
+
       OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat);
       virtual ~OgreTexture();
 
@@ -70,8 +117,11 @@ namespace Gsage {
 
       /**
        * Create the underlying texture
+       *
+       * @param width override width
+       * @param height override height
        */
-      void create();
+      void create(int width = -1, int height = -1);
 
       /**
        * Texture buffer was changed
@@ -83,14 +133,19 @@ namespace Gsage {
        */
       void render();
     private:
+      friend class ScalingPolicy;
+
+      std::unique_ptr<OgreTexture::ScalingPolicy> createScalingPolicy(const DataProxy& params);
 
       Ogre::TexturePtr mTexture;
       std::mutex mSizeUpdateLock;
       DataProxy mParams;
       std::string mName;
+      std::unique_ptr<OgreTexture::ScalingPolicy> mScalingPolicy;
 
       bool mHasData;
       bool mDirty;
+      bool mCreate;
   };
 
   /**

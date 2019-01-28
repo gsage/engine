@@ -31,6 +31,8 @@ THE SOFTWARE.
 
 #include "imgui.h"
 #include "Definitions.h"
+#include "EventSubscriber.h"
+#include "systems/RenderSystem.h"
 #if OGRE_VERSION >= 0x020100
 #include "v2/ViewportRenderable.h"
 #endif
@@ -59,7 +61,7 @@ namespace Gsage {
    * .. code-block:: lua
    *
    *  -- create ogre viewport
-   *  viewport = imgui.createOgreView()
+   *  viewport = imgui.createOgreView("#000000FF")
    *
    *  local textureID = "myOgreView"
    *
@@ -76,10 +78,10 @@ namespace Gsage {
    *
    * \endverbatim
    */
-  class OgreView
+  class OgreView : public EventSubscriber<OgreView>
   {
     public:
-      OgreView(OgreRenderSystem* render);
+      OgreView(OgreRenderSystem* render, ImVec4 bgColour);
       virtual ~OgreView();
 
       /**
@@ -93,8 +95,16 @@ namespace Gsage {
        */
       void setTextureID(const std::string& textureID);
 
+      /**
+       * Sets rendered manual texture object
+       */
+      void setTexture(TexturePtr texture);
+
     private:
+      bool onTextureEvent(EventDispatcher* sender, const Event& event);
+
       std::string mTextureID;
+      TexturePtr mTexture;
       OgreRenderSystem* mRender;
 
       unsigned int mWidth;
@@ -106,6 +116,7 @@ namespace Gsage {
 #endif
       ImVec2 mPosition;
       bool mCaptureMouse;
+      ImVec4 mBgColour;
   };
 }
 

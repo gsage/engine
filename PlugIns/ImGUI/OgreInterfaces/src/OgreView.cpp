@@ -47,10 +47,11 @@ namespace Gsage {
     return (coord / size) * 2 - 1;
   }
 
-  OgreView::OgreView(OgreRenderSystem* render)
+  OgreView::OgreView(OgreRenderSystem* render, ImVec4 bgColour)
     : mRender(render)
     , mWidth(1)
     , mHeight(1)
+    , mBgColour(bgColour)
   {
 #if OGRE_VERSION < 0x020100
     mViewport = new Ogre::Rectangle2D(true);
@@ -73,7 +74,7 @@ namespace Gsage {
     ImVec2 pos = ImGui::GetCursorScreenPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     drawList->PathClear();
-    drawList->AddRectFilled(ImVec2(pos.x, pos.y), pos + ImGui::GetContentRegionAvail(), ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 1.0f)));
+    drawList->AddRectFilled(ImVec2(pos.x, pos.y), pos + ImGui::GetContentRegionAvail(), ImGui::ColorConvertFloat4ToU32(mBgColour));
 
     if(mTextureID.empty())
       return;
@@ -105,7 +106,17 @@ namespace Gsage {
 
 #if OGRE_VERSION >= 0x020100
     if(widthChange || heightChange || posChange) {
-      mViewport->update(pos, ImGui::GetContentRegionAvail());
+      ImVec2 size = ImGui::GetContentRegionAvail();
+      if(mTexture) {
+        Gsage::Vector2 texSize = mTexture->getSrcSize();
+        size = ImVec2(texSize.X, texSize.Y);
+      }
+      mViewport->updatePos(pos);
+      mViewport->updateSize(size);
+      if(mTexture) {
+        mViewport->updateUVs(mTexture->getUVs());
+      }
+      mViewport->updateVertexBuffer();
     }
 #else
     // inverting
@@ -120,7 +131,7 @@ namespace Gsage {
 #endif
 
     drawList->AddCallback(NULL, mViewport);
-    if(widthChange || heightChange) {
+    if(!mTexture && (widthChange || heightChange)) {
       setTextureID(mTextureID);
     }
   }
@@ -151,5 +162,48 @@ namespace Gsage {
     mViewport->setDatablock(textureID);
     mTextureID = textureID;
 #endif
+  }
+
+  void OgreView::setTexture(TexturePtr texture)
+  {
+    if(mTexture) {
+      removeEventListener(mTexture.get(), Texture::RECREATE, &OgreView::onTextureEvent);
+      removeEventListener(mTexture.get(), Texture::UV_UPDATE, &OgreView::onTextureEvent);
+    }
+    mTexture = texture;
+    setTextureID(texture->getName());
+    addEventListener(texture.get(), Texture::RECREATE, &OgreView::onTextureEvent);
+    addEventListener(texture.get(), Texture::UV_UPDATE, &OgreView::onTextureEvent);
+  }
+
+  bool OgreView::onTextureEvent(EventDispatcher* sender, const Event& event)
+  {
+    if(event.getType() == Texture::RECREATE) {
+      if(mTexture->hasData())
+        setTextureID(mTexture->getName());
+    } else if(event.getType() == Texture::UV_UPDATE) {
+#if OGRE_VERSION >= 0x020100
+      mViewport->updateUVs(mTexture->getUVs());
+#else
+      Gsage::Vector2 tl;
+      Gsage::Vector2 bl;
+      Gsage::Vector2 tr;
+      Gsage::Vector2 br;
+      std::tie(tl, bl, tr, br) = mTexture->getUVs();
+      mViewport->setUVs(
+          Ogre::Vector2(tl.X, tl.Y),
+          Ogre::Vector2(bl.X, bl.Y),
+          Ogre::Vector2(tr.X, tr.Y),
+          Ogre::Vector2(br.X, br.Y)
+      );
+#endif
+    }
+#if OGRE_VERSION >= 0x020100
+    Gsage::Vector2 texSize = mTexture->getSrcSize();
+    ImVec2 size(texSize.X, texSize.Y);
+    mViewport->updateSize(size);
+    mViewport->updateVertexBuffer();
+#endif
+    return false;
   }
 }

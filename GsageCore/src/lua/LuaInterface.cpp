@@ -215,6 +215,8 @@ namespace Gsage {
     );
     lua.new_usertype<GsageFacade>("Facade",
         "new", sol::no_constructor,
+        "configure", &GsageFacade::configure,
+        "filesystem", sol::property(&GsageFacade::filesystem),
         "shutdown", &GsageFacade::shutdown,
         "reset", sol::overload(
           (void(GsageFacade::*)()) &GsageFacade::reset,
@@ -223,7 +225,12 @@ namespace Gsage {
         "loadSave", &GsageFacade::loadSave,
         "dumpSave", &GsageFacade::dumpSave,
         "loadArea", &GsageFacade::loadArea,
-        "loadPlugin", &GsageFacade::loadPlugin,
+        "loadPlugin", sol::overload(
+          (bool(GsageFacade::*)(const std::string&))&GsageFacade::loadPlugin,
+          (bool(GsageFacade::*)(const std::string&, bool))&GsageFacade::loadPlugin
+        ),
+        "getInstalledPlugins", &GsageFacade::getInstalledPlugins,
+        "getFullPluginPath", &GsageFacade::getFullPluginPath,
         "unloadPlugin", &GsageFacade::unloadPlugin,
         "createSystem", &GsageFacade::createSystem,
         "getWindowManager", &GsageFacade::getWindowManager,
@@ -235,13 +242,51 @@ namespace Gsage {
 
     lua.new_usertype<WindowManager>("WindowManager",
         "new", sol::no_constructor,
-        "getWindow", &WindowManager::getWindow
+        "getWindow", (WindowPtr(WindowManager::*)(const std::string&))&WindowManager::getWindow,
+        "openDialog", [] (WindowManager* w, Window::DialogMode mode, const std::string& title, const std::string& defaultFilePath, sol::table filters) {
+            std::vector<std::string> actualFilters;
+            for(auto iter = filters.begin();
+                      iter != filters.end();
+                      ++iter) {
+              actualFilters.push_back((*iter).second.as<std::string>());
+            }
+
+            return w->openDialog(mode, title, defaultFilePath, actualFilters);
+        }
+    );
+
+    lua.new_usertype<Filesystem>("Filesystem",
+        sol::base_classes, sol::bases<EventDispatcher>(),
+        "new", sol::no_constructor,
+        "copytreeAsync", &Filesystem::copytreeAsync,
+        "ls", &Filesystem::ls,
+        "exists", &Filesystem::exists,
+        "rmdir", &Filesystem::rmdir
+    );
+
+    lua.new_usertype<CopyWorker>("CopyWorker",
+        "new", sol::no_constructor,
+        "getID", &CopyWorker::getID,
+        sol::meta_function::to_string, &CopyWorker::str
     );
 
     lua.new_usertype<Window>("Window",
         "new", sol::no_constructor,
         "getWindowHandle", &Window::getWindowHandle,
-        "getPosition", &Window::getPosition
+        "getPosition", &Window::getPosition,
+        "setPosition", &Window::setPosition,
+        "getSize", &Window::getSize,
+        "setSize", &Window::setSize,
+        "getDisplayBounds", &Window::getDisplayBounds,
+
+        "FILE_DIALOG_OPEN_FOLDER", sol::var(Window::FILE_DIALOG_OPEN_FOLDER),
+        "FILE_DIALOG_OPEN", sol::var(Window::FILE_DIALOG_OPEN),
+        "FILE_DIALOG_OPEN_MULTIPLE", sol::var(Window::FILE_DIALOG_OPEN_MULTIPLE),
+        "FILE_DIALOG_SAVE", sol::var(Window::FILE_DIALOG_SAVE),
+
+        "FILE_DIALOG_OKAY", sol::var(Window::OKAY),
+        "FILE_DIALOG_CANCEL", sol::var(Window::CANCEL),
+        "FILE_DIALOG_FAILURE", sol::var(Window::FAILURE)
     );
 
     lua.new_usertype<Reflection>("Reflection",
@@ -383,7 +428,10 @@ namespace Gsage {
     lua.new_usertype<Texture>("Texture",
         "valid", sol::property(&Texture::isValid),
         "setSize", &Texture::setSize,
-        "hasData", &Texture::hasData
+        "hasData", &Texture::hasData,
+
+        "RESIZE", sol::var(Texture::RESIZE),
+        "RECREATE", sol::var(Texture::RECREATE)
     );
 
     // --------------------------------------------------------------------------------
@@ -391,7 +439,8 @@ namespace Gsage {
 
     lua.new_usertype<EngineSystem>("EngineSystem",
         "enabled", sol::property(&EngineSystem::isEnabled, &EngineSystem::setEnabled),
-        "info", sol::property(&EngineSystem::getSystemInfo)
+        "info", sol::property(&EngineSystem::getSystemInfo),
+        "config", sol::property(&EngineSystem::getConfig)
     );
 
     lua.new_usertype<LuaScriptSystem>("ScriptSystem",
@@ -509,7 +558,15 @@ namespace Gsage {
     lua.new_usertype<Engine>("Engine",
         sol::base_classes, sol::bases<EventDispatcher>(),
         "settings", sol::property(&Engine::settings),
-        "env", sol::property(&Engine::env)
+        "env", sol::property(&Engine::env),
+        "setEnv", sol::overload(
+          &Engine::setEnv<int>,
+          &Engine::setEnv<const std::string&>,
+          &Engine::setEnv<const DataProxy&>,
+          &Engine::setEnv<double>,
+          &Engine::setEnv<float>,
+          &Engine::setEnv<bool>
+        )
     );
 
     lua["Engine"]["removeEntity"] = (bool(Engine::*)(const std::string& id))&Engine::removeEntity;
@@ -534,6 +591,10 @@ namespace Gsage {
     lua.new_usertype<GameDataManager>("DataManager",
         "getEntityData", &GameDataManager::getEntityData,
         "removeEntity", &GameDataManager::removeEntity,
+        "levelsFolder", sol::property(&GameDataManager::getLevelsFolder),
+        "charactersFolder", sol::property(&GameDataManager::getCharactersFolder),
+        "savesFolder", sol::property(&GameDataManager::getSavesFolder),
+        "fileExtension", sol::property(&GameDataManager::getFileExtension),
         "createEntity", sol::overload(
           (Entity*(GameDataManager::*)(const std::string&))&GameDataManager::createEntity,
           (Entity*(GameDataManager::*)(const std::string&, const DataProxy&))&GameDataManager::createEntity,
@@ -550,8 +611,25 @@ namespace Gsage {
           }
           return std::make_tuple(res, true);
         },
+        "readJSON", [&] (GameDataManager* self, const std::string& path) {
+          DataProxy res;
+          if(!FileLoader::getSingletonPtr()->load(path, DataProxy(), res)) {
+            return std::make_tuple(res, false);
+          }
+          return std::make_tuple(res, true);
+        },
         "write", [] (GameDataManager* self, const std::string& path, const std::string& data, const std::string& rootDir) {
           return FileLoader::getSingletonPtr()->dump(path, data, rootDir);
+        },
+        "addSearchFolder", [](GameDataManager* self, int index, const std::string& path) { FileLoader::getSingletonPtr()->addSearchFolder(index, path); },
+        "removeSearchFolder", [](GameDataManager* self, const std::string& path) { return FileLoader::getSingletonPtr()->removeSearchFolder(path); },
+        "loadTemplate", [] (GameDataManager* self, const std::string& path, const DataProxy& context) {
+          std::string res;
+          bool success = FileLoader::getSingletonPtr()->loadTemplate(path, res, context);
+          return std::make_tuple(res, success);
+        },
+        "addTemplateCallback", [] (GameDataManager* self, const std::string& name, int argsNumber, sol::function function) {
+          return FileLoader::getSingletonPtr()->addTemplateCallback(name, argsNumber, function);
         }
     );
 
@@ -581,6 +659,14 @@ namespace Gsage {
         "system", &SystemChangeEvent::mSystem,
         "SYSTEM_ADDED", sol::var(SystemChangeEvent::SYSTEM_ADDED),
         "SYSTEM_REMOVED", sol::var(SystemChangeEvent::SYSTEM_REMOVED)
+    );
+
+    registerEvent<FileEvent>("FileEvent",
+        "onFile",
+        sol::base_classes, sol::bases<Event>(),
+        "id", &FileEvent::id,
+        "COPY_COMPLETE", sol::var(FileEvent::COPY_COMPLETE),
+        "COPY_FAILED", sol::var(FileEvent::COPY_FAILED)
     );
 
     registerEvent<SelectEvent>("SelectEvent",
@@ -893,13 +979,12 @@ namespace Gsage {
       return split(s, delim);
     };
 
-    lua["utf8_char"] = [](unsigned short code) -> std::string { char s[1] = {(char)code}; return std::string(s); };
-
     // serialization
-    lua["json"] = lua.create_table_with(
-        "load", [](const std::string& path) { return load(path, DataWrapper::JSON_OBJECT); },
-        "dump", [](const std::string& path, const DataProxy& value) { return dump(value, path, DataWrapper::JSON_OBJECT); }
-    );
+    lua["json"] = lua.create_table();
+    lua["json"]["load"] = [](const std::string& path) { return load(path, DataWrapper::JSON_OBJECT); };
+    lua["json"]["dump"] = [](const std::string& path, const DataProxy& value) { return dump(value, path, DataWrapper::JSON_OBJECT); };
+    lua["json"]["loads"] = [](const std::string& str) { return loads(str, DataWrapper::JSON_OBJECT); };
+    lua["json"]["dumps"] = [](const DataProxy& value) { return dumps(value, DataWrapper::JSON_OBJECT); };
 
     return true;
   }

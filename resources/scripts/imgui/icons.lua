@@ -5,6 +5,7 @@ local icons = {
   add_alert = "",        -- 0xE003
 
   equalizer = "",        -- 0xE01D
+  plus = "",
 
   pause = "",            -- 0xE034
   play_arrow = "",       -- 0xE037
@@ -19,8 +20,13 @@ local icons = {
   code = "",             -- 0xE86F
   setting = "",          -- 0xE8B8
   setting_ethernet = "", -- 0xE8BE
+  home = "",             -- 0xE890
   list = "",             -- 0xE896
   timeline = "",         -- 0xE922
+
+  world = "",
+
+  folder_special = "",
 
   save = "",
   insert_drive_file = "",

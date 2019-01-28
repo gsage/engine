@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "ImguiLuaInterface.h"
 #include <stdio.h>
 #include <imgui.h>
+#include <imgui_extensions.h>
 #include <deque>
 
 #include "sol.hpp"
@@ -473,6 +474,8 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiSelectableFlags_SpanAllColumns");
     lua_pushnumber(L, ImGuiStyleVar_FramePadding);
     lua_setglobal(L, "ImGuiStyleVar_FramePadding");
+    lua_pushnumber(L, ImGuiStyleVar_FrameRounding);
+    lua_setglobal(L, "ImGuiStyleVar_FrameRounding");
     lua_pushnumber(L, ImGuiStyleVar_ItemSpacing);
     lua_setglobal(L, "ImGuiStyleVar_ItemSpacing");
     lua_pushnumber(L, ImGuiStyleVar_WindowPadding);
@@ -499,8 +502,13 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiCol_Text");
     lua_pushnumber(L, ImGuiCol_FrameBg);
     lua_setglobal(L, "ImGuiCol_FrameBg");
+    lua_pushnumber(L, ImGuiCol_WindowBg);
+    lua_setglobal(L, "ImGuiCol_WindowBg");
     lua_pushnumber(L, ImGuiCol_ChildWindowBg);
     lua_setglobal(L, "ImGuiCol_ChildWindowBg");
+
+    lua_pushnumber(L, ImGuiTreeNodeFlags_Leaf);
+    lua_setglobal(L, "ImGuiTreeNodeFlags_Leaf");
 
     sol::table imgui = lua["imgui"];
 

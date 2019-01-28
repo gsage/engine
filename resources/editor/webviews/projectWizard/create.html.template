@@ -1,0 +1,204 @@
+<html>
+    <head>
+      <meta charset="utf-8">
+      <script src="../js/jquery.js"></script>
+      <script src="./create.js"></script>
+      <script src="./semantic.min.js"></script>
+      <link rel="stylesheet" href="./semantic.min.css">
+      <style>
+      body {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: column;
+        padding-bottom: 30px;
+      }
+
+      .content {
+        flex: 1;
+      }
+
+      .text {
+        float: left;
+      }
+
+      .others {
+        float: right;
+      }
+
+      </style>
+      <script>
+        settings = {{settings}}
+      </script>
+    </head>
+    <body>
+      <div class="ui menu inverted">
+        <a class="item prev" id="cancel">{{ lm("wizard.create.cancel") }}</a>
+        <a class="item prev" id="back" style="display: none">{{ lm("wizard.create.back") }}</a>
+        <div class="item"><h3>{{ projectTemplateName }}</h3></div>
+        <div class="right menu">
+          <a class="item right next" id="next">{{ lm("wizard.create.next") }}</a>
+          <a class="item right next" id="complete" style="display: none">{{ lm("wizard.create.complete") }}</a>
+        </div>
+      </div>
+      <div class="content" style="height: 100%; overflow-y: scroll; overflow-x: hidden">
+        <div class="ui container segment active tab" data-tab="location">
+          <div class="content">
+            <h2>{{ lm("wizard.create.description_location") }}</h2>
+            <div class="ui form" id="location">
+              <div class="two fields">
+                <div class="field six wide">
+                  <label>{{ lm("wizard.create.project_name") }}</label>
+                  <input id="name" type="text" name="name" placeholder="{{ lm("wizard.create.project_name") }}" value="{{settings.projectName}}"/>
+                </div>
+                <div class="field two wide">
+                  <label>{{ lm("wizard.create.project_icon") }}</label>
+                  <img onclick="engine.selectProjectIcon()" class="ui middle aligned mini image" src="./images/default.png"/>
+                </div>
+              </div>
+              <div class="field">
+                <label>{{ lm("wizard.create.project_folder") }}</label>
+                <div class="ui action input">
+                  <input type="text" id="path" placeholder="{{ lm("wizard.create.project_folder") }}" value="{{settings.projectPath}}">
+                  <button class="ui button" id="browse">{{ lm("wizard.create.browse") }}</button>
+                </div>
+              </div>
+              <div class="ui error message"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ui container segment tab" data-tab="plugins">
+          <div class="content">
+            <h2>{{ lm("wizard.create.description_plugins") }}</h2>
+            <h4>{{ lm("wizard.create.plugins_config.description") }}</h4>
+            <div class="ui styled accordion" id="plugins-config" style="width: 100%">
+              {% for plugin in settings.plugins %}
+              <div class="title">
+                <div style="height: 20px">
+                  <span class="text">{{ plugin.name }}</span>
+                  <span class="others">
+                    {% if existsIn(plugin.details, "systems") %}
+                    <span>{{lm("wizard.create.systems")}}</span>
+                    {% for key, items in plugin.details.systems %}
+                    {% for value in items %}
+                    <a class="ui blue label">{{key}}:{{value}}</a>
+                    {% endfor %}
+                    {% endfor %}
+                    {% endif %}
+                    {% if existsIn(plugin.details, "managers") %}
+                    <span>{{lm("wizard.create.managers")}}</span>
+                    {% for key, value in plugin.details.managers %}
+                    <a class="ui red label">{{key}}:{{value}}</a>
+                    {% endfor %}
+                    {% endif %}
+                    <span id="{{ plugin.name }}-label">
+                      {% if plugin.enabled %}
+                      {{ lm("wizard.create.plugins_config.installed") }}
+                      {% else if plugin.available %}
+                      {{ lm("wizard.create.plugins_config.not_installed") }}
+                      {% else %}
+                      N/A
+                      {% endif %}
+                    </span>
+                    <span>
+                      <div class="ui toggle checkbox plugin-checkbox{% if not plugin.available %} disabled{% endif %}" onclick="event.stopPropagation()" id="{{ plugin.name }}">
+                        <input type="checkbox" id="{{ plugin.name }}" {% if plugin.enabled %}checked=""{% endif %} >
+                        <label>#</label>
+                      </div>
+                    </span>
+                  <span>
+                </div>
+              </div>
+              <div class="content">
+                {{ plugin.description }}
+                {% if existsIn(plugin.details, "depends") %}
+                <h4>{{ lm("wizard.create.plugins_config.depends") }}</h4>
+                <table class="ui celled striped table">
+                  <tbody>
+                  {% for key, value in plugin.details.depends %}
+                      <tr>
+                      <td>{{ key }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="ui container segment tab" data-tab="systems">
+          <div class="content">
+            <h2>{{ lm("wizard.create.description_systems") }}</h2>
+            <div id="systems-config">{{ lm("wizard.create.systems_config.no_systems") }}</div>
+            <h2>{{ lm("wizard.create.description_managers") }}</h2>
+            <div id="managers-config">{{ lm("wizard.create.systems_config.no_managers") }}</div>
+          </div>
+        </div>
+        <div class="ui container segment tab" data-tab="summary">
+          <div class="content">
+            <h2>{{ lm("wizard.create.description_summary") }}</h2>
+            <table class="ui celled striped table">
+              <tbody>
+                <tr>
+                  <td class="right aligned collapsing">
+                    {{ lm("wizard.create.project_name") }}
+                  </td>
+                  <td id="summary-name"></td>
+                </tr>
+                <tr>
+                  <td class="right aligned collapsing">
+                    {{ lm("wizard.create.project_folder") }}
+                  </td>
+                  <td id="summary-path"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="ui divider"></div>
+            <h3>{{ lm("wizard.create.plugins") }}</h3>
+            <table class="ui celled striped table">
+              <tbody id="summary-plugins">
+              </tbody>
+            </table>
+            <h3>{{ lm("wizard.create.systems") }}</h3>
+            <table class="ui celled striped table">
+              <tbody id="summary-systems">
+              </tbody>
+            </table>
+            <div id="summary-managers"></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <div class="ui container">
+          <div class="ui four steps content" id="steps">
+            <a class="active step" id="location">
+              <div class="content">
+                <div class="title">{{ lm("wizard.create.location") }}</div>
+                <div class="description">{{ lm("wizard.create.description_location") }}</div>
+              </div>
+            </a>
+            <a class="step" id="plugins">
+              <div class="content">
+                <div class="title">{{ lm("wizard.create.plugins") }}</div>
+                <div class="description">{{ lm("wizard.create.description_plugins") }}</div>
+              </div>
+            </a>
+            <a class="step" id="systems">
+              <div class="content">
+                <div class="title">{{ lm("wizard.create.systems") }}</div>
+                <div class="description">{{ lm("wizard.create.description_systems") }}</div>
+              </div>
+            </a>
+            <a class="step" id="summary">
+              <div class="content">
+                <div class="title">{{ lm("wizard.create.summary") }}</div>
+                <div class="description">{{ lm("wizard.create.description_summary") }}</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </footer>
+    </body>
+</html>

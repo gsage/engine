@@ -28,6 +28,7 @@ THE SOFTWARE.
 #define _LuaScriptSystem_H_
 
 #include "ComponentStorage.h"
+#include "components/ScriptComponent.h"
 #include "systems/SystemFactory.h"
 #include "lua/LuaInterface.h"
 #include "Engine.h"
@@ -184,9 +185,14 @@ namespace Gsage
         if(!script){
           return 0;
         }
-
+        script->setKind(LuaScriptSystem::ID);
         script->setLuaState(s);
         return script;
+      }
+
+      const std::string& getSystemType() const
+      {
+        return LuaScriptSystem::type::SYSTEM;
       }
     private:
       LuaInterface* mLuaInterface;

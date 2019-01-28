@@ -1,1 +1,335 @@
-{"dockState":{"Editor":{" 2c037d45-54a1-4355-b95f-c639d84cfdc3":{"active":true,"children":["lua console","transform"],"layout":1.0,"location":0.0,"next":"","opened":true,"parent":" eb482987-8857-42cf-a3bd-3b8059d7d26c","prev":"","ratio":0.75139147043228149}," 5b9cfd78-683f-4979-b60b-4e49feed47f8":{"active":true,"children":["assets","recast"],"layout":1.0,"location":1.0,"next":"","opened":true,"parent":" container2","prev":"","ratio":0.70129871368408203}," 968423e5-8c55-4ed1-9483-59200a02fe51":{"active":true,"children":["tools"," eb482987-8857-42cf-a3bd-3b8059d7d26c"],"layout":1.0,"location":6.0,"next":"","opened":true,"parent":"","prev":"","ratio":0.070689655840396881}," a53aabd0-8519-4e60-aba0-1e2f8bd5646c":{"active":true,"children":["viewport"," bf9e43cf-ed13-4e8f-b70e-ed9a59968b21"],"layout":1.0,"location":0.0,"next":"","opened":true,"parent":" container2","prev":"","ratio":0.91001856327056885}," bf9e43cf-ed13-4e8f-b70e-ed9a59968b21":{"active":true,"children":["stats","debug"],"layout":2.0,"location":2.0,"next":"","opened":true,"parent":" a53aabd0-8519-4e60-aba0-1e2f8bd5646c","prev":"","ratio":0.85429936647415161}," container2":{"active":true,"children":[" 5b9cfd78-683f-4979-b60b-4e49feed47f8"," a53aabd0-8519-4e60-aba0-1e2f8bd5646c"],"layout":2.0,"location":1.0,"next":"","opened":true,"parent":" eb482987-8857-42cf-a3bd-3b8059d7d26c","prev":"","ratio":0.21105527877807617}," eb482987-8857-42cf-a3bd-3b8059d7d26c":{"active":true,"children":[" container2"," 2c037d45-54a1-4355-b95f-c639d84cfdc3"],"layout":2.0,"location":2.0,"next":"","opened":true,"parent":" 968423e5-8c55-4ed1-9483-59200a02fe51","prev":"","ratio":0.83560210466384888},"assets":{"active":false,"layout":0.0,"location":3.0,"next":"scene explorer","opened":false,"parent":" 5b9cfd78-683f-4979-b60b-4e49feed47f8","prev":"","ratio":0.5},"debug":{"active":true,"layout":0.0,"location":0.0,"next":"","opened":true,"parent":" bf9e43cf-ed13-4e8f-b70e-ed9a59968b21","prev":"","ratio":0.5},"lua console":{"active":true,"layout":0.0,"location":3.0,"next":"","opened":true,"parent":" 2c037d45-54a1-4355-b95f-c639d84cfdc3","prev":"","ratio":0.5},"recast":{"active":true,"layout":0.0,"location":2.0,"next":"","opened":true,"parent":" 5b9cfd78-683f-4979-b60b-4e49feed47f8","prev":"","ratio":0.5},"scene explorer":{"active":true,"layout":0.0,"location":5.0,"next":"settings","opened":true,"parent":" container2","prev":"assets","ratio":0.5},"script_editor":{"active":false,"layout":0.0,"location":5.0,"next":"","opened":true,"parent":" a53aabd0-8519-4e60-aba0-1e2f8bd5646c","prev":"viewport","ratio":0.5},"settings":{"active":false,"layout":0.0,"location":5.0,"next":"","opened":true,"parent":" container2","prev":"scene explorer","ratio":0.5},"stats":{"active":true,"layout":0.0,"location":1.0,"next":"","opened":true,"parent":" bf9e43cf-ed13-4e8f-b70e-ed9a59968b21","prev":"","ratio":0.5},"tools":{"active":true,"layout":0.0,"location":3.0,"next":"","opened":true,"parent":" 968423e5-8c55-4ed1-9483-59200a02fe51","prev":"","ratio":0.5},"transform":{"active":true,"layout":0.0,"location":2.0,"next":"","opened":true,"parent":" 2c037d45-54a1-4355-b95f-c639d84cfdc3","prev":"","ratio":0.5},"viewport":{"active":true,"layout":0.0,"location":3.0,"next":"script_editor","opened":true,"parent":" a53aabd0-8519-4e60-aba0-1e2f8bd5646c","prev":"","ratio":0.5}}},"workdir":"../../resources"}
+{
+    "dockState": {
+        "character": {
+            " 4b41ad91-19e4-48f2-8f88-2ba10af98f63": {
+                "active": true,
+                "children": [" ef620bf4-e1c0-4ae8-adbf-5e45bd976158", "assets"],
+                "layout": 2.0,
+                "location": 2.0,
+                "next": "",
+                "opened": true,
+                "parent": " c1c0cf91-3623-4455-9412-13132429e2ee",
+                "prev": "",
+                "ratio": 0.46718418598175049
+            },
+            " c1c0cf91-3623-4455-9412-13132429e2ee": {
+                "active": true,
+                "children": ["tools", " 4b41ad91-19e4-48f2-8f88-2ba10af98f63"],
+                "layout": 1.0,
+                "location": 6.0,
+                "next": "",
+                "opened": true,
+                "parent": "",
+                "prev": "",
+                "ratio": 0.089805826544761658
+            },
+            " ef620bf4-e1c0-4ae8-adbf-5e45bd976158": {
+                "active": true,
+                "children": ["viewport", "script_editor"],
+                "layout": 1.0,
+                "location": 1.0,
+                "next": "",
+                "opened": true,
+                "parent": " 4b41ad91-19e4-48f2-8f88-2ba10af98f63",
+                "prev": "",
+                "ratio": 0.47999998927116394
+            },
+            "assets": {
+                "active": true,
+                "layout": 0.0,
+                "location": 0.0,
+                "next": "",
+                "opened": true,
+                "parent": " 4b41ad91-19e4-48f2-8f88-2ba10af98f63",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            },
+            "lua console": {
+                "active": false,
+                "layout": 0.0,
+                "location": 5.0,
+                "next": "scene explorer",
+                "opened": false,
+                "parent": "",
+                "prev": "script_editor",
+                "ratio": 0.50060755014419556
+            },
+            "recast": {
+                "active": true,
+                "layout": 0.0,
+                "location": 10.0,
+                "next": "",
+                "opened": false,
+                "parent": "",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            },
+            "scene explorer": {
+                "active": false,
+                "layout": 0.0,
+                "location": 5.0,
+                "next": "settings",
+                "opened": false,
+                "parent": "",
+                "prev": "lua console",
+                "ratio": 0.50060755014419556
+            },
+            "script_editor": {
+                "active": true,
+                "layout": 0.0,
+                "location": 2.0,
+                "next": "lua console",
+                "opened": true,
+                "parent": " ef620bf4-e1c0-4ae8-adbf-5e45bd976158",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            },
+            "settings": {
+                "active": false,
+                "layout": 0.0,
+                "location": 5.0,
+                "next": "",
+                "opened": false,
+                "parent": "",
+                "prev": "scene explorer",
+                "ratio": 0.50060755014419556
+            },
+            "size": "1417,824",
+            "stats": {
+                "active": true,
+                "layout": 0.0,
+                "location": 10.0,
+                "next": "",
+                "opened": false,
+                "parent": "",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            },
+            "tools": {
+                "active": true,
+                "layout": 0.0,
+                "location": 3.0,
+                "next": "",
+                "opened": true,
+                "parent": " c1c0cf91-3623-4455-9412-13132429e2ee",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            },
+            "transform": {
+                "active": true,
+                "layout": 0.0,
+                "location": 10.0,
+                "next": "",
+                "opened": false,
+                "parent": "",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            },
+            "viewport": {
+                "active": true,
+                "layout": 0.0,
+                "location": 3.0,
+                "next": "",
+                "opened": true,
+                "parent": " ef620bf4-e1c0-4ae8-adbf-5e45bd976158",
+                "prev": "",
+                "ratio": 0.50060755014419556
+            }
+        },
+        "world": {
+            " 33418ce1-b196-4021-bcd0-369eb9793abe": {
+                "active": true,
+                "children": [" 92f6000d-395d-4939-8055-86de49fb764f", " 97af6a7a-7c69-4db6-8d5c-684e0e10536a"],
+                "layout": 2.0,
+                "location": 2.0,
+                "next": "",
+                "opened": true,
+                "parent": " 70ac3fd4-836c-494c-8259-777c1a925f40",
+                "prev": "",
+                "ratio": 0.21312631666660309
+            },
+            " 70ac3fd4-836c-494c-8259-777c1a925f40": {
+                "active": true,
+                "children": ["tools", " 33418ce1-b196-4021-bcd0-369eb9793abe"],
+                "layout": 1.0,
+                "location": 6.0,
+                "next": "",
+                "opened": true,
+                "parent": "",
+                "prev": "",
+                "ratio": 0.089805826544761658
+            },
+            " 92f6000d-395d-4939-8055-86de49fb764f": {
+                "active": true,
+                "children": ["scene explorer", "recast"],
+                "layout": 1.0,
+                "location": 1.0,
+                "next": "",
+                "opened": true,
+                "parent": " 33418ce1-b196-4021-bcd0-369eb9793abe",
+                "prev": "",
+                "ratio": 0.51999998092651367
+            },
+            " 94cd25ed-240f-4efa-a0f0-8388d9b867d4": {
+                "active": true,
+                "children": [" ebc024d7-8cbc-479a-84d1-8a41e36db555", "ogre"],
+                "layout": 1.0,
+                "location": 1.0,
+                "next": "",
+                "opened": true,
+                "parent": " 97af6a7a-7c69-4db6-8d5c-684e0e10536a",
+                "prev": "",
+                "ratio": 0.76368492841720581
+            },
+            " 97af6a7a-7c69-4db6-8d5c-684e0e10536a": {
+                "active": true,
+                "children": [" 94cd25ed-240f-4efa-a0f0-8388d9b867d4", " bde52b81-510c-44bc-a245-b25dca44e217"],
+                "layout": 2.0,
+                "location": 0.0,
+                "next": "",
+                "opened": true,
+                "parent": " 33418ce1-b196-4021-bcd0-369eb9793abe",
+                "prev": "",
+                "ratio": 0.69327354431152344
+            },
+            " bde52b81-510c-44bc-a245-b25dca44e217": {
+                "active": true,
+                "children": ["lua console", "transform"],
+                "layout": 1.0,
+                "location": 0.0,
+                "next": "",
+                "opened": true,
+                "parent": " 97af6a7a-7c69-4db6-8d5c-684e0e10536a",
+                "prev": "",
+                "ratio": 0.62000000476837158
+            },
+            " ebc024d7-8cbc-479a-84d1-8a41e36db555": {
+                "active": true,
+                "children": ["viewport", "stats"],
+                "layout": 1.0,
+                "location": 3.0,
+                "next": "",
+                "opened": true,
+                "parent": " 94cd25ed-240f-4efa-a0f0-8388d9b867d4",
+                "prev": "",
+                "ratio": 0.86400002241134644
+            },
+            "assets": {
+                "active": false,
+                "layout": 0.0,
+                "location": 5.0,
+                "next": "",
+                "opened": true,
+                "parent": " 97af6a7a-7c69-4db6-8d5c-684e0e10536a",
+                "prev": "lua console",
+                "ratio": 0.5
+            },
+            "lua console": {
+                "active": true,
+                "layout": 0.0,
+                "location": 3.0,
+                "next": "assets",
+                "opened": true,
+                "parent": " bde52b81-510c-44bc-a245-b25dca44e217",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "ogre": {
+                "active": true,
+                "layout": 0.0,
+                "location": 2.0,
+                "next": "",
+                "opened": false,
+                "parent": " 94cd25ed-240f-4efa-a0f0-8388d9b867d4",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "recast": {
+                "active": true,
+                "layout": 0.0,
+                "location": 2.0,
+                "next": "",
+                "opened": true,
+                "parent": " 92f6000d-395d-4939-8055-86de49fb764f",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "scene explorer": {
+                "active": true,
+                "layout": 0.0,
+                "location": 3.0,
+                "next": "",
+                "opened": true,
+                "parent": " 92f6000d-395d-4939-8055-86de49fb764f",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "script_editor": {
+                "active": false,
+                "layout": 0.0,
+                "location": 5.0,
+                "next": "",
+                "opened": true,
+                "parent": "",
+                "prev": "settings",
+                "ratio": 0.5
+            },
+            "settings": {
+                "active": true,
+                "layout": 0.0,
+                "location": 5.0,
+                "next": "script_editor",
+                "opened": true,
+                "parent": "",
+                "prev": "viewport",
+                "ratio": 0.5
+            },
+            "size": "1417,824",
+            "stats": {
+                "active": true,
+                "layout": 0.0,
+                "location": 2.0,
+                "next": "",
+                "opened": true,
+                "parent": " ebc024d7-8cbc-479a-84d1-8a41e36db555",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "tools": {
+                "active": true,
+                "layout": 0.0,
+                "location": 3.0,
+                "next": "",
+                "opened": true,
+                "parent": " 70ac3fd4-836c-494c-8259-777c1a925f40",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "transform": {
+                "active": true,
+                "layout": 0.0,
+                "location": 2.0,
+                "next": "",
+                "opened": true,
+                "parent": " bde52b81-510c-44bc-a245-b25dca44e217",
+                "prev": "",
+                "ratio": 0.5
+            },
+            "viewport": {
+                "active": false,
+                "layout": 0.0,
+                "location": 3.0,
+                "next": "settings",
+                "opened": true,
+                "parent": "",
+                "prev": "",
+                "ratio": 0.5
+            }
+        }
+    },
+    "recentProjects": [],
+    "settings": {
+        "locale": "en_US"
+    },
+    "workdir": "../Resources"
+}

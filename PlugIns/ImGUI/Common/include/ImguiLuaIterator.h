@@ -1922,3 +1922,11 @@ END_IMGUI_FUNC
 //struct ImFontAtlas
 
 //struct ImFont
+
+IMGUI_FUNCTION(Spinner)
+LABEL_ARG(label)
+NUMBER_ARG(radius)
+INT_ARG(thickness)
+UINT_ARG(color)
+CALL_FUNCTION(Spinner, bool, label, radius, thickness, color)
+END_IMGUI_FUNC

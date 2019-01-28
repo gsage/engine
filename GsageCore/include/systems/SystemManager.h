@@ -142,6 +142,13 @@ namespace Gsage {
        */
       EngineSystem* create(const std::string& id, bool configure = true);
 
+      /**
+       * Get system type from system kind
+       *
+       * @param kind Factory id
+       */
+      std::string getSystemType(const std::string& kind);
+
     private:
       typedef std::map<std::string, SystemFactory*> Factories;
       Factories mFactories;
