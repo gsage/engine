@@ -122,7 +122,6 @@ local function createViews()
   views.assets = function() imgui.TextWrapped(icons.directions_run .. " coming soon") end
   views.sceneExplorer = SceneExplorer("scene explorer", true)
   views.settings = SettingsView(true)
-  views.tools = ToolsView(true)
   views.assets = Assets(true)
 
   local function createEditorView(systemType)
@@ -193,6 +192,11 @@ local menus = {
 
 local renderDockspace = false
 imguiInterface:addView("mainMenu", Menu(menus))
+local tools = ToolsView(true, function()
+  local width, height = imgui.DisplaySize()
+  return 90, 35, width - 95, 40
+end)
+imgui.manager:addView("tools", tools)
 imgui.manager:addView("workspace", {
   __call = function()
     if not renderDockspace then
@@ -200,7 +204,7 @@ imgui.manager:addView("workspace", {
     end
 
     local width, height = imgui.DisplaySize()
-    dockspace:render(90, 35, width - 95, height - 40)
+    dockspace:render(90, 35 + 43, width - 95, height - 83)
   end
 })
 

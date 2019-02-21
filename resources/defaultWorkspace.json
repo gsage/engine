@@ -14,7 +14,7 @@
             },
             " c1c0cf91-3623-4455-9412-13132429e2ee": {
                 "active": true,
-                "children": ["tools", " 4b41ad91-19e4-48f2-8f88-2ba10af98f63"],
+                "children": [" 4b41ad91-19e4-48f2-8f88-2ba10af98f63"],
                 "layout": 1.0,
                 "location": 6.0,
                 "next": "",
@@ -105,16 +105,6 @@
                 "prev": "",
                 "ratio": 0.50060755014419556
             },
-            "tools": {
-                "active": true,
-                "layout": 0.0,
-                "location": 3.0,
-                "next": "",
-                "opened": true,
-                "parent": " c1c0cf91-3623-4455-9412-13132429e2ee",
-                "prev": "",
-                "ratio": 0.50060755014419556
-            },
             "transform": {
                 "active": true,
                 "layout": 0.0,
@@ -150,7 +140,7 @@
             },
             " 70ac3fd4-836c-494c-8259-777c1a925f40": {
                 "active": true,
-                "children": ["tools", " 33418ce1-b196-4021-bcd0-369eb9793abe"],
+                "children": [" 33418ce1-b196-4021-bcd0-369eb9793abe"],
                 "layout": 1.0,
                 "location": 6.0,
                 "next": "",
@@ -292,16 +282,6 @@
                 "next": "",
                 "opened": true,
                 "parent": " ebc024d7-8cbc-479a-84d1-8a41e36db555",
-                "prev": "",
-                "ratio": 0.5
-            },
-            "tools": {
-                "active": true,
-                "layout": 0.0,
-                "location": 3.0,
-                "next": "",
-                "opened": true,
-                "parent": " 70ac3fd4-836c-494c-8259-777c1a925f40",
                 "prev": "",
                 "ratio": 0.5
             },
