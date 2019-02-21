@@ -26,13 +26,12 @@ If some plug-ins are not needed they can be removed from the project.
 Thus, the Engine has the Core, which is static itself, but has many
 customization traits, like:
 
-* UIManager.
-* InputManager.
-* WindowManager.
-* IPlugin.
+* UI library interface `UIManager`.
+* Input handling interface `InputManager`.
+* Window handling interface `WindowManager`.
+* Generic plugin interface `IPlugin`.
 
-So by using these interfaces, one can easily implement new input system,
-or add support for any UI library and so on.
+So by using these interfaces, one can easily implement new input system, add support for any UI library and so on.
 
 As this engine is based on [ECS](https://en.wikipedia.org/wiki/Entity_component_system) architecture,
 adding new kind of game logic can be achieved by [writing](http://engine.readthedocs.io/en/latest/tutorials/advanced/2_custom_systems.html) new EngineSystem and Component.
@@ -64,37 +63,42 @@ Most of dependencies are vendored by Conan.
 
 ### Main
 
-* [luajit](http://luajit.org/).
-* [jsoncpp](https://github.com/open-source-parsers/jsoncpp).
-* [msgpackc](https://github.com/msgpack/msgpack-c).
+* [Luajit](http://luajit.org/) Scripting.
+* [jsoncpp](https://github.com/open-source-parsers/jsoncpp) config/level
+  data parsing.
+* [msgpackc](https://github.com/msgpack/msgpack-c) used for released
+  game package resources (levels/characters).
 * [easylogging](https://muflihun.github.io/easyloggingpp/).
-* [sol2](https://github.com/ThePhD/sol2).
-* [sole](https://github.com/r-lyeh-archived/sole).
+* [sol2](https://github.com/ThePhD/sol2) Lua bindings.
+* [sole](https://github.com/r-lyeh-archived/sole) UUID generator.
+* [inja](https://github.com/pantor/inja) Jinja2 like template renderer.
+* [POCO](https://github.com/pocoproject/poco) Networking, threading,
+  filesystem.
 
 ### Optional
 
-* [libRocket](https://github.com/libRocket/libRocket) -- RocketUI.
-* [ogre 1.9/2.1](http://www.ogre3d.org/) -- Ogre plugin (2.1 is still
-  unstable).
-* [Particle Universe](https://github.com/scrawl/particleuniverse) --
-  ParticleUniverse plugin.
-* OIS -- from ogre dependencies.
-* [SDL2](https://www.libsdl.org/download-2.0.php) -- SDL2 windowing
+* [libRocket](https://github.com/libRocket/libRocket) RocketUI interface.
+* [ogre 1.9/2.1](http://www.ogre3d.org/) powered rendering system.
+* OIS input from ogre dependencies (only for OGRE 1.9).
+* [SDL2](https://www.libsdl.org/download-2.0.php) SDL2 windowing
   and input.
-* [recastnavigation](https://github.com/recastnavigation/recastnavigation).
-* [dear imgui](https://github.com/ocornut/imgui).
+* [recastnavigation](https://github.com/recastnavigation/recastnavigation) navmesh building/pathfinding.
+* [dear imgui](https://github.com/ocornut/imgui) interface.
+* [CEF](https://github.com/chromiumembedded/cef/).
 
 ## Contributing
 
-1. Fork this repo
-2. Create feature branch and push it to your fork
-3. Create PR basing on your branch
+Fork the repo on GitHub
+1. Clone the project to your own machine
+2. Commit changes to your own branch
+3. Push your work back up to your fork
+4. Submit a Pull request with a single commit preferably
 
-Please make your PR have only one commit, so squash them.
+NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 
 ## LICENSE
 
-This project is licensed under MIT
+This project is licensed under MIT license
 
 ## Other Plugins
 - [Audio system plugin based on SFML](https://github.com/gsage/SFMLAudioSystemPlugin)

@@ -27,7 +27,125 @@ THE SOFTWARE.
 #include "FileLoader.h"
 #include <assert.h>
 
+
 namespace Gsage {
+  inline nlohmann::json jsonContext(const DataProxy& dp)
+  {
+    nlohmann::json result;
+    switch(dp.getStoredType()) {
+      case DataWrapper::Object:
+        result = nlohmann::json::object();
+        for(auto pair : dp) {
+          result[pair.first] = jsonContext(pair.second);
+        }
+        break;
+      case DataWrapper::Array:
+        result = nlohmann::json::array();
+        for(auto pair : dp) {
+          result.push_back(jsonContext(pair.second));
+        }
+        break;
+      case DataWrapper::Int:
+        result = nlohmann::json(dp.as<int>());
+        break;
+      case DataWrapper::UInt:
+        result = nlohmann::json(dp.as<unsigned int>());
+        break;
+      case DataWrapper::Float:
+        result = nlohmann::json(dp.as<float>());
+        break;
+      case DataWrapper::Double:
+        result = nlohmann::json(dp.as<double>());
+        break;
+      case DataWrapper::String:
+        result = nlohmann::json(dp.as<std::string>());
+        break;
+      case DataWrapper::Bool:
+        result = nlohmann::json(dp.as<bool>());
+        break;
+      default:
+        return nlohmann::json(nullptr);
+    }
+    return result;
+  }
+
+  inline DataProxy jsonToDataProxy(const nlohmann::json& data)
+  {
+    DataProxy result = DataProxy::create(DataWrapper::JSON_OBJECT);
+    switch(data.type()) {
+      case nlohmann::json::value_t::object:
+        for(auto& pair : data.items()) {
+          result.put(pair.key(), jsonToDataProxy(pair.value()));
+        }
+        break;
+      case nlohmann::json::value_t::array:
+        for(auto& pair : data.items()) {
+          result.push(jsonToDataProxy(pair.value()));
+        }
+        break;
+      case nlohmann::json::value_t::number_integer:
+        result.set(data.get<int>());
+        break;
+      case nlohmann::json::value_t::number_unsigned:
+        result.set(data.get<unsigned int>());
+        break;
+      case nlohmann::json::value_t::number_float:
+        result.set(data.get<float>());
+        break;
+      case nlohmann::json::value_t::string:
+        result.set(data.get<std::string>());
+        break;
+      case nlohmann::json::value_t::boolean:
+        result.set(data.get<bool>());
+        break;
+      default:
+        return result;
+    }
+    return result;
+  }
+
+  inline sol::object jsonToLuaObject(lua_State* L, const nlohmann::json& data) {
+    sol::object res;
+    sol::table t;
+    int index = 1;
+    switch(data.type()) {
+      case nlohmann::json::value_t::number_integer:
+        res = sol::make_object(L, data.get<int>());
+        break;
+      case nlohmann::json::value_t::number_unsigned:
+        res = sol::make_object(L, data.get<unsigned int>());
+        break;
+      case nlohmann::json::value_t::number_float:
+        res = sol::make_object(L, data.get<float>());
+        break;
+      case nlohmann::json::value_t::string:
+        res = sol::make_object(L, data.get<std::string>());
+        break;
+      case nlohmann::json::value_t::boolean:
+        res = sol::make_object(L, data.get<bool>());
+        break;
+      case nlohmann::json::value_t::object:
+        t = sol::state_view(L).create_table();
+        for(auto& pair : data.items()) {
+          t[pair.key()] = jsonToLuaObject(L, pair.value());
+        }
+        res = t;
+        break;
+      case nlohmann::json::value_t::array:
+        t = sol::state_view(L).create_table();
+        for(auto& pair : data.items()) {
+          t[index++] = jsonToLuaObject(L, pair.value());
+        }
+        res = t;
+        break;
+      default:
+        LOG(WARNING) << "Skipped unsupported callback arg type";
+        break;
+    }
+
+    return res;
+  }
+
   FileLoader* FileLoader::mInstance = 0;
 
   FileLoader FileLoader::getSingleton()
@@ -50,11 +168,36 @@ namespace Gsage {
   FileLoader::FileLoader(FileLoader::Encoding format, const DataProxy& environment)
     : mFormat(format)
     , mEnvironment(environment)
+    , mInjaEnv(new inja::Environment())
   {
+    // add main workdir with low priority
+    mResourceSearchFolders[100000] = mEnvironment.get("workdir", ".");
   }
 
   FileLoader::~FileLoader()
   {
+    delete mInjaEnv;
+  }
+
+  void FileLoader::addSearchFolder(int index, const std::string& path)
+  {
+    mResourceSearchFolders[index] = path;
+  }
+
+  bool FileLoader::removeSearchFolder(const std::string& path)
+  {
+    FileLoader::ResourceFolders::iterator it = std::find_if(
+          mResourceSearchFolders.begin(),
+          mResourceSearchFolders.end(),
+          [path](const auto& mo) {return mo.second == path;
+    });
+
+    if (it == mResourceSearchFolders.end()) {
+      return false;
+    }
+
+    mResourceSearchFolders.erase(it);
+    return true;
   }
 
   bool FileLoader::load(const std::string& path, std::string& dest, std::ios_base::openmode mode) const
@@ -66,6 +209,46 @@ namespace Gsage {
 
     dest = pair.first;
     return true;
+  }
+
+  bool FileLoader::loadTemplate(const std::string& path, std::string& dest, const DataProxy& context)
+  {
+    std::string data;
+    if(!load(path, data)) {
+      LOG(ERROR) << "Failed to load file " << path;
+      return false;
+    }
+
+    nlohmann::json ctx = jsonContext(context);
+    try {
+      dest = mInjaEnv->render(data, ctx);
+    } catch (std::runtime_error err) {
+      LOG(ERROR) << "Failed to render template " << err.what();
+      return false;
+    }
+    return true;
+  }
+
+  void FileLoader::addTemplateCallback(const std::string& name, int argsNumber, sol::function function)
+  {
+    mInjaEnv->add_callback(name, argsNumber, [name, function] (inja::Arguments& args) {
+      std::vector<sol::object> luaArgs;
+      for(auto& a : args) {
+        luaArgs.push_back(jsonToLuaObject(function.lua_state(), *a));
+      }
+
+      DataProxy result;
+      try {
+        sol::object res;
+        res = function(sol::as_args(luaArgs));
+        result = DataProxy::create(res);
+      } catch(...) {
+        LOG(ERROR) << "Failed to call filter function " << name;
+      }
+
+      inja::json res = jsonContext(result);
+      return res;
+    });
   }
 
   std::ifstream FileLoader::stream(const std::string& path) const
@@ -135,16 +318,35 @@ namespace Gsage {
 
   std::pair<std::string, bool> FileLoader::loadFile(const std::string& path, std::ios_base::openmode mode) const
   {
-    // TODO: additional lookup folders
-    std::stringstream ss;
-    ss << mEnvironment.get("workdir", ".") << GSAGE_PATH_SEPARATOR << path;
-    std::ifstream stream(ss.str(), mode);
-    std::string res;
-    bool success = true;
-    if(!stream) {
-      LOG(ERROR) << "Failed to read file: " << ss.str();
+    std::ifstream stream;
+
+    std::string fullPath;
+    std::vector<std::string> scanned(mResourceSearchFolders.size());
+
+    for(auto& rf : mResourceSearchFolders) {
+      std::stringstream ss;
+      ss << rf.second << GSAGE_PATH_SEPARATOR << path;
+      stream = std::ifstream(ss.str(), mode);
+      if(stream.good()) {
+        fullPath = ss.str();
+        break;
+      }
+      scanned.push_back(rf.second);
+    }
+
+    if(fullPath.empty()) {
+      LOG(ERROR) << "Failed to find file path in any of resource folders " << path << ":\n" << join(scanned, '\n');
       return std::make_pair("", false);
     }
+
+    if(!stream) {
+      LOG(ERROR) << "Failed to read file: " << fullPath;
+      return std::make_pair("", false);
+    }
+
+    std::string res;
+    bool success = true;
+
     try
     {
       stream.seekg(0, std::ios::end);
@@ -156,7 +358,7 @@ namespace Gsage {
     catch(std::exception& e)
     {
       success = false;
-      LOG(ERROR) << "Failed to read file: " << path << ", reason: " << e.what();
+      LOG(ERROR) << "Failed to read file: " << fullPath << ", reason: " << e.what();
     }
 
     stream.close();

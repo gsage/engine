@@ -31,17 +31,88 @@ THE SOFTWARE.
 
 #if OGRE_VERSION >= 0x020100
 #define _BLANKSTRING Ogre::BLANKSTRING
+#include <OgreHlmsUnlitDatablock.h>
+#include <OgreHlmsUnlit.h>
+#include <OgreHlmsPbs.h>
+#include <OgreHlmsManager.h>
 #else
 #define _BLANKSTRING Ogre::StringUtil::BLANK
 #endif
 
 namespace Gsage {
+  OgreTexture::ScalingPolicy::ScalingPolicy(OgreTexture& texture)
+    : mTexture(texture)
+    , mWidth(0)
+    , mHeight(0)
+  {
+  }
+
+  OgreTexture::ScalingPolicy::~ScalingPolicy()
+  {
+  }
+
+  void OgreTexture::ScalingPolicy::update(int width, int height)
+  {
+    if(width != mWidth || height != mHeight) {
+      mDirty = true;
+      mWidth = width;
+      mHeight = height;
+    }
+  }
+
+  bool OgreTexture::ScalingPolicy::render()
+  {
+    if(mDirty) {
+      mDirty = false;
+      return resize();
+    }
+
+    return false;
+  }
+
+  OgreTexture::DefaultScalingPolicy::DefaultScalingPolicy(OgreTexture& texture)
+    : ScalingPolicy(texture)
+  {
+  }
+
+  bool OgreTexture::DefaultScalingPolicy::resize()
+  {
+    mTexture.create(mWidth, mHeight);
+    return true;
+  }
+
+  OgreTexture::AllocateScalingPolicy::AllocateScalingPolicy(OgreTexture& texture, float scalingFactor)
+    : ScalingPolicy(texture)
+    , mScalingFactor(scalingFactor)
+  {
+    assert(scalingFactor > 1.0);
+  }
+
+  bool OgreTexture::AllocateScalingPolicy::resize()
+  {
+    bool created = false;
+    if(mTexture.mTexture->getWidth() < mWidth || mTexture.mTexture->getHeight() < mHeight) {
+      mTexture.create(mWidth * mScalingFactor, mHeight * mScalingFactor);
+      created = true;
+    }
+    float widthScale = (float)mWidth/(float)mTexture.mTexture->getWidth();
+    float heightScale = (float)mHeight/(float)mTexture.mTexture->getHeight();
+
+    Gsage::Vector2 tl(0.f, 0.f);
+    Gsage::Vector2 bl(0.f, heightScale);
+    Gsage::Vector2 tr(widthScale, 0.0f);
+    Gsage::Vector2 br(widthScale, heightScale);
+    mTexture.setUVs(tl, bl, tr, br);
+    return created;
+  }
+
   OgreTexture::OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat)
-    : Texture()
-    , mName(name)
+    : Texture(name)
     , mParams(params)
     , mHasData(false)
     , mDirty(false)
+    , mCreate(false)
+    , mScalingPolicy(std::move(createScalingPolicy(params)))
   {
     params.read("width", mWidth);
     params.read("height", mHeight);
@@ -52,7 +123,7 @@ namespace Gsage {
     mTexture->addListener(this);
   }
 
-  void OgreTexture::create()
+  void OgreTexture::create(int width, int height)
   {
     mValid = false;
     Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
@@ -71,18 +142,21 @@ namespace Gsage {
     bool shareableDepthBuffer = mParams.get("shareableDepthBuffer", true);
 #endif
 
-    Ogre::ResourcePtr resource = texManager.getResourceByName(mName, group);
+    Ogre::ResourcePtr resource = texManager.getResourceByName(mHandle, group);
     if(!resource.isNull()) {
       texManager.remove(resource);
     }
 
+    width = width < 0 ? mWidth : width;
+    height = height < 0 ? mHeight : height;
+
     mHasData = false;
     mTexture = texManager.createManual(
-      mName,
+      mHandle,
       group,
       textureType,
-      mWidth,
-      mHeight,
+      width,
+      height,
       depth,
       numMipmaps,
       pixelFormat,
@@ -99,9 +173,25 @@ namespace Gsage {
     );
     OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
     texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
-    memset(texBuf->getCurrentLock().data, 0, mWidth * mHeight * Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat()));
+    memset(texBuf->getCurrentLock().data, 0, width * height * Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat()));
     texBuf->unlock();
-    LOG(TRACE) << "Created texture with size " << mWidth << "x" << mHeight;
+#if OGRE_VERSION >= 0x020100
+    // additionally set up Hlms for 2.1
+    Ogre::HlmsManager *hlmsManager = Ogre::Root::getSingletonPtr()->getHlmsManager();
+    Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
+    Ogre::HlmsUnlitDatablock *datablock = static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->getDatablock(mHandle));
+    if(!datablock) {
+      datablock = static_cast<Ogre::HlmsUnlitDatablock*>(
+          hlmsUnlit->createDatablock(mHandle,
+            mHandle,
+            Ogre::HlmsMacroblock(),
+            Ogre::HlmsBlendblock(),
+            Ogre::HlmsParamVec()));
+    }
+
+    datablock->setTexture(Ogre::PBSM_DIFFUSE, 0, mTexture);
+#endif
+    LOG(TRACE) << "Created texture " << mHandle << " with size " << width << "x" << height;
     mValid = true;
   }
 
@@ -125,6 +215,7 @@ namespace Gsage {
     mBufferWidth = width;
     mBufferHeight = height;
     mSize = size;
+    mScalingPolicy->update(width, height);
     mDirty = true;
   }
 
@@ -142,8 +233,6 @@ namespace Gsage {
 
     mWidth = width;
     mHeight = height;
-    create();
-
     Texture::setSize(width, height);
   }
 
@@ -158,19 +247,53 @@ namespace Gsage {
   void OgreTexture::render()
   {
     std::lock_guard<std::mutex> lock(mSizeUpdateLock);
-    if(mWidth != mBufferWidth) {
+    if(mSize == 0) {
+      mHasData = false;
       return;
     }
 
-    mDirty = false;
-    char numBytes = Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat());
-    size_t textureSize = mWidth * mHeight * numBytes;
-
+    bool wasCreated = mScalingPolicy->render();
     OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
     texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
-    memcpy(texBuf->getCurrentLock().data, mBuffer, std::min(mSize, textureSize));
+
+    size_t pixelSize = Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat());
+    int textureRowWidth = mTexture->getWidth() * pixelSize;
+    size_t textureSize = textureRowWidth * mTexture->getHeight();
+    char* dest = static_cast<char*>(texBuf->getCurrentLock().data);
+    if(mSize != textureSize) {
+      int bufferRowWidth = mBufferWidth * pixelSize;
+
+      int bufferOffset = 0;
+      int destOffset = 0;
+      while(bufferOffset < mSize && destOffset < textureSize) {
+        memcpy(&dest[destOffset], &mBuffer[bufferOffset], bufferRowWidth);
+        destOffset += textureRowWidth;
+        bufferOffset += bufferRowWidth;
+      }
+    } else {
+      memcpy(dest, mBuffer, mSize);
+    }
+
     texBuf->unlock();
+    mDirty = false;
     mHasData = true;
+
+    if(wasCreated) {
+      fireEvent(Event(Texture::RECREATE));
+    }
+  }
+
+  std::unique_ptr<OgreTexture::ScalingPolicy> OgreTexture::createScalingPolicy(const DataProxy& params)
+  {
+    std::string policyType = params.get("scalingPolicy.type", "default");
+    if(policyType == "default") {
+      return std::make_unique<OgreTexture::DefaultScalingPolicy>(*this);
+    } else if(policyType == "allocate") {
+      return std::make_unique<OgreTexture::AllocateScalingPolicy>(*this, params.get("scalingPolicy.scalingFactor", 2.0f));
+    }
+
+    LOG(WARNING) << "Unknown scaling policy type " << policyType << ", falling back to default policy";
+    return std::make_unique<OgreTexture::DefaultScalingPolicy>(*this);
   }
 
   OgreTexture::~OgreTexture()

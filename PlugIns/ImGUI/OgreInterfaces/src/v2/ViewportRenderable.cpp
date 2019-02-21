@@ -67,20 +67,44 @@ namespace Gsage {
   {
   }
 
-  void ViewportRenderData::update(ImVec2 pos, ImVec2 size)
+  void ViewportRenderData::updatePos(ImVec2 pos)
+  {
+    mPos = pos;
+  }
+
+  void ViewportRenderData::updateSize(ImVec2 size)
+  {
+    mSize = size;
+  }
+
+  void ViewportRenderData::updateUVs(const Texture::UVs& uvs)
+  {
+    Gsage::Vector2 tl;
+    Gsage::Vector2 bl;
+    Gsage::Vector2 tr;
+    Gsage::Vector2 br;
+
+    std::tie(tl, bl, tr, br) = uvs;
+    mVertexBuffer[0].uv = ImVec2(bl.X, bl.Y);
+    mVertexBuffer[1].uv = ImVec2(br.X, br.Y);
+    mVertexBuffer[2].uv = ImVec2(tr.X, tr.Y);
+    mVertexBuffer[3].uv = ImVec2(tl.X, tl.Y);
+  }
+
+  void ViewportRenderData::updateVertexBuffer()
   {
     mDrawCmd.ElemCount = 6;
-    mDrawCmd.ClipRect = ImVec4(pos.x, pos.y, size.x, size.y);
-    mVertexBuffer[0].pos.x = pos.x;
-    mVertexBuffer[0].pos.y = pos.y + size.y;
+    mDrawCmd.ClipRect = ImVec4(mPos.x, mPos.y, mSize.x, mSize.y);
+    mVertexBuffer[0].pos.x = mPos.x;
+    mVertexBuffer[0].pos.y = mPos.y + mSize.y;
 
-    mVertexBuffer[1].pos.x = pos.x + size.x;
-    mVertexBuffer[1].pos.y = pos.y + size.y;
+    mVertexBuffer[1].pos.x = mPos.x + mSize.x;
+    mVertexBuffer[1].pos.y = mPos.y + mSize.y;
 
-    mVertexBuffer[2].pos.x = pos.x + size.x;
-    mVertexBuffer[2].pos.y = pos.y;
+    mVertexBuffer[2].pos.x = mPos.x + mSize.x;
+    mVertexBuffer[2].pos.y = mPos.y;
 
-    mVertexBuffer[3].pos = pos;
+    mVertexBuffer[3].pos = mPos;
   }
 
   void ViewportRenderData::setDatablock(const Ogre::String& name)
@@ -89,6 +113,9 @@ namespace Gsage {
     Ogre::HlmsDatablock* datablock = manager->getDatablockNoDefault(name);
     if(datablock) {
       mDatablock = datablock;
+    } else {
+      LOG(WARNING) << "Failed to update datablock to " << name;
+      return;
     }
 
     mTextureName = name;

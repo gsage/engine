@@ -152,7 +152,11 @@ namespace Gsage {
         LOG(ERROR) << "Failed to set up node tree: scene manager or object manager is not set";
         return;
       }
-      mRootNode = mObjectManager->create<SceneNodeWrapper>(value, getOwner()->getId(), mSceneManager);
+      try {
+        mRootNode = mObjectManager->create<SceneNodeWrapper>(value, getOwner()->getId(), mSceneManager);
+      } catch(const Ogre::Exception& e) {
+        LOG(ERROR) << "Failed to create render component " << e.what();
+      }
     } else {
       mRootNode->read(value);
     }

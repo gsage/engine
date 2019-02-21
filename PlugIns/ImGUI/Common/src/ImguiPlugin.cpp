@@ -92,6 +92,7 @@ namespace Gsage {
 
     ImguiLuaInterface::addLuaBindings(lua);
     lua["imgui"]["manager"] = &mUIManager;
+    lua["imgui"]["Scale"] = 1.0;
 
     lua["imgui"]["Image"] = [&](const std::string& name) -> std::shared_ptr<ImguiImage> {
       EngineSystem* system = mFacade->getEngine()->getSystem("render");

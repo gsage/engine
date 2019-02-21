@@ -35,8 +35,8 @@ class TestGsageFacade : public ::testing::Test
  */
 TEST_F(TestGsageFacade, TestPlugins)
 {
-  std::string input = mPluginDirectory + GSAGE_PATH_SEPARATOR + "Input";
-  std::string empty = mPluginDirectory + GSAGE_PATH_SEPARATOR + "Empty";
+  std::string input = "Input";
+  std::string empty = "Empty";
 
   ASSERT_TRUE(mInstance->initialize("testConfig.json", RESOURCES_FOLDER));
   // Loading after initialize

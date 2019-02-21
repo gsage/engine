@@ -1,0 +1,9 @@
+hlms BaseWhite pbs
+{
+	roughness	0.4
+	fresnel		1.33
+
+	diffuse		1 1 1
+
+	specular	1 1 1
+}

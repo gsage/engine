@@ -69,6 +69,12 @@ namespace Gsage {
     for (int i = 0; i < drawList->CmdBuffer.Size; i++)
     {
       int index = offset + i;
+      const ImDrawCmd *drawCmd = &drawList->CmdBuffer[i];
+
+      if(drawList->VtxBuffer.Size == 0 || drawCmd->ElemCount == 0) {
+        continue;
+      }
+
       // add more renderables if needed
       if(mRenderables.size() <= index) {
         mRenderables.push_back(OGRE_NEW ImguiRenderable(
@@ -76,7 +82,6 @@ namespace Gsage {
         ));
       }
 
-      const ImDrawCmd *drawCmd = &drawList->CmdBuffer[i];
 
       //update renderable vertex buffers
       static_cast<ImguiRenderable*>(mRenderables[index])->updateVertexData(

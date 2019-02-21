@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2017 Gsage Authors
+Copyright (c) 2014-2019 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,9 @@ THE SOFTWARE.
 #include <string>
 
 #include "imgui.h"
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include "imgui_internal.h"
 
 namespace Gsage {

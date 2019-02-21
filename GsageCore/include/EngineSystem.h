@@ -192,6 +192,18 @@ namespace Gsage
       void setName(const std::string& name);
 
       /**
+       * Get system kind created by the SystemFactory
+       * @returns system kind string
+       */
+      const std::string& getKind() const;
+
+      /**
+       * Called by the SystemFactory instance, sets system kind
+       * @param name system kind string
+       */
+      void setKind(const std::string& kind);
+
+      /**
        * Count of threads to use for the system
        */
       inline int getThreadsNumber() { return mThreadsNumber; };
@@ -225,6 +237,7 @@ namespace Gsage
       DataProxy mSystemInfo;
 
       std::string mName;
+      std::string mKind;
 
       int mThreadsNumber;
 

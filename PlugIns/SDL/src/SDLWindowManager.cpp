@@ -74,6 +74,55 @@ namespace Gsage {
     return std::make_tuple(x, y);
   }
 
+  void SDLWindow::setPosition(int x, int y)
+  {
+    SDL_SetWindowPosition(mWindow, x, y);
+  }
+
+  std::tuple<int, int> SDLWindow::getSize()
+  {
+    int width = 0;
+    int height = 0;
+    SDL_GetWindowSize(mWindow, &width, &height);
+    return std::make_tuple(width, height);
+  }
+
+  void SDLWindow::setSize(int width, int height)
+  {
+    SDL_SetWindowSize(mWindow, width, height);
+  }
+
+  std::tuple<int, int, int, int> SDLWindow::getDisplayBounds()
+  {
+    int displays = SDL_GetNumVideoDisplays();
+    SDL_Point p = {0, 0};
+    SDL_Point points[1] = {p};
+    std::tie(p.x, p.y) = getPosition();
+    SDL_Rect displayBounds;
+    for(int i = 0; i < displays; i++) {
+      SDL_GetDisplayUsableBounds(i, &displayBounds);
+      if(p.x < 0 || p.y < 0) {
+        break;
+      }
+
+      SDL_Rect r;
+      if(SDL_EnclosePoints(&points[0], 1, &displayBounds, &r)) {
+        break;
+      }
+    }
+#if GSAGE_PLATFORM != GSAGE_APPLE
+    int top;
+    int left;
+    int bottom;
+    int right;
+    SDL_GetWindowBordersSize(mWindow, &top, &left, &bottom, &right);
+    displayBounds.y += top;
+    displayBounds.h -= top;
+#endif
+
+    return std::make_tuple(displayBounds.x, displayBounds.y, displayBounds.w, displayBounds.h);
+  }
+
   void* SDLWindow::getGLContext()
   {
     if(mGLContext == nullptr) {

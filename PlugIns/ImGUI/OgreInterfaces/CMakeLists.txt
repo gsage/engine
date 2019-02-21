@@ -12,10 +12,10 @@ include_directories(
 )
 
 set(LIBS
+  OgrePlugin
   GsageCore
   imgui
   ImGUIPlugin
-  OgrePlugin
   cpp-channel
 )
 
@@ -26,14 +26,6 @@ else("${OGRE_VERSION_MAJOR}" STREQUAL "2")
   file(GLOB version_dependent  src/v1/*.cpp)
 endif("${OGRE_VERSION_MAJOR}" STREQUAL "2")
 set(sources ${version_dependent} ${sources})
-
-if(APPLE)
-  set(LIBS ${LIBS}
-    ${COREFOUNDATION_LIBRARY})
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/OSXUtils.mm PROPERTIES COMPILE_FLAGS "-x objective-c++")
-  set(sources src/OSXUtils.mm ${sources})
-endif(APPLE)
-
 
 if(NOT CONAN_USER_OGRE_STATIC)
   set(LIBS ${LIBS} ${OGRE_LIBRARIES} ${OGRE_Overlay_LIBRARIES})

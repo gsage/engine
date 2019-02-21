@@ -24,6 +24,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#define POCO_NO_UNWINDOWS
 #include "GsageFacade.h"
 
 #include <stdio.h>

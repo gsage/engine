@@ -39,6 +39,116 @@ THE SOFTWARE.
 
 namespace Gsage {
 
+  bool ImguiViewCollection::addView(const std::string& name, sol::object view)
+  {
+    sol::function callback;
+    sol::table t = view.as<sol::table>();
+    sol::optional<sol::function> call = t[sol::meta_function::call];
+    RenderView render;
+
+    if (call) {
+      render = [t, call] () -> sol::function_result { return call.value()(t); };
+    } else if(view.is<sol::function>()) {
+      callback = view.as<sol::function>();
+      render = [callback] () -> sol::function_result { return callback(); };
+    } else {
+      LOG(ERROR) << "Failed to add lua object as lua view " << name << ": must be either callable or function";
+      return false;
+    }
+
+    mViews[name] = render;
+    return true;
+  }
+
+  bool ImguiViewCollection::removeView(const std::string& name, sol::object view)
+  {
+    auto views = &mViews;
+
+    if(views->count(name) == 0) {
+      return false;
+    }
+
+    views->erase(name);
+    return true;
+  }
+
+  ImguiDockspaceView::ImguiDockspaceView(ImguiManager* manager, const std::string& name)
+    : mManager(manager)
+  {
+    std::stringstream ss;
+    ss << "###dockspace_" << name;
+    mName = ss.str();
+  }
+
+  void ImguiDockspaceView::render(int x, int y, int width, int height)
+  {
+    if(!mDockspace) {
+      mDockspace = std::make_unique<ImGuiDockspaceRenderer>();
+      mDockspace->setState(loadState(mState));
+    }
+
+    if(mViews.size() == 0) {
+      return;
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetColorU32(ImGuiCol_Border));
+    ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+    // TODO: this may not work
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(io.DisplaySize);
+    ImGui::Begin(
+        mName.c_str(),
+        NULL,
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse |
+        ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoSavedSettings
+        );
+    ImGui::PopStyleVar();
+    mManager->mCurrentDockspace = mDockspace.get();
+    mDockspace->beginWorkspace(ImVec2(x, y), ImVec2(width, height));
+    ImGui::PopStyleColor(2);
+    for(auto pair : mViews) {
+      try {
+        auto res = pair.second();
+        if(!res.valid()) {
+          sol::error e = res;
+          LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
+        }
+      } catch(sol::error e) {
+        LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
+      } catch(...) {
+        LOG(ERROR) << "Exception in view " << pair.first << ": unknown error";
+      }
+    }
+    mDockspace->endWorkspace();
+    mManager->mCurrentDockspace = NULL;
+    ImGui::End();
+  }
+
+  sol::table ImguiDockspaceView::getState()
+  {
+    sol::state_view lua(mManager->mLuaState);
+    sol::table t = lua.create_table();
+    dumpState(mDockspace->getState()).dump(t);
+    return t;
+  }
+
+  void ImguiDockspaceView::setState(sol::table t)
+  {
+    DataProxy dp = DataProxy::wrap(t);
+    mState = dp;
+    if(mDockspace) {
+      mDockspace->setState(loadState(mState));
+    }
+  }
+
   void ImguiRenderer::initialize(Engine* engine, lua_State* L)
   {
     mEngine = engine;
@@ -52,15 +162,14 @@ namespace Gsage {
     }
   }
 
-  ImGuiDockspaceRenderer* ImguiRenderer::getDockspace(ImGuiContext* imctx)
+  ImguiRenderer::Context* ImguiRenderer::getContext(ImGuiContext* imctx)
   {
     if(mContextNames.count(imctx) == 0) {
       return nullptr;
     }
 
-    Context& ctx = mContexts[mContextNames[imctx]];
-
-    return ctx.dockspace.get();
+    Context* ctx = &mContexts[mContextNames[imctx]];
+    return ctx;
   }
 
   ImguiRenderer::Context* ImguiRenderer::initializeContext(const std::string& name)
@@ -88,8 +197,6 @@ namespace Gsage {
       if(pair.second.context == NULL) {
         pair.second.context = mManager->getImGuiContext(pair.first, pair.second.size);
         ImGui::SetCurrentContext(pair.second.context);
-        pair.second.dockspace = std::make_unique<ImGuiDockspaceRenderer>();
-        pair.second.dockspace->setState(mManager->getDockState(pair.first));
         mContextNames[pair.second.context] = pair.first;
       } else  {
         ImGui::SetCurrentContext(pair.second.context);
@@ -100,8 +207,6 @@ namespace Gsage {
         io.MousePos.x = mMousePositions[pair.first].x;
         io.MousePos.y = mMousePositions[pair.first].y;
       }
-
-      mFrameEnded = false;
 
       // Setup display size (every frame to accommodate for window resizing)
       io.DisplaySize = ImVec2(pair.second.size.x, pair.second.size.y);
@@ -120,6 +225,7 @@ namespace Gsage {
     : mRenderer(0)
     , mIsSetUp(false)
     , mFontAtlas(NULL)
+    , mCurrentDockspace(NULL)
   {
   }
 
@@ -237,41 +343,45 @@ namespace Gsage {
     lua["ImGuiDock_NoTitleBar"] = ImGuiDock_NoTitleBar;
     lua["ImGuiDock_NoResize"] = ImGuiDock_NoResize;
 
+    lua["imgui"]["SetFontScale"] = [&](size_t index, float scale) {
+      mFonts[index]->Scale = scale;
+      ImGui::PushFont(mFonts[index]);
+    };
+
+    lua["imgui"]["ResetFontScale"] = [&](size_t index) {
+      mFonts[index]->Scale = 1;
+      ImGui::PopFont();
+    };
+
     lua["imgui"]["BeginDock"] = [this](std::string label, int flags) -> bool {
-      return mRenderer->getDockspace(ImGui::GetCurrentContext())->begin(label.c_str(), NULL, flags);
+      return mCurrentDockspace ? mCurrentDockspace->begin(label.c_str(), NULL, flags) : false;
     };
 
     lua["imgui"]["BeginDockOpen"] = [this](std::string label, bool opened, int flags) -> std::tuple<bool, bool> {
-      bool active = mRenderer->getDockspace(ImGui::GetCurrentContext())->begin(label.c_str(), &opened, flags);
+      bool active = mCurrentDockspace ? mCurrentDockspace->begin(label.c_str(), &opened, flags) : false;
       return std::make_tuple(active, opened);
     };
 
     lua["imgui"]["BeginDockTitleOpen"] = [this](std::string label, std::string title, bool opened, int flags, int dockFlags) -> std::tuple<bool, bool> {
-      bool active = mRenderer->getDockspace(ImGui::GetCurrentContext())->begin(label.c_str(), title.c_str(), &opened, flags, dockFlags);
+      bool active = mCurrentDockspace ? mCurrentDockspace->begin(label.c_str(), title.c_str(), &opened, flags, dockFlags) : false;
       return std::make_tuple(active, opened);
     };
 
     lua["imgui"]["EndDock"] = [this]() {
-      return mRenderer->getDockspace(ImGui::GetCurrentContext())->end();
+      if(mCurrentDockspace)
+        mCurrentDockspace->end();
     };
 
-    lua["imgui"]["GetDockState"] = [this] () -> sol::table {
-      if(mRenderer) {
-        mRenderer->getDockState(mDockspaceStates);
-      }
+    lua.new_usertype<ImguiDockspaceView>("ImguiDockspaceView",
+        "addView", &ImguiDockspaceView::addView,
+        "removeView", &ImguiDockspaceView::removeView,
+        "getState", &ImguiDockspaceView::getState,
+        "setState", &ImguiDockspaceView::setState,
+        "render", &ImguiDockspaceView::render
+    );
 
-      sol::state_view lua(mLuaState);
-      sol::table t = lua.create_table();
-      mDockspaceStates.dump(t);
-      return t;
-    };
-
-    lua["imgui"]["SetDockState"] = [this] (sol::table t) {
-      DataProxy dp = DataProxy::wrap(t);
-      dp.dump(mDockspaceStates);
-      if(mRenderer) {
-        mRenderer->setDockState(dp);
-      }
+    lua["imgui"]["createDockspace"] = [&](const std::string& name){
+      return std::make_shared<ImguiDockspaceView>(this, name);
     };
   }
 
@@ -360,23 +470,6 @@ namespace Gsage {
   {
     mRenderer->render();
     return true;
-  }
-
-  void ImguiRenderer::getDockState(DataProxy& dest)
-  {
-    for(auto& pair : mContexts) {
-      dest.put(pair.first, dumpState(pair.second.dockspace->getState()));
-    }
-  }
-
-  void ImguiRenderer::setDockState(const DataProxy& state)
-  {
-    for(auto pair : state) {
-      if(mContexts.count(pair.first) > 0) {
-        ImGuiDockspaceState s = loadState(pair.second);
-        mContexts[pair.first].dockspace->setState(s);
-      }
-    }
   }
 
   ImGuiContext* ImguiManager::getImGuiContext(std::string name, const ImVec2& initialSize)
@@ -553,96 +646,9 @@ namespace Gsage {
     return ctx;
   }
 
-  bool ImguiManager::addView(const std::string& name, sol::object view, bool docked)
-  {
-    sol::function callback;
-    sol::table t = view.as<sol::table>();
-    sol::optional<sol::function> call = t[sol::meta_function::call];
-    RenderView render;
-
-    if (call) {
-      render = [t, call] () -> sol::function_result { return call.value()(t); };
-      docked = t.get_or("docked", docked);
-    } else if(view.is<sol::function>()) {
-      callback = view.as<sol::function>();
-      render = [callback] () -> sol::function_result { return callback(); };
-    } else {
-      LOG(ERROR) << "Failed to add lua object as lua view " << name << ": must be either callable or function";
-      return false;
-    }
-
-    if(docked){
-      mDockedViews[name] = render;
-    } else {
-      mViews[name] = render;
-    }
-
-    return true;
-  }
-
-  bool ImguiManager::removeView(const std::string& name, sol::object view)
-  {
-    bool docked = false;
-    auto views = &mViews;
-    if(view != sol::lua_nil) {
-      sol::table t = view.as<sol::table>();
-      if(t.get_or("docked", docked)) {
-        views = &mDockedViews;
-      }
-    }
-
-    if(views->count(name) == 0) {
-      return false;
-    }
-
-    views->erase(name);
-    return true;
-  }
-
   void ImguiManager::renderViews(ImguiRenderer::Context& ctx)
   {
     ImGuiIO& io = ImGui::GetIO();
-    if(mDockedViews.size() > 0) {
-      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
-      ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetColorU32(ImGuiCol_Border));
-      ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-      ImVec2 size = ctx.size;
-
-      ImGui::SetNextWindowSize(size);
-      ImGui::SetNextWindowPos(ImVec2(0, 0));
-      ImGui::Begin(
-          "###dockspace",
-          NULL,
-          ImGuiWindowFlags_NoTitleBar |
-          ImGuiWindowFlags_NoResize |
-          ImGuiWindowFlags_NoMove |
-          ImGuiWindowFlags_NoScrollbar |
-          ImGuiWindowFlags_NoScrollWithMouse |
-          ImGuiWindowFlags_NoBringToFrontOnFocus |
-          ImGuiWindowFlags_NoSavedSettings
-      );
-      ImGui::PopStyleVar();
-      if(ctx.dockspace) {
-        ctx.dockspace->beginWorkspace(ImVec2(5, 35), size - ImVec2(10, 40));
-      }
-      ImGui::PopStyleColor(2);
-      for(auto pair : mDockedViews) {
-        try {
-          auto res = pair.second();
-          if(!res.valid()) {
-            sol::error e = res;
-            LOG(ERROR) << "Failed to render view " << pair.first << ": " << e.what();
-          }
-        } catch(sol::error e) {
-          LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
-        }
-      }
-      if(ctx.dockspace) {
-        ctx.dockspace->endWorkspace();
-      }
-      ImGui::End();
-    }
-
     for(auto pair : mViews) {
       try {
         auto res = pair.second();
@@ -654,13 +660,5 @@ namespace Gsage {
         LOG(ERROR) << "Exception in view " << pair.first << ": " << e.what();
       }
     }
-  }
-
-  ImGuiDockspaceState ImguiManager::getDockState(const std::string& name)
-  {
-    ImGuiDockspaceState s;
-    DataProxy dp;
-    mDockspaceStates.read(name, dp);
-    return loadState(dp);
   }
 }

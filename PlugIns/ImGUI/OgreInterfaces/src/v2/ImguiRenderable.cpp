@@ -64,7 +64,9 @@ namespace Gsage {
     // recreate vertex buffer if vtxCount changes
     if(mVertexBuffer == nullptr || mVertexBuffer->getNumElements() != vtxCount) {
       if(mVertexBuffer != nullptr) {
-        mVertexBuffer->unmap(Ogre::UO_UNMAP_ALL);
+        if(mVertexBuffer->getMappingState() != 0) {
+          mVertexBuffer->unmap(Ogre::UO_UNMAP_ALL);
+        }
         mVaoManager->destroyVertexBuffer(mVertexBuffer);
       }
 

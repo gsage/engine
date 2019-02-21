@@ -98,7 +98,6 @@ describe("#ogre getGeometry", function()
               for i = 1, #verts do
                 local p = verts[i]
                 local e = vertices[i].position
-
                 assert.equals_float(e.x * scale.x + position.x, p.x)
                 assert.equals_float(e.y * scale.y + position.y, p.y)
                 assert.equals_float(e.z * scale.z + position.z, p.z)

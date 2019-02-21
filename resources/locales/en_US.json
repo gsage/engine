@@ -1,5 +1,24 @@
 {
-  "views": "Views",
+  "menu": {
+    "file": {
+      "new": "New",
+      "open": "Open",
+      "close": "Close",
+      "save": "Save",
+      "import": "Import..."
+    }
+  },
+  "side_panel": {
+    "home": "Home",
+    "world": "World",
+    "models": "Models"
+  },
+
+  "top_menu": {
+    "file": "File",
+    "views": "Views"
+  },
+
   "language": "English",
   "lang.select": "Language",
   "window_title": {
@@ -16,6 +35,100 @@
     "dock states": "Dock states",
     "tools": "Tools",
     "script_editor": "Script"
+  },
+
+  "plugins": {
+    "description": {
+      "OgrePlugin": "Adds rendering functionality backed by OGRE 1.9 or 2.1. The only available render system at the moment.",
+      "SDLPlugin": "Allows using SDL for input handling and window management.",
+      "CEFPlugin": "Adds ability to open any webpage and render it to texture using Chrome Embeddable Framework. Pretty heavy dependency.",
+      "ImGUIPlugin": "Dear-ImGUI interface library. Not advised to use it in production environment.",
+      "OisInputPlugin": "Handle input using OIS library. Does not play well with SDL windows, use only if using window created by OGRE render system",
+      "RecastNavigationPlugin": "Navmesh building and pathfinding using Recast and Detour.",
+      "RocketUIPlugin": "LibRocket interface library"
+    }
+  },
+
+  "wizard": {
+    "create_project": "Create New Project",
+    "recent_projects": "Recent Projects",
+    "open_project": "Open Project",
+    "project": {
+      "opened": "Last Opened",
+      "path": "Path"
+    },
+    "recent": {
+      "no_projects": "No Recent Projects"
+    },
+    "projects": {
+      "blank": {
+        "name": "Blank Project",
+        "description": "Blank project. It won't create any project settings, won't load any default models"
+      },
+      "actionRPG": {
+        "name": "Action RPG",
+        "description": "Default settings for action RPG project with isometric view. Will set up isometric camera controller, add default models."
+      }
+    },
+
+    "create": {
+      "next": "Next",
+      "back": "Previous",
+      "cancel": "Cancel",
+      "complete": "Create",
+      "location": "Location",
+      "plugins": "Plugins",
+      "summary": "Summary",
+      "browse": "Browse",
+      "systems": "Systems",
+      "managers": "Managers",
+
+      "plugins_config": {
+        "description": "Set up plugins, that will be used in release version of the game",
+        "installed": "Install",
+        "not_installed": "Disabled",
+        "depends": "Plugin Dependencies"
+      },
+
+      "systems_config": {
+        "no_systems": "No systems available",
+        "not_set": "None",
+        "no_managers": "No managers available"
+      },
+
+      "summary_config": {
+        "window_manager": "Using window manager ",
+        "no_window_manager": "Not using window manager",
+        "input_manager": "Using input manager ",
+        "no_input_manager": "Not using input manager"
+      },
+
+      "description_location": "Create New Project",
+      "description_plugins": "Install PlugIns",
+      "description_systems": "Configure systems",
+      "description_summary": "Project Summary",
+      "description_managers": "Configure Managers",
+
+      "project_name": "Project Name",
+      "project_folder": "Project Path",
+      "project_icon": "Icon",
+      "errors": {
+        "name_empty": "Project name is empty",
+        "path_empty": "Project path is not set"
+      },
+
+      "progress_title": "Creating Project",
+      "progress": {
+        "file_copied": "Copy %{flow}",
+        "file_copy_failed": "Copy failed %{flow}",
+        "folder_created": "Folder created %{path}",
+        "project_already_exists": "Failed: project already exists",
+        "writing_project_file": "Writing project file",
+        "writing_project_file_failed": "Writing project file failed",
+        "writing_configs": "Writing configs",
+        "opening_project": "Opening project..."
+      }
+    }
   },
 
   "tools": {
@@ -44,6 +157,10 @@
     "entity": {
       "reload": "Reload"
     }
+  },
+
+  "assets": {
+    "levels": "Levels"
   },
 
   "transform": {

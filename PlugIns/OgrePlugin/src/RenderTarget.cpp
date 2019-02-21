@@ -579,15 +579,15 @@ namespace Gsage {
       params["parentWindowHandle"] = handle;
 #endif
     }
+    mWidth = parameters.get("width", 1024) * parameters.get("scale", 1);
+    mHeight = parameters.get("height", 768) * parameters.get("scale", 1);
+
     Ogre::RenderWindow* window = Ogre::Root::getSingletonPtr()->createRenderWindow(
         parameters.get("name", "default"),
-        parameters.get("width", 1024) * parameters.get("scale", 1),
-        parameters.get("height", 786) * parameters.get("scale", 1),
+        mWidth,
+        mHeight,
         parameters.get("fullscreen", false),
         &params);
-
-    mWidth = window->getWidth();
-    mHeight = window->getHeight();
 
     if(parameters.get("useWindowManager", false)) {
       window->setVisible(false);

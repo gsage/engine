@@ -37,8 +37,7 @@ namespace Gsage {
   SceneNodeWrapper::SceneNodeWrapper() :
     mNode(0),
     mOffset(Ogre::Vector3::ZERO),
-    mOrientationVector(Ogre::Vector3::UNIT_Z),
-    mOrientation(Ogre::Quaternion::IDENTITY)
+    mOrientationVector(Ogre::Vector3::UNIT_Z)
   {
     BIND_PROPERTY("offset", &mOffset);
 
@@ -71,7 +70,6 @@ namespace Gsage {
 #else
       mNode = parent->createChildSceneNode(mObjectId);
 #endif
-      mNode->setOrientation(mOrientation);
     }
 
     addEventListener(objectManager, OgreObjectManagerEvent::FACTORY_UNREGISTERED, &SceneNodeWrapper::onFactoryUnregister);
@@ -97,7 +95,6 @@ namespace Gsage {
 #else
     mNode = mParentNode->createChildSceneNode(name);
 #endif
-    mNode->setOrientation(mOrientation);
     LOG(TRACE) << "Creating scene node \"" << name << "\"";
   }
 
@@ -110,6 +107,10 @@ namespace Gsage {
   {
     assert(mNode != 0);
     mNode->setPosition(position + (mOffset * getScale()));
+#if OGRE_VERSION >= 0x020100
+    // update cached position value
+    mNode->_getDerivedPositionUpdated();
+#endif
   }
 
   Ogre::Vector3 SceneNodeWrapper::getPosition()
@@ -119,30 +120,45 @@ namespace Gsage {
 
   Ogre::Vector3 SceneNodeWrapper::getPositionWithoutOffset()
   {
-    return mNode != 0 ? mNode->getPosition() : Ogre::Vector3::ZERO;
+    if(mNode == 0) {
+      return Ogre::Vector3::ZERO;
+    }
+    return mNode->getPosition();
   }
 
   void SceneNodeWrapper::setScale(const Ogre::Vector3& scale)
   {
     mNode->setScale(scale);
+#if OGRE_VERSION >= 0x020100
+    // update cached scale value
+    mNode->_getDerivedScaleUpdated();
+#endif
   }
 
   Ogre::Vector3 SceneNodeWrapper::getScale()
   {
-    return mNode != 0 ? mNode->getScale() : Ogre::Vector3::ZERO;
+    if(mNode == 0) {
+      return Ogre::Vector3::ZERO;
+    }
+
+    return mNode->getScale();
   }
 
   void SceneNodeWrapper::setOrientation(const Ogre::Quaternion& orientation)
   {
-    mOrientation = orientation;
-    if(mNode) {
-      mNode->setOrientation(mOrientation);
-    }
+    mNode->setOrientation(orientation);
+#if OGRE_VERSION >= 0x020100
+    // update cached position value
+    mNode->_getDerivedOrientationUpdated();
+#endif
   }
 
   Ogre::Quaternion SceneNodeWrapper::getOrientation()
   {
-    return mOrientation;
+    if(mNode == 0) {
+      return Ogre::Quaternion();
+    }
+    return mNode->getOrientation();
   }
 
   void SceneNodeWrapper::readChildren(const DataProxy& dict)
@@ -232,22 +248,16 @@ namespace Gsage {
   void SceneNodeWrapper::rotate(const Ogre::Quaternion& rotation, const Ogre::Node::TransformSpace ts)
   {
     mNode->rotate(rotation, ts);
-    mOrientation = mNode->getOrientation();
   }
 
   void SceneNodeWrapper::lookAt(const Ogre::Vector3& position, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->lookAt(position, relativeTo, mOrientationVector);
-    mOrientation = mNode->getOrientation();
   }
 
   void SceneNodeWrapper::destroy()
   {
     removeEventListener(mObjectManager, OgreObjectManagerEvent::FACTORY_UNREGISTERED, &SceneNodeWrapper::onFactoryUnregister);
-    for(auto& subscription : mConnections)
-    {
-      LOG(TRACE) << subscription.first.second << ", om: " << mObjectManager << ", sp: " << subscription.first.first;
-    }
     for(auto& pair : mChildren)
     {
       for(auto& objectPair : pair.second)
@@ -313,30 +323,25 @@ namespace Gsage {
   void SceneNodeWrapper::pitch(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->pitch(angle, relativeTo);
-    mOrientation = mNode->getOrientation();
   }
 
   void SceneNodeWrapper::yaw(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->yaw(angle, relativeTo);
-    mOrientation = mNode->getOrientation();
   }
 
   void SceneNodeWrapper::roll(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->roll(angle, relativeTo);
-    mOrientation = mNode->getOrientation();
   }
 
   void SceneNodeWrapper::translate(const Ogre::Vector3& d) {
     translate(d, Ogre::Node::TS_LOCAL);
-    mOrientation = mNode->getOrientation();
   }
 
   void SceneNodeWrapper::translate(const Ogre::Vector3& d, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->translate(d, relativeTo);
-    mOrientation = mNode->getOrientation();
   }
 
   bool SceneNodeWrapper::onFactoryUnregister(EventDispatcher* sender, const Event& event)

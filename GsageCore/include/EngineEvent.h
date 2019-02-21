@@ -54,6 +54,11 @@ namespace Gsage {
        * Engine main loop update
        */
       static const Event::Type UPDATE;
+      /**
+       * Engine settings were updated
+       */
+      static const Event::Type ENV_UPDATED;
+
       EngineEvent(Event::ConstType type);
       virtual ~EngineEvent();
   };

@@ -458,7 +458,7 @@ namespace Gsage {
     try {
       res = loads(str, type);
     } catch(DecodeException e) {
-      LOG(INFO) << e.what();
+      LOG(ERROR) << e.what();
       success = false;
     }
 
@@ -471,7 +471,7 @@ namespace Gsage {
     try {
       dest = loads(value, type);
     } catch(DecodeException e) {
-      LOG(INFO) << e.what();
+      LOG(ERROR) << "Failed to parse " << e.what();
       success = false;
     }
     return success;

@@ -91,8 +91,6 @@ namespace Gsage {
     if(mFactories.count(id) == 0)
       return;
 
-    mInputHandlers.clear();
-
     delete mFactories[id];
     mFactories.erase(id);
 

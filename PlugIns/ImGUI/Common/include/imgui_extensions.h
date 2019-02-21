@@ -1,9 +1,16 @@
 
+#ifndef __IMGUI_EXTENSIONS__
+#define __IMGUI_EXTENSIONS__
+
 #include "imgui.h"
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include "imgui_internal.h"
 
-
 namespace ImGui {
+
+  IMGUI_API bool Spinner(const char* label, float radius, int thickness, const ImU32& color);
 
   struct Gradient
   {
@@ -113,3 +120,5 @@ namespace ImGui {
   static inline void PathFillConvex(ImDrawList* drawList, const Gradient& gradient) { AddConvexPolyFilled(drawList, drawList->_Path.Data, drawList->_Path.Size, gradient); drawList->PathClear(); }
 
 }
+
+#endif

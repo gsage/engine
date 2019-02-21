@@ -83,9 +83,27 @@ THE SOFTWARE.
 #include <chrono>
 
 #include "OgreGeom.h"
+#include "GsageDefinitions.h"
 
 
 namespace Gsage {
+
+  inline bool pluginExists(const std::string& name) {
+    std::stringstream ss;
+    ss << name;
+#if GSAGE_PLATFORM == GSAGE_WIN32
+    ss << ".dll";
+#elif GSAGE_PLATFORM == GSAGE_APPLE
+    ss << "";
+#elif GSAGE_PLATFORM == GSAGE_LINUX
+    ss << ".so";
+#else
+    LOG(ERROR) << "File existence check is not supported on the current platform";
+    return false;
+#endif
+    std::ifstream f(ss.str());
+    return f.good();
+  }
 
   void OgreLogRedirect::messageLogged(const std::string& message,
                                       Ogre::LogMessageLevel lml,
@@ -174,7 +192,7 @@ namespace Gsage {
     // initialize ogre root
     mRoot = new Ogre::Root("", config, "");
     // initialize resource manager
-    mResourceManager = new ResourceManager(workdir);
+    mResourceManager = new ResourceManager(mFacade, workdir);
 
     auto pair = settings.get<DataProxy>("plugins");
     if(pair.second) {
@@ -199,7 +217,11 @@ namespace Gsage {
     if(windowParams.get("useWindowManager", false)) {
       WindowPtr window;
       auto createWindow = [&]() {
-        window = mFacade->getWindowManager()->createWindow(
+        WindowManagerPtr wm = mFacade->getWindowManager();
+        if(!wm) {
+          return;
+        }
+        window = wm->createWindow(
           windowName,
           windowParams.get("width", 1024),
           windowParams.get("height", 786),
@@ -279,6 +301,7 @@ namespace Gsage {
     mWindow = createRenderTarget(windowName, RenderTargetType::Window, windowParams);
 
     EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, WindowEvent::RESIZE, &OgreRenderSystem::handleWindowResized, 0);
+    EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, EngineEvent::ENV_UPDATED, &OgreRenderSystem::handleEnvUpdate, 0);
 
     if(!settings.get("window.useWindowManager", false)) {
       mWindowEventListener = new WindowEventListener(getRenderWindow(), mEngine);
@@ -325,6 +348,10 @@ namespace Gsage {
     auto resources = settings.get<DataProxy>("globalResources");
     if(resources.second && !mResourceManager->load(resources.first))
       return false;
+
+    resources = mConfig.get<DataProxy>("resources");
+    if(resources.second)
+      mResourceManager->load(resources.first);
 
 #if OGRE_VERSION >= 0x020100
     // TODO: make this configurable
@@ -572,9 +599,20 @@ namespace Gsage {
       std::string filename = pluginIDToFilename.count(id) != 0 ? pluginIDToFilename[id] : id;
 #if GSAGE_PLATFORM ==  GSAGE_WIN32 && (!defined(NDEBUG) && !defined(__OPTIMIZE__) || defined(_DEBUG) && !defined(NDEBUG))
       pluginPath = pluginsDir + filename + "_d";
-#else
-      pluginPath = pluginsDir + filename;
+      if(!pluginExists(pluginPath)) {
+        LOG(WARNING) << "Debug plugin " << pluginPath << " is not available";
+        pluginPath = "";
+      }
 #endif
+      if(pluginPath.empty()) {
+        pluginPath = pluginsDir + filename;
+      }
+
+      if(!pluginExists(pluginPath)) {
+        LOG(ERROR) << "Failed to load plugin " << pluginPath << ": file not found";
+        return false;
+      }
+
       LOG(INFO) << "Loading plugin " << pluginPath;
       mRoot->loadPlugin(pluginPath);
       return true;
@@ -624,6 +662,10 @@ namespace Gsage {
   }
 
   GeomPtr OgreRenderSystem::getGeometry(OgreEntities entities) {
+#if OGRE_VERSION >= 0x020100
+    mSceneManager->updateSceneGraph();
+#endif
+
     Ogre::SceneNode* root = mSceneManager->getRootSceneNode();
     if(!root) {
       LOG(INFO) << "Failed to get geometry: no root node defined";
@@ -631,25 +673,34 @@ namespace Gsage {
     }
 
     GeomPtr geom = GeomPtr(new OgreGeom(entities, root));
+    Ogre::Vector3 min(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+    Ogre::Vector3 max = -min;
 #if OGRE_VERSION_MAJOR == 1
     Ogre::AxisAlignedBox meshBoundingBox;
 #else
-    Ogre::Aabb meshBoundingBox;
+    Ogre::Aabb meshBoundingBox(min, max);
 #endif
+
 
     // calculate bounds
     for(auto entity : entities) {
 #if OGRE_VERSION_MAJOR == 1
+      Ogre::Matrix4 transform = root->_getFullTransform().inverse() * entity->getParentSceneNode()->_getFullTransform();
       Ogre::AxisAlignedBox bbox = entity->getBoundingBox();
-      bbox.transform(root->_getFullTransform().inverse() * entity->getParentSceneNode()->_getFullTransform());
+      bbox.transform(transform);
       meshBoundingBox.merge(bbox);
 #else
       meshBoundingBox.merge(entity->getWorldAabb());
 #endif
     }
 
-    Ogre::Vector3 min = meshBoundingBox.getMinimum();
-    Ogre::Vector3 max = meshBoundingBox.getMaximum();
+    if(entities.size() == 0) {
+      min = max = Ogre::Vector3::ZERO;
+    } else {
+      min = meshBoundingBox.getMinimum();
+      max = meshBoundingBox.getMaximum();
+    }
+
     geom->bmin = new float[3]{min.x, min.y, min.z};
     geom->bmax = new float[3]{max.x, max.y, max.z};
 
@@ -940,6 +991,15 @@ namespace Gsage {
   {
     const WindowEvent& event = static_cast<const WindowEvent&>(e);
     mWindow->setDimensions(event.width, event.height);
+    return true;
+  }
+
+  bool OgreRenderSystem::handleEnvUpdate(EventDispatcher* sender, const Event& e)
+  {
+    auto pair = mEngine->env().get<DataProxy>("resourceFolders");
+    if(pair.second && pair.first.size() > 0) {
+      mResourceManager->setAdditionalResourceFolders(pair.first);
+    }
     return true;
   }
 }

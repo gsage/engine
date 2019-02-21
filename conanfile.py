@@ -35,14 +35,20 @@ class GsageConan(ConanFile):
         "with_lua_version=luajit-2.0.5",
         "with_recast=True",
         "with_metal=False",
-        "cef:use_sandbox=True",
+        "cef:use_sandbox=False",
+        "Poco:enable_json=False",
+        "Poco:enable_mongodb=False",
+        "Poco:enable_data_sqlite=False",
     )
     generators = "cmake"
     requires = (
+        ("zlib/1.2.11@lasote/stable",),
         ("msgpack/2.1.3@gsage/master",),
         ("SDL2/2.0.8@gsage/master",),
         ("gtest/1.8.1@lasote/stable",),
-        ("cef/3.3239.1709.g093cae4@gsage/master",),
+        ("inja/2.0.1@gsage/master",),
+        ("jsonformoderncpp/3.5.0@gsage/master",),
+        ("Poco/1.9.0@pocoproject/stable",),
     )
 
     def source(self):
@@ -59,6 +65,10 @@ class GsageConan(ConanFile):
         self.options["gtest"].shared = False
         if self.settings.os == "Macos":
             self.options["SDL2"].x11_video = False
+            self.requires.add("cef/3.3239.1709.g093cae4@gsage/master")
+        else:
+            # 3440 has scaling issues on OSX
+            self.requires.add("cef/3.3440.1806.g65046b7@gsage/master")
 
         if self.options.with_ogre != "disabled":
             self.requires.add("OGRE/{}@gsage/master".format(self.options.with_ogre))

@@ -217,7 +217,6 @@ namespace Gsage {
       std::string mId;
 
       Ogre::Vector3 mOrientationVector;
-      Ogre::Quaternion mOrientation;
 
       Ogre::SceneNode* mNode;
       Ogre::Vector3 mOffset;

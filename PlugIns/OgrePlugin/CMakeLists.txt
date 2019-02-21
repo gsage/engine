@@ -29,7 +29,6 @@ set(LIBS
   ${OGRE_Overlay_LIBRARY}
   ${OGRE_LIBRARIES}
 )
-message("${OGRE_LIBRARIES}", "${CONAN_LIBS_ZZIPLIB}")
 
 if(APPLE)
   set(LIBS

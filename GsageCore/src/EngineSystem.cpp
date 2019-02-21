@@ -171,6 +171,16 @@ namespace Gsage
     mName = name;
   }
 
+  const std::string& EngineSystem::getKind() const
+  {
+    return mKind;
+  }
+
+  void EngineSystem::setKind(const std::string& name)
+  {
+    mKind = name;
+  }
+
   TaskPtr EngineSystem::asyncTask(Task::Function func)
   {
     if(mBackgroundWorkers.size() == 0) {

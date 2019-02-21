@@ -45,6 +45,7 @@ namespace Gsage
       UIManager()
         : mLuaState(0)
         , mEngine(0)
+        , mInitialized(false)
       {
       }
       virtual ~UIManager() {}
@@ -57,6 +58,7 @@ namespace Gsage
       virtual void initialize(Engine* engine, lua_State* L = 0) {
         mEngine = engine;
         mLuaState = L;
+        mInitialized = true;
       };
 
       /**
@@ -75,9 +77,12 @@ namespace Gsage
        * Get type id
        */
       virtual const std::string& getType() = 0;
+
+      inline bool initialized() const { return mInitialized; }
     protected:
       Engine* mEngine;
       lua_State* mLuaState;
+      bool mInitialized;
   };
 }
 

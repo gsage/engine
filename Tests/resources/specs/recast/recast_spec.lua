@@ -4,12 +4,17 @@ local recast = require 'helpers.recast'
 require 'factories.camera'
 
 describe("#recast #ogre", function()
+  local version = "v1"
+  if core:render().info.type == "ogre" and core:render().info.version >= 0x020100 then
+    version = "v2"
+  end
+
   local actor = {
     id = "recastNavigationTester",
     render = {
       resources = {
         Gunspider = {
-          "Zip:models/packs/gunspider.zip"
+          "Zip:bundles/models/".. version .. "/packs/gunspider.zip"
         }
       },
       animations = {
@@ -121,7 +126,7 @@ describe("#recast #ogre", function()
 
   setup(function()
     game:reset()
-    assert.truthy(game:loadPlugin(PLUGINS_DIR .. "/RecastNavigationPlugin"))
+    assert.truthy(game:loadPlugin("RecastNavigationPlugin"))
     assert.truthy(game:createSystem("3dmovement"))
     assert.truthy(game:createSystem("recast"))
   end)
@@ -130,7 +135,7 @@ describe("#recast #ogre", function()
     game:reset()
     core:removeSystem("navigation")
     core:removeSystem("movement")
-    assert:truthy(game:unloadPlugin(PLUGINS_DIR .. "/RecastNavigationPlugin"))
+    assert:truthy(game:unloadPlugin("RecastNavigationPlugin"))
   end)
 
   local settingsTestCases = {
@@ -195,16 +200,18 @@ describe("#recast #ogre", function()
     assert.is_not.is_nil(orbit.renderTargetName)
     assert.truthy(core:navigation():rebuildNavMesh(defaultRecastOptions))
 
-    recast.visualizeNavmesh()
+    if core:render().info.type == "ogre" and core:render().info.version < 0x020100 then
+      recast.visualizeNavmesh()
+    end
 
     local actorEntity = eal:getEntity(actor.id)
 
     it("works", function()
       local assertPosition = function(x, y, z)
         local position = actorEntity.render.position
-        assert.equals_float(position.x, x)
-        assert.equals_float(position.y, y)
-        assert.equals_float(position.z, z)
+        assert.close_enough(position.x, x, 4, 0.2)
+        assert.close_enough(position.y, y, 4, 0.2)
+        assert.close_enough(position.z, z, 4, 0.2)
       end
 
       -- walk randomly using navmesh

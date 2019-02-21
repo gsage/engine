@@ -1,0 +1,61 @@
+<html>
+    <head>
+      <meta charset="utf-8">
+      <script src="../js/jquery.js"></script>
+      <script src="./semantic.min.js"></script>
+      <link rel="stylesheet" href="./semantic.min.css">
+      <style>
+        .menu {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          padding: 5px;
+        }
+
+        body {
+          display: flex;
+          min-height: 100vh;
+          flex-direction: column;
+          padding: 50px;
+        }
+
+        .content {
+          flex: 1;
+        }
+      </style>
+      <script>
+      function updateProgress(percent, total, msg, color, fatalError) {
+        $("#logs").append("<div class=\"item\" style=\"color: " + color + " !important;\">" + msg + "</div>");
+        $("#progress").progress({
+          percent : percent,
+          text     : {
+            active: msg
+          }
+        });
+        if(fatalError) {
+          $("#progress").progress("set error");
+        }
+      }
+      </script>
+    </head>
+    <body>
+      <div class="ui menu inverted">
+        <a class="item" disabled="true" onclick="engine.startCreateWizard({{js(settings)}})">{{ lm("wizard.create.cancel") }}</a>
+      </div>
+      <h1>{{ lm("wizard.create.progress_title") }} {{settings.projectName}}</h1>
+      <div class="ui inverted segment content">
+        <div class="ui inverted list" id="logs">
+        </div>
+      </div>
+
+      <footer>
+        <div class="ui indicating progress" id="progress">
+          <div class="bar">
+            <div class="progress"></div>
+          </div>
+          <div class="label"></div>
+        </div>
+      </footer>
+    </body>
+</html>

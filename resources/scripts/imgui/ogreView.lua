@@ -5,7 +5,7 @@ require 'imgui.base'
 -- ogre view
 OgreView = class(ImguiWindow, function(self, textureID, title, docked, open)
   ImguiWindow.init(self, title, docked, open)
-  self.viewport = imgui.createOgreView()
+  self.viewport = imgui.createOgreView("0xFF000000")
   self.textureID = textureID
   self.camera = nil
 

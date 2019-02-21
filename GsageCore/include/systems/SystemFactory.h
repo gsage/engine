@@ -74,6 +74,11 @@ namespace Gsage {
        * @returns pointer to created EngineSystem, 0 if failed
        */
       virtual EngineSystem* create(Engine* engine, bool configure) = 0;
+
+      /**
+       * Get underlying factory created system type
+       */
+      virtual const std::string& getSystemType() const = 0;
   };
 
   /**
@@ -100,7 +105,13 @@ namespace Gsage {
        */
       EngineSystem* create(Engine* engine, bool configure = true)
       {
-        return engine->addSystem<S>(configure);
+        EngineSystem* s = engine->addSystem<S>(configure);
+        s->setKind(S::ID);
+        return s;
+      }
+
+      const std::string& getSystemType() const {
+        return S::type::SYSTEM;
       }
   };
 }

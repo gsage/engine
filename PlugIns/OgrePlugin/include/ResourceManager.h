@@ -37,11 +37,21 @@ THE SOFTWARE.
 #endif
 
 namespace Gsage {
+  class GsageFacade;
   class ResourceManager
   {
     public:
-      ResourceManager(const std::string& workdir);
+      ResourceManager(GsageFacade* facade, const std::string& workdir);
       virtual ~ResourceManager(void);
+
+      /**
+       * Add more folders to the resource manager search paths
+       *
+       * will unload all resources
+       *
+       * @param folders new folders list
+       */
+      void setAdditionalResourceFolders(const DataProxy& folders);
       /**
        * Loads all resource groups
        *
@@ -115,6 +125,8 @@ namespace Gsage {
     private:
       std::string mWorkdir;
       bool mHlmsLoaded;
+      std::vector<std::string> mResourceFolders;
+      GsageFacade* mFacade;
 #if OGRE_VERSION >= 0x020100
       std::string mShaderSyntax;
       std::string mCommonFolder;

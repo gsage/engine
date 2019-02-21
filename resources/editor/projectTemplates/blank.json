@@ -1,7 +1,5 @@
 {
   "plugins": [],
-  "systems": {
-    "render": "OgreRenderSystem"
-  },
+  "systems": {},
   "resources": []
 }

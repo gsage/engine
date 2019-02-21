@@ -65,10 +65,15 @@
 
   "startLuaInterface": false,
   "inputHandler": "SDL",
+  "systemTypes": {
+    "test": "testSystem",
+    "stats": "dynamicStats",
+    "script": "lua"
+  },
   "systems": [
-    "testSystem",
-    "dynamicStats",
-    "lua"
+    "test",
+    "stats",
+    "script"
   ],
   "packager": {
     "deps": [
@@ -81,11 +86,13 @@
     "type": "SDL"
   },
 
+  "pluginsFolders": ["@PLUGINS_DIRECTORY@"],
+
   "plugins":
   [
-    "@PLUGINS_DIRECTORY@/System",
-    "@PLUGINS_DIRECTORY@/UI",
-    "@PLUGINS_DIRECTORY@/SDLPlugin"
+    "System",
+    "UI",
+    "SDLPlugin"
   ],
   "render": {
     "renderSystems": [
@@ -101,10 +108,9 @@
     {
       "General":
       [
-        "FileSystem:materials/",
-        "FileSystem:programs/",
-        "FileSystem:particles/PU",
-        "FileSystem:particles/Ogre"
+        "FileSystem:bundles/materials/",
+        "FileSystem:bundles/particles/PU",
+        "FileSystem:bundles/particles/Ogre"
       ]
     },
     "window":

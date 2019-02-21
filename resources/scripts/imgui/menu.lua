@@ -9,13 +9,18 @@ end)
 function List:render()
   if imgui.BeginMenu(lm(self.text)) then
     for _, item in pairs(self.items) do
-      local selected = nil
-      if item.selected then
-        selected = item.selected()
+      if item.type == "separator" then
+        imgui.Separator()
+      else
+        local selected = nil
+        if item.selected then
+          selected = item.selected()
+        end
+        if imgui.MenuItem(lm(item.text), self.shortcut, selected) then
+          item.action()
+        end
       end
-      if imgui.MenuItem(lm(item.text), self.shortcut, selected) then
-        item.action()
-      end
+
     end
     imgui.EndMenu()
   end
@@ -23,6 +28,7 @@ end
 
 MenuItem = class(function(self, text, action, selected, shortcut)
   self.text = text
+  self.type = "MenuItem"
   self.action = action
   self.selected = selected
   self.shortcut = shortcut
@@ -39,3 +45,5 @@ function Menu:__call()
   end
   imgui.EndMainMenuBar()
 end
+
+Separator = {type = "separator"}
