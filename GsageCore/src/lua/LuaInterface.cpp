@@ -258,15 +258,32 @@ namespace Gsage {
     lua.new_usertype<Filesystem>("Filesystem",
         sol::base_classes, sol::bases<EventDispatcher>(),
         "new", sol::no_constructor,
+        "createFile", &Filesystem::createFile,
+        "unzip", &Filesystem::unzip,
         "copytreeAsync", &Filesystem::copytreeAsync,
+        "isDirectory", &Filesystem::isDirectory,
+        "copy", &Filesystem::copy,
         "ls", &Filesystem::ls,
         "exists", &Filesystem::exists,
-        "rmdir", &Filesystem::rmdir
+        "rmdir", &Filesystem::rmdir,
+        "directory", &Filesystem::directory,
+        "extension", &Filesystem::extension,
+        "filename", &Filesystem::filename,
+        "mkdir", &Filesystem::mkdir,
+        "join", [](Filesystem* fs, DataProxy data) {
+          std::vector<std::string> v;
+          for(auto& pair : data) {
+            v.push_back(pair.second.as<std::string>());
+          }
+          return fs->join(v);
+        }
     );
 
     lua.new_usertype<CopyWorker>("CopyWorker",
         "new", sol::no_constructor,
         "getID", &CopyWorker::getID,
+        "src", &CopyWorker::getSrc,
+        "dst", &CopyWorker::getDst,
         sol::meta_function::to_string, &CopyWorker::str
     );
 
@@ -429,6 +446,8 @@ namespace Gsage {
         "valid", sol::property(&Texture::isValid),
         "setSize", &Texture::setSize,
         "hasData", &Texture::hasData,
+        "name", sol::property(&Texture::getName),
+        "handle", [](Texture* texture) -> size_t { return (size_t)texture; },
 
         "RESIZE", sol::var(Texture::RESIZE),
         "RECREATE", sol::var(Texture::RECREATE)
@@ -440,7 +459,8 @@ namespace Gsage {
     lua.new_usertype<EngineSystem>("EngineSystem",
         "enabled", sol::property(&EngineSystem::isEnabled, &EngineSystem::setEnabled),
         "info", sol::property(&EngineSystem::getSystemInfo),
-        "config", sol::property(&EngineSystem::getConfig)
+        "config", sol::property(&EngineSystem::getConfig),
+        "restart", &EngineSystem::restart
     );
 
     lua.new_usertype<LuaScriptSystem>("ScriptSystem",
@@ -566,7 +586,8 @@ namespace Gsage {
           &Engine::setEnv<double>,
           &Engine::setEnv<float>,
           &Engine::setEnv<bool>
-        )
+        ),
+        "configureSystem", (bool(Engine::*)(const std::string&, const DataProxy&, bool))&Engine::configureSystem
     );
 
     lua["Engine"]["removeEntity"] = (bool(Engine::*)(const std::string& id))&Engine::removeEntity;
@@ -591,7 +612,7 @@ namespace Gsage {
     lua.new_usertype<GameDataManager>("DataManager",
         "getEntityData", &GameDataManager::getEntityData,
         "removeEntity", &GameDataManager::removeEntity,
-        "levelsFolder", sol::property(&GameDataManager::getLevelsFolder),
+        "scenesFolder", sol::property(&GameDataManager::getScenesFolder),
         "charactersFolder", sol::property(&GameDataManager::getCharactersFolder),
         "savesFolder", sol::property(&GameDataManager::getSavesFolder),
         "fileExtension", sol::property(&GameDataManager::getFileExtension),
@@ -658,7 +679,9 @@ namespace Gsage {
         "systemID", &SystemChangeEvent::mSystemId,
         "system", &SystemChangeEvent::mSystem,
         "SYSTEM_ADDED", sol::var(SystemChangeEvent::SYSTEM_ADDED),
-        "SYSTEM_REMOVED", sol::var(SystemChangeEvent::SYSTEM_REMOVED)
+        "SYSTEM_REMOVED", sol::var(SystemChangeEvent::SYSTEM_REMOVED),
+        "SYSTEM_STARTED", sol::var(SystemChangeEvent::SYSTEM_STARTED),
+        "SYSTEM_STOPPING", sol::var(SystemChangeEvent::SYSTEM_STOPPING)
     );
 
     registerEvent<FileEvent>("FileEvent",
@@ -722,6 +745,14 @@ namespace Gsage {
         sol::base_classes, sol::bases<Event>(),
         "STOPPING", sol::var(EngineEvent::STOPPING),
         "SHUTDOWN", sol::var(EngineEvent::SHUTDOWN)
+    );
+
+    registerEvent<DropFileEvent>("DropFileEvent",
+        "onFileDrop",
+        sol::base_classes, sol::bases<Event>(),
+        "DROP_FILE", sol::var(DropFileEvent::DROP_FILE),
+        "DROP_BEGIN", sol::var(DropFileEvent::DROP_BEGIN),
+        "file", &DropFileEvent::file
     );
 
     registerEvent<WindowEvent>("WindowEvent",

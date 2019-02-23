@@ -137,6 +137,12 @@ namespace Gsage {
       void destroy();
 
       /**
+       * Attach movable object to this object
+       * @param object Object to attach
+       */
+      bool attach(Ogre::MovableObject* object, const DataProxy& params);
+
+      /**
        * Remove all attached movable objects from the node
        * @param node Node to process
        */

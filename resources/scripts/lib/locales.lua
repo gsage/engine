@@ -1,5 +1,4 @@
 require 'lib.class'
-local hasLFS = pcall(require, 'lfs')
 
 local i18n = require 'i18n'
 
@@ -12,20 +11,12 @@ LocalizationManager = class(function(self)
   local locales = {}
   local files = {}
 
-  if hasLFS then
-    for file in lfs.dir(f) do
-      local _, extension = string.match(file, "([%w_]+)%.(%w+)$")
-      local fullPath = f .. file
-      if lfs.attributes(fullPath, "mode") == "file" and extension == "json" then
-        files[#files + 1] = file
-      end
+  for _, file in ipairs(game.filesystem:ls(f)) do
+    local extension = game.filesystem:extension(file)
+    local fullPath = f .. file
+    if game.filesystem:exists(fullPath) and extension == "json" then
+      files[#files + 1] = file
     end
-  else
-    files = {
-      "en_US.json",
-      "ja_JP.json",
-      "ru_RU.json"
-    }
   end
 
   for _, file in ipairs(files) do

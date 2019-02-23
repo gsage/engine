@@ -33,12 +33,7 @@ THE SOFTWARE.
 
 #include "RenderTarget.h"
 
-#if OGRE_VERSION >= 0x020100
-#include <Math/Array/OgreObjectMemoryManager.h>
-#else
-#include <OgreRectangle2D.h>
 #include "v1/ImguiRendererV1.h"
-#endif
 
 namespace Gsage {
 
@@ -53,12 +48,7 @@ namespace Gsage {
     , mHeight(1)
     , mBgColour(bgColour)
   {
-#if OGRE_VERSION < 0x020100
-    mViewport = new Ogre::Rectangle2D(true);
-    mViewport->setBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE);
-#else
     mViewport = new ViewportRenderData();
-#endif
   }
 
   OgreView::~OgreView()
@@ -93,10 +83,6 @@ namespace Gsage {
     mPosition = pos;
 
     if(renderTarget) {
-      if (io.WantCaptureMouse) {
-        io.WantCaptureMouse = !renderTarget->isMouseOver();
-      }
-
       if(widthChange || heightChange) {
         renderTarget->setDimensions(mWidth, mHeight);
       }
@@ -104,7 +90,6 @@ namespace Gsage {
       renderTarget->setPosition(pos.x, pos.y);
     }
 
-#if OGRE_VERSION >= 0x020100
     if(widthChange || heightChange || posChange) {
       ImVec2 size = ImGui::GetContentRegionAvail();
       if(mTexture) {
@@ -118,17 +103,6 @@ namespace Gsage {
       }
       mViewport->updateVertexBuffer();
     }
-#else
-    // inverting
-    pos.y = size.y - pos.y;
-
-    mViewport->setCorners(
-        convertCoordinate(pos.x, size.x),
-        convertCoordinate(pos.y, size.y),
-        convertCoordinate(pos.x + mWidth, size.x),
-        convertCoordinate(pos.y - mHeight, size.y)
-    );
-#endif
 
     drawList->AddCallback(NULL, mViewport);
     if(!mTexture && (widthChange || heightChange)) {
@@ -138,72 +112,40 @@ namespace Gsage {
 
   void OgreView::setTextureID(const std::string& textureID)
   {
-#if OGRE_VERSION < 0x020100
-    mTextureID = textureID;
-    std::string materialID = mTextureID + "material";
-
-    Ogre::MaterialManager& materialManager = Ogre::MaterialManager::getSingleton();
-    Ogre::MaterialPtr renderMaterial = materialManager.getByName(
-        materialID,
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-    if(renderMaterial.isNull()) {
-      renderMaterial = materialManager.create(
-          materialID,
-          Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-      renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-      mViewport->setMaterial(materialID);
-    } else {
-      renderMaterial->getTechnique(0)->getPass(0)->removeTextureUnitState(0);
-    }
-
-    renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(textureID);
-#else
     mViewport->setDatablock(textureID);
     mTextureID = textureID;
-#endif
   }
 
   void OgreView::setTexture(TexturePtr texture)
   {
     if(mTexture) {
       removeEventListener(mTexture.get(), Texture::RECREATE, &OgreView::onTextureEvent);
+      removeEventListener(mTexture.get(), Texture::DESTROY, &OgreView::onTextureEvent);
       removeEventListener(mTexture.get(), Texture::UV_UPDATE, &OgreView::onTextureEvent);
     }
     mTexture = texture;
     setTextureID(texture->getName());
     addEventListener(texture.get(), Texture::RECREATE, &OgreView::onTextureEvent);
+    addEventListener(texture.get(), Texture::DESTROY, &OgreView::onTextureEvent);
     addEventListener(texture.get(), Texture::UV_UPDATE, &OgreView::onTextureEvent);
   }
 
   bool OgreView::onTextureEvent(EventDispatcher* sender, const Event& event)
   {
     if(event.getType() == Texture::RECREATE) {
-      if(mTexture->hasData())
+      if(mTexture->hasData()) {
         setTextureID(mTexture->getName());
+      }
     } else if(event.getType() == Texture::UV_UPDATE) {
-#if OGRE_VERSION >= 0x020100
       mViewport->updateUVs(mTexture->getUVs());
-#else
-      Gsage::Vector2 tl;
-      Gsage::Vector2 bl;
-      Gsage::Vector2 tr;
-      Gsage::Vector2 br;
-      std::tie(tl, bl, tr, br) = mTexture->getUVs();
-      mViewport->setUVs(
-          Ogre::Vector2(tl.X, tl.Y),
-          Ogre::Vector2(bl.X, bl.Y),
-          Ogre::Vector2(tr.X, tr.Y),
-          Ogre::Vector2(br.X, br.Y)
-      );
-#endif
+    } else if(event.getType() == Texture::DESTROY) {
+      mViewport->resetDatablock();
+      return true;
     }
-#if OGRE_VERSION >= 0x020100
     Gsage::Vector2 texSize = mTexture->getSrcSize();
     ImVec2 size(texSize.X, texSize.Y);
     mViewport->updateSize(size);
     mViewport->updateVertexBuffer();
-#endif
-    return false;
+    return true;
   }
 }

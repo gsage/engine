@@ -109,7 +109,9 @@ namespace Gsage {
 
       static const Event::Type UV_UPDATE;
 
-      Texture(const std::string& name);
+      static const Event::Type DESTROY;
+
+      Texture(const std::string& name, const DataProxy& params);
       virtual ~Texture();
 
       /**
@@ -166,6 +168,11 @@ namespace Gsage {
        * @param br Bottom right corner
        */
       void setUVs(const Gsage::Vector2& tl, const Gsage::Vector2& bl, const Gsage::Vector2& tr, const Gsage::Vector2& br);
+
+      virtual void updateConfig(const DataProxy& config);
+
+      inline DataProxy& getConfig() { return mParams; }
+
     protected:
       Gsage::Vector2 mUVTL;
       Gsage::Vector2 mUVBL;
@@ -181,8 +188,11 @@ namespace Gsage {
 
       char* mBuffer;
       size_t mSize;
+      DataProxy mParams;
 
       std::string mHandle;
+
+      std::mutex mLock;
   };
 
   typedef std::shared_ptr<Texture> TexturePtr;

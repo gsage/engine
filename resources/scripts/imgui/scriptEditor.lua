@@ -1,7 +1,7 @@
 local camera = require 'factories.camera'
 local event = require 'lib.event'
 require 'imgui.components.webview'
-require 'imgui.base'
+local imguiInterface = require 'imgui.base'
 local icons = require 'imgui.icons'
 local lm = require 'lib.locales'
 
@@ -26,6 +26,7 @@ ScriptEditor = class(ImguiWindow, function(self, textureID, title, docked, open)
     log.info("Saving file " .. p)
   end)
   self.icon = icons.code
+  self.titleBase = self.title
 end)
 
 -- render script editor
@@ -35,8 +36,8 @@ function ScriptEditor:__call()
   end
 
   imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 5.0, 5.0)
-  imgui.SetWantCaptureMouse(false)
   local drawing = self:imguiBegin()
+
   imgui.PopStyleVar(ImGuiStyleVar_WindowPadding)
 
   self.webview.visible = drawing
@@ -44,6 +45,8 @@ function ScriptEditor:__call()
   if not drawing then
     return
   end
+
+  imguiInterface:captureMouse(not imgui.IsWindowHovered())
 
   if imgui.Button("save") then
     self:saveFile()
@@ -63,7 +66,6 @@ function ScriptEditor:__call()
   self.webview:render(w, h)
 
   self:imguiEnd()
-  imgui.SetWantCaptureMouse(false)
 end
 
 -- cleanup resources
@@ -79,6 +81,8 @@ function ScriptEditor:openFile(path)
     return
   end
 
+  self.params = {filename = game.filesystem:filename(path)}
+
   self.code = string.gsub(text, "(['\"])", "\\%1")
 
   local mode = "application/json"
@@ -93,6 +97,10 @@ function ScriptEditor:openFile(path)
 
   self.webview:executeJavascript(script)
   self.currentFilePath = path
+  if self.dockspace then
+    self.open = true
+    self.dockspace:activateDock(self.label)
+  end
 end
 
 -- save file

@@ -101,29 +101,47 @@ namespace Gsage
         }
         return system;
       }
+
       /**
        * Add system to the engine
+       *
        * @param name System name to associate with. Entity factory uses name to select proper system
        * @param configure system after add
        * @param system System that handles components
        * @returns true if succeed
        */
       bool addSystem(const std::string& name, EngineSystem* system, bool configure = true);
+
       /**
        * Configure system (call initialize and configure methods)
+       *
        * @param name system name to configure
        * @returns true if succeed
        */
       bool configureSystem(const std::string& name);
+
       /**
-       * Configure system (call initialize method)
+       * Configure system (call initialize and configure methods)
+       *
        * @param name system name to configure
-       * @param config new system config
+       * @param restart force system restart
        * @returns true if succeed
        */
-      bool configureSystem(const std::string& name, const DataProxy& config);
+      bool configureSystem(const std::string& name, bool restart);
+
+      /**
+       * Configure system (call initialize method)
+       *
+       * @param name system name to configure
+       * @param config new system config
+       * @param restart should restart
+       * @returns true if succeed
+       */
+      bool configureSystem(const std::string& name, const DataProxy& config, bool restart);
+
       /**
        * Check that engine has specified system
+       *
        * @param name System name
        */
       bool hasSystem(const std::string& name) { return mEngineSystems.count(name) != 0; }

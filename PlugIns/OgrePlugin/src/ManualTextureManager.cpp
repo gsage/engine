@@ -39,6 +39,12 @@ THE SOFTWARE.
 #define _BLANKSTRING Ogre::StringUtil::BLANK
 #endif
 
+#include <OgrePixelFormat.h>
+#include <OgreImage.h>
+#include <OgreDataStream.h>
+#include <fstream>
+#include "systems/OgreRenderSystem.h"
+
 namespace Gsage {
   OgreTexture::ScalingPolicy::ScalingPolicy(OgreTexture& texture)
     : mTexture(texture)
@@ -49,6 +55,11 @@ namespace Gsage {
 
   OgreTexture::ScalingPolicy::~ScalingPolicy()
   {
+  }
+
+  void OgreTexture::ScalingPolicy::invalidate()
+  {
+    mDirty = true;
   }
 
   void OgreTexture::ScalingPolicy::update(int width, int height)
@@ -62,9 +73,16 @@ namespace Gsage {
 
   bool OgreTexture::ScalingPolicy::render()
   {
+    if(mWidth == 0 || mHeight == 0) {
+      return false;
+    }
+
     if(mDirty) {
-      mDirty = false;
-      return resize();
+      bool created = resize();
+      if(mTexture.isValid()) {
+        mDirty = false;
+      }
+      return created;
     }
 
     return false;
@@ -77,6 +95,7 @@ namespace Gsage {
 
   bool OgreTexture::DefaultScalingPolicy::resize()
   {
+
     mTexture.create(mWidth, mHeight);
     return true;
   }
@@ -91,8 +110,11 @@ namespace Gsage {
   bool OgreTexture::AllocateScalingPolicy::resize()
   {
     bool created = false;
-    if(mTexture.mTexture->getWidth() < mWidth || mTexture.mTexture->getHeight() < mHeight) {
+    if(!mTexture.isValid() || mTexture.mTexture->getWidth() < mWidth || mTexture.mTexture->getHeight() < mHeight) {
       mTexture.create(mWidth * mScalingFactor, mHeight * mScalingFactor);
+      if(!mTexture.isValid()) {
+        return false;
+      }
       created = true;
     }
     float widthScale = (float)mWidth/(float)mTexture.mTexture->getWidth();
@@ -107,33 +129,32 @@ namespace Gsage {
   }
 
   OgreTexture::OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat)
-    : Texture(name)
-    , mParams(params)
+    : Texture(name, params)
     , mHasData(false)
     , mDirty(false)
     , mCreate(false)
     , mScalingPolicy(std::move(createScalingPolicy(params)))
   {
-    params.read("width", mWidth);
-    params.read("height", mHeight);
     if(mParams.count("pixelFormat") == 0) {
       mParams.put("pixelFormat", pixelFormat);
     }
     create();
-    mTexture->addListener(this);
   }
 
   void OgreTexture::create(int width, int height)
   {
     mValid = false;
-    Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
+    Ogre::TextureManager* texManager = Ogre::TextureManager::getSingletonPtr();
+    if(!texManager)
+      return;
+
     Ogre::String group = mParams.get("group", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     Ogre::TextureType textureType = mParams.get("textureType", Ogre::TEX_TYPE_2D);
 
     unsigned int depth = mParams.get("depth", 1);
     int numMipmaps = mParams.get("numMipmaps", 0);
-    Ogre::PixelFormat pixelFormat = mParams.get("pixelFormat", Ogre::PF_R8G8B8A8);
-    int usage = mParams.get("usage", Ogre::TU_DEFAULT);
+    Ogre::PixelFormat pixelFormat = (Ogre::PixelFormat)mParams.get("pixelFormat", (int)Ogre::PF_R8G8B8A8);
+    int usage = mParams.get("usage", (int)Ogre::TU_DEFAULT);
     bool hwGammaCorrection = mParams.get("hwGammaCorrection", true);
     unsigned int fsaa = mParams.get("fsaa", 0);
     std::string fsaaHint = mParams.get("fsaaHint", _BLANKSTRING);
@@ -142,33 +163,33 @@ namespace Gsage {
     bool shareableDepthBuffer = mParams.get("shareableDepthBuffer", true);
 #endif
 
-    Ogre::ResourcePtr resource = texManager.getResourceByName(mHandle, group);
+    Ogre::ResourcePtr resource = texManager->getResourceByName(mHandle, group);
     if(!resource.isNull()) {
-      texManager.remove(resource);
+      texManager->remove(resource);
     }
 
     width = width < 0 ? mWidth : width;
     height = height < 0 ? mHeight : height;
 
     mHasData = false;
-    mTexture = texManager.createManual(
-      mHandle,
-      group,
-      textureType,
-      width,
-      height,
-      depth,
-      numMipmaps,
-      pixelFormat,
-      usage,
-      0,
-      hwGammaCorrection,
-      fsaa,
-      fsaaHint
+    mTexture = texManager->createManual(
+        mHandle,
+        group,
+        textureType,
+        width,
+        height,
+        depth,
+        numMipmaps,
+        pixelFormat,
+        usage,
+        0,
+        hwGammaCorrection,
+        fsaa,
+        fsaaHint
 #if OGRE_VERSION >= 0x020100
-      ,
-      explicitResolve,
-      shareableDepthBuffer
+        ,
+        explicitResolve,
+        shareableDepthBuffer
 #endif
     );
     OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
@@ -193,16 +214,14 @@ namespace Gsage {
 #endif
     LOG(TRACE) << "Created texture " << mHandle << " with size " << width << "x" << height;
     mValid = true;
+    if(usage & Ogre::TU_RENDERTARGET) {
+      mHasData = true;
+    }
   }
 
   void OgreTexture::update(const void* buffer, size_t size, int width, int height)
   {
-    std::lock_guard<std::mutex> lock(mSizeUpdateLock);
-
-    if(!mValid) {
-      LOG(WARNING) << "Tried to update invalid texture";
-      return;
-    }
+    std::lock_guard<std::mutex> lock(mLock);
 
     if(mSize < size) {
       if(mBuffer) {
@@ -225,11 +244,7 @@ namespace Gsage {
       return;
     }
 
-    std::lock_guard<std::mutex> lock(mSizeUpdateLock);
-    if(!mValid) {
-      LOG(WARNING) << "Tried to update invalid texture";
-      return;
-    }
+    std::lock_guard<std::mutex> lock(mLock);
 
     mWidth = width;
     mHeight = height;
@@ -246,39 +261,37 @@ namespace Gsage {
 
   void OgreTexture::render()
   {
-    std::lock_guard<std::mutex> lock(mSizeUpdateLock);
-    if(mSize == 0) {
-      mHasData = false;
-      return;
-    }
+    std::lock_guard<std::mutex> lock(mLock);
 
     bool wasCreated = mScalingPolicy->render();
-    OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
-    texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
+    if(mValid && mSize > 0) {
+      OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
+      texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
 
-    size_t pixelSize = Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat());
-    int textureRowWidth = mTexture->getWidth() * pixelSize;
-    size_t textureSize = textureRowWidth * mTexture->getHeight();
-    char* dest = static_cast<char*>(texBuf->getCurrentLock().data);
-    if(mSize != textureSize) {
-      int bufferRowWidth = mBufferWidth * pixelSize;
+      size_t pixelSize = Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat());
+      int textureRowWidth = mTexture->getWidth() * pixelSize;
+      size_t textureSize = textureRowWidth * mTexture->getHeight();
+      char* dest = static_cast<char*>(texBuf->getCurrentLock().data);
+      if(mSize != textureSize) {
+        int bufferRowWidth = mBufferWidth * pixelSize;
 
-      int bufferOffset = 0;
-      int destOffset = 0;
-      while(bufferOffset < mSize && destOffset < textureSize) {
-        memcpy(&dest[destOffset], &mBuffer[bufferOffset], bufferRowWidth);
-        destOffset += textureRowWidth;
-        bufferOffset += bufferRowWidth;
+        int bufferOffset = 0;
+        int destOffset = 0;
+        while(bufferOffset < mSize && destOffset < textureSize) {
+          memcpy(&dest[destOffset], &mBuffer[bufferOffset], bufferRowWidth);
+          destOffset += textureRowWidth;
+          bufferOffset += bufferRowWidth;
+        }
+      } else {
+        memcpy(dest, mBuffer, mSize);
       }
-    } else {
-      memcpy(dest, mBuffer, mSize);
+
+      texBuf->unlock();
+      mDirty = false;
+      mHasData = true;
     }
 
-    texBuf->unlock();
-    mDirty = false;
-    mHasData = true;
-
-    if(wasCreated) {
+    if(wasCreated && mValid) {
       fireEvent(Event(Texture::RECREATE));
     }
   }
@@ -298,20 +311,38 @@ namespace Gsage {
 
   OgreTexture::~OgreTexture()
   {
-    if(mTexture.isNull()) {
-      return;
-    }
-    Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
-    texManager.remove(mTexture->getHandle());
+    destroy();
   }
 
-  ManualTextureManager::ManualTextureManager()
+  void OgreTexture::destroy()
+  {
+    if(!mTexture.isNull()) {
+      Ogre::TextureManager* texManager = Ogre::TextureManager::getSingletonPtr();
+      if(texManager) {
+        texManager->remove(mTexture->getHandle());
+      }
+      mTexture.setNull();
+    }
+    mScalingPolicy->invalidate();
+    mValid = false;
+    mDirty = true;
+    fireEvent(Event(Texture::DESTROY));
+  }
+
+  ManualTextureManager::ManualTextureManager(OgreRenderSystem* renderSystem)
     : mPixelFormat(Ogre::PF_R8G8B8A8)
+    , mRenderSystem(renderSystem)
   {
   }
 
   ManualTextureManager::~ManualTextureManager()
   {
+  }
+
+  void ManualTextureManager::reset() {
+    for(auto& pair : mTextures) {
+      static_cast<OgreTexture*>(pair.second.get())->destroy();
+    }
   }
 
   TexturePtr ManualTextureManager::createTexture(RenderSystem::TextureHandle handle, DataProxy params)
@@ -323,15 +354,71 @@ namespace Gsage {
 
     unsigned int width = params.get("width", 0);
     unsigned int height = params.get("height", 0);
-    if(width == 0 || height == 0) {
+    if((width == 0 || height == 0)) {
       LOG(ERROR) << "Failed to create texture with zero width and height";
       return nullptr;
     }
 
     OgreTexture* texture = new OgreTexture(handle, params, mPixelFormat);
+    TexturePtr tex = TexturePtr(texture);
+    std::string scalemode = params.get("scalemode", "keepAspect");
+
+    Ogre::PixelFormat fmt = texture->getOgreTexture()->getFormat();
+
+    std::string path = params.get("path", "");
+    if(!path.empty()) {
+      mRenderSystem->asyncTask([path, tex, fmt, scalemode]() {
+        std::ifstream ifs(path, std::ios::binary|std::ios::in);
+        if(ifs.is_open()) {
+          size_t indexOfExtension = path.find_last_of('.');
+          if (indexOfExtension != std::string::npos) {
+            std::string ext = path.substr(indexOfExtension + 1);
+            Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(path, &ifs, false));
+            Ogre::Image img;
+            img.load(dataStream, ext);
+            Ogre::MemoryDataStreamPtr buf;
+            buf.bind(OGRE_NEW Ogre::MemoryDataStream(
+                  Ogre::PixelUtil::getMemorySize(
+                    img.getWidth(), img.getHeight(), img.getDepth(), fmt)));
+
+            Ogre::PixelBox corrected(img.getWidth(), img.getHeight(), img.getDepth(), fmt, buf->getPtr());
+            Ogre::PixelUtil::bulkPixelConversion(img.getPixelBox(0, 0), corrected);
+
+            size_t size = corrected.getWidth() * corrected.getHeight() * Ogre::PixelUtil::getNumElemBytes(fmt);
+            int width;
+            int height;
+
+            if(scalemode == "keepSize") {
+              width = img.getWidth();
+              height = img.getHeight();
+            } else if(scalemode == "keepAspect" && img.getHeight() > 0) {
+              std::tie(width, height) = tex->getSize();
+              float aspect = (float)img.getWidth() / (float)img.getHeight();
+
+              if(aspect > 1) {
+                height = width / aspect;
+              } else {
+                width = height * aspect;
+              }
+            } else {
+              std::tie(width, height) = tex->getSize();
+            }
+
+            tex->setSize(width, height);
+            tex->update(corrected.getTopLeftFrontPixelPtr(), size, corrected.getWidth(), corrected.getHeight());
+            LOG(TRACE) << "Loaded image " << path << " " << size << " " << img.getWidth() << " " << img.getHeight();
+          } else {
+            LOG(ERROR) << "Failed to load image " << path << ", unknown image extension";
+          }
+          ifs.close();
+        } else {
+          LOG(ERROR) << "Failed to load image " << path;
+        }
+      });
+    }
 
     texture->setSize(width, height);
-    mTextures[handle] = TexturePtr(texture);
+    mTextures[handle] = tex;
 
     return mTextures[handle];
   }

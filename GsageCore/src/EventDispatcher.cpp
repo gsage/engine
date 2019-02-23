@@ -56,7 +56,7 @@ namespace Gsage {
   bool EventDispatcher::hasListenersForType(Event::ConstType type)
   {
     mMutationMutex.lock();
-    bool res = mSignals.count(type) > 0;
+    bool res = contains(mSignals, type);
     mMutationMutex.unlock();
     return res;
   }
@@ -100,12 +100,12 @@ namespace Gsage {
 
   EventConnection EventSignal::connect(const int priority, EventCallback callback)
   {
-    if(mConnections.count(priority) == 0)
+    if(!contains(mConnections, priority))
     {
       mConnections[priority] = CallbacksList();
     }
 
-    int id = mConnections[priority].empty() ? 0 : mConnections[priority].size();
+    int id = mConnections[priority].empty() ? 0 : (--mConnections[priority].end())->first + 1;
     mConnections[priority].insert(std::make_pair(id, callback));
     return EventConnection(this, priority, id);
   }
@@ -130,7 +130,7 @@ namespace Gsage {
 
   void EventSignal::disconnect(int priority, int id)
   {
-    if(mConnections.count(priority) == 0)
+    if(!contains(mConnections, priority))
       return;
 
     mConnections[priority].erase(id);

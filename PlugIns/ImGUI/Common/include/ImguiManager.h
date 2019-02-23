@@ -55,7 +55,7 @@ namespace Gsage {
       virtual bool addView(const std::string& name, sol::object view);
 
       /**
-       * Remove view from dockspace
+       * Remove view from collection
        */
       virtual bool removeView(const std::string& name, sol::object view);
     protected:
@@ -92,6 +92,26 @@ namespace Gsage {
        * @param t sol::table to read state data from
        */
       void setState(sol::table t);
+
+      /**
+       * Activate dock
+       *
+       * @param name Dock name
+       * @return true if dock was found
+       */
+      bool activateDock(const std::string& name);
+      /**
+       * Add new lua view to the imgui renderer.
+       *
+       * @param name view name
+       * @param view lua function that will render everything.
+       */
+      virtual bool addView(const std::string& name, sol::object view);
+
+      /**
+       * Remove view from dockspace
+       */
+      virtual bool removeView(const std::string& name, sol::object view);
     private:
       ImguiManager* mManager;
       DataProxy mState;
@@ -104,7 +124,7 @@ namespace Gsage {
     public:
 
       ImguiRenderer() : mEngine(0), mManager(0) {}
-      virtual ~ImguiRenderer() {}
+      virtual ~ImguiRenderer() { mContexts.clear(); }
 
       /**
        * Set engine, setup lua bindings

@@ -50,6 +50,7 @@ namespace Gsage {
       void updateVertexData(Ogre::Viewport* vp, ImVec2 displaySize);
       void createMaterial();
       void updateFontTexture();
+      void setFiltering(Ogre::TextureFilterOptions mode);
     private:
       std::vector<ImGUIRenderable*> mRenderables;
 

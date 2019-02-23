@@ -4,7 +4,7 @@
   {
     "extension": "json",
     "charactersFolder": "characters",
-    "levelsFolder": "levels",
+    "scenesFolder": "scenes",
     "savesFolder": "templates"
   },
   "imgui": {
@@ -111,7 +111,12 @@
         "FileSystem:bundles/materials/",
         "FileSystem:bundles/particles/PU",
         "FileSystem:bundles/particles/Ogre"
-      ]
+      ],
+      "Hlms": {
+        "common": "FileSystem:ogre/materials/Common",
+        "pbs": "FileSystem:ogre/materials/Pbs",
+        "unlit": "FileSystem:ogre/materials/Unlit"
+      }
     },
     "window":
     {

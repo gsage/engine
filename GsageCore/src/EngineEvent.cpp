@@ -39,6 +39,10 @@ namespace Gsage {
 
   const Event::Type EngineEvent::ENV_UPDATED = "EngineEvent::ENV_UPDATED";
 
+  const Event::Type DropFileEvent::DROP_FILE = "DropFileEvent::DROP_FILE";
+
+  const Event::Type DropFileEvent::DROP_BEGIN = "DropFileEvent::DROP_BEGIN";
+
   const Event::Type EntityEvent::REMOVE = "EntityEvent::REMOVE";
 
   const Event::Type EntityEvent::CREATE = "EntityEvent::CREATE";
@@ -48,6 +52,10 @@ namespace Gsage {
   const Event::Type SystemChangeEvent::SYSTEM_ADDED = "SystemChangeEvent::SYSTEM_ADDED";
 
   const Event::Type SystemChangeEvent::SYSTEM_REMOVED = "SystemChangeEvent::SYSTEM_REMOVED";
+
+  const Event::Type SystemChangeEvent::SYSTEM_STARTED = "SystemChangeEvent::SYSTEM_STARTED";
+
+  const Event::Type SystemChangeEvent::SYSTEM_STOPPING = "SystemChangeEvent::SYSTEM_STOPPING";
 
   const Event::Type SelectEvent::OBJECT_SELECTED = "SystemChangeEvent::OBJECT_SELECTED";
 
@@ -68,6 +76,16 @@ namespace Gsage {
   }
 
   EngineEvent::~EngineEvent()
+  {
+  }
+
+  DropFileEvent::DropFileEvent(Event::ConstType type, const std::string& pfile) 
+    : Event(type)
+    , file(pfile)
+  {
+  }
+
+  DropFileEvent::~DropFileEvent()
   {
   }
 

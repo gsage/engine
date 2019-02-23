@@ -83,19 +83,33 @@ namespace Gsage {
 
   void SceneNodeWrapper::createNode(const std::string& id)
   {
-    if (mParentNode == 0) {
+    if (mParentNode == 0 && mParentObject == 0) {
       LOG(ERROR) << "Failed to create node \"" << mObjectId << "\" parent node is not set";
       return;
     }
+
+    if(!mParentNode) {
+      if(mParentObject->getType() == "node") {
+        mParentNode = static_cast<SceneNodeWrapper*>(mParentObject)->mNode;
+      } else {
+        mParentNode = mSceneManager->getRootSceneNode();
+      }
+    }
+
     mObjectId = id;
     std::string name = generateName();
+
+    if(mNode == 0) {
 #if OGRE_VERSION_MAJOR == 2
-      // TODO: static/dynamic nodes
-    mNode = mParentNode->createChildSceneNode();
+        // TODO: static/dynamic nodes
+      mNode = mParentNode->createChildSceneNode();
 #else
-    mNode = mParentNode->createChildSceneNode(name);
+      mNode = mParentNode->createChildSceneNode(name);
 #endif
-    LOG(TRACE) << "Creating scene node \"" << name << "\"";
+      LOG(TRACE) << "Creating scene node \"" << name << "\"";
+    } else {
+      LOG(TRACE) << "Updating scene node \"" << name << "\"";
+    }
   }
 
   const std::string& SceneNodeWrapper::getId() const
@@ -196,7 +210,8 @@ namespace Gsage {
         continue;
       }
       LOG(TRACE) << "Creating child " << type << " \"" << id << "\"";
-      OgreObject* child = mObjectManager->create(pair.second, mOwnerId, mSceneManager, mNode);
+      DataProxy params;
+      OgreObject* child = mObjectManager->create(pair.second, mOwnerId, mSceneManager, type, params, this);
       if(!child) {
         LOG(ERROR) << "Failed to create child " << type << " \"" << id << "\"";
         continue;
@@ -278,6 +293,12 @@ namespace Gsage {
 
   }
 
+  bool SceneNodeWrapper::attach(Ogre::MovableObject* object, const DataProxy& params)
+  {
+    mNode->attachObject(object);
+    return true;
+  }
+
   void SceneNodeWrapper::destroyAllAttachedMovableObjects( Ogre::SceneNode* node )
   {
     if(!node) return;
@@ -302,8 +323,8 @@ namespace Gsage {
   {
     std::string key = name;
     SceneNodeWrapper* child = this;
-    if(traverse) {
-      std::vector<std::string> parts = split(name, '.');
+    std::vector<std::string> parts = split(name, '.');
+    if(traverse && parts.size() > 1) {
       for(auto iter = parts.begin(); iter != parts.end() - 1; iter++) {
         SceneNodeWrapper* tmp = child->getChildOfType<SceneNodeWrapper>(*iter);
         if(!tmp) {

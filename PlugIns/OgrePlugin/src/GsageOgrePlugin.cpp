@@ -77,6 +77,7 @@ namespace Gsage {
 
       lua.new_usertype<OgreObject>("OgreObject",
           sol::base_classes, sol::bases<Reflection>(),
+          "props", sol::property(&SceneNodeWrapper::getProps, &SceneNodeWrapper::setProps),
           "type", sol::property(&OgreObject::getType),
           "name", sol::property(&OgreObject::getObjectId)
       );
@@ -84,6 +85,7 @@ namespace Gsage {
       lua.new_usertype<SceneNodeWrapper>(
           "OgreSceneNode",
           sol::base_classes, sol::bases<OgreObject>(),
+          "props", sol::property(&SceneNodeWrapper::getProps, &SceneNodeWrapper::setProps),
           "orientation", sol::property(&SceneNodeWrapper::setOrientation, &SceneNodeWrapper::getOrientation),
           "scale", sol::property(&SceneNodeWrapper::setScale, &SceneNodeWrapper::getScale),
           "position", sol::property(&SceneNodeWrapper::setPosition, &SceneNodeWrapper::getPosition),
@@ -106,7 +108,8 @@ namespace Gsage {
 
       lua.new_usertype<EntityWrapper>("OgreEntity",
           sol::base_classes, sol::bases<OgreObject>(),
-          "attachToBone", &EntityWrapper::attachToBone
+          "attachToBone", &EntityWrapper::attachToBone,
+          "getAabb", &EntityWrapper::getAabb
       );
 
       lua.new_usertype<ParticleSystemWrapper>("OgreParticleSystem",
@@ -127,15 +130,15 @@ namespace Gsage {
           "isActive", &CameraWrapper::isActive,
           "getProjectionMatrix", &CameraWrapper::getProjectionMatrix,
           "getViewMatrix", &CameraWrapper::getViewMatrix,
-          "getCamera", (Ogre::Camera*(CameraWrapper::*)())&CameraWrapper::getCamera
+          "getCamera", (Ogre::Camera*(CameraWrapper::*)())&CameraWrapper::getCamera,
+          "renderTarget", sol::property(&CameraWrapper::getRenderTarget)
       );
-
-      lua.new_usertype<Ogre::Camera>("Camera");
 
       lua.new_usertype<RenderTarget>("RenderTarget",
           "setCamera", &RenderTarget::setCamera,
           "getCamera", &RenderTarget::getCamera,
           "name", sol::property(&RenderTarget::getName),
+          "raycast", &RenderTarget::raycast,
 
           "Rtt", sol::var(RenderTargetType::Rtt),
           "Window", sol::var(RenderTargetType::Window)
@@ -238,6 +241,30 @@ namespace Gsage {
         return std::make_tuple(vector, succeed);
       };
 
+      lua.new_usertype<Ogre::Camera>("Camera",
+          "fovy", sol::property(&Ogre::Camera::getFOVy)
+      );
+
+      lua.new_usertype<Ogre::Ray>("Ray",
+          "getDirection", &Ogre::Ray::getDirection,
+          "getPoint", &Ogre::Ray::getPoint,
+          "getOrigin", &Ogre::Ray::getOrigin
+      );
+
+#if OGRE_VERSION >= 0x020100
+      lua.new_usertype<Ogre::Aabb>("OgreAabb",
+          "getRadiusOrigin", &Ogre::Aabb::getRadiusOrigin,
+          "center", &Ogre::Aabb::mCenter
+      );
+#else
+      lua.new_usertype<Ogre::AxisAlignedBox>("OgreAabb",
+          "getRadiusOrigin", [](Ogre::AxisAlignedBox* aabb) {
+            return Ogre::Math::boundingRadiusFromAABB(*aabb);
+          },
+          "center", sol::property(&Ogre::AxisAlignedBox::getCenter)
+      );
+#endif
+
       lua.new_usertype<Ogre::Vector3>("Vector3",
           sol::constructors<sol::types<const Ogre::Real&, const Ogre::Real&, const Ogre::Real&>>(),
           "parse", sol::factories(parseVector),
@@ -246,6 +273,7 @@ namespace Gsage {
           "z", &Ogre::Vector3::z,
           "squaredDistance", &Ogre::Vector3::squaredDistance,
           "crossProduct", &Ogre::Vector3::crossProduct,
+          "normalise", &Ogre::Vector3::normalise,
           "ZERO", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::ZERO; }),
           "UNIT_X", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::UNIT_X; }),
           "UNIT_Y", sol::property([] () -> Ogre::Vector3 { return Ogre::Vector3::UNIT_Y; }),
@@ -259,7 +287,8 @@ namespace Gsage {
             (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Real)const)&Ogre::Vector3::operator*
           ),
           sol::meta_function::addition, (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Vector3&)const)&Ogre::Vector3::operator+,
-          sol::meta_function::equal_to, (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Vector3&)const)&Ogre::Vector3::operator==
+          sol::meta_function::equal_to, (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Vector3&)const)&Ogre::Vector3::operator==,
+          sol::meta_function::subtraction, (Ogre::Vector3(Ogre::Vector3::*)(const Ogre::Vector3&)const)&Ogre::Vector3::operator-
       );
 
       lua.new_usertype<Ogre::Node>("OgreNode",
@@ -279,7 +308,8 @@ namespace Gsage {
           sol::meta_function::multiplication, sol::overload(
             (Ogre::Quaternion(Ogre::Quaternion::*)(const Ogre::Quaternion&)const)  &Ogre::Quaternion::operator*,
             (Ogre::Vector3(Ogre::Quaternion::*)(const Ogre::Vector3&)const)  &Ogre::Quaternion::operator*
-          )
+          ),
+          "IDENTITY", sol::property([] () { return &Ogre::Quaternion::IDENTITY; })
       );
 
       lua.new_usertype<Ogre::Radian>("Radian",

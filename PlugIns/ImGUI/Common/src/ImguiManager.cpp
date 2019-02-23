@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "ImGuiDockspaceState.h"
 #include "ImGuiConverters.h"
 #include "ImguiEvent.h"
+#include "FileLoader.h"
 
 namespace Gsage {
 
@@ -95,7 +96,6 @@ namespace Gsage {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetColorU32(ImGuiCol_Border));
     ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 
-    // TODO: this may not work
     ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);
@@ -127,16 +127,47 @@ namespace Gsage {
         LOG(ERROR) << "Exception in view " << pair.first << ": unknown error";
       }
     }
-    mDockspace->endWorkspace();
+    mDockspace->endWorkspace(true);
     mManager->mCurrentDockspace = NULL;
     ImGui::End();
+  }
+
+  bool ImguiDockspaceView::activateDock(const std::string& name)
+  {
+    if(mDockspace)
+      return mDockspace->activateDock(name.c_str());
+
+    return false;
+  }
+
+  bool ImguiDockspaceView::addView(const std::string& name, sol::object view)
+  {
+    if(!ImguiViewCollection::addView(name, view))
+      return false;
+
+    if(view.get_type() == sol::type::table) {
+      sol::table t = view.as<sol::table>();
+      t["dockspace"] = this;
+    }
+
+    return true;
+  }
+
+  bool ImguiDockspaceView::removeView(const std::string& name, sol::object view)
+  {
+    if(view.get_type() == sol::type::table) {
+      sol::table t = view.as<sol::table>();
+      t["dockspace"] = sol::type::lua_nil;
+    }
+    return ImguiViewCollection::removeView(name, view);
   }
 
   sol::table ImguiDockspaceView::getState()
   {
     sol::state_view lua(mManager->mLuaState);
     sol::table t = lua.create_table();
-    dumpState(mDockspace->getState()).dump(t);
+    if(mDockspace)
+      dumpState(mDockspace->getState()).dump(t);
     return t;
   }
 
@@ -164,7 +195,7 @@ namespace Gsage {
 
   ImguiRenderer::Context* ImguiRenderer::getContext(ImGuiContext* imctx)
   {
-    if(mContextNames.count(imctx) == 0) {
+    if(contains(mContextNames, imctx)) {
       return nullptr;
     }
 
@@ -197,6 +228,7 @@ namespace Gsage {
       if(pair.second.context == NULL) {
         pair.second.context = mManager->getImGuiContext(pair.first, pair.second.size);
         ImGui::SetCurrentContext(pair.second.context);
+        ImGui::GetIO().WantCaptureMouse = true;
         mContextNames[pair.second.context] = pair.first;
       } else  {
         ImGui::SetCurrentContext(pair.second.context);
@@ -241,8 +273,8 @@ namespace Gsage {
   {
     UIManager::initialize(engine, luaState);
     setUp();
-    addEventListener(engine, SystemChangeEvent::SYSTEM_ADDED, &ImguiManager::handleSystemChange);
-    addEventListener(engine, SystemChangeEvent::SYSTEM_REMOVED, &ImguiManager::handleSystemChange);
+    addEventListener(engine, SystemChangeEvent::SYSTEM_STOPPING, &ImguiManager::handleSystemChange);
+    addEventListener(engine, SystemChangeEvent::SYSTEM_STARTED, &ImguiManager::handleSystemChange);
     // mouse events
     addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &ImguiManager::handleMouseEvent, -100);
     addEventListener(mEngine, MouseEvent::MOUSE_UP, &ImguiManager::handleMouseEvent, -100);
@@ -257,16 +289,17 @@ namespace Gsage {
   bool ImguiManager::handleSystemChange(EventDispatcher* sender, const Event& event)
   {
     const SystemChangeEvent& e = static_cast<const SystemChangeEvent&>(event);
+    
     if(e.mSystemId != "render") {
       return true;
     }
 
-    if(e.getType() == SystemChangeEvent::SYSTEM_ADDED)
+    if(e.getType() == SystemChangeEvent::SYSTEM_STARTED)
     {
       setUp();
     }
 
-    if(e.getType() == SystemChangeEvent::SYSTEM_REMOVED && mRenderer != 0)
+    if(e.getType() == SystemChangeEvent::SYSTEM_STOPPING && mRenderer != 0)
     {
       tearDown();
       LOG(INFO) << "Render system was removed, system wrapper was destroyed";
@@ -291,7 +324,7 @@ namespace Gsage {
       return;
     }
 
-    if(mRendererFactories.count(type) > 0)
+    if(contains(mRendererFactories, type))
     {
       if(mRenderer) {
         delete mRenderer;
@@ -325,6 +358,7 @@ namespace Gsage {
     for(auto pair : mContexts) {
       ImGui::SetCurrentContext(pair.second);
       ImGui::DestroyContext();
+      LOG(TRACE) << "Destroyed context " << pair.first;
     }
     mContexts.clear();
     mFontAtlas = NULL;
@@ -377,7 +411,12 @@ namespace Gsage {
         "removeView", &ImguiDockspaceView::removeView,
         "getState", &ImguiDockspaceView::getState,
         "setState", &ImguiDockspaceView::setState,
-        "render", &ImguiDockspaceView::render
+        "render", &ImguiDockspaceView::render,
+        "activateDock", &ImguiDockspaceView::activateDock
+    );
+
+    lua.new_usertype<ImGuiDockspaceRenderer>("ImGuiDockspaceRenderer",
+        "activateDock", &ImGuiDockspaceRenderer::activateDock
     );
 
     lua["imgui"]["createDockspace"] = [&](const std::string& name){
@@ -474,7 +513,7 @@ namespace Gsage {
 
   ImGuiContext* ImguiManager::getImGuiContext(std::string name, const ImVec2& initialSize)
   {
-    if(mContexts.count(name) != 0) {
+    if(contains(mContexts, name)) {
       return mContexts[name];
     }
 
@@ -549,7 +588,6 @@ namespace Gsage {
     style.GrabRounding          = theme.get("grabRounding", 3.0f);
     style.CurveTessellationTol  = theme.get("curveTessellationTol", 1.25f);
 
-    std::string workdir = mEngine->env().get("workdir", ".");
     auto additionalFonts = mEngine->settings().get<DataProxy>("imgui.fonts");
 
     ImGuiIO& io = ImGui::GetIO();
@@ -603,7 +641,13 @@ namespace Gsage {
           builder.BuildRanges(&mGlyphRanges[i]);
           config.PixelSnapH = pair.second.get("pixelSnapH", false);
 
-          ImFont* pFont = io.Fonts->AddFontFromFileTTF((workdir + GSAGE_PATH_SEPARATOR + file.first).c_str(), size.first, &config, mGlyphRanges[i].Data);
+          std::string path = FileLoader::getSingletonPtr()->searchFile(file.first);
+          if(path.empty()) {
+            LOG(WARNING) << "Skipped loading font " << path << ": file not found";
+            continue;
+          }
+
+          ImFont* pFont = io.Fonts->AddFontFromFileTTF(path.c_str(), size.first, &config, mGlyphRanges[i].Data);
           mFonts.push_back(pFont);
           i++;
         }

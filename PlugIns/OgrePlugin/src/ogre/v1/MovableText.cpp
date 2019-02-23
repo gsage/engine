@@ -5,7 +5,7 @@ Authors:
 2003 cTh gavocanov@rambler.ru
 2006 by barraq see nospam@barraquand.com
 2012 to work with newer versions of OGRE by MindCalamity <mindcalamity@gmail.com>
-2016 Artem Chernyshev adapt to Gsage engine
+2016 by uniq4ever to adapt to Gsage engine
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -82,10 +82,33 @@ function time.clearHandlers(all)
   end
 end
 
-event:bind(core, Facade.BEFORE_RESET, time.clearHandlers)
+local function addListener(event)
+  if listensForUpdates then
+    return
+  end
 
-if core:script() then
-  core:script():addUpdateListener(time.update, true)
+  if event then
+    if event.systemID ~= "script" then
+      return
+    end
+
+    if event.type == SYSTEM_REMOVED then
+      listensForUpdates = false
+      return
+    end
+  end
+
+  if core:script() then
+    core:script():addUpdateListener(time.update, true)
+    listensForUpdates = true
+  end
 end
+
+event:bind(core, Facade.BEFORE_RESET, time.clearHandlers)
+event:bind(core, SystemChangeEvent.SYSTEM_ADDED, addListener)
+event:bind(core, SystemChangeEvent.SYSTEM_REMOVED, addListener)
+
+local listensForUpdates = false
+addListener()
 
 return time

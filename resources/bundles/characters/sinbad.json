@@ -1,4 +1,6 @@
 {
+  "type": "character",
+  "version": "1.0",
   "id": "sinbad",
   "render":
   {

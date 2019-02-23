@@ -72,9 +72,9 @@ namespace Gsage  {
     {
       EventSubscriber<LuaEventProxy>::removeEventListener(dispatcher, eventType, &LuaEventProxy::handleEvent);
       mCallbackBindings.erase(CallbackBinding(dispatcher, eventType));
-      LOG(INFO) << "Removed event listener for event " << eventType << " as there is no more lua callbacks";
+      LOG(TRACE) << "Removed event listener for event " << eventType << " as there is no more lua callbacks";
     } else {
-      LOG(INFO) << "Removed event callback " << eventType;
+      LOG(TRACE) << "Removed event callback " << eventType;
       assert(getCallbacks(dispatcher, eventType)->size() != previousSize);
     }
 
@@ -141,7 +141,7 @@ namespace Gsage  {
   LuaEventProxy::Callbacks* LuaEventProxy::getCallbacks(EventDispatcher* dispatcher, Event::ConstType eventType)
   {
     CallbackBinding binding(dispatcher, eventType);
-    if(mCallbackBindings.count(binding) == 0)
+    if(!contains(mCallbackBindings, binding))
       return 0;
 
     return &mCallbackBindings[binding];

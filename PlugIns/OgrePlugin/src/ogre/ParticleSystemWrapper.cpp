@@ -67,7 +67,7 @@ namespace Gsage {
 #endif
         mTemplate
     );
-    mParentNode->attachObject(mParticleSystem);
+    attachObject(mParticleSystem);
   }
 
   const std::string& ParticleSystemWrapper::getTemplate() const

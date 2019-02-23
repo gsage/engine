@@ -14,7 +14,7 @@
   {
     "extension": "json",
     "charactersFolder": "characters",
-    "levelsFolder": "levels",
+    "scenesFolder": "scenes",
     "savesFolder": "templates"
   },
 
@@ -22,16 +22,18 @@
   "startupScript": "scripts/entrypoints/editor.lua",
   "inputHandler": "SDL",
   "systemTypes": {
-    "render": "ogre"
+    "render": "ogre",
+    "script": "lua"
   },
   "systems": [
-    "render"
+    "render",
+    "script"
   ],
   "packager": {
     "deps": [
       "tween",
       "i18n",
-      "luafilesystem"
+      "luacheck"
     ]
   },
 
@@ -70,7 +72,7 @@
         "button": "0xffbbbbbb",
         "buttonHovered": "0xff4F91D8",
         "buttonActive": "0xff4F8FD4",
-        "header": "0xff4F8FD4",
+        "header": "0xffbbbbbb",
         "headerHovered": "0xff4F91D8",
         "headerActive": "0xff4F8FD4"
       },
@@ -81,7 +83,7 @@
       "framePadding": "5,5",
       "buttonTextAlign": "0.5,0.5",
       "frameRounding": 4,
-      "itemSpacing": "12,8",
+      "itemSpacing": "12,4",
       "itemInnerSpacing": "8,6",
       "indentSpacing": 25,
       "scrollbarRounding": 2,
@@ -133,6 +135,17 @@
 
   "render":
   {
+    "globalResources": {
+      "General": [
+        "ogre/materials/"
+      ],
+      "Hlms": {
+        "common": "FileSystem:ogre/materials/Common",
+        "pbs": "FileSystem:ogre/materials/Pbs",
+        "unlit": "FileSystem:ogre/materials/Unlit"
+      }
+    },
+    "backgroundWorkersCount": 1,
     "renderSystems": [
       {"id": "Metal Rendering Subsystem"},
       {"id": "OpenGL 3+ Rendering Subsystem"},
@@ -154,19 +167,6 @@
       "OctreeSceneManager",
       "ParticleFX"
     ],
-    "globalResources":
-    {
-      "General":
-      [
-        "FileSystem:materials/",
-        "FileSystem:programs/"
-      ],
-      "Rocket":
-      [
-        "FileSystem:fonts/",
-        "FileSystem:ui/"
-      ]
-    },
 
     "window":
     {

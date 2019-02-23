@@ -43,12 +43,13 @@ local function decorate(cls)
     self.renderTargetName = renderTarget.name
     cam:attach(renderTarget)
     currentCamera = self
-    if self.update then
+    if self.update and not self.hasHandler then
       self.onTime = function(time)
         self:update(time)
       end
 
       time.addHandler(self.handlerId, self.onTime)
+      self.hasHandler = true
     end
     return true
   end
@@ -62,13 +63,16 @@ local function decorate(cls)
     local cam = self.render.root:getCamera(self.props.cameraPath)
     cam:attach(renderTarget)
     self.renderTargetName = textureID
-    if self.update then
+    if self.update and not self.hasHandler then
       self.onTime = function(time)
         self:update(time)
       end
 
       time.addHandler(self.handlerId, self.onTime)
+      self.hasHandler = true
     end
+
+    return core:render():getTexture(textureID)
   end
 
   -- detach camera
@@ -84,6 +88,7 @@ local function decorate(cls)
     self.renderTargetName = nil
     if self.update then
       time.removeHandler(self.handlerId)
+      self.hasHandler = false
     end
   end
 
@@ -91,8 +96,14 @@ local function decorate(cls)
     return event.type == MouseEvent.MOUSE_UP or self.renderTargetName == event.dispatcher
   end
 
+  -- get camera's render target
+  function cls:getRenderTarget()
+    return core:render():getRenderTarget(self.renderTargetName)
+  end
+
   return cls
 end
+
 
 -- free camera mixin
 local function freeCamera(cls)

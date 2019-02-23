@@ -198,7 +198,7 @@ function Console:__call()
 
   --self.filter = imgui.ImGuiTextFilter()
   imgui.PushStyleColor_U32(ImGuiCol_ChildWindowBg, imgui.GetColorU32(ImGuiCol_FrameBg, 1))
-  imgui.BeginChild("ScrollingRegion", 0, -imgui.GetItemsLineHeightWithSpacing(), false, ImGuiWindowFlags_HorizontalScrollbar)
+  imgui.BeginChild("ScrollingRegion", 0, -imgui.GetItemsLineHeightWithSpacing(), false, ImGuiWindowFlags_HorizontalScrollbar + ImGuiWindowFlags_AlwaysUseWindowPadding)
   if imgui.BeginPopupContextWindow() then
     if imgui.Selectable(lm("console.clear")) then
       self:clear()

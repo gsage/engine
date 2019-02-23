@@ -153,7 +153,7 @@ namespace Gsage {
         return;
       }
       try {
-        mRootNode = mObjectManager->create<SceneNodeWrapper>(value, getOwner()->getId(), mSceneManager);
+        mRootNode = mObjectManager->create<SceneNodeWrapper>(value, getOwner()->getId(), mSceneManager, mSceneManager->getRootSceneNode());
       } catch(const Ogre::Exception& e) {
         LOG(ERROR) << "Failed to create render component " << e.what();
       }

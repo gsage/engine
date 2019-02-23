@@ -58,6 +58,10 @@ namespace Gsage {
       return;
     }
 
+    if(ImGuizmo::IsOver() && !ImGui::IsMouseDown(1)) {
+      ImGui::GetIO().WantCaptureMouse = true;
+    }
+
     Ogre::Camera* cam = renderTarget->getCamera();
     Ogre::Matrix4 view = cam->getViewMatrix();
     Ogre::Matrix4 projection = cam->getProjectionMatrix();

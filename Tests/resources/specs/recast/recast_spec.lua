@@ -90,12 +90,14 @@ describe("#recast #ogre", function()
         rotation = Quaternion.new(0.5, 0, 0, 0),
         children = {{
           type = "light",
-          colourSpecular = "0xFFFFFF",
+          colourSpecular = "0xFFFFFFFF",
+          colourShadow = "0xffffffff",
           direction = Vector3.new(0, -0.5, 0.5),
-          name = "lamp",
+          name = "sun",
           castShadows = true,
-          colourDiffuse = "0xFFFFFF",
-          lightType = "point"
+          colourDiffuse = "0xFFFFFFFF",
+          lightType = "directional",
+          powerScale = 8,
         },}
       }
     }
@@ -191,6 +193,18 @@ describe("#recast #ogre", function()
 
   describe("movement", function()
     game:reset()
+    cfg = core:render().config
+    cfg.settings = {
+      ambientLight = {
+        lowerHemisphere = "0x337F7FFF",
+        upperHemisphere = "0xFF7F7FFF"
+      },
+      colourBackground = "0xc0c0cFF",
+      colourAmbient = "0x7F7F7FFF",
+      colourDiffuse = "0xc0c0c0FF"
+    }
+    core:configureSystem("render", cfg, false)
+
     assert.truthy(data:createEntity(actor))
     assert.truthy(data:createEntity(light))
     assert.truthy(data:createEntity(testArea))

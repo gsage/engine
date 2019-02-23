@@ -129,6 +129,11 @@ namespace Gsage {
       void destroy();
       
       void objectDestroyed(Ogre::MovableObject* cam);
+
+      /**
+       * Get render target camera attached to
+       */
+      inline RenderTargetPtr getRenderTarget() { return mRenderTarget; };
     private:
       std::string mTarget;
 

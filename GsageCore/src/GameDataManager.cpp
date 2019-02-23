@@ -55,7 +55,7 @@ namespace Gsage {
   {
     mFileExtension    = config.get(CONFIG_SECTION + ".extension", "json");
     mCharactersFolder = config.get(CONFIG_SECTION + ".charactersFolder", ".");
-    mLevelsFolder     = config.get(CONFIG_SECTION + ".levelsFolder", ".");
+    mScenesFolder     = config.get(CONFIG_SECTION + ".scenesFolder", ".");
     mSavesFolder      = config.get(CONFIG_SECTION + ".savesFolder", ".");
   }
 
@@ -235,7 +235,7 @@ namespace Gsage {
       file = area + "." + mFileExtension;
     }
 
-    std::string path = mLevelsFolder + "/" + file;
+    std::string path = mScenesFolder + "/" + file;
     LOG(INFO) << "Loading area " << path;
     if(!FileLoader::getSingletonPtr()->load(path, DataProxy(), areaInfo))
       return false;
@@ -295,7 +295,7 @@ namespace Gsage {
   bool GameDataManager::loadCharacters(const std::string& area)
   {
     DataProxy charactersIndex;
-    if(!FileLoader::getSingletonPtr()->load(mLevelsFolder + "/placement." + mFileExtension, DataProxy(), charactersIndex))
+    if(!FileLoader::getSingletonPtr()->load(mScenesFolder + "/placement." + mFileExtension, DataProxy(), charactersIndex))
       return false;
 
     auto locationCharacters = charactersIndex.get<DataProxy>(area);

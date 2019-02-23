@@ -25,9 +25,8 @@ THE SOFTWARE.
 */
 
 #include "Filesystem.h"
-#include "Poco/File.h"
-#include "Poco/Path.h"
 #include "Logger.h"
+#include "Poco/Zip/Decompress.h"
 
 namespace Gsage {
   const Event::Type FileEvent::COPY_COMPLETE = "FileEvent::COPY_COMPLETE";
@@ -48,13 +47,50 @@ namespace Gsage {
     mThreadPool.joinAll();
   }
 
+  bool Filesystem::createFile(const std::string& path) const
+  {
+    Poco::Path p(path);
+    Poco::File f(p);
+    return f.createFile();
+  }
+
   std::shared_ptr<CopyWorker> Filesystem::copytreeAsync(const std::string& src, const std::string& dst)
   {
     unsigned int id = mCopyID.fetch_add(1);
     std::shared_ptr<CopyWorker> worker = std::make_shared<CopyWorker>(this, id, src, dst);
-    CopyWorker* w = worker.get();
-    mThreadPool.start(*w);
+    mTasks << worker;
     return worker;
+  }
+
+  bool Filesystem::unzip(const std::string& path, const std::string& dest) const
+  {
+    if(!exists(path))
+      return false;
+
+    Poco::Path p(path);
+    std::ifstream input(p.toString(), std::ios::binary);
+    Poco::Zip::Decompress dec(input, Poco::Path(dest));
+    // TODO: handle decompression errors
+    dec.decompressAllFiles();
+    return true;
+  }
+
+  bool Filesystem::copy(const std::string& src, const std::string& dst) const
+  {
+    Poco::File srcFile(src);
+    if(!srcFile.exists()) {
+      return false;
+    }
+
+    Poco::Path p(dst);
+    p.makeParent();
+
+    Poco::File directory(p);
+    if(!directory.exists())
+      directory.createDirectories();
+
+    srcFile.copyTo(dst);
+    return true;
   }
 
   bool Filesystem::rmdir(const std::string& path, bool recursive) const
@@ -94,6 +130,14 @@ namespace Gsage {
 
   void Filesystem::update(double time)
   {
+    size_t pending = mTasks.size();
+    if(pending > 0) {
+      for(int i = 0; i < mThreadPool.available(); i++) {
+        std::shared_ptr<CopyWorker> worker;
+        if(mTasks.get(worker))
+          mThreadPool.start(*worker.get());
+      }
+    }
     for(size_t i = 0; i < mEvents.size(); i++){
       FileEvent e;
       if(mEvents.get(e)) {
@@ -109,25 +153,14 @@ namespace Gsage {
 
   void CopyWorker::run()
   {
-    Poco::File src(mSrc);
-    if(!src.exists()) {
-      mFS->queueEvent(FileEvent(FileEvent::COPY_FAILED, mID));
-      return;
-    }
-
-    try{
-
-      Poco::Path p(mDst);
-      p.makeParent();
-
-      Poco::File directory(p);
-      if(!directory.exists())
-        directory.createDirectories();
-
-      src.copyTo(mDst);
+    try {
+      if(!mFS->copy(mSrc, mDst)) {
+        mFS->queueEvent(FileEvent(FileEvent::COPY_FAILED, mID));
+        return;
+      }
       mFS->queueEvent(FileEvent(FileEvent::COPY_COMPLETE, mID));
     } catch (const std::exception& e) {
-      LOG(ERROR) << "Failed to copy " << mSrc << "->" << mSrc << ": " << e.what();
+      LOG(ERROR) << "Failed to copy " << mSrc << "->" << mDst << ": " << e.what();
       mFS->queueEvent(FileEvent(FileEvent::COPY_FAILED, mID));
     }
   }

@@ -44,8 +44,10 @@ namespace Gsage {
       }
 
       virtual ~MovableObjectWrapper() {
-        mObject->detachFromParent();
-        mSceneManager->destroyMovableObject(mObject);
+        if(mObject) {
+          mObject->detachFromParent();
+          mSceneManager->destroyMovableObject(mObject);
+        }
       }
 
       void setRenderQueueGroup(const unsigned char& queueId)

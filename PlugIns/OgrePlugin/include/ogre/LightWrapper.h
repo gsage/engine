@@ -27,16 +27,17 @@ THE SOFTWARE.
 #ifndef _LightWrapper_H_
 #define _LightWrapper_H_
 
-#include "ogre/OgreObject.h"
+#include "ogre/MovableObjectWrapper.h"
 #include <OgreLight.h>
 
 namespace Gsage {
-  class LightWrapper : public OgreObject
+  class LightWrapper : public MovableObjectWrapper<Ogre::Light>
   {
     public:
       static const std::string TYPE;
 
       LightWrapper();
+      virtual ~LightWrapper();
       /**
        * Create light instance
        * @param light name
@@ -118,9 +119,17 @@ namespace Gsage {
 
       Ogre::Real getPowerScale();
 #endif
-    private:
-      Ogre::Light* mLight;
+      /**
+       * Set render queue
+       * @param queue queue id
+       */
+      void setRenderQueue(const unsigned int& queue);
 
+      /**
+       * Get render queue
+       */
+      unsigned int getRenderQueue();
+    private:
       /**
        * Get ogre internal light type from string
        * @param type point/directional/spotlight

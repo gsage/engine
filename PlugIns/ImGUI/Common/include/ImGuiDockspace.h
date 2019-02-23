@@ -319,14 +319,13 @@ namespace Gsage {
       bool mActive;
       // window is opened
       bool mOpened;
-      float mRatio;
-
-      int mFlags;
-
-      const ImGuiDockspaceStyle& mStyle;
-
+      bool mRendered;
       bool mResized;
       bool mDirty;
+
+      float mRatio;
+      int mFlags;
+      const ImGuiDockspaceStyle& mStyle;
   };
 
   struct ImGuiDockspaceState
@@ -407,15 +406,17 @@ namespace Gsage {
        * Undock dock from any kind of container
        *
        * @param dock DockPtr
+       * @param destroy removes dock object completely, clearing the dock state
        */
-      bool undock(DockPtr dock);
+      bool undock(DockPtr dock, bool destroy = false);
 
       /**
        * Undock dock from any kind of container
        *
        * @param label dock label
+       * @param destroy removes dock object completely, clearing the dock state
        */
-      bool undock(const char* label);
+      bool undock(const char* label, bool destroy = false);
 
       /**
        * Get root dock
@@ -516,6 +517,13 @@ namespace Gsage {
       virtual ~ImGuiDockspaceRenderer();
 
       /**
+       * Activate dock
+       * @param label Dock id
+       * @returns true if succeed
+       */
+      bool activateDock(const char* label);
+
+      /**
        * Must be called before rendering all windows
        */
       void beginWorkspace(ImVec2 pos, ImVec2 size);
@@ -556,8 +564,10 @@ namespace Gsage {
 
       /**
        * Must be called after rendering all windows
+       *
+       * @param cleanup do cleanup of docks that were not rendered this time
        */
-      void endWorkspace();
+      void endWorkspace(bool cleanup = false);
 
       /**
        * Get workspace state

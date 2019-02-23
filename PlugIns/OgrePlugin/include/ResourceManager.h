@@ -41,17 +41,9 @@ namespace Gsage {
   class ResourceManager
   {
     public:
-      ResourceManager(GsageFacade* facade, const std::string& workdir);
+      ResourceManager(GsageFacade* facade);
       virtual ~ResourceManager(void);
 
-      /**
-       * Add more folders to the resource manager search paths
-       *
-       * will unload all resources
-       *
-       * @param folders new folders list
-       */
-      void setAdditionalResourceFolders(const DataProxy& folders);
       /**
        * Loads all resource groups
        *
@@ -98,6 +90,10 @@ namespace Gsage {
         Ogre::Root& root = Ogre::Root::getSingleton();
 
         std::tie(path, type) = processPath(mCommonFolder);
+        if(type.empty()) {
+          LOG(ERROR) << "Failed to find resource " << path;
+          return;
+        }
         std::vector<std::string> folders;
         //Fill the library folder paths with the relevant folders
         folders.push_back(path + "/" + mShaderSyntax);
@@ -123,9 +119,7 @@ namespace Gsage {
 
       std::tuple<std::string, std::string> processPath(const std::string& line, const std::string& workdir = "");
     private:
-      std::string mWorkdir;
       bool mHlmsLoaded;
-      std::vector<std::string> mResourceFolders;
       GsageFacade* mFacade;
 #if OGRE_VERSION >= 0x020100
       std::string mShaderSyntax;

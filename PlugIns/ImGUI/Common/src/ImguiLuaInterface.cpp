@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <imgui_extensions.h>
 #include <deque>
 
+#include "systems/RenderSystem.h"
 #include "sol.hpp"
 
 namespace Gsage {
@@ -434,6 +435,8 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiWindowFlags_Modal");
     lua_pushnumber(L, ImGuiWindowFlags_ChildMenu);
     lua_setglobal(L, "ImGuiWindowFlags_ChildMenu");
+    lua_pushnumber(L, ImGuiWindowFlags_AlwaysUseWindowPadding);
+    lua_setglobal(L, "ImGuiWindowFlags_AlwaysUseWindowPadding");
     lua_pushnumber(L, ImGuiInputTextFlags_CharsDecimal);
     lua_setglobal(L, "ImGuiInputTextFlags_CharsDecimal");
     lua_pushnumber(L, ImGuiInputTextFlags_CharsHexadecimal);
@@ -506,6 +509,12 @@ namespace Gsage {
     lua_setglobal(L, "ImGuiCol_WindowBg");
     lua_pushnumber(L, ImGuiCol_ChildWindowBg);
     lua_setglobal(L, "ImGuiCol_ChildWindowBg");
+    lua_pushnumber(L, ImGuiCol_Border);
+    lua_setglobal(L, "ImGuiCol_Border");
+    lua_pushnumber(L, ImGuiCol_BorderShadow);
+    lua_setglobal(L, "ImGuiCol_BorderShadow");
+    lua_pushnumber(L, ImGuiCol_Separator);
+    lua_setglobal(L, "ImGuiCol_Separator");
 
     lua_pushnumber(L, ImGuiTreeNodeFlags_Leaf);
     lua_setglobal(L, "ImGuiTreeNodeFlags_Leaf");
@@ -608,6 +617,10 @@ namespace Gsage {
         "data", &ImVector<char>::Data
     );
 
+    imgui["SetDragDropPayload"] = [] (const std::string& label, void* data) {
+      ImGui::SetDragDropPayload(label.c_str(), data, 0);
+    };
+
     imgui["PushStyleColor_U32"] = [] (ImGuiCol idx, ImU32 col) {
       ImGui::PushStyleColor(idx, ImGui::ColorConvertU32ToFloat4(col));
     };
@@ -619,6 +632,23 @@ namespace Gsage {
 
     imgui["SetWantCaptureMouse"] = [](bool value) {
       ImGui::GetIO().WantCaptureMouse = value;
+    };
+
+    imgui["GetWantCaptureMouse"] = []() {
+      return ImGui::GetIO().WantCaptureMouse;
+    };
+
+    imgui["Texture"] = [](TexturePtr texture) {
+      if (!texture->isValid() || !texture->hasData()) {
+        return false;
+      }
+
+      ImVec2 size;
+
+      std::tie(size.x, size.y) = texture->getSize();
+
+      ImGui::Image(texture.get(), size);
+      return true;
     };
   }
 }

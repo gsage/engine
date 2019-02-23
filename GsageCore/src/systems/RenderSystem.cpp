@@ -93,7 +93,9 @@ namespace Gsage {
 
   const Event::Type Texture::UV_UPDATE = "Texture::UV_UPDATE";
 
-  Texture::Texture(const std::string& name)
+  const Event::Type Texture::DESTROY = "Texture::DESTROY";
+
+  Texture::Texture(const std::string& name, const DataProxy& params)
     : mValid(false)
     , mWidth(0)
     , mHeight(0)
@@ -107,6 +109,9 @@ namespace Gsage {
     , mUVTR(1.0, 0.0)
     , mUVBR(1.0, 1.0)
   {
+    params.dump(mParams, DataProxy::ForceCopy);
+    params.read("width", mWidth);
+    params.read("height", mHeight);
   }
 
   void Texture::setSize(int width, int height)
@@ -131,6 +136,13 @@ namespace Gsage {
     mUVBR = br;
 
     fireEvent(Event(Texture::UV_UPDATE));
+  }
+
+  void Texture::updateConfig(const DataProxy& config)
+  {
+    mLock.lock();
+    mParams = merge(mParams, config);
+    mLock.unlock();
   }
 
   RenderSystem::RenderSystem()

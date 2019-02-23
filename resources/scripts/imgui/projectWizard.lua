@@ -1,8 +1,9 @@
 require 'imgui.components.webview'
-require 'imgui.base'
+local imguiInterface = require 'imgui.base'
 local lm = require 'lib.locales'
 local async = require 'lib.async'
 local projectManager = require 'editor.projectManager'
+local fs = require 'lib.filesystem'
 
 -- project creation wisard view
 ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
@@ -28,7 +29,6 @@ ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
     self:goHome()
   end)
 
-
   cef:addMessageHandler("selectProjectIcon", function()
     local window = game:getWindowManager()
     local files = window:openDialog(Window.FILE_DIALOG_OPEN, "", dialogFolder, {"png", "jpg"})
@@ -36,6 +36,11 @@ ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
 
   cef:addMessageHandler("pickFolder", function()
     local window = game:getWindowManager()
+
+    if dialogFolder[#dialogFolder] ~= "/" then
+      dialogFolder = dialogFolder .. "/"
+    end
+
     local files = window:openDialog(Window.FILE_DIALOG_OPEN_FOLDER, lm("wizard.create.project_folder"), dialogFolder, {})
     if #files > 0 then
       self:updateProjectsFolder(files[1])
@@ -51,7 +56,7 @@ ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
       end,
       function(success)
         if success then
-          local success, err = pcall(projectManager.open, projectManager, settings.projectPath .. "/" .. settings.projectName)
+          local success, err = pcall(projectManager.open, projectManager, fs.path.join(settings.projectPath, settings.projectName))
           self:updateProjectsFolder(settings.projectPath)
           if not success then
             log.error("Failed to open project " .. err)
@@ -62,27 +67,18 @@ ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
   end)
 
   cef:addMessageHandler("browseProjects", function()
-    local wm = game:getWindowManager()
-    local files, status, err = wm:openDialog(Window.FILE_DIALOG_OPEN_FOLDER, lm("wizard.open_project"), dialogFolder, {})
-    if status == Window.FILE_DIALOG_FAILURE then
-      log.error("Failed to open file dialog " .. err)
-      return
-    end
-
-    if #files > 0 then
-      projectManager:open(files[1])
-    end
+    projectManager:browseProjects()
   end)
 
   cef:addMessageHandler("openProject", function(path)
     projectManager:open(path)
-    self:goHome()
   end)
 end)
 
 function ProjectWizard:updateProjectsFolder(folder)
   self.fileDialogState.folder = folder
-  editor:putToGlobalState("fileDialogState", fileDialogState)
+  editor:putToGlobalState("fileDialogState", self.fileDialogState)
+  editor:saveGlobalState()
 end
 
 function ProjectWizard:goHome()
@@ -105,7 +101,6 @@ function ProjectWizard:__call()
   local width, height = imgui.DisplaySize()
   imgui.SetNextWindowSize(width - 95, height - 40)
   imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 3.0, 3.0)
-  imgui.SetWantCaptureMouse(false)
   local drawing = self:imguiBegin()
   imgui.PopStyleVar(ImGuiStyleVar_WindowPadding)
 
@@ -115,13 +110,14 @@ function ProjectWizard:__call()
     return
   end
 
+  imguiInterface:captureMouse(not imgui.IsWindowHovered())
+
   local w, h = imgui.GetContentRegionAvail()
   local x, y = imgui.GetCursorScreenPos()
 
   self.webview:render(w, h)
 
   self:imguiEnd()
-  imgui.SetWantCaptureMouse(false)
 end
 
 -- start project creation flow
@@ -138,7 +134,7 @@ function ProjectWizard:runCreationFlow(project)
       version = "v2"
     end
 
-    local s, loaded = data:loadTemplate("editor/projectTemplates/" .. projectType .. ".json", {version = version})
+    local s, loaded = data:loadTemplate(fs.path.join("editor", "projectTemplates", projectType .. ".json"), {version = version})
     if not loaded then
       error("No template found for project type " .. projectType)
     end
@@ -149,10 +145,7 @@ function ProjectWizard:runCreationFlow(project)
     local plugins = {}
 
     -- loading all plugins information
-    local pluginFileData, loaded = data:readJSON("editor/plugins.json")
-    if not loaded then
-      error("Failed to load all plugins information")
-    end
+    local pluginFileData = require "editor.plugins"
     local info = pluginFileData.pluginsInfo
 
     local enabledPlugins = {}

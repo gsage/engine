@@ -57,9 +57,9 @@ THE SOFTWARE.
 #include <CommandBuffer/OgreCommandBuffer.h>
 #include <OgreHlmsPbsPrerequisites.h>
 #include <OgreHlms.h>
-
-#include "v2/ViewportRenderable.h"
 #endif
+
+#include "ViewportRenderable.h"
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #include "OSX/Utils.h"
@@ -160,18 +160,6 @@ namespace Gsage {
       for (int i = 0; i < drawList->CmdBuffer.Size; i++)
       {
         const ImDrawCmd *drawCmd = &drawList->CmdBuffer[current];
-#if OGRE_VERSION < 0x020100
-        if (drawCmd->UserCallbackData != NULL){
-          OgreV1::Rectangle2D* rect = static_cast<OgreV1::Rectangle2D*>(drawCmd->UserCallbackData);
-          mSceneMgr->_injectRenderWithPass(
-              rect->getMaterial()->getTechnique(0)->getPass(0),
-              rect,
-              false,
-              false
-          );
-          continue;
-        }
-#endif
         //create renderables if necessary
         if (numberDraws >= mRenderables.size())
         {
@@ -184,7 +172,6 @@ namespace Gsage {
         ImGUIRenderable* renderable = mRenderables[numberDraws];
         Ogre::TextureUnitState* texUnitState;
 
-#if OGRE_VERSION >= 0x020100
         if (drawCmd->UserCallbackData != NULL){
           ViewportRenderData* viewport = static_cast<ViewportRenderData*>(drawCmd->UserCallbackData);
           renderable->updateVertexData(
@@ -196,22 +183,42 @@ namespace Gsage {
           if((viewport->mTexUnitState == 0 && !viewport->mTextureName.empty()) || viewport->mDirty) {
             Ogre::TexturePtr texture = viewport->getRenderTexture();
             if(!texture.isNull()) {
+#if OGRE_VERSION >= 0x020100
               viewport->mTexUnitState = mPass->createTextureUnitState();
               viewport->mTexUnitState->setTexture(texture);
+#else
+              viewport->mTexUnitState = mPass->getTextureUnitState(0);
+#endif
               viewport->mDirty = false;
             }
           }
 
           if(viewport->mTexUnitState) {
+#if OGRE_VERSION >= 0x020100
             texUnitState = viewport->mTexUnitState;
+#else
+            viewport->mTexUnitState->setTexture(viewport->getRenderTexture());
+#endif
+          } else {
+            continue;
           }
         } else {
-#endif
           texUnitState = mTexUnit;
+          if (drawCmd->TextureId != 0) {
+            OgreTexture* texture = (OgreTexture*)drawCmd->TextureId;
+            Ogre::TexturePtr tex = texture->getOgreTexture();
+            if(texture->isValid() && !tex.isNull())
+            {
+              mTexUnit->setTexture(tex);
+              setFiltering(Ogre::TFO_TRILINEAR);
+            }
+          } else {
+            mTexUnit->setTexture(mFontTex);
+            setFiltering(Ogre::TFO_NONE);
+          }
+
           renderable->updateVertexData(vtxBuf, &idxBuf[startIdx], drawList->VtxBuffer.Size, drawCmd->ElemCount);
-#if OGRE_VERSION >= 0x020100
         }
-#endif
 
         //set scissoring
         int vpLeft, vpTop, vpWidth, vpHeight;
@@ -710,13 +717,17 @@ namespace Gsage {
   {
     Ogre::TextureUnitState* texUnit = mPass->createTextureUnitState();
     texUnit->setTexture(mFontTex);
+    mTexUnit = texUnit;
+  }
+
+  void ImguiRendererV1::setFiltering(Ogre::TextureFilterOptions mode)
+  {
 #if OGRE_VERSION < 0x020100
-    texUnit->setTextureFiltering(Ogre::TFO_NONE);
+    mTexUnit->setTextureFiltering(mode);
 #else
     Ogre::HlmsSamplerblock samplerblock;
-    samplerblock.setFiltering(Ogre::TFO_NONE);
-    texUnit->setSamplerblock(samplerblock);
+    samplerblock.setFiltering(mode);
+    mTexUnit->setSamplerblock(samplerblock);
 #endif
-    mTexUnit = texUnit;
   }
 }

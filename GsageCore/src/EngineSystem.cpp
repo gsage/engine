@@ -25,12 +25,15 @@ THE SOFTWARE.
 */
 
 #include "EngineSystem.h"
+#include "EngineEvent.h"
+#include "Engine.h"
 
 namespace Gsage
 {
 
   Task::Task(Task::Function func)
     : mFunction(func)
+    , mCancelled(false)
   {
 
   }
@@ -59,6 +62,7 @@ namespace Gsage
     , mDedicatedThread(false)
     , mReadyWasSet(false)
     , mShutdown(false)
+    , mRestart(false)
   {
   }
 
@@ -81,6 +85,7 @@ namespace Gsage
 
   bool EngineSystem::initialize(const DataProxy& settings)
   {
+    mShutdown.store(false);
     mConfig = settings;
     mThreadsNumber = mConfig.get("threadsNumber", 1);
     mDedicatedThread = mConfig.get("dedicatedThread", false);
@@ -92,30 +97,34 @@ namespace Gsage
 
     size_t backgroundWorkersCount = mConfig.get("backgroundWorkersCount", 0);
     if(backgroundWorkersCount > 0) {
-      for(int i = 0; i < backgroundWorkersCount - mBackgroundWorkers.size(); i++) {
-        mBackgroundWorkers.push_back(std::thread([&](){
+      size_t count = backgroundWorkersCount - mBackgroundWorkers.size();
+      for(int i = 0; i < count; i++) {
+        mBackgroundWorkers.push_back(std::thread([&, i](){
           LOG(INFO) << "Starting background worker " << i;
           bool run = true;
           while(run) {
-            ChannelSignal signal;
+            ChannelSignal signal(ChannelSignal::NONE);
             cpp::select select;
             select.recv(mTasksQueue, [](TaskPtr task){
               task->run();
             });
             select.recv_only(mShutdownChannel, signal);
-            select.wait();
+            select.wait(std::chrono::milliseconds(200));
 
-            run = mShutdown.load() && signal != ChannelSignal::SHUTDOWN;
+            run = !mShutdown.load() && signal != ChannelSignal::SHUTDOWN;
           }
+          LOG(INFO) << "Stopped background worker " << i;
         }));
       }
     }
 
+    mEngine->fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_STARTED, getName(), this));
     return true;
   }
 
   void EngineSystem::shutdown()
   {
+    mEngine->fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_STOPPING, getName(), this));
     mShutdown.store(true);
     for(int i = 0; i < mBackgroundWorkers.size(); i++) {
       mShutdownChannel.send(ChannelSignal::SHUTDOWN);
@@ -128,6 +137,20 @@ namespace Gsage
     }
     mBackgroundWorkers.clear();
     setReady(false);
+  }
+
+  void EngineSystem::restart()
+  {
+    if(!mReady)
+      return;
+
+    // if the system if running, it should be restarted only after update finished
+    if(mEnabled) {
+      mRestart = true;
+    } else {
+      shutdown();
+      initialize(mConfig);
+    }
   }
 
   void EngineSystem::setEngineInstance(Engine* value)

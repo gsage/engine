@@ -84,7 +84,7 @@ namespace Gsage {
       manualObject->position(point.X, point.Y, point.Z);
     }
     manualObject->end();
-    mParentNode->attachObject(manualObject);
+    attachObject(manualObject);
     mObject = manualObject;
   }
 

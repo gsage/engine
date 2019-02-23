@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "render": {
+      "resources": {
+        "exampleLevel": [
+          "Zip:models/packs/exampleLevel.zip",
+          "Zip:models/packs/torch.zip",
+          "FileSystem:2.0/materials",
+          "FileSystem:models"
+        ]
+      },
+
+      "colourBackground": "0xc0c0c",
+      "colourAmbient": "0x7F7F7F",
+      "colourDiffuse": "0xc0c0c"
+    },
+    "script": {
+      "hooks": {
+        "camera": "setOrbitalCam()"
+      }
+    }
+  },
+  "entities": [
+  {
+    "id": "castle",
+    "render": {
+      "root": {
+        "position": "0,0,0",
+        "rotation": "1,0,-1,0",
+        "scale": "1,1,1",
+        "children": [{
+          "type": "model",
+          "mesh": "Barrel.mesh",
+          "name": "castle",
+          "castShadows": true
+        }]
+      }
+    }
+  }, {
+      "id": "Lamp",
+      "render": {
+        "root": {
+          "position": "0,0,0",
+          "rotation": "0.570947,0.169076,0.755880,-0.272171",
+          "scale": "1.000000,1.000000,1.000000",
+          "name": "Lamp",
+          "children": [{
+            "type": "light",
+            "colourSpecular": "0xffffff",
+            "direction": "0,-0.5,0.5",
+            "name": "Lamp",
+            "castShadows": true,
+            "position": "40,10,40",
+            "colourShadow": "0x000000",
+            "colourDiffuse": "0xffffff",
+            "lightType": "directional"
+          }]
+        }
+      }
+  }]
+}

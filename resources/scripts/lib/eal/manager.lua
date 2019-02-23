@@ -134,6 +134,9 @@ function EALManager:assembleNew(info)
   local function walkTree(tree, id)
     if type(tree) == "function" then
       cls = tree(cls)
+      if cls == nil then
+        error("Nil return value from " .. id)
+      end
       return
     end
 
@@ -170,6 +173,9 @@ function EALManager:assembleNew(info)
       local decorator = self.mixins[mixin]
       if decorator then
         cls = decorator(cls)
+        if cls == nil then
+          error("Nil return value from mixin decorator " .. mixin)
+        end
       else
         log.warn("Undefined mixin \"" .. mixin .. "\"")
       end

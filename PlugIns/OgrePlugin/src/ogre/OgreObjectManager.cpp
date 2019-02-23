@@ -44,10 +44,9 @@ namespace Gsage {
   {
   }
 
-  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, OgreV1::Entity* parentEntity)
+  OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, const DataProxy& attachParams, OgreObject* parent)
   {
-    std::string type = dict.get("type", "no_type_defined!");
-    if(mObjects.count(type) == 0)
+    if(!contains(mObjects, type))
     {
       LOG(ERROR) << "Failed to create element of type \"" << type << "\": no factory of such type exists";
       return 0;
@@ -60,8 +59,8 @@ namespace Gsage {
         owner,
         type,
         sceneManager,
-        boneId,
-        parentEntity))
+        attachParams,
+        parent))
     {
       LOG(ERROR) << "Failed to create object of type \"" << type << "\": failed to build object";
       object->destroy();
@@ -72,7 +71,7 @@ namespace Gsage {
 
   OgreObject* OgreObjectManager::create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent)
   {
-    if(mObjects.count(type) == 0)
+    if(!contains(mObjects, type))
     {
       LOG(ERROR) << "Failed to create element of type \"" << type << "\": no factory of such type exists";
       return 0;
@@ -108,7 +107,7 @@ namespace Gsage {
   void OgreObjectManager::destroy(OgreObject* object)
   {
     const std::string& type = object->getType();
-    if(mObjects.count(type) == 0)
+    if(!contains(mObjects, type))
     {
       LOG(WARNING) << "Failed to destroy object of type \""<< type << "\": no pool of such type exists";
       return;
