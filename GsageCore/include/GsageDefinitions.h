@@ -49,6 +49,7 @@ THE SOFTWARE.
 #include <ostream>
 #include <vector>
 #include <channel>
+#include <map>
 
 static inline std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
@@ -80,11 +81,30 @@ static inline std::string join(const std::vector<std::string>& vector, const cha
   return s.str();
 }
 
+/**
+ * Short definition of std::map key search
+ */
+template<class K, class T>
+static bool contains(const std::map<K, T>& m, K value)
+{
+  return m.find(value) != m.end();
+}
+
+/**
+ * Short definition of std::vector key search
+ */
+template<class T>
+static bool contains(const std::vector<T>& v, T value)
+{
+  return std::find(v.start(), v.end(), value) != v.end();
+}
+
 namespace Gsage {
   enum ChannelSignal {
-    DONE,
-    SHUTDOWN,
-    FAILURE
+    NONE = 0,
+    DONE = 1,
+    SHUTDOWN = 2,
+    FAILURE = 3
   };
 
   typedef cpp::channel<ChannelSignal, 32> SignalChannel;

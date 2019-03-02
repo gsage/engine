@@ -1025,6 +1025,12 @@ OPTIONAL_INT_ARG(cond, 0)
 CALL_FUNCTION_NO_RET(SetNextTreeNodeOpen, is_open, cond)
 END_IMGUI_FUNC
 //    IMGUI_API bool          CollapsingHeader(const char* label, ImGuiTreeNodeFlags flags = 0);      // if returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().
+IMGUI_FUNCTION(CollapsingHeader)
+LABEL_ARG(label)
+OPTIONAL_INT_ARG(flags, 0)
+CALL_FUNCTION(CollapsingHeader, bool, label, flags)
+PUSH_BOOL(ret)
+END_IMGUI_FUNC
 // Unsupported arg type  ImGuiTreeNodeFlags flags = 0
 //    IMGUI_API bool          CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags flags = 0); // when 'p_open' isn't NULL, display an additional small close button on upper right of the header
 // Unsupported arg type  ImGuiTreeNodeFlags flags = 0
@@ -1248,6 +1254,39 @@ END_IMGUI_FUNC
 //    IMGUI_API void          LogButtons();                                                       // helper to display buttons for logging to tty/file/clipboard
 IMGUI_FUNCTION(LogButtons)
 CALL_FUNCTION_NO_RET(LogButtons)
+END_IMGUI_FUNC
+//    IMGUI_API void          LogText(const char* fmt, ...) IM_FMTARGS(1);                        // pass text data straight to log (without being displayed)
+// Unsupported arg type  ...) IM_FMTARGS(1
+//    IMGUI_API bool          BeginDragDropSource(ImGuiDragDropFlags flags = 0);                                      // call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
+IMGUI_FUNCTION(BeginDragDropSource)
+OPTIONAL_INT_ARG(flags, 0)
+CALL_FUNCTION_NO_RET(BeginDragDropSource, flags)
+END_IMGUI_FUNC
+//    IMGUI_API bool          SetDragDropPayload(const char* type, const void* data, size_t size, ImGuiCond cond = 0);// type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types. Data is copied and held by imgui.
+// Unsupported arg type  const void* data
+// Unsupported arg type  size_t size
+// Unsupported arg type  ImGuiCond cond = 0
+//    IMGUI_API void          EndDragDropSource();                                                                    // only call EndDragDropSource() if BeginDragDropSource() returns true!
+IMGUI_FUNCTION(EndDragDropSource)
+CALL_FUNCTION_NO_RET(EndDragDropSource)
+POP_END_STACK(12)
+END_IMGUI_FUNC
+//    IMGUI_API bool          BeginDragDropTarget();                                                                  // call after submitting an item that may receive an item. If this returns true, you can call AcceptDragDropPayload() + EndDragDropTarget()
+IMGUI_FUNCTION(BeginDragDropTarget)
+CALL_FUNCTION(BeginDragDropTarget, bool)
+IF_RET_ADD_END_STACK(13)
+PUSH_BOOL(ret)
+END_IMGUI_FUNC
+//    IMGUI_API const ImGuiPayload* AcceptDragDropPayload(const char* type, ImGuiDragDropFlags flags = 0);            // accept contents of a given type. If ImGuiDragDropFlags_AcceptBeforeDelivery is set you can peek into the payload before the mouse button is released.
+IMGUI_FUNCTION(AcceptDragDropPayload)
+LABEL_ARG(type)
+OPTIONAL_INT_ARG(flags, 0)
+CALL_FUNCTION_NO_RET(AcceptDragDropPayload, type, flags)
+END_IMGUI_FUNC
+//    IMGUI_API void          EndDragDropTarget();                                                                    // only call EndDragDropTarget() if BeginDragDropTarget() returns true!
+IMGUI_FUNCTION(EndDragDropTarget)
+CALL_FUNCTION_NO_RET(EndDragDropTarget)
+POP_END_STACK(13)
 END_IMGUI_FUNC
 //    IMGUI_API void          LogText(const char* fmt, ...);                     // pass text data straight to log (without being displayed)
 // Variadic functions aren't suppported but here it is anyway

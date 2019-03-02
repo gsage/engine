@@ -50,12 +50,20 @@ namespace Gsage {
       /**
        * Get FileLoader singleton
        */
-      static FileLoader getSingleton();
+      static FileLoader& getSingleton();
 
       /**
        * Get FileLoader singleton pointer
        */
       static FileLoader* getSingletonPtr();
+
+      /**
+       * Search for the file in all search folders
+       *
+       * @param file
+       * @returns first found file path
+       */
+      std::string searchFile(const std::string& path) const;
 
       /**
        * Add resource search folder

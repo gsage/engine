@@ -32,6 +32,8 @@ THE SOFTWARE.
 #include "EventDispatcher.h"
 #include "Poco/ThreadPool.h"
 #include "Poco/Runnable.h"
+#include "Poco/File.h"
+#include "Poco/Path.h"
 #include "UpdateListener.h"
 #include <atomic>
 
@@ -63,9 +65,24 @@ namespace Gsage {
       virtual ~Filesystem();
 
       /**
+       * Creates a file
+       */
+      bool createFile(const std::string& path) const;
+
+      /**
        * Recoursively copy directory in async fashion
        */
       std::shared_ptr<CopyWorker> copytreeAsync(const std::string& src, const std::string& dst);
+
+      /**
+       * Unzip archive
+       */
+      bool unzip(const std::string& path, const std::string& dest) const;
+
+      /**
+       * Recoursively copy directory or file
+       */
+      bool copy(const std::string& src, const std::string& dst) const;
 
       /**
        * Remove directory
@@ -78,9 +95,49 @@ namespace Gsage {
       bool rmdir(const std::string& path, bool recursive = false) const;
 
       /**
+       * Create a directory
+       *
+       * @param path
+       * @returns true if success
+       */
+      inline bool mkdir(const std::string& path, bool recursive = false) const
+      {
+        Poco::Path p(path);
+        Poco::File directory(p);
+        if(directory.exists())
+          return true;
+
+        if(recursive) {
+          directory.createDirectories();
+          return true;
+        }
+
+        return directory.createDirectory();
+      }
+
+      /**
+       * Join path
+       */
+      inline std::string join(const std::vector<std::string> parts) const
+      {
+        Poco::Path p(parts[0]);
+
+        for(int i = 1; i < parts.size(); i++) {
+          p.append(parts[i]);
+        }
+
+        return p.toString();
+      }
+
+      /**
        * Check if path exists
        */
       bool exists(const std::string& path) const;
+
+      /**
+       * Check if the path is absolute
+       */
+      inline bool isAbsolute(const std::string& path) const { return Poco::Path(path).isAbsolute(); }
 
       /**
        * Get all files in directory
@@ -88,6 +145,36 @@ namespace Gsage {
        * @param path
        */
       std::vector<std::string> ls(const std::string& path) const;
+
+      /**
+       * Get file path directory
+       */
+      inline std::string directory(const std::string& path) const {
+        Poco::Path p(path);
+        p.makeParent();
+        return p.toString();
+      }
+
+      /**
+       * Check if path is directory
+       */
+      inline bool isDirectory(const std::string& path) const {
+        return Poco::File(Poco::Path(path)).isDirectory();
+      }
+
+      /**
+       * Get file extension
+       */
+      inline std::string extension(const std::string& path) const {
+        return Poco::Path(path).getExtension();
+      }
+
+      /**
+       * Get file name
+       */
+      inline std::string filename(const std::string& path) const {
+        return Poco::Path(path).getFileName();
+      }
 
       /**
        * Flush all copy complete events
@@ -103,6 +190,8 @@ namespace Gsage {
       ThreadSafeQueue<FileEvent> mEvents;
       std::atomic<unsigned int> mCopyID;
       Poco::ThreadPool mThreadPool;
+      typedef ThreadSafeQueue<std::shared_ptr<CopyWorker>> Tasks;
+      Tasks mTasks;
   };
 
   class CopyWorker : public Poco::Runnable
@@ -120,6 +209,14 @@ namespace Gsage {
       virtual void run();
 
       inline unsigned int getID() const { return mID; }
+
+      inline const std::string& getSrc() const {
+        return mSrc;
+      }
+
+      inline const std::string& getDst() const {
+        return mDst;
+      }
 
       inline std::string str() const { return mSrc + " -> " + mDst; }
     private:

@@ -48,14 +48,6 @@ namespace Gsage {
       OgreObject();
       virtual ~OgreObject();
 
-      virtual bool initialize(
-          OgreObjectManager* objectManager,
-          const DataProxy& dict,
-          const std::string& ownerId,
-          const std::string& type,
-          Ogre::SceneManager* sceneManager,
-          const std::string& boneId,
-          OgreV1::Entity* parentEntity);
       /**
        * Initialize element from the node with values
        * @param factory OgreObjectManager to enable child class creation
@@ -72,6 +64,25 @@ namespace Gsage {
           const std::string& type,
           Ogre::SceneManager* sceneManager,
           Ogre::SceneNode* parent);
+
+      /**
+       * Initialize element from the node with values
+       * @param factory OgreObjectManager to enable child class creation
+       * @param dict DataProxy with values
+       * @param type String type of the object
+       * @param parent Parent OgreObject
+       * @param sceneManager SceneManager to use
+       * @param attachParams Passed down to the parent object when attaching
+       * @param ownerId Id of entity that owns the element
+       */
+      virtual bool initialize(
+          OgreObjectManager* objectManager,
+          const DataProxy& dict,
+          const std::string& ownerId,
+          const std::string& type,
+          Ogre::SceneManager* sceneManager,
+          const DataProxy& attachParams,
+          OgreObject* parent);
       /**
        * Destroy object
        */
@@ -92,6 +103,11 @@ namespace Gsage {
        */
       void attachObject(Ogre::MovableObject* object);
 
+      /**
+       * Attach movable object to this object
+       * @param object Object to attach
+       */
+      virtual bool attach(Ogre::MovableObject* object, const DataProxy& params);
 
       /**
        * Generate unique name for the object.
@@ -111,13 +127,14 @@ namespace Gsage {
       std::string mObjectId;
       std::string mOwnerId;
       std::string mType;
-      std::string mBoneId;
 
-      OgreV1::Entity* mParentEntity;
       OgreObjectManager* mObjectManager;
 
       Ogre::SceneManager* mSceneManager;
       Ogre::SceneNode* mParentNode;
+
+      OgreObject* mParentObject;
+      DataProxy mAttachParams;
   };
 }
 #endif

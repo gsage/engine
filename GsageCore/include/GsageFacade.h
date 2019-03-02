@@ -91,10 +91,14 @@ namespace Gsage
        * @param gsageConfigPath Path to the file with facade settings
        */
       virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, DataProxy* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
+
       /**
        * Configure the engine and systems
+       *
+       * @param configuration Config data
+       * @param restart Forces restart of all systems
        */
-      virtual bool configure(const DataProxy& configuration);
+      virtual bool configure(const DataProxy& configuration, bool restart = false);
       /**
        * Add new system in the engine
        */

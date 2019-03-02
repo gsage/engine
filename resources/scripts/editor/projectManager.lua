@@ -1,31 +1,10 @@
 require 'lib.class'
-require 'lfs'
+require 'lib.utils'
 local async = require 'lib.async'
 local lm = require 'lib.locales'
 local event = require 'lib.event'
 local path = require 'lib.path'
-
--- Save copied tables in `copies`, indexed by original table.
-local function deepcopy(orig, copies)
-    copies = copies or {}
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        if copies[orig] then
-            copy = copies[orig]
-        else
-            copy = {}
-            for orig_key, orig_value in next, orig, nil do
-                copy[deepcopy(orig_key, copies)] = deepcopy(orig_value, copies)
-            end
-            copies[orig] = copy
-            setmetatable(copy, deepcopy(getmetatable(orig), copies))
-        end
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
+local fs = require 'lib.filesystem'
 
 local function hasValue(tab, val)
   for index, value in ipairs(tab) do
@@ -39,7 +18,7 @@ end
 
 -- represents project file access
 local ProjectFile = class(function(self, projectRoot)
-  self.path = projectRoot .. "/project.gpf"
+  self.path = fs.path.join(projectRoot, "project.gpf")
   self.projectRoot = projectRoot
   self.data = {
     version = 1.0
@@ -61,6 +40,11 @@ function ProjectFile:read()
   end
 
   self.data = data
+end
+
+-- get source root
+function ProjectFile:getSourceRoot()
+  return fs.path.join(self.projectRoot, "sources")
 end
 
 -- write project data back to file
@@ -137,7 +121,7 @@ function ProjectFile:getScriptsDirs()
     return {}
   end
 
-  return script
+  return deepcopy(script)
 end
 
 -- adds plugin (used in release build of the game)
@@ -201,18 +185,43 @@ local ProjectManager = class(function(self)
     end
   end
 
+  self.onSystemStart = function(event)
+    if not self.openingProject then
+      return
+    end
+    self.awaitedSystems[event.systemID] = true
+    local ready = true
+    for _, started in pairs(self.awaitedSystems) do
+      if started ~= true then
+        ready = false
+        break
+      end
+    end
+
+    if ready then
+      for _, cb in ipairs(self.projectOpenCallbacks) do
+        cb(self.openProjectFile)
+      end
+      self.openingProject = false
+      self.awaitedSystems = {}
+    end
+  end
+
   event:onFile(game.filesystem, FileEvent.COPY_COMPLETE, self.onFileCopied)
   event:onFile(game.filesystem, FileEvent.COPY_FAILED, self.onFileCopied)
+  event:onSystemChange(core, SystemChangeEvent.SYSTEM_STARTED, self.onSystemStart)
 
   self.openProjectFile = nil
   self.editorWorkdir = core.env.workdir
   self:saveInitialSettings()
+
+  self.openingProject = false
 end)
 
 -- create.progress creates folder, copy resources
 function ProjectManager:create(settings, onProgress, onComplete)
-  local projectPath = settings.projectPath .. "/" .. settings.projectName
-  local sourcePath = projectPath .. "/sources"
+  local projectPath = fs.path.join(settings.projectPath, settings.projectName)
+  local sourcePath = fs.path.join(projectPath, "sources")
   local percent = 0
   local function message(msg, color, fatalError)
     onProgress({
@@ -223,9 +232,8 @@ function ProjectManager:create(settings, onProgress, onComplete)
     })
   end
 
-  local function createFolder(path)
-    lfs.mkdir(path)
-    message(lm("wizard.create.progress.folder_created", {path = path}))
+  local function createFolder(path, recursive)
+    return fs.mkdir(path, not not recursive)
   end
 
   local projectFile = ProjectFile(projectPath)
@@ -267,21 +275,28 @@ function ProjectManager:create(settings, onProgress, onComplete)
     return
   end
 
-  createFolder(projectPath)
-  createFolder(sourcePath)
+  createFolder(projectPath, true)
+  message(lm("wizard.create.progress.folder_created", {path = projectPath}))
+  createFolder(sourcePath, true)
+  message(lm("wizard.create.progress.folder_created", {path = sourcePath}))
 
   -- initial project configuration
   projectFile:setProjectName(settings.projectName)
   projectFile:setWorkspace(editor:getGlobalState().dockState)
 
   local step = 100 / math.max(#settings.resources, 1)
+  filesCount = {}
 
   self.progressCallbacks[#self.progressCallbacks + 1] = function(id, success)
     local worker = self.copyWorkers[id]
     if not worker then
       return
     end
-    percent = percent + step
+    local p = step
+    if filesCount[id] then
+      p = step / filesCount[id]
+    end
+    percent = percent + p
 
     local msg = ""
     local color = "#FFFFFF"
@@ -291,7 +306,6 @@ function ProjectManager:create(settings, onProgress, onComplete)
       msg = lm("wizard.create.progress.file_copy_failed", {flow = worker})
       color = "#FF0000"
     end
-
     message(msg, color)
 
     if percent == 100 then
@@ -306,11 +320,62 @@ function ProjectManager:create(settings, onProgress, onComplete)
     return
   end
 
+  local function unzip(src, dst, filecount)
+    local unzipped = fs.unzip(
+      src,
+      dst
+    )
+
+    local color = "#FFFFFF"
+    local msg = ""
+    if unzipped then
+      msg = lm("wizard.create.progress.unzip_success", {src = src, dst = dst})
+    else
+      msg = lm("wizard.create.progress.unzip_failed", {src = src, dst = dst})
+      color = "#FF0000"
+    end
+    message(msg, color)
+    percent = percent + step / filecount
+
+    if percent == 100 then
+      finalize(true)
+    end
+  end
+
+  local function processFolder(resource)
+    local folder = fs.path.join(workdir, resource.folder)
+    local files = {}
+    if not fs.path.isDirectory(folder) then
+      files = {folder}
+      folder = fs.path.directory(folder)
+    else
+      files = scanDirectory(folder, true, false)
+    end
+
+    for _, fullpath in ipairs(files) do
+      local p = fs.path.directory(fullpath):gsub(folder, "")
+      local destPath = fs.path.join(sourcePath, resource.install, p)
+      local extension = fs.path.extension(fullpath)
+      if not createFolder(destPath, true) then
+        message(lm("wizard.create.progress.failed_to_create_directory", {directory = destPath}), "#FF0000", true)
+        finalize(false)
+        break
+      end
+
+      if extension:lower() == "zip" then
+        unzip(fullpath, destPath .. "/", #files)
+      else
+        local file = fs.path.filename(fullpath)
+        local worker = fs.copytreeAsync(fullpath, fs.path.join(destPath, file))
+        filesCount[worker:getID()] = #files
+        self.copyWorkers[worker:getID()] = worker
+      end
+    end
+  end
+
   for _, resource in ipairs(settings.resources) do
     if resource.source == "folder" then
-      local destPath = sourcePath .. "/" .. resource.install
-      local worker = game.filesystem:copytreeAsync(workdir .. "/" .. resource.folder, destPath)
-      self.copyWorkers[worker:getID()] = worker
+      processFolder(resource)
     elseif parts[1] == "http" then
       percent = percent + step
       log.error("HTTP hosted resources is not supported yet")
@@ -327,23 +392,38 @@ function ProjectManager:create(settings, onProgress, onComplete)
   end
 end
 
+-- read project file
+function ProjectManager:readProjectFile(projectPath)
+  local projectFile = ProjectFile(projectPath)
+  projectFile:read()
+  return projectFile
+end
+
 -- open a project
 function ProjectManager:open(projectPath)
+  if self.openingProject then
+    return false
+  end
+
   if self.openProjectFile then
     self:close(false)
   end
 
   log.info("Opening project " .. projectPath)
   local projectFile = ProjectFile(projectPath)
-  projectFile:read()
+  local success, err = pcall(projectFile.read, projectFile)
+  if not success then
+    log.error("Failed to open project " .. err)
+    return false
+  end
   log.info("Read project file")
 
   self.openProjectFile = projectFile
-  local sourcesDir = self.openProjectFile.projectRoot .. "/sources"
+  local sourcesDir = fs.path.join(self.openProjectFile.projectRoot, "sources")
 
   local scripts = projectFile:getScriptsDirs()
   for i, path in pairs(scripts) do
-    scripts[i] = sourcesDir .. "/" .. path
+    scripts[i] = fs.path.join(sourcesDir, path)
   end
 
   if #scripts > 0 then
@@ -373,16 +453,13 @@ function ProjectManager:open(projectPath)
     log.error("Failed to save recent projects")
   end
 
-  for _, cb in ipairs(self.projectOpenCallbacks) do
-    cb(projectFile)
-  end
-
   -- change workdir to project path
   core:setEnv("workdir", sourcesDir)
   data:addSearchFolder(0, self.openProjectFile.projectRoot)
+  data:addSearchFolder(1, self.openProjectFile:getSourceRoot())
 
   local settings = deepcopy(core.settings)
-  settings.dataManager.levelsFolder = "sources/" .. settings.dataManager.levelsFolder
+  settings.dataManager.scenesFolder = "sources/" .. settings.dataManager.scenesFolder
   settings.dataManager.charactersFolder = "sources/" .. settings.dataManager.charactersFolder
   settings.dataManager.savesFolder = "sources/"
   table.insert(settings.pluginsFolders, 1, self.openProjectFile.projectRoot)
@@ -401,19 +478,36 @@ function ProjectManager:open(projectPath)
     end
   end
 
+  self.awaitedSystems = {}
   for system, t in pairs(self.openProjectFile:getSystems()) do
     settings.systemTypes[system] = t
     if not hasValue(settings.systems, system) then
       settings.systems[#settings.systems + 1] = system
     end
+    self.awaitedSystems[system] = false
   end
 
-  core:setEnv("resourceFolders", {sourcesDir})
 
-  if not game:configure(settings) then
+  for system, resources in pairs(self.openProjectFile.data.resources) do
+    local folders = {}
+    for i, folder in ipairs(resources) do
+      folders[i] = fs.path.join(self.openProjectFile:getSourceRoot(), folder)
+    end
+
+    if not settings[system] then
+      settings[system] = {}
+    end
+
+    settings[system].resources = folders
+  end
+
+  self.openingProject = true
+  game:reset()
+  if not game:configure(settings, true) then
     log.error("Failed to reconfigure game core")
     error("failed to reconfigure game core")
   end
+  return true
 end
 
 -- close a project
@@ -437,10 +531,12 @@ function ProjectManager:close(withCallback)
 
   -- revert working directory back to editor root
   core:setEnv("workdir", self.editorWorkdir)
+  data:removeSearchFolder(self.openProjectFile:getSourceRoot())
   data:removeSearchFolder(self.openProjectFile.projectRoot)
+  self.openProjectFile:write()
 
   -- reconfigure facade to the initial state
-  game:configure(self.initialSettings)
+  game:configure(self.initialSettings, true)
   self.openProjectFile = nil
 end
 
@@ -488,6 +584,22 @@ function ProjectManager:saveInitialSettings()
     self.initialSettings[key] = value.config
   end
   self.initialSettings.systems = systems
+end
+
+function ProjectManager:browseProjects()
+  local state = editor:getGlobalState()
+  fileDialogState = state.fileDialogState or {}
+  local dialogFolder = fileDialogState.folder or os.getenv("HOME")
+  local wm = game:getWindowManager()
+  local files, status, err = wm:openDialog(Window.FILE_DIALOG_OPEN_FOLDER, lm("wizard.open_project"), dialogFolder, {})
+  if status == Window.FILE_DIALOG_FAILURE then
+    log.error("Failed to open file dialog " .. err)
+    return
+  end
+
+  if #files > 0 then
+    self:open(files[1])
+  end
 end
 
 local projectManager = ProjectManager()

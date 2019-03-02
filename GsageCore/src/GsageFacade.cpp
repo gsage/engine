@@ -180,7 +180,7 @@ namespace Gsage {
     return true;
   }
 
-  bool GsageFacade::configure(const DataProxy& configuration)
+  bool GsageFacade::configure(const DataProxy& configuration, bool restart)
   {
     mPluginsFolders.clear();
     auto pluginsFolders = configuration.get<DataProxy>("pluginsFolders");
@@ -213,12 +213,17 @@ namespace Gsage {
       }
     }
 
+    std::vector<std::string> toRemove;
     // unload no longer used plugins
     for(auto& pair : mLibraries) {
       if(!installedPlugins[pair.first]) {
-        LOG(INFO) << "Unloading no longer used plugin " << pair.first;
-        unloadPlugin(pair.first);
+        toRemove.push_back(pair.first);
       }
+    }
+
+    for(auto& name : toRemove) {
+      LOG(INFO) << "Unloading no longer used plugin " << name;
+      unloadPlugin(name);
     }
 
     // note that old windows will still use old inputHandler
@@ -284,7 +289,7 @@ namespace Gsage {
           LOG(TRACE) << "Installed system " << systemType << " " << id.first;
         }
 
-        if(!mEngine.configureSystem(systemType, configuration.get(systemType, DataProxy()))) {
+        if(!mEngine.configureSystem(systemType, configuration.get(systemType, DataProxy()), restart)) {
           LOG(ERROR) << "Failed to configure engine system " << systemType;
           return false;
         }
@@ -292,12 +297,17 @@ namespace Gsage {
       }
     }
 
+    toRemove.clear();
     // uninstall not used systems
     for(auto& pair : mEngine.getSystems()) {
       if(!installedSystems[pair.first]) {
-        LOG(TRACE) << "Uninstalling no longer used system " << pair.first;
-        mEngine.removeSystem(pair.first);
+        toRemove.push_back(pair.first);
       }
+    }
+
+    for(auto& name : toRemove) {
+      LOG(TRACE) << "Uninstalling no longer used system " << name;
+      mEngine.removeSystem(name);
     }
 
     for(auto pair : mUIManagers) {
@@ -388,12 +398,10 @@ namespace Gsage {
 
   void GsageFacade::reset(sol::function f)
   {
-    mEngine.fireEvent(Event(BEFORE_RESET));
     mEngine.unloadMatching([f](Entity* e) -> bool {
       bool match = f(e);
       return match;
     });
-    mEngine.fireEvent(Event(RESET));
   }
 
   bool GsageFacade::loadArea(const std::string& name)

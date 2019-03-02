@@ -7,7 +7,7 @@ local lm = require 'lib.locales'
 ToolsView = class(ImguiWindow, function(self, open, positioner)
   ImguiWindow.init(self, "tools", false, open)
   self.icon = icons.dehaze
-  self.flags = ImGuiWindowFlags_NoScrollWithMouse + ImGuiWindowFlags_NoScrollbar + ImGuiWindowFlags_NoTitleBar + ImGuiWindowFlags_NoResize + ImGuiWindowFlags_NoMove
+  self.flags = ImGuiWindowFlags_NoScrollWithMouse + ImGuiWindowFlags_NoScrollbar + ImGuiWindowFlags_NoTitleBar + ImGuiWindowFlags_NoResize + ImGuiWindowFlags_NoMove + ImGuiWindowFlags_NoBringToFrontOnFocus
   self.positioner = positioner
 end)
 

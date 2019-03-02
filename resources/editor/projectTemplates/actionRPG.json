@@ -21,12 +21,12 @@
     {
       "source": "folder",
       "folder": "bundles/characters/ninja.json",
-      "install": "characters/ninja.json"
+      "install": "characters"
     },
     {
       "source": "folder",
       "folder": "bundles/characters/sinbad.json",
-      "install": "characters/sinbad.json"
+      "install": "characters"
     },
     {
       "source": "folder",
@@ -36,8 +36,8 @@
     },
     {
       "source": "folder",
-      "folder": "bundles/levels/",
-      "install": "levels"
+      "folder": "bundles/scenes/",
+      "install": "scenes"
     },
     {
       "source": "folder",
@@ -47,7 +47,7 @@
     },
     {
       "source": "folder",
-      "folder": "bundles/models/{{version}}/",
+      "folder": "bundles/models/{{version}}/packs/",
       "install": "models",
       "type": "render"
     },

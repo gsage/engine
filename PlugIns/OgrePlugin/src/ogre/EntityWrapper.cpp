@@ -50,6 +50,7 @@ namespace Gsage {
 
     BIND_ACCESSOR("query", &EntityWrapper::setQueryFlags, &EntityWrapper::getQueryFlags);
     BIND_ACCESSOR("castShadows", &EntityWrapper::setCastShadows, &EntityWrapper::getCastShadows);
+    BIND_ACCESSOR("renderQueue", &EntityWrapper::setRenderQueue, &EntityWrapper::getRenderQueue);
   }
 
   EntityWrapper::~EntityWrapper()
@@ -97,6 +98,16 @@ namespace Gsage {
       return;
     }
 
+    if(mObject) {
+      for(auto entity : mAttachedEntities) {
+        entity->destroy();
+      }
+      mAttachedEntities.clear();
+      mObject->detachFromParent();
+      mSceneManager->destroyEntity(mObject);
+      mObject = 0;
+    }
+
     mMeshName = model;
 
     OgreV1::MeshPtr mesh = OgreV1::MeshManager::getSingleton().load(
@@ -129,12 +140,37 @@ namespace Gsage {
     return mObject ? mObject->getCastShadows() : false;
   }
 
-  void EntityWrapper::attachToBone(const std::string& boneId, const std::string& entityId, DataProxy movableObjectData)
+  void EntityWrapper::setRenderQueue(const unsigned int& queue)
   {
     if(!mObject)
       return;
 
-    OgreObject* object = mObjectManager->create(movableObjectData, mOwnerId, mSceneManager, boneId, mObject);
+    mObject->setRenderQueueGroup(queue & 0xFF);
+  }
+
+  unsigned int EntityWrapper::getRenderQueue()
+  {
+    return mObject ? mObject->getRenderQueueGroup() : 0;
+  }
+
+  bool EntityWrapper::attach(Ogre::MovableObject* object, const DataProxy& params)
+  {
+    std::string boneID = params.get("boneID", "");
+    if(boneID.empty()) {
+      return false;
+    }
+
+    mObject->attachObjectToBone(boneID, object);
+
+    return true;
+  }
+
+  void EntityWrapper::attachToBone(const DataProxy& params, const std::string& entityId, DataProxy movableObjectData)
+  {
+    if(!mObject)
+      return;
+
+    OgreObject* object = mObjectManager->create(movableObjectData, mOwnerId, mSceneManager, movableObjectData.get("type", ""), params, this);
     mAttachedEntities.push_back(object);
   }
 }

@@ -64,6 +64,27 @@ namespace Gsage {
   };
 
   /**
+   * Drop file event (e.g. SDL_FILEDROP)
+   */
+  class GSAGE_API DropFileEvent : public Event
+  {
+    public:
+      /**
+       * Drop file into the window
+       */
+      static const Event::Type DROP_FILE;
+      /**
+       * Drop file begin
+       */
+      static const Event::Type DROP_BEGIN;
+
+      DropFileEvent(Event::ConstType type, const std::string& file);
+      virtual ~DropFileEvent();
+
+      std::string file;
+  };
+
+  /**
    * Entity changes event
    */
   class GSAGE_API EntityEvent : public Event
@@ -116,6 +137,14 @@ namespace Gsage {
        * System was removed
        */
       static const Event::Type SYSTEM_REMOVED;
+      /**
+       * System was started
+       */
+      static const Event::Type SYSTEM_STARTED;
+      /**
+       * System is being stopped (called before shutdown)
+       */
+      static const Event::Type SYSTEM_STOPPING;
 
       SystemChangeEvent(Event::ConstType type, const std::string& systemId, EngineSystem* system = 0);
       virtual ~SystemChangeEvent();

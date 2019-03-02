@@ -118,9 +118,9 @@ describe("#editor project manager", function()
 
   it("opening/closing project works", function()
     createProject(true)
-    assert.has_no.errors(function()
-      projectManager:open(pfolder)
-    end)
+    assert.truthy(projectManager:open(pfolder))
+    async.waitSeconds(0.2)
+    local dirs = projectManager.openProjectFile:getScriptsDirs()
     -- should not uninstall render system
     if settings.selectedSystems.render then
       assert.is_not.is_nil(core:render())
@@ -136,15 +136,16 @@ describe("#editor project manager", function()
     if core.navigation then
       assert.is_nil(core:navigation())
     end
+
+    assert.truthy(projectManager:open(pfolder))
+    async.waitSeconds(0.2)
+    assert.are.same(dirs, projectManager.openProjectFile:getScriptsDirs())
   end)
 
   for _, path in ipairs({"asdjfoisajfoijaisodfji30493", "."}) do
     it("handles not existing project " .. path, function()
-      local success, err = pcall(function()
-        projectManager:open(path)
-      end)
+      local success = projectManager:open(path)
       assert.falsy(success)
-      assert.not_nil(err)
     end)
   end
 end)

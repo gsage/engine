@@ -45,37 +45,47 @@ namespace Gsage {
     BIND_ACCESSOR("colourDiffuse", &LightWrapper::setDiffuseColour, &LightWrapper::getDiffuseColour);
     BIND_ACCESSOR("direction", &LightWrapper::setDirection, &LightWrapper::getDirection);
     BIND_ACCESSOR("castShadows", &LightWrapper::setCastShadows, &LightWrapper::getCastShadows);
+    BIND_ACCESSOR("renderQueue", &LightWrapper::setRenderQueue, &LightWrapper::getRenderQueue);
+  }
+
+  LightWrapper::~LightWrapper()
+  {
   }
 
   void LightWrapper::create(const std::string& name)
   {
-    mLight = mSceneManager->createLight(
+    if(mObject) {
+      mObject->detachFromParent();
+      mSceneManager->destroyLight(mObject);
+      mObject = 0;
+    }
+    mObject = mSceneManager->createLight(
 #if OGRE_VERSION_MAJOR == 1
     name
 #endif
     );
-    mParentNode->attachObject(mLight);
+    attachObject(mObject);
   }
 
   const std::string& LightWrapper::getName() const
   {
-    return mLight->getName();
+    return mObject->getName();
   }
 
   void LightWrapper::setType(const std::string& type)
   {
-    mLight->setType(mapType(type));
+    mObject->setType(mapType(type));
   }
 
   std::string LightWrapper::getType()
   {
-    return mapType(mLight->getType());
+    return mapType(mObject->getType());
   }
 
   void LightWrapper::setPosition(const Ogre::Vector3& position)
   {
 #if OGRE_VERSION < 0x020100
-    mLight->setPosition(position);
+    mObject->setPosition(position);
 #else
     LOG(WARNING) << "Setting light position is deprecated";
 #endif
@@ -84,7 +94,7 @@ namespace Gsage {
   Ogre::Vector3 LightWrapper::getPosition()
   {
 #if OGRE_VERSION < 0x020100
-    return mLight->getPosition();
+    return mObject->getPosition();
 #else
     LOG(WARNING) << "Getting light position is deprecated";
     return Ogre::Vector3(0, 0, 0);
@@ -94,53 +104,66 @@ namespace Gsage {
 #if OGRE_VERSION >= 0x020100
   void LightWrapper::setPowerScale(const Ogre::Real& value)
   {
-    mLight->setPowerScale(value);
+    mObject->setPowerScale(value);
   }
 
   Ogre::Real LightWrapper::getPowerScale()
   {
-    return mLight->getPowerScale();
+    return mObject->getPowerScale();
   }
 #endif
 
   void LightWrapper::setDiffuseColour(const Ogre::ColourValue& value)
   {
-    mLight->setDiffuseColour(value);
+    mObject->setDiffuseColour(value);
   }
 
   const Ogre::ColourValue& LightWrapper::getDiffuseColour() const
   {
-    return mLight->getDiffuseColour();
+    return mObject->getDiffuseColour();
   }
 
   void LightWrapper::setSpecularColour(const Ogre::ColourValue& value)
   {
-    mLight->setSpecularColour(value);
+    mObject->setSpecularColour(value);
   }
 
   const Ogre::ColourValue& LightWrapper::getSpecularColour() const
   {
-    return mLight->getSpecularColour();
+    return mObject->getSpecularColour();
   }
 
   void LightWrapper::setDirection(const Ogre::Vector3& value)
   {
-    mLight->setDirection(value);
+    mObject->setDirection(value);
   }
 
   Ogre::Vector3 LightWrapper::getDirection()
   {
-    return mLight->getDirection();
+    return mObject->getDirection();
   }
 
   void LightWrapper::setCastShadows(const bool& value)
   {
-    mLight->setCastShadows(value);
+    mObject->setCastShadows(value);
   }
 
   bool LightWrapper::getCastShadows()
   {
-    return mLight->getCastShadows();
+    return mObject->getCastShadows();
+  }
+
+  void LightWrapper::setRenderQueue(const unsigned int& queue)
+  {
+    if(!mObject)
+      return;
+
+    mObject->setRenderQueueGroup(queue & 0xFF);
+  }
+
+  unsigned int LightWrapper::getRenderQueue()
+  {
+    return mObject ? mObject->getRenderQueueGroup() : 0;
   }
 
   Ogre::Light::LightTypes LightWrapper::mapType(const std::string& type)

@@ -191,7 +191,7 @@ namespace Gsage {
       bool hasEventListener(EventDispatcher* dispatcher, Event::ConstType eventType)
       {
         EventSubscription subscription(dispatcher, eventType);
-        return mConnections.count(subscription) > 0;
+        return contains(mConnections, subscription);
       }
 
       virtual bool onForceUnsubscribe(EventDispatcher* sender, const Event& event)
@@ -203,8 +203,7 @@ namespace Gsage {
           if((*iter).first.first == sender)
           {
             LOG(INFO) << "Unsubscribing from event on deletion of dispatcher, event type: " << (*iter).first.second;
-            typename EventConnections::iterator tmp = iter++;
-            mConnections.erase(tmp);
+            mConnections.erase(iter++);
           }
           else
           {

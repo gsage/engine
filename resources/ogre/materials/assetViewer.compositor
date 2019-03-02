@@ -1,0 +1,21 @@
+compositor_node assetViewer_node
+{
+    in 0 renderwindow
+    target renderwindow
+    {
+        pass clear
+        {
+            colour_value 0 0 0 0
+        }
+        pass render_scene
+        {
+            rq_first    103
+            rq_last     104
+        }
+    }
+}
+
+workspace assetViewer
+{
+    connect_output assetViewer_node 0
+}

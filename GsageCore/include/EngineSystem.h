@@ -103,6 +103,11 @@ namespace Gsage
       virtual void shutdown();
 
       /**
+       * Restarts engine system
+       */
+      virtual void restart();
+
+      /**
        * Updates system
        * @param time Delta time
        */
@@ -225,6 +230,19 @@ namespace Gsage
        * @param task function to run
        */
       virtual TaskPtr asyncTask(Task::Function func);
+
+      /**
+       * Check if the system should be restarted
+       */
+      inline bool needsRestart() {
+        bool res = mRestart;
+        mRestart = false;
+        return res;
+      }
+
+      inline void setConfig(const DataProxy& value) {
+        mConfig = value;
+      }
     protected:
       /**
        * Update configuration
@@ -244,12 +262,13 @@ namespace Gsage
       bool mEnabled;
       bool mConfigDirty;
       bool mDedicatedThread;
+      bool mRestart;
 
       std::atomic_bool mReadyWasSet;
       std::atomic_bool mReady;
       std::atomic_bool mShutdown;
 
-      cpp::channel<TaskPtr> mTasksQueue;
+      cpp::channel<TaskPtr, 256> mTasksQueue;
       SignalChannel mShutdownChannel;
 
       std::vector<std::thread> mBackgroundWorkers;

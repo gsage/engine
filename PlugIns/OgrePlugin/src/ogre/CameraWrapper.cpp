@@ -67,12 +67,14 @@ namespace Gsage {
 
   void CameraWrapper::objectDestroyed(Ogre::MovableObject* cam)
   {
+    if(cam != mObject)
+      return;
+
     cam->setListener(0);
     if(mRenderTarget) {
 #if OGRE_VERSION >= 0x020100
       mRenderTarget->destroyCurrentWorkspace();
 #endif
-      mRenderTarget->setCamera(nullptr);
       mRenderTarget->switchToDefaultCamera();
     }
   }
@@ -118,6 +120,10 @@ namespace Gsage {
 
   void CameraWrapper::createCamera(const std::string& name)
   {
+    if(mObjectId == name && mObject) {
+      return;
+    }
+
     mObjectId = name;
     LOG(TRACE) << "Create camera with id " << name;
     // toss camera object to the movable wrapper

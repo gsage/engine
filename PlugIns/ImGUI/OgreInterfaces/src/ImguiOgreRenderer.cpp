@@ -43,6 +43,7 @@ namespace Gsage {
 
   ImguiOgreRenderer::~ImguiOgreRenderer()
   {
+    removeEventListener(mEngine, RenderEvent::RENDER_QUEUE_ENDED, &ImguiOgreRenderer::renderQueueEnded);
   }
 
   void ImguiOgreRenderer::initialize(Engine* engine, lua_State* L)

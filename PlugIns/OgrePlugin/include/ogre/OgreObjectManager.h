@@ -76,8 +76,6 @@ namespace Gsage {
       OgreObjectManager(OgreRenderSystem* rs);
       virtual ~OgreObjectManager();
 
-      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& boneId, OgreV1::Entity* parentEntity);
-
       /**
        * Create object from the DataProxy
        * @param dict DataProxy with all values (dict should contain type field)
@@ -96,6 +94,16 @@ namespace Gsage {
        * @param parent Parent object to attach to
        */
       OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, Ogre::SceneNode* parent = 0);
+
+      /**
+       * Create object from the DataProxy
+       * @param dict DataProxy with all values
+       * @param owner Owner entity of the created object
+       * @param sceneManager Ogre::SceneManager to create object in
+       * @param type Object type string, defined explicitly
+       * @param parent Parent object to attach to
+       */
+      OgreObject* create(const DataProxy& dict, const std::string& owner, Ogre::SceneManager* sceneManager, const std::string& type, const DataProxy& params, OgreObject* parent = 0);
 
       /**
        * @see OgreObjectManager::create
@@ -204,7 +212,7 @@ namespace Gsage {
           ObjectPool<C> mObjects;
       };
 
-      typedef std::map<const std::string, OgreObjectPool*> OgreObjectsCollections;
+      typedef std::map<std::string, OgreObjectPool*> OgreObjectsCollections;
 
       OgreObjectsCollections mObjects;
 

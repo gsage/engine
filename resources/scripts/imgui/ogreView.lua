@@ -1,6 +1,6 @@
 local camera = require 'factories.camera'
 local event = require 'lib.event'
-require 'imgui.base'
+local imguiInterface = require 'imgui.base'
 
 -- ogre view
 OgreView = class(ImguiWindow, function(self, textureID, title, docked, open)
@@ -23,9 +23,9 @@ OgreView = class(ImguiWindow, function(self, textureID, title, docked, open)
 end)
 
 -- create camera
-function OgreView:createCamera(type, settings)
-  self.camera = camera:create(type, nil, settings)
-  self.camera:renderToTexture(self.textureID, {
+function OgreView:createCamera(type, name, settings)
+  self.camera = camera:create(type, name, settings)
+  local texture = self.camera:renderToTexture(self.textureID, {
     autoUpdated = true,
     workspaceName = "ogreview",
     viewport = {
@@ -37,18 +37,23 @@ function OgreView:createCamera(type, settings)
       }
     }
   })
-  self.viewport:setTextureID(self.textureID)
+
+  if texture then
+    self.viewport:setTexture(texture)
+  end
 end
 
 -- render ogre view
 function OgreView:__call()
   imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 5.0, 5.0)
-  self:imguiBegin()
+  local render = self:imguiBegin()
   imgui.PopStyleVar(ImGuiStyleVar_WindowPadding)
 
-  if not self.open then
+  if not self.open or not render then
     return
   end
+
+  imguiInterface:captureMouse(not imgui.IsWindowHovered())
 
   local w, h = imgui.GetContentRegionAvail()
   local x, y = imgui.GetCursorScreenPos()
@@ -73,6 +78,11 @@ function OgreView:setGizmoTarget(entity)
     log.error("Can't transform target " .. entity.id .. ": no render component")
     return
   end
+
+  if entity.props.utility then
+    return
+  end
+
   self.targetID = entity.id
   self.gizmo:setTarget(render.root)
   self.gizmo:enable(true)
@@ -87,4 +97,12 @@ function OgreView:resetGizmoTarget()
   self.gizmoEnabled = false
   self.gizmo:setTarget(nil)
   self.gizmo:enable(false)
+end
+
+function OgreView:getRenderTarget()
+  if not self.camera then
+    return nil
+  end
+
+  return self.camera:getRenderTarget()
 end

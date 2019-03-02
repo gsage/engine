@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "RenderTargetTypes.h"
 #include "DataProxy.h"
 #include "EventSubscriber.h"
+#include "systems/RenderSystem.h"
 #include "CollisionTools.h"
 #include <OgreVector2.h>
 #include "OgreConverters.h"
@@ -150,12 +151,26 @@ namespace Gsage {
 #if OGRE_VERSION >= 0x020100
       void destroyCurrentWorkspace();
 #endif
+      virtual bool onTextureEvent(EventDispatcher* sender, const Event& event) { return true; }
+
+      /**
+       * Raycast and get object and 3d point under the pointer
+       *
+       * @param defaultDistance If nothing is hit, use ray and point on it
+       * @param closestDistance Closest raycast distance
+       * @param flags Objects flags filter
+       *
+       * @returns tuple: point and object hit by ray
+       */
+      std::tuple<Ogre::Vector3, Ogre::MovableObject*> raycast(Ogre::Real defaultDistance, Ogre::Real closestDistance, unsigned int flags) const;
     private:
       void subscribe();
 
       bool handleRaycast(EventDispatcher* sender, const Event& event);
 
       bool handleMouseEvent(EventDispatcher* sender, const Event& event);
+
+      std::tuple<Ogre::Ray, bool> getRay() const;
 
       void doRaycasting(float x, float y, unsigned int flags = 0xFFFF, bool select = false);
     protected:
@@ -183,10 +198,8 @@ namespace Gsage {
       bool mAutoUpdate;
       RenderTargetType::Type mType;
 
-#if OGRE_VERSION_MAJOR == 1
-      bool mRenderQueueSequenceCreated;
-#endif
       bool mHasQueueSequence;
+      bool mDestroying;
       int mSamples;
 
       Engine* mEngine;
@@ -197,13 +210,15 @@ namespace Gsage {
 
       Ogre::Vector2 mMousePosition;
       std::string mRolledOverObject;
-#if OGRE_VERSION_MAJOR == 2
+#if OGRE_VERSION >= 0x020100
       Ogre::CompositorWorkspace* mWorkspace;
+#else
+      bool mRenderQueueSequenceCreated;
 #endif
   };
 
   /**
-   * Wrap render to texture target
+   * Wraps Ogre RT target
    */
   class RttRenderTarget : public RenderTarget
   {
@@ -212,14 +227,10 @@ namespace Gsage {
       virtual ~RttRenderTarget();
 
       /**
-       * Get GL id of the underlying texture
-       */
-      unsigned int getGLID() const;
-
-      /**
        * @copydoc RenderTarget::setDimensions
        */
       void setDimensions(int width, int height);
+
     protected:
       void createTexture(const std::string& name,
           unsigned int width,
@@ -227,7 +238,10 @@ namespace Gsage {
           unsigned int samples,
           Ogre::PixelFormat pixelFormat);
 
-      Ogre::TexturePtr mTexture;
+      TexturePtr mTexture;
+      bool onTextureEvent(EventDispatcher* sender, const Event& event);
+    private:
+      void wrap();
   };
 
   /**

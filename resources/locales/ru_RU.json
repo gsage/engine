@@ -7,7 +7,7 @@
     "lua console": "Lua консоль",
     "transform": "Трансформации",
     "stats": "Статистика",
-    "assets": "Ассеты",
+    "assets": "Ресурсы",
     "scene explorer": "Дерево объектов",
     "recast": "Recast навигация",
     "settings": "Настройки",
@@ -24,6 +24,90 @@
       "OisInputPlugin": "Позволяет обрабатывать ввод при помощи библиотеки OIS. Не работает с окнами, созданными при помощи SDL, можно использовать только с окнами, которые были созданы OGRE.",
       "RecastNavigationPlugin": "Позволяет строить навигационные карты и пути по ним используя Recast и Detour.",
       "RocketUIPlugin": "LibRocket библиотека для отрисовки интерфейсов"
+    }
+  },
+
+  "modals": {
+    "confirm_deletion": {
+      "title": "Удалить файл %{asset}",
+      "desc": "Вы уверены, что хотите удалить файл %{fullpath}?"
+    },
+    "create_entity": {
+      "title": "Добавить %{asset} на сцену",
+      "desc": "Задайте параметры entity",
+      "entity_id": "Entity ID"
+    },
+    "open_project": {
+      "title": "Открыть проект",
+      "question": "Вы хотите открыть проект %{name}?"
+    },
+    "import_dialog_title": "Выберете файлы для импортирования",
+    "create_asset": {
+      "title": "Создать файл",
+      "description": "Вы можете создать текстовый файл любого поддерживаемого типа",
+      "type": "тип",
+      "name": "имя",
+      "path": "путь"
+    },
+    "import_assets": {
+      "title": "Импорт файла",
+      "description": "Список файлов",
+      "file": "файл",
+      "type": "тип",
+      "install": "путь установки"
+    },
+    "ok": "Ок",
+    "cancel": "Отмена"
+  },
+
+  "top_menu": {
+    "file": "Файл",
+    "views": "Окна"
+  },
+
+  "menu": {
+    "file": {
+      "new": "Новый проект",
+      "open": "Открыть",
+      "close": "Закрыть",
+      "save": "Сохранить",
+      "import": "Импорт..."
+    }
+  },
+
+  "assets": {
+    "search": "Найти файл",
+    "actions": {
+      "delete": "Удалить",
+      "data": "Редактировать текст",
+      "addToScene": "Добавить на сцену"
+    },
+    "groups": {
+      "models": "Модели",
+      "scripts": "Скрипты",
+      "scenes": "Сцены",
+      "characters": "Персонажи",
+      "other": "Другое",
+      "images": "Изображения",
+      "archives": "Архивы"
+    },
+    "desc": {
+      "mesh": "OGRE 3Д объект",
+      "material": "OGRE материал",
+      "compositor": "Скрипт композитора",
+      "glsl": "OpenGL шейдер",
+      "hlsl": "Direct3D шейдер",
+      "metal": "Metal шейдер",
+      "rml": "LibRocket HTML страница",
+      "rcss": "LibRocket CSS файл стилей",
+      "json": "JSON файл",
+      "lua": "Lua скрипт",
+      "png": "PNG изображение",
+      "jpg": "JPG изображение",
+      "jpeg": "JPG изображение",
+      "tiff": "TIFF изображение",
+      "dds": "DDS изображение",
+      "zip": "ZIP архив"
     }
   },
 
@@ -97,10 +181,25 @@
         "file_copied": "Копирование %{flow}",
         "file_copy_failed": "Ошибка копирования %{flow}",
         "folder_created": "Создание папки %{path}",
+        "unzip_success": "Распаковка файла %{src} в папку %{dst}",
+        "unzip_failed": "Не удалось распаковать файл %{src} в папку %{dst}",
+        "folder_created": "Создана папка %{path}",
         "writing_project_file": "Создание файла проекта",
         "writing_configs": "Запись настроек",
-        "opening_project": "Открываю..."
+        "writing_project_file_failed": "Не удалось записать файл проекта",
+        "opening_project": "Открываю...",
+        "failed_to_create_directory": "Не удалось создать директорию %{directory}",
+        "project_already_exists": "Не удалось создать проект, так как он уже существует"
       }
+    }
+  },
+
+  "tools": {
+    "tooltips": {
+      "create": "Создать сцену",
+      "save": "Сохранить сцену",
+      "undo": "Отмена",
+      "redo": "Возврат"
     }
   },
 

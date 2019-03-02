@@ -60,15 +60,24 @@ namespace Gsage {
         return;
       }
 
-      if(event.type == SDL_WINDOWEVENT) {
-        switch(event.window.event){
-        case SDL_WINDOWEVENT_SIZE_CHANGED:
-          mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::RESIZE, event.window.windowID, event.window.data1, event.window.data2));
+      switch(event.type) {
+        case SDL_WINDOWEVENT:
+          switch(event.window.event){
+            case SDL_WINDOWEVENT_SIZE_CHANGED:
+              mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::RESIZE, event.window.windowID, event.window.data1, event.window.data2));
+              break;
+            case SDL_WINDOWEVENT_MOVED:
+              mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::MOVE, event.window.windowID, 0, 0, event.window.data1, event.window.data2));
+              break;
+          }
           break;
-        case SDL_WINDOWEVENT_MOVED:
-          mFacade->getEngine()->fireEvent(WindowEvent(WindowEvent::MOVE, event.window.windowID, 0, 0, event.window.data1, event.window.data2));
+        case SDL_DROPBEGIN:
+          mFacade->getEngine()->fireEvent(DropFileEvent(DropFileEvent::DROP_BEGIN, ""));
           break;
-        }
+        case SDL_DROPFILE:
+          mFacade->getEngine()->fireEvent(DropFileEvent(DropFileEvent::DROP_FILE, event.drop.file));
+          SDL_free(event.drop.file);
+          break;
       }
 
       for(auto listener : mEventListeners) {

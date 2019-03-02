@@ -45,7 +45,7 @@ artifacts:
 after_test:
   - ps: |
         $wc = New-Object 'System.Net.WebClient'
-        Get-ChildItem . -Name -Recurse 'build\bin\*.xml'  |
+        Get-ChildItem . -Name -Recurse '.\*.xml'  |
         Foreach-Object {
             $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $_))
         }

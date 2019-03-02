@@ -29,6 +29,7 @@ if imguiInterface:available() then
   require 'imgui.scriptEditor'
   require 'imgui.projectWizard'
   require 'imgui.assets'
+  require 'imgui.modal'
 else
   log.error("editor requires ImGUI plugin to be installed")
   game:shutdown(1)
@@ -37,6 +38,9 @@ end
 
 -- create main dockspace view
 local dockspace = imgui.createDockspace("workspace")
+
+-- create project wizard
+local wizard = ProjectWizard("wizard", "wizard", true)
 
 local globalEditorState = editor:getGlobalState()
 if globalEditorState.settings then
@@ -99,18 +103,19 @@ local function saveDockState()
   projectManager.openProjectFile:write()
 end
 
+local views = {}
 local function onSelect(e)
   local target = eal:getEntity(e.entity)
   if not target then
     return
   end
 
-  ogreView:setGizmoTarget(target)
+  views.ogreView:setGizmoTarget(target)
 end
 
 event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
 
-local views = {}
+local modalView = ModalView()
 local viewsMenu = {}
 
 local function createViews()
@@ -119,10 +124,9 @@ local function createViews()
   views.scriptEditor = ScriptEditor("script", "script_editor", true)
   views.transform = Transform(views.ogreView, "transform", true)
   views.stats = Stats("stats", true)
-  views.assets = function() imgui.TextWrapped(icons.directions_run .. " coming soon") end
   views.sceneExplorer = SceneExplorer("scene explorer", true)
   views.settings = SettingsView(true)
-  views.assets = Assets(true)
+  views.assets = Assets(modalView, views.scriptEditor, true)
 
   local function createEditorView(systemType)
     if not systemType then
@@ -134,7 +138,7 @@ local function createViews()
       log.warn("Failed to load editor for system " .. systemType)
     else
       views[systemType] = editorView(true)
-      dockspace:addView(systemType, views[systemType])
+      imguiInterface:addView(dockspace, systemType, views[systemType])
     end
   end
 
@@ -145,7 +149,7 @@ local function createViews()
       createEditorView(systemType)
     else
       if views[systemType] then
-        dockspace:removeView(systemType, views[systemType])
+        imguiInterface:removeView(dockspace, systemType, views[systemType])
       end
     end
   end
@@ -171,18 +175,26 @@ local function createViews()
   end
 
   for name, view in pairs(views) do
-    dockspace:addView(name, view)
+    imguiInterface:addView(dockspace, name, view)
   end
 
 end
 
 local fileMenu = {
-  MenuItem("menu.file.new", function() end),
-  MenuItem("menu.file.open", function() end),
-  MenuItem("menu.file.close", function() end),
+  MenuItem("menu.file.new", function()
+    showWizard()
+  end),
+  MenuItem("menu.file.open", function()
+    projectManager:browseProjects()
+  end),
+  MenuItem("menu.file.close", function()
+    projectManager:close()
+  end),
   MenuItem("menu.file.save", function() end),
   Separator,
-  MenuItem("menu.file.import", function() end)
+  MenuItem("menu.file.import", function()
+    views.assets:browseImport()
+  end)
 }
 
 local menus = {
@@ -191,11 +203,12 @@ local menus = {
 }
 
 local renderDockspace = false
-imguiInterface:addView("mainMenu", Menu(menus))
+imguiInterface:addView(imgui.manager, "mainMenu", Menu(menus))
 local tools = ToolsView(true, function()
   local width, height = imgui.DisplaySize()
   return 90, 35, width - 95, 40
 end)
+imgui.manager:addView("modal", modalView)
 imgui.manager:addView("tools", tools)
 imgui.manager:addView("workspace", {
   __call = function()
@@ -247,14 +260,36 @@ imgui.manager:addView("sidePanel", {
   end
 })
 
-local function addViews()
+local function onAreaLoad(event)
+  views.ogreView:createCamera("free", "editorMain", {utility = true, policy = EntityFactory.REUSE})
 end
 
-local function onAreaLoad(event)
-  views.ogreView:createCamera("free", {utility = true})
+local function openProject(event)
+  local f = event.file
+  if f:match("^.*%.gpf$") ~= nil then
+    f = game.filesystem:directory(f)
+  elseif not game.filesystem:exists(f .. "/project.gpf") then
+    local d = views.assets:info(f)
+    if d then
+      views.assets:import(f, d)
+    end
+    return
+  end
+  local pf = projectManager:readProjectFile(f)
+  local choices = {}
+  choices[lm("modals.ok")] = function()
+    projectManager:open(f)
+  end
+  choices[lm("modals.cancel")] = function()
+  end
+
+  modalView:show(lm("modals.open_project.title"), function()
+    imgui.Text(lm("modals.open_project.question", {name = pf:getProjectName()}))
+  end, choices)
 end
 
 event:bind(core, Facade.LOAD, onAreaLoad)
+event:onFileDrop(core, DropFileEvent.DROP_FILE, openProject)
 
 -- used for editor window initial set up
 local function setDefaultEditorDimensions(onResizeFinished)
@@ -278,7 +313,7 @@ function showWizard()
   end
 
   wizardShown = true
-  imguiInterface:addView("wizard", wizard)
+  imguiInterface:addView(imgui.manager, "wizard", wizard)
   wizard:goHome()
   renderDockspace = false
 end
@@ -289,7 +324,7 @@ function hideWizard()
   end
 
   wizardShown = false
-  imguiInterface:removeView("wizard", wizard)
+  imguiInterface:removeView(imgui.manager, "wizard", wizard)
   renderDockspace = true
 end
 
@@ -334,8 +369,6 @@ if imguiInterface:available() then
     return result
   end)
 
-  wizard = ProjectWizard("wizard", "wizard", true)
-
   cef:addMessageHandler("startCreateWizard", function(project)
     local success, err = pcall(wizard.runCreationFlow, wizard, project)
     if not success then
@@ -358,19 +391,20 @@ if imguiInterface:available() then
       }
       dockspace:setState(dockstates[mode] or {})
     end
-
+    views.assets:configure()
     event:bind(core, EngineEvent.STOPPING, saveDockState)
   end)
 
   projectManager:beforeProjectClose(function(projectFile)
     log.info("Saving imgui dock state")
+    game:reset()
     dockstates[mode] = dockspace:getState()
     projectManager.openProjectFile:setWorkspace(dockstates)
-    projectManager.openProjectFile:write()
   end)
 
   projectManager:onProjectClose(function(projectFile)
     showWizard()
+    views.assets:configure()
   end)
 else
   log.error("editor requires ImGUI plugin to be installed")

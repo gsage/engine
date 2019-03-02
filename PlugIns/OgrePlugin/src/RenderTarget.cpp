@@ -70,9 +70,6 @@ namespace Gsage {
     , mY(0)
     , mWidth(parameters.get("width", 320))
     , mHeight(parameters.get("height", 240))
-#if OGRE_VERSION_MAJOR == 1
-    , mRenderQueueSequenceCreated(false)
-#endif
     , mSamples(parameters.get("samples", 0))
     , mHasQueueSequence(false)
     , mEngine(engine)
@@ -80,8 +77,11 @@ namespace Gsage {
     , mContinuousRaycast(false)
     , mMousePosition(Ogre::Vector2(0, 0))
     , mMouseOver(false)
-#if OGRE_VERSION_MAJOR == 2
+    , mDestroying(false)
+#if OGRE_VERSION >= 0x020100
     , mWorkspace(nullptr)
+#else
+    , mRenderQueueSequenceCreated(false)
 #endif
   {
     subscribe();
@@ -99,9 +99,6 @@ namespace Gsage {
     , mY(0)
     , mWidth(parameters.get("width", 320))
     , mHeight(parameters.get("height", 240))
-#if OGRE_VERSION_MAJOR == 1
-    , mRenderQueueSequenceCreated(false)
-#endif
     , mSamples(parameters.get("samples", 0))
     , mWrappedTarget(wrapped)
     , mHasQueueSequence(false)
@@ -110,8 +107,11 @@ namespace Gsage {
     , mContinuousRaycast(false)
     , mMousePosition(Ogre::Vector2(0, 0))
     , mMouseOver(false)
-#if OGRE_VERSION_MAJOR == 2
+    , mDestroying(false)
+#if OGRE_VERSION >= 0x020100
     , mWorkspace(nullptr)
+#else
+    , mRenderQueueSequenceCreated(false)
 #endif
   {
     subscribe();
@@ -119,6 +119,11 @@ namespace Gsage {
 
   RenderTarget::~RenderTarget()
   {
+    mDestroying = true;
+#if OGRE_VERSION_MAJOR == 2
+    destroyCurrentWorkspace();
+#endif
+    setCamera(nullptr);
   }
 
   void RenderTarget::subscribe()
@@ -175,6 +180,37 @@ namespace Gsage {
     }
 
     return true;
+  }
+
+  std::tuple<Ogre::Ray, bool> RenderTarget::getRay() const
+  {
+    Ogre::Ray ray;
+    if(!mMouseOver || !mCurrentCamera) {
+      return std::make_tuple(ray, false);
+    }
+
+    ray = mCurrentCamera->getCameraToViewportRay((Ogre::Real) mMousePosition.x / (Ogre::Real) mWidth, (Ogre::Real) mMousePosition.y / (Ogre::Real) mHeight);
+    return std::make_tuple(ray, true);
+  }
+
+  std::tuple<Ogre::Vector3, Ogre::MovableObject*> RenderTarget::raycast(Ogre::Real defaultDistance, Ogre::Real closestDistance, unsigned int flags) const
+  {
+    Ogre::Vector3 result = Ogre::Vector3::ZERO;
+    if(!mMouseOver || !mCurrentCamera) {
+      return std::make_tuple(result, nullptr);
+    }
+
+    Ogre::MovableObject* target = nullptr;
+    if(!mCollisionTools->raycastFromCamera(mWidth, mHeight, mCurrentCamera, mMousePosition, result, target, closestDistance, flags)) {
+      bool success = false;
+      Ogre::Ray ray;
+      std::tie(ray, success) = getRay();
+      if(success) {
+        result = ray.getPoint(defaultDistance);
+      }
+    }
+
+    return std::make_tuple(result, target);
   }
 
   void RenderTarget::doRaycasting(float offsetX, float offsetY, unsigned int flags, bool select)
@@ -284,6 +320,10 @@ namespace Gsage {
   void RenderTarget::setCamera(Ogre::Camera* camera)
   {
     mCurrentCamera = camera;
+    if(mWrappedTarget == 0) {
+      return;
+    }
+
 #if OGRE_VERSION_MAJOR == 1
     mWrappedTarget->removeAllViewports();
     if(!camera) {
@@ -413,6 +453,10 @@ namespace Gsage {
 
   void RenderTarget::switchToDefaultCamera()
   {
+    if(mDestroying)
+      return;
+
+
     // create default camera
     auto name = mParameters.get("defaultCamera.name", "");
     if(!name.empty()) {
@@ -423,6 +467,8 @@ namespace Gsage {
 
       setCamera(mDefaultCamera);
       LOG(INFO) << "Using default camera " << mName;
+    } else {
+      setCamera(nullptr);
     }
   }
 
@@ -467,80 +513,73 @@ namespace Gsage {
   {
   }
 
-  unsigned int RttRenderTarget::getGLID() const {
-    // TODO: check if render target is openGL actually
-    // or remove this method completely as it's not used anywhere
-#if OGRE_VERSION_MAJOR == 1
-    Ogre::GLTexture *nativeTexture = static_cast<Ogre::GLTexture*>(mTexture.get());
-    return nativeTexture->getGLID();
-#else
-    Ogre::GL3PlusTexture *nativeTexture = static_cast<Ogre::GL3PlusTexture*>(mTexture.get());
-    bool outIsFsaa = false;
-    return nativeTexture->getGLID(outIsFsaa);
-#endif
-  }
-
   void RttRenderTarget::createTexture(const std::string& name,
       unsigned int width,
       unsigned int height,
       unsigned int samples,
       Ogre::PixelFormat pixelFormat) {
 
+
+    OgreRenderSystem* rs = mEngine->getSystem<OgreRenderSystem>();
+    if(!rs) {
+      return;
+    }
+
+    if(mTexture) {
+      rs->deleteTexture(rs->getName());
+      removeEventListener(mTexture.get(), Texture::RECREATE, &RenderTarget::onTextureEvent);
+      removeEventListener(mTexture.get(), Texture::DESTROY, &RenderTarget::onTextureEvent);
+    }
 #if OGRE_VERSION >= 0x020100
     destroyCurrentWorkspace();
 #endif
 
-    Ogre::TextureManager& texManager = Ogre::TextureManager::getSingleton();
+    DataProxy params;
+    params.put("width", width);
+    params.put("height", height);
+    params.put("fsaa", samples);
+    params.put("pixelFormat", pixelFormat);
+    params.put("usage", (int)Ogre::TU_RENDERTARGET);
 
-    if(texManager.resourceExists(name)) {
-      texManager.remove(name);
+    TexturePtr texture = rs->getTexture(name);
+    if(texture) {
+      texture->updateConfig(params);
+      mTexture = texture;
+    } else {
+      mTexture = rs->createTexture(name, params);
     }
-
-    mTexture = texManager.createManual(name,
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-        Ogre::TEX_TYPE_2D,
-        width,
-        height,
-        0,
-        pixelFormat,
-        Ogre::TU_RENDERTARGET,
-        0,
-        false,
-        samples);
-#if OGRE_VERSION >= 0x020100
-    // additionally set up Hlms for 2.1
-    Ogre::HlmsManager *hlmsManager = Ogre::Root::getSingletonPtr()->getHlmsManager();
-    Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
-    Ogre::HlmsUnlitDatablock *datablock = static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->getDatablock(name));
-    if(!datablock) {
-      datablock = static_cast<Ogre::HlmsUnlitDatablock*>(
-        hlmsUnlit->createDatablock(name,
-          name,
-          Ogre::HlmsMacroblock(),
-          Ogre::HlmsBlendblock(),
-          Ogre::HlmsParamVec()));
-    }
-
-    datablock->setTexture(Ogre::PBSM_DIFFUSE, 0, mTexture);
-#endif
-    mWrappedTarget = mTexture->getBuffer()->getRenderTarget();
-    if(mCurrentCamera) {
-      // reattach camera to the new render target
-      setCamera(mCurrentCamera);
-    }
+    wrap();
+    addEventListener(mTexture.get(), Texture::RECREATE, &RenderTarget::onTextureEvent);
+    addEventListener(mTexture.get(), Texture::DESTROY, &RenderTarget::onTextureEvent);
 
     LOG(DEBUG) << "Created RTT texture \"" << name << "\", size: " << width << "x" << height << ", samples: " << samples << ", pixel format: " << pixelFormat;
   }
 
   void RttRenderTarget::setDimensions(int width, int height) {
-    createTexture(
-        mName,
-        width,
-        height,
-        mSamples,
-        Ogre::PF_R8G8B8A8
-    );
+    mTexture->update(0, 0, width, height);
     RenderTarget::setDimensions(width, height);
+  }
+
+  bool RttRenderTarget::onTextureEvent(EventDispatcher* sender, const Event& event)
+  {
+#if OGRE_VERSION >= 0x020100
+    destroyCurrentWorkspace();
+#endif
+    if(event.getType() == Texture::RECREATE) {
+      wrap();
+    } else {
+      mWrappedTarget = 0;
+    }
+    return true;
+  }
+
+  void RttRenderTarget::wrap()
+  {
+    mWrappedTarget = static_cast<OgreTexture*>(mTexture.get())->getOgreTexture()->getBuffer()->getRenderTarget();
+    if(mCurrentCamera) {
+      // reattach camera to the new render target
+      setCamera(mCurrentCamera);
+    }
   }
 
   WindowRenderTarget::WindowRenderTarget(const std::string& name, const DataProxy& parameters, Engine* engine)

@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "ResourceManager.h"
 #include "Logger.h"
 #include "GsageFacade.h"
+#include "FileLoader.h"
 
 #if OGRE_VERSION >= 0x020100
 #include "ogre/v2/HlmsUnlit.h"
@@ -37,34 +38,47 @@ namespace Gsage {
   std::tuple<std::string, std::string> ResourceManager::processPath(const std::string& line, const std::string& workdir)
   {
     std::vector<std::string> list = split(line, ':');
-    std::string wd = workdir.empty() ? mWorkdir : workdir;
+    std::string path;
+    std::string type = list[0];
+    int offset = 1;
     if(list.size() < 2)
     {
+      type = "FileSystem";
+      path = list[0];
+      offset = 0;
+    } else if(list.size() > 2) {
       LOG(ERROR) << "Malformed resource path: " << line;
       OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
                   std::string("Malformed resource path: ") + line,
                   "processPath");
     }
 
-    std::vector<std::string> pathList;
-    if (!wd.empty())
-    {
-      pathList.push_back(wd);
+    if(!mFacade->filesystem()->isAbsolute(path)) {
+      std::vector<std::string> pathList;
+      if (!workdir.empty())
+      {
+        pathList.push_back(workdir);
+      }
+
+      for(std::vector<std::string>::iterator it = list.begin() + offset; it != list.end(); it++)
+      {
+        pathList.push_back(*it);
+      }
+
+      path = join(pathList, GSAGE_PATH_SEPARATOR);
     }
 
-    for(std::vector<std::string>::iterator it = list.begin() + 1; it != list.end(); it++)
-    {
-      pathList.push_back(*it);
+    path = FileLoader::getSingletonPtr()->searchFile(path);
+    if(path.empty()) {
+      // failure
+      return std::make_tuple("", "");
     }
 
-    std::string path = join(pathList, GSAGE_PATH_SEPARATOR);
-    std::string type = list[0];
     return std::make_tuple(path, type);
   }
 
-  ResourceManager::ResourceManager(GsageFacade* facade, const std::string& workdir)
-    : mWorkdir(workdir)
-    , mHlmsLoaded(false)
+  ResourceManager::ResourceManager(GsageFacade* facade)
+    : mHlmsLoaded(false)
     , mFacade(facade)
   {
 
@@ -75,40 +89,21 @@ namespace Gsage {
     // cleanup resources here
   }
 
-  void ResourceManager::setAdditionalResourceFolders(const DataProxy& folders)
-  {
-    int index = 0;
-    bool changed = false;
-    for(auto& pair : folders) {
-      const std::string folder = pair.second.as<std::string>();
-      if(index >= mResourceFolders.size()) {
-        mResourceFolders.push_back(folder);
-        changed = true;
-      } else if(mResourceFolders[index] != folder) {
-        changed = true;
-        mResourceFolders[index] = folder;
-      }
-      index++;
-    }
-
-    if(!changed) {
-      return;
-    }
-
-    unload();
-    DataProxy resources;
-    // This is used to trigger immediate HLMS reload
-    load(resources);
-  }
-
-  bool ResourceManager::load(const DataProxy& resources)
+  bool ResourceManager::load(const DataProxy& input)
   {
     Ogre::ResourceGroupManager& orgm = Ogre::ResourceGroupManager::getSingleton();
     std::string type;
     std::string section;
     std::string path;
-    std::string workdir = mWorkdir;
-    bool customWorkdir = resources.read("workdir", workdir);
+    std::string workdir;
+    DataProxy resources;
+    if(input.getStoredType() == DataWrapper::Array) {
+      resources.put("Extra", input);
+    } else {
+      resources = input;
+    }
+
+    resources.read("workdir", workdir);
 
 #if OGRE_VERSION >= 0x020100
     if(!mHlmsLoaded) {
@@ -133,33 +128,19 @@ namespace Gsage {
     for(auto& pair : resources)
     {
       section = pair.first;
-      if(section == "workdir") {
-        continue;
-      }
-
-      if(section == "Hlms") {
+      if(section == "workdir" || section == "Hlms") {
         continue;
       }
 
       for(auto& config : pair.second)
       {
-        bool gotResourceFolder = false;
-        if(!customWorkdir) {
-          // autodetect proper resource folder
-          for(auto& f : mResourceFolders) {
-            std::tie(path, type) = processPath(config.second.as<std::string>(), f);
-            if(mFacade->filesystem()->exists(path)) {
-              gotResourceFolder = true;
-              break;
-            }
-          }
-        }
-
-        if(!gotResourceFolder) {
-          std::tie(path, type) = processPath(config.second.as<std::string>(), workdir);
+        std::tie(path, type) = processPath(config.second.as<std::string>(), workdir);
+        if(type.empty()) {
+          LOG(ERROR) << "Failed to find resource " << path;
+          continue;
         }
         LOG(INFO) << "Adding resource location " << path;
-        orgm.addResourceLocation(path, type, section, true, path.find(".zip") != std::string::npos);
+        orgm.addResourceLocation(path, type, section, true, type == "Zip");
       }
 
 #if OGRE_VERSION_MAJOR == 2
@@ -186,8 +167,15 @@ namespace Gsage {
     }
   }
 
-  void ResourceManager::unload(const DataProxy& resources)
+  void ResourceManager::unload(const DataProxy& input)
   {
+    DataProxy resources;
+    if(input.getStoredType() == DataWrapper::Array) {
+      resources.put("Extra", input);
+    } else {
+      resources = input;
+    }
+
     for(auto& pair : resources)
     {
       if(pair.first == "workdir") {

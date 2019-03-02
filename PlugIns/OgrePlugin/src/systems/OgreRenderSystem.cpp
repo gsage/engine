@@ -139,49 +139,26 @@ namespace Gsage {
     , mWindowEventListener(0)
     , mSceneManager(0)
     , mObjectManager(this)
+    , mManualTextureManager(this)
+    , mLogManager(0)
 #if OGRE_VERSION >= 0x020100
     , mRectangle2DFactory(0)
 #endif
   {
     mSystemInfo.put("type", OgreRenderSystem::ID);
     mSystemInfo.put("version", OGRE_VERSION);
-    mLogManager = new Ogre::LogManager();
   }
 
   OgreRenderSystem::~OgreRenderSystem()
   {
-#if OGRE_VERSION >= 0x020100
-    if(mRectangle2DFactory != 0) {
-      mRoot->removeMovableObjectFactory(mRectangle2DFactory);
-      delete mRectangle2DFactory;
-    }
-#endif
-
-    if(mFontManager != 0)
-      delete mFontManager;
-
     shutdown();
-
-    if(mRoot != 0)
-      delete mRoot;
-#if OGRE_STATIC
-    for(auto pair : mOgrePlugins) {
-      delete pair.second;
-    }
-    mOgrePlugins.clear();
-#endif
-    if(mManualMovableTextParticleFactory != 0)
-      delete mManualMovableTextParticleFactory;
-    if(mResourceManager != 0)
-      delete mResourceManager;
-    if(mWindowEventListener != 0)
-      delete mWindowEventListener;
-
-    delete mLogManager;
   }
 
   bool OgreRenderSystem::initialize(const DataProxy& settings)
   {
+    if(mLogManager == 0)
+      mLogManager = new Ogre::LogManager();
+
     std::string workdir   = mEngine->env().get("workdir", ".");
     std::string config    = workdir + GSAGE_PATH_SEPARATOR + settings.get("configFile", "");
 
@@ -192,7 +169,7 @@ namespace Gsage {
     // initialize ogre root
     mRoot = new Ogre::Root("", config, "");
     // initialize resource manager
-    mResourceManager = new ResourceManager(mFacade, workdir);
+    mResourceManager = new ResourceManager(mFacade);
 
     auto pair = settings.get<DataProxy>("plugins");
     if(pair.second) {
@@ -221,13 +198,22 @@ namespace Gsage {
         if(!wm) {
           return;
         }
-        window = wm->createWindow(
-          windowName,
-          windowParams.get("width", 1024),
-          windowParams.get("height", 786),
-          windowParams.get("fullscreen", false),
-          windowParams
-        );
+
+        window = wm->getWindow(windowName);
+        if(!window) {
+          window = wm->createWindow(
+            windowName,
+            windowParams.get("width", 1024),
+            windowParams.get("height", 786),
+            windowParams.get("fullscreen", false),
+            windowParams
+          );
+        } else {
+          int width, height;
+          std::tie(width, height) = window->getSize();
+          windowParams.put("width", width);
+          windowParams.put("height", height);
+        }
       };
 
       if(settings.get("dedicatedThread", false)) {
@@ -301,7 +287,6 @@ namespace Gsage {
     mWindow = createRenderTarget(windowName, RenderTargetType::Window, windowParams);
 
     EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, WindowEvent::RESIZE, &OgreRenderSystem::handleWindowResized, 0);
-    EventSubscriber<OgreRenderSystem>::addEventListener(mEngine, EngineEvent::ENV_UPDATED, &OgreRenderSystem::handleEnvUpdate, 0);
 
     if(!settings.get("window.useWindowManager", false)) {
       mWindowEventListener = new WindowEventListener(getRenderWindow(), mEngine);
@@ -432,6 +417,9 @@ namespace Gsage {
       return;
     }
 
+    EngineSystem::shutdown();
+    mManualTextureManager.reset();
+
     if(getRenderWindow() != 0 && mWindowEventListener != 0)
       mWindowEventListener->windowClosed(getRenderWindow());
 
@@ -439,9 +427,43 @@ namespace Gsage {
       delete pair.second;
     }
     mRenderTargets.clear();
-    mRoot->shutdown();
+    if(mFontManager)
+      delete mFontManager;
 
-    EngineSystem::shutdown();
+    mFontManager = 0;
+
+    if(mResourceManager != 0) {
+      delete mResourceManager;
+      mResourceManager = 0;
+    }
+
+    if(mWindowEventListener != 0) {
+      delete mWindowEventListener;
+      mWindowEventListener = 0;
+    }
+
+    if(mRoot) {
+      mRoot->shutdown();
+      delete mRoot;
+    }
+    mRoot = 0;
+    mSceneManager = 0;
+
+    if(mManualMovableTextParticleFactory) {
+      delete mManualMovableTextParticleFactory;
+      mManualMovableTextParticleFactory = 0;
+    }
+#if OGRE_STATIC
+    for(auto pair : mOgrePlugins) {
+      delete pair.second;
+    }
+    mOgrePlugins.clear();
+#endif
+
+    if(mLogManager) {
+      delete mLogManager;
+      mLogManager = 0;
+    }
   }
 
   bool OgreRenderSystem::prepareComponent(OgreRenderComponent* c)
@@ -834,22 +856,6 @@ namespace Gsage {
     return res;
   }
 
-  unsigned int OgreRenderSystem::getFBOID(const std::string& target) const
-  {
-    if(mRenderTargets.count(target) == 0) {
-      LOG(WARNING) << "Attempt to get fboid of not existing render target: " << target;
-      return 0;
-    }
-
-    if(mRenderTargets.at(target)->getType() != RenderTargetType::Rtt) {
-      LOG(WARNING) << "FBOID can be obtained only from Rtt target";
-      return 0;
-    }
-
-    const RttRenderTarget* rtt = static_cast<const RttRenderTarget*>(mRenderTargets.at(target));
-    return rtt->getGLID();
-  }
-
   void OgreRenderSystem::setWidth(unsigned int width, const std::string& target)
   {
     if(target.empty()) {
@@ -991,15 +997,6 @@ namespace Gsage {
   {
     const WindowEvent& event = static_cast<const WindowEvent&>(e);
     mWindow->setDimensions(event.width, event.height);
-    return true;
-  }
-
-  bool OgreRenderSystem::handleEnvUpdate(EventDispatcher* sender, const Event& e)
-  {
-    auto pair = mEngine->env().get<DataProxy>("resourceFolders");
-    if(pair.second && pair.first.size() > 0) {
-      mResourceManager->setAdditionalResourceFolders(pair.first);
-    }
     return true;
   }
 }

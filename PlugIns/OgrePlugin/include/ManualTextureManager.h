@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "systems/RenderSystem.h"
 
 namespace Gsage {
+  class OgreRenderSystem;
   /**
    * Implements abstract texture class Texture
    */
@@ -42,6 +43,10 @@ namespace Gsage {
         public:
           ScalingPolicy(OgreTexture& texture);
           virtual ~ScalingPolicy();
+          /**
+           * Forces rescaling without width/height change
+           */
+          void invalidate();
           /**
            * Update scaling policy
            */
@@ -132,14 +137,22 @@ namespace Gsage {
        * Update texture using supplied buffer
        */
       void render();
+
+      /**
+       * Get underlying OgreTexture object
+       */
+      inline Ogre::TexturePtr getOgreTexture() { return mTexture; }
+
+      /**
+       * Destroy underlying Ogre::TexturePtr
+       */
+      void destroy();
     private:
       friend class ScalingPolicy;
 
       std::unique_ptr<OgreTexture::ScalingPolicy> createScalingPolicy(const DataProxy& params);
 
       Ogre::TexturePtr mTexture;
-      std::mutex mSizeUpdateLock;
-      DataProxy mParams;
       std::string mName;
       std::unique_ptr<OgreTexture::ScalingPolicy> mScalingPolicy;
 
@@ -154,8 +167,13 @@ namespace Gsage {
   class ManualTextureManager : public Ogre::Texture::Listener
   {
     public:
-      ManualTextureManager();
+      ManualTextureManager(OgreRenderSystem* renderSystem);
       virtual ~ManualTextureManager();
+
+      /**
+       * Destroy all texture objects
+       */
+      void reset();
 
       /**
        * Create manual texture
@@ -216,6 +234,7 @@ namespace Gsage {
 
       std::map<RenderSystem::TextureHandle, TexturePtr> mTextures;
       Ogre::PixelFormat mPixelFormat;
+      OgreRenderSystem* mRenderSystem;
   };
 }
 

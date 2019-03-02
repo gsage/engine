@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #include "FileLoader.h"
 #include <assert.h>
+#include <Poco/Path.h>
+#include <Poco/File.h>
 
 
 namespace Gsage {
@@ -148,7 +150,7 @@ namespace Gsage {
 
   FileLoader* FileLoader::mInstance = 0;
 
-  FileLoader FileLoader::getSingleton()
+  FileLoader& FileLoader::getSingleton()
   {
     assert(mInstance != 0);
     return *mInstance;
@@ -172,11 +174,38 @@ namespace Gsage {
   {
     // add main workdir with low priority
     mResourceSearchFolders[100000] = mEnvironment.get("workdir", ".");
+
+    // add current directory
+    mResourceSearchFolders[99999] = Poco::Path::current();
   }
 
   FileLoader::~FileLoader()
   {
     delete mInjaEnv;
+  }
+
+  std::string FileLoader::searchFile(const std::string& file) const
+  {
+    if(Poco::Path(file).isAbsolute()) {
+      Poco::File f(file);
+      return f.exists() ? file : "";
+    }
+
+    std::vector<std::string> scanned(mResourceSearchFolders.size());
+
+    for(auto& rf : mResourceSearchFolders) {
+      std::stringstream ss;
+      ss << rf.second << GSAGE_PATH_SEPARATOR << file;
+      std::string p = ss.str();
+      Poco::File f(p);
+      if(f.exists()) {
+        return p;
+      }
+      scanned.push_back(rf.second);
+    }
+
+    LOG(ERROR) << "Failed to find file path in any of resource folders " << file << ":\n" << join(scanned, '\n');
+    return "";
   }
 
   void FileLoader::addSearchFolder(int index, const std::string& path)
@@ -303,7 +332,7 @@ namespace Gsage {
   bool FileLoader::dump(const std::string& path, const std::string& str, const std::string& rootDir) const
   {
     std::stringstream ss;
-    if(!rootDir.empty()) {
+    if(!rootDir.empty() && !Poco::Path(path).isAbsolute()) {
       ss << rootDir << GSAGE_PATH_SEPARATOR;
     }
     ss << path;
@@ -318,34 +347,21 @@ namespace Gsage {
 
   std::pair<std::string, bool> FileLoader::loadFile(const std::string& path, std::ios_base::openmode mode) const
   {
-    std::ifstream stream;
-
     std::string fullPath;
-    std::vector<std::string> scanned(mResourceSearchFolders.size());
-
-    for(auto& rf : mResourceSearchFolders) {
-      std::stringstream ss;
-      ss << rf.second << GSAGE_PATH_SEPARATOR << path;
-      stream = std::ifstream(ss.str(), mode);
-      if(stream.good()) {
-        fullPath = ss.str();
-        break;
-      }
-      scanned.push_back(rf.second);
+    if(Poco::Path(path).isAbsolute()) {
+      fullPath = path;
+    } else {
+      fullPath = searchFile(path);
     }
 
     if(fullPath.empty()) {
-      LOG(ERROR) << "Failed to find file path in any of resource folders " << path << ":\n" << join(scanned, '\n');
-      return std::make_pair("", false);
-    }
-
-    if(!stream) {
       LOG(ERROR) << "Failed to read file: " << fullPath;
       return std::make_pair("", false);
     }
 
     std::string res;
     bool success = true;
+    std::ifstream stream(fullPath, mode);
 
     try
     {

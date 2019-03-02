@@ -1,8 +1,0 @@
-hlms torii pbs {
-	roughness	0.09
-	fresnel		0.2
-
-  diffuse_map   torii_diffuse.png
-	roughness_map	torii_specular.png
-	specular_map	torii_specular.png
-}

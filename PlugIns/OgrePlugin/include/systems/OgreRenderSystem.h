@@ -289,8 +289,6 @@ namespace Gsage
        */
       Entities getObjectsInRadius(const Ogre::Vector3& center, float distance, const unsigned int flags = 0xFF, const std::string& id = "");
 
-      virtual unsigned int getFBOID(const std::string& target = "") const;
-
       /**
        * Set render target width
        *
@@ -394,13 +392,6 @@ namespace Gsage
        * @param event WindowEvent
        */
       bool handleWindowResized(EventDispatcher* sender, const Event& event);
-
-      /**
-       * Handle settings update
-       * @param sender Engine
-       * @param event EngineEvent
-       */
-      bool handleEnvUpdate(EventDispatcher* sender, const Event& event);
 
       bool installPlugin(const std::string& name);
 

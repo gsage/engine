@@ -41,7 +41,7 @@ namespace Gsage
   class EngineSystem;
 
   /**
-   * Class responsible for level loading
+   * Class responsible for scenes, saves loading
    */
   class GameDataManager
   {
@@ -118,7 +118,7 @@ namespace Gsage
       /**
        * Get locations folder
        */
-      inline const std::string& getLevelsFolder() const { return mLevelsFolder; }
+      inline const std::string& getScenesFolder() const { return mScenesFolder; }
       /**
        * Get save data folder
        */
@@ -138,7 +138,7 @@ namespace Gsage
       // settings
       std::string mFileExtension;
       std::string mCharactersFolder;
-      std::string mLevelsFolder;
+      std::string mScenesFolder;
       std::string mSavesFolder;
 
       bool loadCharacters(const std::string& area);

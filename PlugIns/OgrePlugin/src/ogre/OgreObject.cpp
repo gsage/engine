@@ -38,9 +38,9 @@ namespace Gsage {
 
   OgreObject::OgreObject()
     : mParentNode(0)
-    , mParentEntity(0)
     , mObjectManager(0)
     , mSceneManager(0)
+    , mParentObject(0)
   {
     // setting couple of these props priorities to maximum
     BIND_PROPERTY_WITH_PRIORITY("type", &mType, 10000);
@@ -49,20 +49,6 @@ namespace Gsage {
 
   OgreObject::~OgreObject()
   {
-  }
-
-  bool OgreObject::initialize(
-          OgreObjectManager* objectManager,
-          const DataProxy& dict,
-          const std::string& ownerId,
-          const std::string& type,
-          Ogre::SceneManager* sceneManager,
-          const std::string& boneId,
-          OgreV1::Entity* parentEntity)
-  {
-    mBoneId = boneId;
-    mParentEntity = parentEntity;
-    return initialize(objectManager, dict, ownerId, type, sceneManager, 0);
   }
 
   bool OgreObject::initialize(
@@ -96,9 +82,44 @@ namespace Gsage {
     return true;
   }
 
+  bool OgreObject::initialize(
+          OgreObjectManager* objectManager,
+          const DataProxy& dict,
+          const std::string& ownerId,
+          const std::string& type,
+          Ogre::SceneManager* sceneManager,
+          const DataProxy& attachParams,
+          OgreObject* parent)
+  {
+    mType = type;
+    mOwnerId = ownerId;
+    mObjectManager = objectManager;
+    mSceneManager = sceneManager;
+    mParentObject = parent;
+    mAttachParams = attachParams;
+
+    if(sceneManager == 0)
+    {
+      LOG(ERROR) << "Failed to create ogre object, sceneManager is not initialized";
+      return false;
+    }
+
+    auto objectId = dict.get<std::string>("name");
+    if (!objectId.second && mObjectId.empty()) {
+      std::stringstream ss("");
+      ss << mType << counter++;
+      mObjectId = ss.str();
+    }
+
+    read(dict);
+    return true;
+  }
+
   void OgreObject::destroy()
   {
     mObjectManager->destroy(this);
+    mParentObject = 0;
+    mParentNode = 0;
   }
 
   const std::string& OgreObject::getType() const
@@ -117,21 +138,27 @@ namespace Gsage {
       object->detachFromParent();
     }
 
-    if(mParentNode != 0)
-      mParentNode->attachObject(object);
-    else if(!mBoneId.empty() && mParentEntity != 0)
-      mParentEntity->attachObjectToBone(mBoneId, object);
-    else
-      LOG(ERROR) << "Failed to attach movable object, no attach configuration found";
+    if(!mParentObject || !mParentObject->attach(object, mAttachParams)) {
+      LOG(ERROR) << "Failed to attach movable object, no parent defined";
+    }
+  }
+
+  bool OgreObject::attach(Ogre::MovableObject* object, const DataProxy& params)
+  {
+    // not implemented by default
+    return false;
   }
 
   std::string OgreObject::generateName() const
   {
-    if(mParentNode == mSceneManager->getRootSceneNode()) {
-      return mObjectId;
-    } else if(mParentEntity) {
-      return mParentEntity->getName() + "." + mObjectId;
+#if OGRE_VERSION < 0x020100
+    if(mParentNode) {
+      return mParentNode->getName() + "." + mObjectId;
     }
-    return mParentNode->getName() + "." + mObjectId;
+#endif
+    if(mParentObject == 0) {
+      return mObjectId;
+    }
+    return mParentObject->getObjectId() + "." + mObjectId;
   }
 }

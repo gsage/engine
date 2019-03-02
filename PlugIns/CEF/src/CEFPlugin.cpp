@@ -153,10 +153,6 @@ namespace Gsage {
 
   void RenderHandler::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList &dirtyRects, const void *buffer, int width, int height)
   {
-    if(!mTexture->isValid()) {
-      return;
-    }
-
     mTexture->update(buffer, width * height * 4, width, height);
   }
 
@@ -815,7 +811,7 @@ namespace Gsage {
   WebviewPtr CEFPlugin::createWebview(const std::string& name)
   {
     std::lock_guard<std::mutex> lock(mViewsLock);
-    if(mViews.count(name) > 0)
+    if(contains(mViews, name))
     {
       return mViews[name];
     }
@@ -827,7 +823,7 @@ namespace Gsage {
   bool CEFPlugin::removeWebview(const std::string& name)
   {
     std::lock_guard<std::mutex> lock(mViewsLock);
-    if(mViews.count(name) > 0)
+    if(contains(mViews, name))
     {
       mViews[name]->setCefWasStopped();
       mViews.erase(name);
@@ -938,7 +934,7 @@ namespace Gsage {
     if(name == "fn") {
       auto args = msg->GetArgumentList();
       name = args->GetString(1).ToString();
-      if(mMessageHandlers.count(name) != 0) {
+      if(contains(mMessageHandlers, name)) {
         result = mMessageHandlers[name]->execute(msg);
         success = true;
       }

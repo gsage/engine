@@ -8,10 +8,80 @@
       "import": "Import..."
     }
   },
+
+  "assets": {
+    "search": "Search Asset",
+    "actions": {
+      "delete": "Delete Asset",
+      "data": "Edit as Text",
+      "addToScene": "Add to Scene"
+    },
+    "groups": {
+      "models": "Models",
+      "scripts": "Scripts",
+      "scenes": "Scenes",
+      "characters": "Characters",
+      "other": "Other",
+      "images": "Images",
+      "archives": "Archives"
+    },
+    "desc": {
+      "mesh": "OGRE mesh file",
+      "material": "OGRE material file",
+      "compositor": "Compositor script file",
+      "glsl": "OpenGL shader",
+      "hlsl": "Direct3D shader",
+      "metal": "Metal shader",
+      "rml": "LibRocket HTML view",
+      "rcss": "LibRocket CSS file",
+      "json": "Generic JSON encoded file",
+      "lua": "Lua script file",
+      "png": "PNG image",
+      "jpg": "JPG image",
+      "jpeg": "JPG image",
+      "tiff": "TIFF image",
+      "dds": "DDS image",
+      "zip": "ZIP archive"
+    }
+  },
+
   "side_panel": {
     "home": "Home",
     "world": "World",
     "models": "Models"
+  },
+
+  "modals": {
+    "confirm_deletion": {
+      "title": "Delete Asset %{asset}",
+      "desc": "Are you sure that you want to delete asset %{fullpath}?"
+    },
+    "create_entity": {
+      "title": "Add Asset %{asset} to Scene",
+      "desc": "Set entity properties",
+      "entity_id": "Entity ID"
+    },
+    "open_project": {
+      "title": "Open Project",
+      "question": "Do you want to open project %{name}?"
+    },
+    "import_dialog_title": "Select Assets for Import",
+    "create_asset": {
+      "title": "Create Asset",
+      "description": "Create new asset. You can only create text assets (scripts/material files)",
+      "type": "Type",
+      "name": "Name",
+      "path": "Path"
+    },
+    "import_assets": {
+      "title": "Import Assets",
+      "description": "These assets will be imported into the project",
+      "file": "File",
+      "type": "Type",
+      "install": "Install"
+    },
+    "ok": "Ok",
+    "cancel": "Cancel"
   },
 
   "top_menu": {
@@ -34,7 +104,8 @@
     "viewport": "Viewport",
     "dock states": "Dock states",
     "tools": "Tools",
-    "script_editor": "Script"
+    "script_editor": "Script",
+    "script_editor_parameterised": "Script (%{filename})"
   },
 
   "plugins": {
@@ -121,12 +192,15 @@
       "progress": {
         "file_copied": "Copy %{flow}",
         "file_copy_failed": "Copy failed %{flow}",
+        "unzip_success": "Unzipped file %{src} to folder %{dst}",
+        "unzip_failed": "Failed to unzip file %{src} to folder %{dst}",
         "folder_created": "Folder created %{path}",
         "project_already_exists": "Failed: project already exists",
         "writing_project_file": "Writing project file",
         "writing_project_file_failed": "Writing project file failed",
         "writing_configs": "Writing configs",
-        "opening_project": "Opening project..."
+        "opening_project": "Opening project...",
+        "failed_to_create_directory": "Failed to create directory %{directory}"
       }
     }
   },
@@ -157,10 +231,6 @@
     "entity": {
       "reload": "Reload"
     }
-  },
-
-  "assets": {
-    "levels": "Levels"
   },
 
   "transform": {

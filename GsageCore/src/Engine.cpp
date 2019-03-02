@@ -110,6 +110,12 @@ namespace Gsage
         mMainThreadCallbacks.get(cb);
         cb->execute();
       }
+
+      if(pair.second->needsRestart()) {
+        LOG(INFO) << "Restarting system " << pair.first;
+        pair.second->shutdown();
+        pair.second->initialize(pair.second->getConfig());
+      }
     }
   }
 
@@ -137,6 +143,10 @@ namespace Gsage
   }
 
   bool Engine::configureSystem(const std::string& name) {
+    return configureSystem(name, false);
+  }
+
+  bool Engine::configureSystem(const std::string& name, bool restart) {
     EngineSystem* s = getSystem(name);
     if(!s) {
       return false;
@@ -165,9 +175,15 @@ namespace Gsage
       if(!s->isReady() && !s->initialize(config)) {
         return false;
       }
-      bool res = s->configure(config);
-      if(!res) {
-        return false;
+
+      if(restart) {
+        s->setConfig(config);
+        s->restart();
+      } else {
+        bool res = s->configure(config);
+        if(!res) {
+          return false;
+        }
       }
     }
 
@@ -177,9 +193,9 @@ namespace Gsage
     return true;
   }
 
-  bool Engine::configureSystem(const std::string& name, const DataProxy& config) {
+  bool Engine::configureSystem(const std::string& name, const DataProxy& config, bool restart) {
     mConfiguration.put(name, config);
-    return configureSystem(name);
+    return configureSystem(name, restart);
   }
 
   EngineSystem* Engine::getSystem(const std::string& name)
@@ -302,6 +318,8 @@ namespace Gsage
 
     for(auto pair : mEntityMap) {
       if(f(pair.second)) {
+        fireEvent(EntityEvent(EntityEvent::REMOVE, pair.second->getId()));
+
         removed.push_back(pair.second);
         for(auto& p : pair.second->mComponents)
         {
@@ -316,7 +334,6 @@ namespace Gsage
     }
 
     for(auto entity : removed) {
-      fireEvent(EntityEvent(EntityEvent::REMOVE, entity->getId()));
       LOG(INFO) << "Removed entity \"" << entity->getId() << "\"";
       mEntityMap.erase(entity->getId());
       mEntities.erase(entity);

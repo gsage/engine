@@ -33,19 +33,7 @@ THE SOFTWARE.
 #include "Definitions.h"
 #include "EventSubscriber.h"
 #include "systems/RenderSystem.h"
-#if OGRE_VERSION >= 0x020100
-#include "v2/ViewportRenderable.h"
-#endif
-
-namespace Ogre {
-#if OGRE_VERSION_MAJOR == 2
-  namespace v1 {
-#endif
-    class Rectangle2D;
-#if OGRE_VERSION_MAJOR == 2
-  }
-#endif
-}
+#include "ViewportRenderable.h"
 
 namespace Gsage {
   class OgreRenderSystem;
@@ -90,17 +78,16 @@ namespace Gsage {
       void render(unsigned int width, unsigned int height);
 
       /**
-       * Sets rendered texture id
-       * @param textureID RTT texture
-       */
-      void setTextureID(const std::string& textureID);
-
-      /**
        * Sets rendered manual texture object
        */
       void setTexture(TexturePtr texture);
 
     private:
+      /**
+       * Sets rendered texture id
+       * @param textureID RTT texture
+       */
+      void setTextureID(const std::string& textureID);
       bool onTextureEvent(EventDispatcher* sender, const Event& event);
 
       std::string mTextureID;
@@ -109,11 +96,7 @@ namespace Gsage {
 
       unsigned int mWidth;
       unsigned int mHeight;
-#if OGRE_VERSION >= 0x020100
       ViewportRenderData* mViewport;
-#else
-      Ogre::Rectangle2D* mViewport;
-#endif
       ImVec2 mPosition;
       bool mCaptureMouse;
       ImVec4 mBgColour;

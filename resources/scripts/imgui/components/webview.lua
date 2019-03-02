@@ -90,6 +90,10 @@ WebView = class(function(self, textureID, startPage, pageData, bgColour)
         handler()
       end
       self.loadHandlers = {}
+      for _, script in pairs(self.pendingScripts) do
+        self.cefwebview:executeJavascript(script)
+      end
+      self.pendingScripts = {}
     end
   end
 
@@ -183,9 +187,6 @@ function WebView:render(width, height)
       }
     )
 
-    for _, script in pairs(self.pendingScripts) do
-      self.cefwebview:executeJavascript(script)
-    end
     self.onScreenPositionX, self.onScreenPositionY = window:getPosition()
   end
 

@@ -1,0 +1,15 @@
+{
+  ignore_luajit_errors
+  Memcheck:Cond
+  fun:str_fastcmp
+}
+{
+  ignore_cef_leak
+  Memcheck:Leak
+  obj:*/*cef*.so*
+}
+{
+  ignore_cef_cond
+  Memcheck:Cond
+  obj:*/*cef*.so*
+}

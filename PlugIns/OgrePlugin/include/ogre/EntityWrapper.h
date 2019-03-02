@@ -93,12 +93,29 @@ namespace Gsage {
       bool getCastShadows();
 
       /**
+       * Set render queue
+       * @param queue queue id
+       */
+      void setRenderQueue(const unsigned int& queue);
+
+      /**
+       * Get render queue
+       */
+      unsigned int getRenderQueue();
+
+      /**
        * Attach another entity to the bone
-       * @param boneId Id of the bone to attach to
+       * @param params should contain boneID field
        * @param entityId Id of new entity
        * @param movableObjectData MovableObject to create and attach
        */
-      void attachToBone(const std::string& boneId, const std::string& entityId, DataProxy movableObjectData);
+      void attachToBone(const DataProxy& params, const std::string& entityId, DataProxy movableObjectData);
+
+      /**
+       * Attach another entity to the bone
+       * @param params must contain boneID
+       */
+      bool attach(Ogre::MovableObject* object, const DataProxy& params);
 
       /**
        * Get underlying entity
@@ -106,6 +123,19 @@ namespace Gsage {
       OgreV1::Entity* getEntity() {
         return mObject;
       }
+
+      /**
+       * Get AABB
+       */
+#if OGRE_VERSION >= 0x020100
+      inline Ogre::Aabb getAabb() const {
+        return mObject ? mObject->getWorldAabb() : Ogre::Aabb();
+      }
+#else
+      inline Ogre::AxisAlignedBox getAabb() const {
+        return mObject ? mObject->getBoundingBox() : Ogre::AxisAlignedBox();
+      }
+#endif
     private:
       OgreV1::SkeletonAnimationBlendMode mAnimBlendMode;
 

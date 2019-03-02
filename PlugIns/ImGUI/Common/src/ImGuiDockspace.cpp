@@ -149,6 +149,7 @@ namespace Gsage {
     , mRatio(0.5f)
     , mStyle(style)
     , mFlags(0)
+    , mRendered(false)
   {
     reset();
   }
@@ -282,7 +283,7 @@ namespace Gsage {
 
     mBounds = ImRect(mPos, mPos + mSize);
 
-    if(!mResized && size.x > 0 && size.y > 0) {
+    if(!mResized && size.x > 0 && size.y > 0 && hasBothChildren()) {
       float ratio = mRatio;
       switch(mLayout) {
         case Horizontal:
@@ -358,7 +359,7 @@ namespace Gsage {
 
     if(mParent) {
       Dock::Location location = getOppositeLocation(mLocation);
-      if(mParent->getChildAt(location)->getOpened() == false) {
+      if(mParent->getChildAt(location) && mParent->getChildAt(location)->getOpened() == false) {
         mParent->setOpened(value);
       } else {
         mParent->updateChildren();
@@ -583,6 +584,10 @@ namespace Gsage {
     mRootDock = nullptr;
     // Firstly create all docks
     for(auto pair : state.docks) {
+      if(pair.first == "size") {
+        continue;
+      }
+
       DockPtr dock = getDock(pair.first);
       if(!dock) {
         dock = createDock(pair.first.c_str());
@@ -595,6 +600,10 @@ namespace Gsage {
     }
 
     for(auto pair : state.docks) {
+      if(pair.first == "size") {
+        continue;
+      }
+
       DockPtr dock = getDock(pair.first);
       if(!dock) {
         LOG(ERROR) << "Dock " << pair.first << " was not created";
@@ -784,12 +793,12 @@ namespace Gsage {
     return dock;
   }
 
-  bool ImGuiDockspace::undock(DockPtr dock)
+  bool ImGuiDockspace::undock(DockPtr dock, bool destroy)
   {
-    return undock(dock->mLabel);
+    return undock(dock->mLabel, destroy);
   }
 
-  bool ImGuiDockspace::undock(const char* label)
+  bool ImGuiDockspace::undock(const char* label, bool destroy)
   {
     if(mDocks.count(label) == 0) {
       return false;
@@ -814,7 +823,7 @@ namespace Gsage {
       dock->mNextTab->mPreviousTab = dock->mPreviousTab;
     }
 
-    // cleanup parent container as it won't have two childs
+    // cleanup parent container as it won't have two children
     DockPtr parent = dock->mParent;
     if(parent && dock->mLocation != Dock::Tab) {
       if(firstTab) {
@@ -844,7 +853,11 @@ namespace Gsage {
       mRootDock = dock->mNextTab;
     }
 
-    dock->reset();
+    if(destroy) {
+      mDocks.erase(label);
+    } else {
+      dock->reset();
+    }
 
     return true;
   }
@@ -897,6 +910,23 @@ namespace Gsage {
     mDockspace.reset();
   }
 
+  bool ImGuiDockspaceRenderer::activateDock(const char* label)
+  {
+    DockPtr dock = mDockspace.getDock(label);
+    if(!dock) {
+      return false;
+    }
+
+    if(dock->getLocation() == Dock::Tab) {
+      dock->setActive(true);
+    } else {
+      dock->setActive(true);
+      dock->setOpened(true);
+    }
+
+    return true;
+  }
+
   void ImGuiDockspaceRenderer::beginWorkspace(ImVec2 pos, ImVec2 size)
   {
     if(pos.x != mPos.x || pos.y != mPos.y || size.y != mSize.y || size.x != mSize.y) {
@@ -938,6 +968,7 @@ namespace Gsage {
     if(dock) {
       dock->mTitle = ImStrdup(title);
       dock->mFlags = dockFlags;
+      dock->mRendered = true;
       if(mStateWasUpdated || dock->mDirty) {
         if(opened) {
           *opened = dock->getOpened();
@@ -1020,7 +1051,7 @@ namespace Gsage {
     }
   }
 
-  void ImGuiDockspaceRenderer::endWorkspace()
+  void ImGuiDockspaceRenderer::endWorkspace(bool cleanup)
   {
     // end rendering workspace
     handleDragging();
@@ -1029,6 +1060,24 @@ namespace Gsage {
     if(mPopClipRect) {
       ImGui::PopClipRect();
       mPopClipRect = false;
+    }
+
+    if(cleanup && false) {
+      std::vector<std::string> markedForDeletion;
+      for(auto& pair : mDockspace.mDocks) {
+        if(pair.second->isContainer()) {
+          continue;
+        }
+        if(!pair.second->mRendered)
+          markedForDeletion.push_back(pair.first);
+
+        pair.second->mRendered = false;
+      }
+
+      for(auto& s : markedForDeletion) {
+        mDockspace.undock(s.c_str(), true);
+        LOG(TRACE) << "Clean up no longer rendered dock " << s;
+      }
     }
   }
 
@@ -1285,7 +1334,7 @@ namespace Gsage {
     ImDrawList* canvas = ImGui::GetWindowDrawList();
     int index = 200;
 
-    for(auto pair : mDockspace.mDocks) {
+    for(auto& pair : mDockspace.mDocks) {
       DockPtr dock = pair.second;
 
       // if one of the children is not resizable, skip splitter
