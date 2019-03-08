@@ -248,7 +248,7 @@ namespace Gsage
     if(data.count(KEY_ID) == 0)
     {
       // autogenerate id
-      data.put(KEY_ID, std::string("entity") + std::to_string(mEntityCounter++));
+      data.put(KEY_ID, std::string("entity") + std::to_string(mEntities.size()));
     }
     std::string id = data.get<std::string>(KEY_ID).first;
 
@@ -261,9 +261,9 @@ namespace Gsage
       created = true;
     }
     entity->setClass(data.get<std::string>("class", "default"));
-    auto pair = data.get<DataProxy>("props");
+    auto pair = data.get<DataProxy>("vars");
     if(pair.second) {
-      entity->setProps(pair.first);
+      entity->setVars(pair.first);
     }
     mEntityMap[id] = entity;
     readEntityData(entity, data);
@@ -391,7 +391,7 @@ namespace Gsage
 
     for(auto& pair : dict)
     {
-      if(pair.first == KEY_ID || pair.first == KEY_FLAGS ||  pair.first == "class" || pair.first == "props")
+      if(pair.first == KEY_ID || pair.first == KEY_FLAGS ||  pair.first == "class" || pair.first == "vars")
         continue;
 
       if(!entity->hasComponent(pair.first))

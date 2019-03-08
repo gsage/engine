@@ -54,7 +54,7 @@ end
 
 local equals_float = function(state, arguments)
   local precision = arguments[3] or 5
-  
+
   local a1 = truncateFloat(arguments[1], precision)
   local a2 = truncateFloat(arguments[2], precision)
   if a1 ~= a2 then
@@ -122,7 +122,7 @@ function main()
         resources = {
           workdir = TRESOURCES,
           TestResources = {
-            "FileSystem:models/",
+            "FileSystem;models/",
           }
         }
       })

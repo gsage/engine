@@ -189,8 +189,10 @@ namespace Gsage {
 
       /**
        * Convert data to string
+       *
+       * @param pretty Human readable form
        */
-      virtual std::string toString() const;
+      virtual std::string toString(bool pretty = false) const;
 
       /**
        * Fill data by parsing string

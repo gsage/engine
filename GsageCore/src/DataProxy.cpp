@@ -326,7 +326,7 @@ namespace Gsage {
   DataProxy DataProxy::operator[]<std::string>(const std::string& key) const
   {
     DataProxy value(getWrappedType());
-    if(!read(key, value)) {
+    if(!read(key, value, false)) {
       throw KeyException(key);
     }
     return value;
@@ -354,9 +354,9 @@ namespace Gsage {
     return DataProxy(mDataWrapper->createChildAt(key));
   }
 
-  std::string DataProxy::toString() const
+  std::string DataProxy::toString(bool pretty) const
   {
-    return mDataWrapper->toString();
+    return mDataWrapper->toString(pretty);
   }
 
   bool DataProxy::fromString(const std::string& s)
@@ -402,7 +402,7 @@ namespace Gsage {
     return res;
   }
 
-  bool dump(const DataProxy& value, const std::string& path, DataWrapper::WrappedType type)
+  bool dump(const DataProxy& value, const std::string& path, DataWrapper::WrappedType type, bool pretty)
   {
     std::ofstream os(path);
     if(!os)
@@ -413,15 +413,16 @@ namespace Gsage {
     return true;
   }
 
-  std::string dumps(const DataProxy& value, DataWrapper::WrappedType type)
+  std::string dumps(const DataProxy& value, DataWrapper::WrappedType type, bool pretty)
   {
     std::stringstream ss;
     if(type == DataWrapper::MSGPACK_OBJECT) {
+      LOG(WARNING) << "Pretty dump ignored for msgpack encoding";
       msgpack::pack(ss, value);
     } else {
       DataProxy dp = DataProxy::create(type);
       value.dump(dp);
-      ss << dp.toString();
+      ss << dp.toString(pretty);
     }
     return ss.str();
   }

@@ -224,7 +224,7 @@ namespace Gsage {
         ),
         "loadSave", &GsageFacade::loadSave,
         "dumpSave", &GsageFacade::dumpSave,
-        "loadArea", &GsageFacade::loadArea,
+        "loadScene", &GsageFacade::loadScene,
         "loadPlugin", sol::overload(
           (bool(GsageFacade::*)(const std::string&))&GsageFacade::loadPlugin,
           (bool(GsageFacade::*)(const std::string&, bool))&GsageFacade::loadPlugin
@@ -561,14 +561,14 @@ namespace Gsage {
     lua.new_usertype<Entity>("Entity",
         "id", sol::property(&Entity::getId),
         "class", sol::property(&Entity::getClass),
-        "props", sol::property(&Entity::getProps, &Entity::setProps),
-        "getProps", &Entity::getProps,
+        "props", sol::property(&Entity::getProps),
+        "vars", sol::property(&Entity::getVars, &Entity::setVars),
         "hasComponent", &Entity::hasComponent,
         "hasComponents", &Entity::hasComponents,
         "componentNames", sol::property(&Entity::getComponentNames)
     );
 
-    lua["Entity"]["getProps"] = &Entity::getProps;
+    lua["Entity"]["getVars"] = &Entity::getVars;
 
     // register component getters
     lua["Entity"]["script"] = &Entity::getComponent<ScriptComponent>;
@@ -616,6 +616,9 @@ namespace Gsage {
         "charactersFolder", sol::property(&GameDataManager::getCharactersFolder),
         "savesFolder", sol::property(&GameDataManager::getSavesFolder),
         "fileExtension", sol::property(&GameDataManager::getFileExtension),
+        "saveScene", &GameDataManager::saveScene,
+        "getSceneData", &GameDataManager::getSceneData,
+        "setSceneData", &GameDataManager::setSceneData,
         "createEntity", sol::overload(
           (Entity*(GameDataManager::*)(const std::string&))&GameDataManager::createEntity,
           (Entity*(GameDataManager::*)(const std::string&, const DataProxy&))&GameDataManager::createEntity,
@@ -721,6 +724,7 @@ namespace Gsage {
         sol::base_classes, sol::bases<Event>(),
         "text", sol::readonly(&KeyboardEvent::text),
         "key", sol::readonly(&KeyboardEvent::key),
+        "modifiers", sol::property(&KeyboardEvent::getModifiersState),
         "isModifierDown", &KeyboardEvent::isModifierDown,
         "KEY_DOWN", sol::var(KeyboardEvent::KEY_DOWN),
         "KEY_UP", sol::var(KeyboardEvent::KEY_UP)
@@ -919,6 +923,24 @@ namespace Gsage {
     lua["Keys"]["KC_MYCOMPUTER"] = KeyboardEvent::KC_MYCOMPUTER;
     lua["Keys"]["KC_MAIL"] = KeyboardEvent::KC_MAIL;
     lua["Keys"]["KC_MEDIASELECT"] = KeyboardEvent::KC_MEDIASELECT;
+    lua["Keys"]["KC_LALT"] = KeyboardEvent::KC_LALT;
+    lua["Keys"]["KC_RALT"] = KeyboardEvent::KC_RALT;
+
+    lua["Modifiers"] = lua.create_table();
+    lua["Modifiers"]["LShift"] = KeyboardEvent::LShift;
+    lua["Modifiers"]["RShift"] = KeyboardEvent::RShift;
+    lua["Modifiers"]["LCtrl"] = KeyboardEvent::LCtrl;
+    lua["Modifiers"]["RCtrl"] = KeyboardEvent::RCtrl;
+    lua["Modifiers"]["LAlt"] = KeyboardEvent::LAlt;
+    lua["Modifiers"]["RAlt"] = KeyboardEvent::RAlt;
+    lua["Modifiers"]["LWin"] = KeyboardEvent::LWin;
+    lua["Modifiers"]["RWin"] = KeyboardEvent::RWin;
+    lua["Modifiers"]["Num"] = KeyboardEvent::Num;
+    lua["Modifiers"]["Caps"] = KeyboardEvent::Caps;
+    lua["Modifiers"]["Ctrl"] = KeyboardEvent::Ctrl;
+    lua["Modifiers"]["Shift"] = KeyboardEvent::Shift;
+    lua["Modifiers"]["Alt"] = KeyboardEvent::Alt;
+    lua["Modifiers"]["Win"] = KeyboardEvent::Win;
 
     registerEvent<MouseEvent>("MouseEvent",
         "onMouse",
@@ -1013,9 +1035,16 @@ namespace Gsage {
     // serialization
     lua["json"] = lua.create_table();
     lua["json"]["load"] = [](const std::string& path) { return load(path, DataWrapper::JSON_OBJECT); };
-    lua["json"]["dump"] = [](const std::string& path, const DataProxy& value) { return dump(value, path, DataWrapper::JSON_OBJECT); };
+    lua["json"]["dump"] = [](const std::string& path, const DataProxy& value) { return dump(value, path, DataWrapper::JSON_OBJECT, true); };
     lua["json"]["loads"] = [](const std::string& str) { return loads(str, DataWrapper::JSON_OBJECT); };
-    lua["json"]["dumps"] = [](const DataProxy& value) { return dumps(value, DataWrapper::JSON_OBJECT); };
+    lua["json"]["dumps"] = [](const DataProxy& value) { return dumps(value, DataWrapper::JSON_OBJECT, true); };
+
+    // bit operations
+    lua["bit"] = lua.create_table();
+    lua["bit"]["brshift"] = [](int n, size_t bits) { return bits >> n; };
+    lua["bit"]["blshift"] = [](int n, size_t bits) { return bits << n; };
+    lua["bit"]["band"] = [](size_t left, size_t right) { return left & right; };
+    lua["bit"]["bor"] = [](size_t left, size_t right) { return left | right; };
 
     return true;
   }

@@ -404,9 +404,9 @@ namespace Gsage {
     });
   }
 
-  bool GsageFacade::loadArea(const std::string& name)
+  bool GsageFacade::loadScene(const std::string& name)
   {
-    if(!mGameDataManager->loadArea(name))
+    if(!mGameDataManager->loadScene(name))
     {
       return false;
     }

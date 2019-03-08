@@ -520,18 +520,24 @@ namespace Gsage {
        *
        * @param key to read
        * @param dest destination
+       * @param traverse
        * @returns true if succeed
        */
       template<typename T>
-      bool read(const std::string& key, T& dest) const
+      bool read(const std::string& key, T& dest, bool traverse = true) const
       {
         std::vector<std::string> parts = split(key, '.');
-        std::string lastPart = parts[parts.size()-1];
-        parts.pop_back();
+        std::string lastPart;
+        if(traverse) {
+          lastPart = parts[parts.size()-1];
+          parts.pop_back();
+        } else {
+          lastPart = key;
+        }
 
         DataWrapperPtr wrapper;
 
-        if(parts.size() > 0) {
+        if(parts.size() > 0 && traverse) {
           wrapper = traverseSearch(parts);
         } else {
           wrapper = mDataWrapper;
@@ -556,7 +562,7 @@ namespace Gsage {
        * @returns true if succeed
        */
       template<typename T>
-      bool read(const int& key, T& dest) const
+      bool read(const int& key, T& dest, bool traverse = false) const
       {
         if(mDataWrapper->getStoredType() != DataWrapper::Array) {
           return false;
@@ -587,7 +593,7 @@ namespace Gsage {
       DataProxy operator[] (const K& index) const
       {
         DataProxy value(getWrappedType());
-        if(!read(index, value)) {
+        if(!read(index, value, false)) {
           throw KeyException(std::to_string(index));
         }
         return value;
@@ -725,8 +731,10 @@ namespace Gsage {
        *
        * Convert DataProxy to string.
        * Not all types are supported.
+       *
+       * @param pretty Pretty print output
        */
-      std::string toString() const;
+      std::string toString(bool pretty = false) const;
 
       /**
        * Create DataProxy from string.
@@ -798,9 +806,9 @@ namespace Gsage {
   template<>
   bool DataProxy::dump(DataProxy& dest, int flags) const;
 
-  bool dump(const DataProxy& value, const std::string& path, DataWrapper::WrappedType type);
+  bool dump(const DataProxy& value, const std::string& path, DataWrapper::WrappedType type, bool pretty = false);
 
-  std::string dumps(const DataProxy& value, DataWrapper::WrappedType type);
+  std::string dumps(const DataProxy& value, DataWrapper::WrappedType type, bool pretty = false);
 
   std::tuple<DataProxy, bool> load(const std::string& path, DataWrapper::WrappedType type);
 

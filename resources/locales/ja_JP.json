@@ -1,7 +1,11 @@
 {
   "views": "ウィンドウ",
   "language": "日本語",
-  "lang.select": "言語",
+
+  "settings": {
+    "lang": "言語",
+    "bindings": "バインディング"
+  },
 
   "window_title": {
     "debug": "デバグ",

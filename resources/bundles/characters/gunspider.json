@@ -1,5 +1,5 @@
 {
-  "props": {
+  "vars": {
     "mixins": ["mortal"],
     "type": "npc",
     "hostile": true

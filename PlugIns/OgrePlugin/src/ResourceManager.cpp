@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "Logger.h"
 #include "GsageFacade.h"
 #include "FileLoader.h"
+#include "MaterialLoader.h"
 
 #if OGRE_VERSION >= 0x020100
 #include "ogre/v2/HlmsUnlit.h"
@@ -37,7 +38,7 @@ namespace Gsage {
 
   std::tuple<std::string, std::string> ResourceManager::processPath(const std::string& line, const std::string& workdir)
   {
-    std::vector<std::string> list = split(line, ':');
+    std::vector<std::string> list = split(line, ';');
     std::string path;
     std::string type = list[0];
     int offset = 1;
@@ -77,11 +78,11 @@ namespace Gsage {
     return std::make_tuple(path, type);
   }
 
-  ResourceManager::ResourceManager(GsageFacade* facade)
+  ResourceManager::ResourceManager(GsageFacade* facade, MaterialLoader* materialLoader)
     : mHlmsLoaded(false)
     , mFacade(facade)
+    , mMaterialLoader(materialLoader)
   {
-
   }
 
   ResourceManager::~ResourceManager()
@@ -89,7 +90,7 @@ namespace Gsage {
     // cleanup resources here
   }
 
-  bool ResourceManager::load(const DataProxy& input)
+  bool ResourceManager::load(const DataProxy& input, bool initialize)
   {
     Ogre::ResourceGroupManager& orgm = Ogre::ResourceGroupManager::getSingleton();
     std::string type;
@@ -141,13 +142,18 @@ namespace Gsage {
         }
         LOG(INFO) << "Adding resource location " << path;
         orgm.addResourceLocation(path, type, section, true, type == "Zip");
+        if(type != "Zip") {
+          mMaterialLoader->scan(path);
+        }
       }
 
+      if(initialize) {
 #if OGRE_VERSION_MAJOR == 2
-      orgm.initialiseResourceGroup(section, false);
+        orgm.initialiseResourceGroup(section, false);
 #else
-      orgm.initialiseResourceGroup(section);
+        orgm.initialiseResourceGroup(section);
 #endif
+      }
     }
     return true;
   }

@@ -44,6 +44,7 @@ THE SOFTWARE.
 #include "Logger.h"
 
 #include "AnimationScheduler.h"
+#include "MaterialLoader.h"
 
 #include "ComponentStorage.h"
 #include "Entity.h"
@@ -141,9 +142,7 @@ namespace Gsage {
     , mObjectManager(this)
     , mManualTextureManager(this)
     , mLogManager(0)
-#if OGRE_VERSION >= 0x020100
-    , mRectangle2DFactory(0)
-#endif
+    , mMaterialLoader(0)
   {
     mSystemInfo.put("type", OgreRenderSystem::ID);
     mSystemInfo.put("version", OGRE_VERSION);
@@ -168,8 +167,10 @@ namespace Gsage {
 
     // initialize ogre root
     mRoot = new Ogre::Root("", config, "");
+    // initialize custom material loader
+    mMaterialLoader = new MaterialLoader(this, mFacade);
     // initialize resource manager
-    mResourceManager = new ResourceManager(mFacade);
+    mResourceManager = new ResourceManager(mFacade, mMaterialLoader);
 
     auto pair = settings.get<DataProxy>("plugins");
     if(pair.second) {
@@ -301,9 +302,6 @@ namespace Gsage {
 #endif
 
 #if OGRE_VERSION >= 0x020100
-    mRectangle2DFactory = OGRE_NEW OgreV1::Rectangle2DFactory();
-    mRoot->addMovableObjectFactory(mRectangle2DFactory);
-
     mCustomPassProvider.initialize(mEngine);
 
     auto compositorManager = mRoot->getCompositorManager2();
@@ -321,6 +319,10 @@ namespace Gsage {
 #if OGRE_VERSION < 0x020100
     // TODO: make it customizable via config
     mSceneManager->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_MODULATIVE);
+#else
+    // same here
+    mSceneManager->setShadowDirectionalLightExtrusionDistance(500.0f);
+    mSceneManager->setShadowFarDistance(500.0f);
 #endif
 
     mSceneManager->addRenderQueueListener(this);
@@ -331,12 +333,12 @@ namespace Gsage {
     Ogre::ParticleSystemManager::getSingletonPtr()->addRendererFactory(mManualMovableTextParticleFactory);
 
     auto resources = settings.get<DataProxy>("globalResources");
-    if(resources.second && !mResourceManager->load(resources.first))
+    if(resources.second && !mResourceManager->load(resources.first, true))
       return false;
 
     resources = mConfig.get<DataProxy>("resources");
     if(resources.second)
-      mResourceManager->load(resources.first);
+      mResourceManager->load(resources.first, false);
 
 #if OGRE_VERSION >= 0x020100
     // TODO: make this configurable
@@ -464,6 +466,8 @@ namespace Gsage {
       delete mLogManager;
       mLogManager = 0;
     }
+
+    delete mMaterialLoader;
   }
 
   bool OgreRenderSystem::prepareComponent(OgreRenderComponent* c)
@@ -533,16 +537,16 @@ namespace Gsage {
     if(resources.second)
       mResourceManager->load(resources.first);
     Ogre::ColourValue ambientColour = config.get("colourAmbient", Ogre::ColourValue::Black);
+#if OGRE_VERSION >= 0x020100
     mSceneManager->setAmbientLight(
-#if OGRE_VERSION_MAJOR == 1
-        ambientColour
-#else
         config.get("ambientLight.upperHemisphere", ambientColour),
         config.get("ambientLight.lowerHemisphere", ambientColour),
-        config.get("ambientLight.hepisphereDir", Ogre::Vector3::UNIT_Y),
+        config.get("ambientLight.hemisphereDir", Ogre::Vector3::UNIT_Y),
         config.get("ambientLight.envmapScale", 1.0f)
-#endif
     );
+#else
+    mSceneManager->setAmbientLight(ambientColour);
+#endif
     if(config.count("fog") != 0)
     {
       mSceneManager->setFog(

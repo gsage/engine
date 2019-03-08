@@ -19,7 +19,7 @@ function SceneExplorer:__call()
     local entities = core:getEntities()
     for i = 1, #entities do
       local entity = entities[i]
-      if not entity.props.utility then
+      if not entity.vars.utility then
 
         if imgui.TreeNode(entity.id) then
           local components = entity.componentNames

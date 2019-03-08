@@ -1,9 +1,20 @@
 {
   "views": "Окна",
   "language": "Русский",
-  "lang.select": "Язык",
+
+  "settings": {
+    "lang": "Язык",
+    "bindings": "Назначение клавиш",
+    "bindings_select": "действие",
+    "bindings_create": "создать",
+    "bindings_save": "сохранить",
+    "bindings_remove": "удалить",
+    "bindings_cancel": "отмена",
+    "bindings_placeholder": "задать...",
+    "bindings_error": "%{icon} менеджер назначений клавиш не найден."
+  },
+
   "window_title": {
-    "debug": "Временная хрень",
     "lua console": "Lua консоль",
     "transform": "Трансформации",
     "stats": "Статистика",
@@ -12,7 +23,36 @@
     "recast": "Recast навигация",
     "settings": "Настройки",
     "viewport": "Сцена",
-    "script_editor": "Редактор скриптов"
+    "script_editor": "Редактор скриптов",
+    "script_editor_parameterised": "%{filename}"
+  },
+
+  "viewport": {
+    "actions": {
+      "new": "Новая сцена",
+      "save": "Сохранить сцену",
+      "undo": "Отмена",
+      "redo": "Возврат",
+      "copy": "Копировать",
+      "paste": "Вставить",
+      "delete": "Удалить",
+      "rotate": "Вращать объект",
+      "scale": "Масштабировать объект",
+      "move": "Перемещать объект",
+      "simulationStart": "Запустить симуляцию",
+      "simulationStop": "Остановить симуляцию",
+      "simulationPause": "Приостановить симуляцию"
+    }
+  },
+  "script_editor": {
+    "actions": {
+      "new": "Новый файл",
+      "save": "Сохранить файл",
+      "undo": "Отмена",
+      "redo": "Возврат",
+      "copy": "Копировать",
+      "paste": "Вставить"
+    }
   },
 
   "plugins": {
@@ -28,6 +68,11 @@
   },
 
   "modals": {
+    "errors": {
+      "failed_to_add_entity": "Не удалось добавить объект %{entity} на сцену",
+      "failed_to_create_asset": "Не удалось создать объект. Менеджер ассетов не найден"
+    },
+
     "confirm_deletion": {
       "title": "Удалить файл %{asset}",
       "desc": "Вы уверены, что хотите удалить файл %{fullpath}?"
@@ -57,7 +102,8 @@
       "install": "путь установки"
     },
     "ok": "Ок",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "error": "Ошибка"
   },
 
   "top_menu": {

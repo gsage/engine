@@ -25,6 +25,10 @@ function common.base()
     end
 
     if key ~= "entity"  and self.entity then
+      if key == "vars" then
+        return self.entity.vars
+      end
+
       if key == "props" then
         return self.entity.props
       end

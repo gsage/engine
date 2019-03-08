@@ -75,7 +75,7 @@ namespace Gsage {
       return false;
 
     const std::string& area = root.get("area", "none");
-    if(!loadArea(area))
+    if(!loadScene(area))
     {
       LOG(ERROR) << "Failed to load area: " << area;
       return false;
@@ -100,7 +100,7 @@ namespace Gsage {
       return initGame(saveFile);
 
     const std::string& area = root.get<std::string>("area", "none");
-    if(!loadArea(area))
+    if(!loadScene(area))
     {
       LOG(ERROR) << "Failed to load area: " << area;
       return false;
@@ -196,7 +196,7 @@ namespace Gsage {
     }
     entityNode.put("id", entity->getId());
     entityNode.put("class", entity->getClass());
-    entityNode.put("props", entity->getProps());
+    entityNode.put("vars", entity->getVars());
     return entityNode;
   }
 
@@ -225,7 +225,7 @@ namespace Gsage {
     return mEngine->createEntity(data);
   }
 
-  bool GameDataManager::loadArea(const std::string& area)
+  bool GameDataManager::loadScene(const std::string& area)
   {
     DataProxy areaInfo;
     std::string file;
@@ -261,6 +261,84 @@ namespace Gsage {
       mEngine->createEntity(element.second);
     }
     return true;
+  }
+
+  void GameDataManager::saveScene(const std::string& filename)
+  {
+    std::string file;
+    if(endsWith(filename, std::string(".") + mFileExtension)) {
+      file = filename;
+    } else {
+      file = filename + "." + mFileExtension;
+    }
+    std::string path = mScenesFolder + "/" + file;
+    FileLoader::getSingletonPtr()->dump(path, getSceneData());
+    LOG(TRACE) << "Saved scene " << path;
+  }
+
+  DataProxy GameDataManager::getSceneData() const
+  {
+    DataProxy res;
+    DataProxy entitiesNode;
+    DataProxy settingsNode;
+
+    const ObjectPool<Entity>::PointerVector& entities = mEngine->getEntities();
+
+    for(auto entity : entities)
+    {
+      if(entity->hasFlag("dynamic"))
+        continue;
+
+      entitiesNode.put(entity->getId(), entity->getProps());
+    }
+
+    Engine::EngineSystems& systems = mEngine->getSystems();
+    for(auto pair : systems)
+    {
+      DataProxy config = pair.second->getConfig();
+      if(config.empty())
+        continue;
+
+      settingsNode.put(pair.first, config);
+    }
+
+    res.put("entities", entitiesNode);
+    res.put("settings", settingsNode);
+    // Using static version for now
+    res.put("version", "1.0");
+    res.put("type", "scene");
+    return res;
+  }
+
+  void GameDataManager::setSceneData(const DataProxy& data)
+  {
+    auto systemsConfigs = getSaveFile().get<DataProxy>("settings");
+    if(!systemsConfigs.second)
+      systemsConfigs = data.get<DataProxy>("settings");
+
+    if(systemsConfigs.second)
+    {
+      mEngine->configureSystems(systemsConfigs.first);
+    }
+
+    auto entities = data.get<DataProxy>("entities");
+    if(!entities.second)
+    {
+      return;
+    }
+
+    std::map<std::string, bool> createdEntities;
+    for(auto& element : entities.first)
+    {
+      Entity* e = mEngine->createEntity(element.second);
+      createdEntities[e->getId()] = true;
+    }
+
+    for(auto entity : mEngine->getEntities()) {
+      if(!createdEntities[entity->getId()] && !entity->getVars().get("utility", false)) {
+        mEngine->removeEntity(entity);
+      }
+    }
   }
 
   Entity* GameDataManager::addCharacter(const std::string& name, DataProxy* params)

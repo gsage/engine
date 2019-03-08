@@ -213,7 +213,7 @@ namespace Gsage
        *
        * @param name Area file name
        */
-      virtual bool loadArea(const std::string& name);
+      virtual bool loadScene(const std::string& name);
       /**
        * Gets engine instance
        */

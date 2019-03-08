@@ -68,6 +68,19 @@ namespace Gsage {
 
   // -----------------------------------------------------------------------------
 
+  bool LongCaster::to(const LongCaster::FromType& src, LongCaster::Type& dst) const
+  {
+    dst = static_cast<long>(std::stol(src));
+    return true;
+  }
+
+  const LongCaster::FromType LongCaster::from(const LongCaster::Type& value) const
+  {
+    return std::to_string(value);
+  }
+
+  // -----------------------------------------------------------------------------
+
   bool UlongCaster::to(const UlongCaster::FromType& src, UlongCaster::Type& dst) const
   {
     dst = std::stoul(src);

@@ -1,7 +1,7 @@
 {
   "type": "character",
   "version": "1.0",
-  "props": {
+  "vars": {
     "mixins": ["mortal"],
     "type": "npc",
     "hostile": true

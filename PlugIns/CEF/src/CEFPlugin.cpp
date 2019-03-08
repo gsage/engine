@@ -46,10 +46,6 @@ THE SOFTWARE.
 #include <include/wrapper/cef_stream_resource_handler.h>
 #include <include/cef_parser.h>
 
-#if (!_DLL) && (_MSC_VER >= 1900 /* VS 2015*/) && (_MSC_VER <= 1916 /* VS 2017 */)
-std::locale::id std::codecvt<char16_t, char, _Mbstatet>::id;
-#endif
-
 namespace Gsage {
   inline bool endsWith(std::string const & value, std::string const & ending)
   {
@@ -173,6 +169,26 @@ namespace Gsage {
     return mRenderHandler;
   }
 
+  void BrowserClient::OnBeforeContextMenu(
+   CefRefPtr<CefBrowser> browser,
+   CefRefPtr<CefFrame> frame,
+   CefRefPtr<CefContextMenuParams> params,
+   CefRefPtr<CefMenuModel> model) {
+   CEF_REQUIRE_UI_THREAD();
+
+   model->Clear();
+  }
+
+  bool BrowserClient::OnContextMenuCommand(
+     CefRefPtr<CefBrowser> browser,
+     CefRefPtr<CefFrame> frame,
+     CefRefPtr<CefContextMenuParams> params,
+     int command_id,
+     EventFlags event_flags) {
+     CEF_REQUIRE_UI_THREAD();
+     return false;
+  }
+
   bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId sourceProcess, CefRefPtr<CefProcessMessage> msg)
   {
     std::string json;
@@ -276,6 +292,10 @@ namespace Gsage {
   const Event::Type Webview::PAGE_LOADING = "Webview::PAGE_LOADING";
 
   const Event::Type Webview::MOUSE_LEAVE = "Webview::MOUSE_LEAVE";
+
+  const Event::Type Webview::UNDO = "Webview::UNDO";
+
+  const Event::Type Webview::REDO = "Webview::REDO";
 
   Webview::Webview(CEFPlugin* cef)
     : mCefWasStopped(false)
@@ -402,6 +422,9 @@ namespace Gsage {
 
   void Webview::processEvents()
   {
+    if (!mBrowser)
+      return;
+
     {
       size_t count = mEvents.size();
       Event event;
@@ -415,6 +438,10 @@ namespace Gsage {
             evt.y = mMouseY;
             evt.modifiers = mMouseModifiers;
             mBrowser->GetHost()->SendMouseMoveEvent(evt, true);
+          } else if(event.getType() == Webview::UNDO) {
+            mBrowser->GetMainFrame()->Undo();
+          } else if(event.getType() == Webview::REDO) {
+            mBrowser->GetMainFrame()->Redo();
           } else {
             LOG(WARNING) << "Unhandled event type " << event.getType();
           }
@@ -555,7 +582,11 @@ namespace Gsage {
 
   void Webview::handleInput(const TextInputEvent& event)
   {
-    std::u16string str = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(event.getText());
+#if GSAGE_PLATFORM == GSAGE_WIN32
+    auto str = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(event.getText());
+#else
+    auto str = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(event.getText());
+#endif
 
     for(int i = 0; i < str.size(); i++) {
       CefKeyEvent evt;
@@ -738,6 +769,8 @@ namespace Gsage {
           (void(Webview::*)(Event))&Webview::pushEvent
         ),
         "MOUSE_LEAVE", sol::var(Webview::MOUSE_LEAVE),
+        "UNDO", sol::var(Webview::UNDO),
+        "REDO", sol::var(Webview::REDO),
         "PAGE_LOADING", sol::var(Webview::PAGE_LOADING),
         "PAGE_LOADED", sol::var(Webview::PAGE_LOADED)
       );

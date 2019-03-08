@@ -45,6 +45,7 @@ namespace Ogre {
 
 namespace Gsage {
   class Engine;
+  class Entity;
   class RenderTarget : public EventSubscriber<RenderTarget>
   {
     public:
@@ -162,7 +163,7 @@ namespace Gsage {
        *
        * @returns tuple: point and object hit by ray
        */
-      std::tuple<Ogre::Vector3, Ogre::MovableObject*> raycast(Ogre::Real defaultDistance, Ogre::Real closestDistance, unsigned int flags) const;
+      std::tuple<Ogre::Vector3, Entity*> raycast(Ogre::Real defaultDistance, Ogre::Real closestDistance, unsigned int flags) const;
     private:
       void subscribe();
 

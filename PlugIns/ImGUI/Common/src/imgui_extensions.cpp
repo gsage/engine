@@ -62,7 +62,8 @@ namespace ImGui
     const ImGuiID id = window->GetID(label);
 
     ImVec2 pos = window->DC.CursorPos;
-    ImVec2 size((radius )*2, (radius + style.FramePadding.y)*2);
+    pos.x += style.FramePadding.x;
+    ImVec2 size((radius + style.FramePadding.x)*2, (radius + style.FramePadding.y)*2);
 
     const ImRect bb(pos, ImVec2(pos.x + size.x, pos.y + size.y));
     ItemSize(bb, style.FramePadding.y);

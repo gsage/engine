@@ -1331,6 +1331,11 @@ IMGUI_FUNCTION(IsItemVisible)
 CALL_FUNCTION(IsItemVisible, bool)
 PUSH_BOOL(ret)
 END_IMGUI_FUNC
+//    IMGUI_API bool          IsItemFocused()
+IMGUI_FUNCTION(IsItemFocused)
+CALL_FUNCTION(IsItemFocused, bool)
+PUSH_BOOL(ret)
+END_IMGUI_FUNC
 //    IMGUI_API bool          IsAnyItemHovered();
 IMGUI_FUNCTION(IsAnyItemHovered)
 CALL_FUNCTION(IsAnyItemHovered, bool)

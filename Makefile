@@ -73,8 +73,8 @@ RUN_CMD := $(RUN_CMD)$(POSTFIX)$(FILE_EXTENSION)
 EDITOR_CMD := $(EDITOR_CMD)$(POSTFIX)$(FILE_EXTENSION)
 
 .repo: conanfile.py
-	@$(ADD_REPO_CMD)
-	@$(ADD_BINCRAFTERS_CMD)
+	$(ADD_REPO_CMD)
+	$(ADD_BINCRAFTERS_CMD)
 	@touch .repo
 
 .deps: .repo conanfile.py

@@ -52,6 +52,10 @@
   },
 
   "modals": {
+    "errors": {
+      "failed_to_add_entity": "Failed to add entity %{entity} to scene",
+      "failed_to_create_asset": "Failed to create asset: asset manager is not installed"
+    },
     "confirm_deletion": {
       "title": "Delete Asset %{asset}",
       "desc": "Are you sure that you want to delete asset %{fullpath}?"
@@ -81,7 +85,8 @@
       "install": "Install"
     },
     "ok": "Ok",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "error": "Error"
   },
 
   "top_menu": {
@@ -90,7 +95,6 @@
   },
 
   "language": "English",
-  "lang.select": "Language",
   "window_title": {
     "debug": "Debug",
     "scene explorer": "Scene Explorer",
@@ -106,6 +110,36 @@
     "tools": "Tools",
     "script_editor": "Script",
     "script_editor_parameterised": "Script (%{filename})"
+  },
+
+  "viewport": {
+    "actions": {
+      "new": "New Scene",
+      "save": "Save Scene",
+      "undo": "Undo",
+      "redo": "Redo",
+      "copy": "Copy",
+      "paste": "Paste",
+      "delete": "Delete",
+      "rotate": "Rotate Entity",
+      "scale": "Scale Entity",
+      "move": "Transform Entity",
+      "simulationStart": "Start Simulation",
+      "simulationStop": "Stop Simulation",
+      "simulationPause": "Pause simulation"
+    }
+  },
+
+  "settings": {
+    "lang": "Language",
+    "bindings": "Bindings",
+    "bindings_select": "Action",
+    "bindings_create": "Create",
+    "bindings_save": "Save",
+    "bindings_remove": "Remove",
+    "bindings_cancel": "Cancel",
+    "bindings_placeholder": "Select...",
+    "bindings_error": "%{icon} key bindings not initialized"
   },
 
   "plugins": {
@@ -250,7 +284,14 @@
   },
 
   "script_editor": {
-    "file_path": "Open File"
+    "actions": {
+      "new": "New File",
+      "save": "Save File",
+      "undo": "Undo",
+      "redo": "Redo",
+      "copy": "Copy",
+      "paste": "Paste"
+    }
   },
 
   "recast": {

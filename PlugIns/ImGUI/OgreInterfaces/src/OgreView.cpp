@@ -53,6 +53,11 @@ namespace Gsage {
 
   OgreView::~OgreView()
   {
+    if(mTexture) {
+      removeEventListener(mTexture.get(), Texture::RECREATE, &OgreView::onTextureEvent);
+      removeEventListener(mTexture.get(), Texture::DESTROY, &OgreView::onTextureEvent);
+      removeEventListener(mTexture.get(), Texture::UV_UPDATE, &OgreView::onTextureEvent);
+    }
     delete mViewport;
   }
 
@@ -83,7 +88,7 @@ namespace Gsage {
     mPosition = pos;
 
     if(renderTarget) {
-      if(widthChange || heightChange) {
+      if(widthChange || heightChange || renderTarget->getWidth() != mWidth && renderTarget->getHeight() != mHeight) {
         renderTarget->setDimensions(mWidth, mHeight);
       }
 
@@ -128,6 +133,17 @@ namespace Gsage {
     addEventListener(texture.get(), Texture::RECREATE, &OgreView::onTextureEvent);
     addEventListener(texture.get(), Texture::DESTROY, &OgreView::onTextureEvent);
     addEventListener(texture.get(), Texture::UV_UPDATE, &OgreView::onTextureEvent);
+  }
+
+  bool OgreView::setTexture(const std::string& id)
+  {
+    TexturePtr tex = mRender->getTexture(id);
+    if(!tex) {
+      return false;
+    }
+
+    setTexture(tex);
+    return true;
   }
 
   bool OgreView::onTextureEvent(EventDispatcher* sender, const Event& event)

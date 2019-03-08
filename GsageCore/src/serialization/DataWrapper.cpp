@@ -57,7 +57,7 @@ namespace Gsage {
     *this = *other;
   }
 
-  std::string DataWrapper::toString() const
+  std::string DataWrapper::toString(bool pretty) const
   {
     LOG(WARNING) << "To string is not supported for the type id: " << mType;
     return "";

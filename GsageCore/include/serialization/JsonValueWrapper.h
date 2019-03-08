@@ -222,7 +222,7 @@ namespace Gsage {
 
       Type getStoredType();
 
-      std::string toString() const;
+      std::string toString(bool pretty = false) const;
 
       bool fromString(const std::string& s);
     private:
@@ -257,6 +257,8 @@ namespace Gsage {
   _PRIMITIVE_TYPE_SPECIALIZATION(double)
   _PRIMITIVE_TYPE_SPECIALIZATION(float)
   _PRIMITIVE_TYPE_SPECIALIZATION(bool)
+  _PRIMITIVE_TYPE_SPECIALIZATION(signed long)
+  _PRIMITIVE_TYPE_SPECIALIZATION(unsigned long)
 #undef _PRIMITIVE_TYPE_SPECIALIZATION
 
   template<>

@@ -79,8 +79,16 @@ namespace Gsage {
 
       /**
        * Sets rendered manual texture object
+       * @param texture Texture object
        */
       void setTexture(TexturePtr texture);
+
+      /**
+       * Sets texture by texture id
+       * @param id texture id
+       * @returns true if succeed
+       */
+      bool setTexture(const std::string& id);
 
     private:
       /**
@@ -98,7 +106,6 @@ namespace Gsage {
       unsigned int mHeight;
       ViewportRenderData* mViewport;
       ImVec2 mPosition;
-      bool mCaptureMouse;
       ImVec4 mBgColour;
   };
 }

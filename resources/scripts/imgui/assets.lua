@@ -28,7 +28,9 @@ function ImageViewer:run(asset)
     asset.texture = tex
   else
     if not imgui.Texture(asset.texture) then
-      imgui.Spinner("Loading Image", 25, 4, 0xffaa5119)
+      imgui.PushItemWidth(20)
+      imgui.Spinner("Loading Image", 10, 4, 0xffaa5119)
+      imgui.PopItemWidth()
     end
   end
 end
@@ -39,6 +41,7 @@ local importers = {
   images = function(filepath, asset)
     -- try load with render system
     asset.viewer = ImageViewer
+    asset.install = "models"
     return true
   end,
   scripts = function(filepath, asset)
@@ -69,10 +72,10 @@ local importers = {
           callback = asset.open
         }}
         function asset:open()
-          game:reset(function(entity)
-            return entity.props.utility ~= true
-          end)
-          game:loadArea(self.file)
+          local sceneEditor = imguiInterface:getView("sceneEditor")
+          if sceneEditor then
+            sceneEditor:loadScene(self.file)
+          end
         end
       end
 
@@ -176,7 +179,7 @@ function Assets:configure()
       table.insert(self.creatableAssets, extension .. " (" .. lm("assets.desc." .. asset.extension) .. ")")
     end
   end
-  self.creatableAssetsString = table.concat(self.creatableAssets, "\0")
+  self.creatableAssetsString = table.concat(self.creatableAssets, "\0") .. "\0\0"
 end
 
 -- browse and import asset
@@ -270,7 +273,6 @@ function Assets:import(file, info)
   end
 
   info.filename = fs.path.filename(file)
-  info.install = install
   self.importSession[file] = info
 end
 
@@ -340,6 +342,75 @@ function Assets:refresh()
 
 
   self.displayedAssets = self.assets
+end
+
+function Assets:createAsset(filename, filetype, path, allowSelection, onCreate)
+  local choices = {}
+  local path = path or "./"
+  if filename then
+    self.newAssetNameBuffer:write(filename)
+  else
+    self.newAssetNameBuffer:write("")
+  end
+  choices[lm("modals.ok")] = function()
+    local assetName = self.newAssetNameBuffer:read()
+    if assetName == "" then
+      error("Failed to create asset: empty asset name")
+    end
+
+    local extension = self.creatableAssets[self.currentAssetToCreate + 1]
+    extension = split(extension, " ")[1]
+    local root = projectManager.openProjectFile:getSourceRoot()
+    local fullpath = fs.path.join(root, path, assetName .. "." .. extension)
+    fs.mkdir(fs.path.directory(fullpath))
+    fs.createFile(fullpath)
+    if onCreate then
+      onCreate(fullpath)
+    else
+      self.scriptEditor:openFile(fullpath)
+    end
+    self:refresh()
+  end
+  choices[lm("modals.cancel")] = function()
+  end
+
+  if filetype then
+    for i, value in ipairs(self.creatableAssets) do
+      if value:match("^" .. filetype) then
+        self.currentAssetToCreate = i - 1
+      end
+    end
+  end
+
+  self.modal:show(lm("modals.create_asset.title"), function()
+    imgui.Text(lm("modals.create_asset.description"))
+    imgui.InputTextWithCallback(lm("modals.create_asset.name"), self.newAssetNameBuffer, 0, function() end)
+    if allowSelection then
+      local changed, index = imgui.Combo(lm("modals.create_asset.type"), self.currentAssetToCreate, self.creatableAssetsString)
+      if changed then
+        self.currentAssetToCreate = index
+      end
+    else
+      imgui.Text(lm("modals.create_asset.type"))
+      imgui.SameLine()
+      imgui.Text(self.creatableAssets[self.currentAssetToCreate + 1])
+    end
+
+    imgui.Text(lm("modals.create_asset.path"))
+    imgui.SameLine()
+    if self.newAssetPath ~= "" then
+      path = self.newAssetPath
+    end
+
+    if imgui.Selectable(path) then
+      local root = projectManager.openProjectFile:getSourceRoot() .. "/"
+      local wm = game:getWindowManager()
+      local folders = wm:openDialog(Window.FILE_DIALOG_OPEN_FOLDER, lm("modals.create_asset.title"), root, {})
+      if #folders > 0 then
+        self.newAssetPath = folders[1]:gsub(root, ""):gsub("^%/(.*)%/$", "%1")
+      end
+    end
+  end, choices)
 end
 
 -- render assets browser
@@ -474,48 +545,7 @@ function Assets:__call()
     end
     imgui.SameLine(0, 2)
     if imgui.Button(icons.insert_drive_file) then
-      local choices = {}
-      choices[lm("modals.ok")] = function()
-        local assetName = self.newAssetNameBuffer:read()
-        if assetName == "" then
-          error("Failed to create asset: empty asset name")
-        end
-
-        local extension = self.creatableAssets[self.currentAssetToCreate + 1]
-        extension = split(extension, " ")[1]
-        local root = projectManager.openProjectFile:getSourceRoot()
-        local fullpath = fs.path.join(root, assetName .. "." .. extension)
-        fs.createFile(fullpath)
-        self.scriptEditor:openFile(fullpath)
-        self:refresh()
-      end
-      choices[lm("modals.cancel")] = function()
-      end
-
-      self.modal:show(lm("modals.create_asset.title"), function()
-        imgui.Text(lm("modals.create_asset.description"))
-        imgui.InputTextWithCallback(lm("modals.create_asset.name"), self.newAssetNameBuffer, 0, function() end)
-        local changed, index = imgui.Combo(lm("modals.create_asset.type"), self.currentAssetToCreate, self.creatableAssetsString)
-        if changed then
-          self.currentAssetToCreate = index
-        end
-
-        imgui.Text(lm("modals.create_asset.path"))
-        imgui.SameLine()
-        local path = "./"
-        if self.newAssetPath ~= "" then
-          path = self.newAssetPath
-        end
-
-        if imgui.Selectable(path) then
-          local root = projectManager.openProjectFile:getSourceRoot() .. "/"
-          local wm = game:getWindowManager()
-          local folders= wm:openDialog(Window.FILE_DIALOG_OPEN_FOLDER, lm("modals.create_asset.title"), root, {})
-          if #folders > 0 then
-            self.newAssetPath = folders[1]:gsub(root, ""):gsub("^%/(.*)%/$", "%1")
-          end
-        end
-      end, choices)
+      self:createAsset()
     end
   end
 

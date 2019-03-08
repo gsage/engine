@@ -38,18 +38,20 @@ THE SOFTWARE.
 
 namespace Gsage {
   class GsageFacade;
+  class MaterialLoader;
   class ResourceManager
   {
     public:
-      ResourceManager(GsageFacade* facade);
+      ResourceManager(GsageFacade* facade, MaterialLoader* materialLoader);
       virtual ~ResourceManager(void);
 
       /**
        * Loads all resource groups
        *
        * @param resources DataProxy with all required resources
+       * @param initialize Intializes resource group
        */
-      bool load(const DataProxy& resources);
+      bool load(const DataProxy& resources, bool initialize = true);
 
       /**
        * Unload resources
@@ -120,7 +122,10 @@ namespace Gsage {
       std::tuple<std::string, std::string> processPath(const std::string& line, const std::string& workdir = "");
     private:
       bool mHlmsLoaded;
+
       GsageFacade* mFacade;
+      MaterialLoader* mMaterialLoader;
+
 #if OGRE_VERSION >= 0x020100
       std::string mShaderSyntax;
       std::string mCommonFolder;

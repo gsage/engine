@@ -122,7 +122,7 @@ describe("test engine abstraction layer #eal", function()
 
   describe("mixins", function()
     local composition = data:createEntity({
-      props = {
+      vars = {
         mixins = {"first", "second"},
       },
       test = {
@@ -203,7 +203,7 @@ describe("test engine abstraction layer #eal", function()
     end)
 
     local dummy = data:createEntity({
-      props = {
+      vars = {
         class = "dummy"
       }
     })
@@ -215,7 +215,7 @@ describe("test engine abstraction layer #eal", function()
     end)
 
     local dummyPlus = data:createEntity({
-      props = {
+      vars = {
         class = "dummy",
       },
       test = {
@@ -231,7 +231,7 @@ describe("test engine abstraction layer #eal", function()
     end)
 
     local burple = data:createEntity({
-      props = {
+      vars = {
         class = "burple",
       },
       test = {
@@ -250,7 +250,7 @@ describe("test engine abstraction layer #eal", function()
 
     -- required system not defined, so it should not be defined
     local noBurple = data:createEntity({
-      props = {
+      vars = {
         class = "burple"
       }
     })

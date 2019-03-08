@@ -1,8 +1,8 @@
 local function decorate(cls)
   cls.onCreate(function(self)
     local function initPS(name)
-      if self.props[name] then
-        self[name] = self.render.root:getParticleSystem(self.props[name])
+      if self.vars[name] then
+        self[name] = self.render.root:getParticleSystem(self.vars[name])
       end
     end
 
@@ -13,7 +13,7 @@ local function decorate(cls)
 
   function cls:onDamage(actor, target, amount)
     local ps
-    if target.props.type == "npc" and target.props.hostile then
+    if target.vars.type == "npc" and target.vars.hostile then
       ps = self.hostile or self.pc
     else
       ps = self.pc

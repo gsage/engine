@@ -108,6 +108,13 @@ namespace Gsage  {
           error = err.what();
         }
 
+        if(res.get_type() == sol::type::boolean) {
+          bool cont = res;
+          if(!cont) {
+            return false;
+          }
+        }
+
         if(!error.empty())
         {
           LOG(WARNING) << "Failed to call " << event.getType() << " lua listener: " << error;
