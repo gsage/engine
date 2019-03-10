@@ -7,7 +7,7 @@ local systems = {}
 function systems.damage(name)
   local data = {
     id = name,
-    props = {
+    vars = {
       class = "damageEmitter",
       pc = "damageHit",
       miss = "damageMiss",

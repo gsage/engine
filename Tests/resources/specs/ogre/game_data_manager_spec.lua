@@ -9,7 +9,7 @@ describe("test game data manager #ogre", function()
       render = {
         resources = {
           Ninja = {
-            "Zip:bundles/models/v1/packs/ninja.zip"
+            "Zip;bundles/models/v1/packs/ninja.zip"
           }
         },
         root = {

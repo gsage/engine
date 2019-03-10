@@ -58,8 +58,8 @@ namespace Gsage {
       return;
     }
 
-    if(ImGuizmo::IsOver() && !ImGui::IsMouseDown(1)) {
-      ImGui::GetIO().WantCaptureMouse = true;
+    if(ImGuizmo::IsOver()) {
+      ImGui::GetIO().WantCaptureMouse = ImGui::IsMouseDown(0);
     }
 
     Ogre::Camera* cam = renderTarget->getCamera();

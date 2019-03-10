@@ -116,6 +116,18 @@ function WebView:disable()
   self.visible = false
 end
 
+function WebView:undo()
+  if self.cefwebview then
+    self.cefwebview:pushEvent(Event.new(CEFWebview.UNDO))
+  end
+end
+
+function WebView:redo()
+  if self.cefwebview then
+    self.cefwebview:pushEvent(Event.new(CEFWebview.REDO))
+  end
+end
+
 function WebView:destroy()
   event:unbind(core, KeyboardEvent.KEY_DOWN, self.proxyKeyboardEvent)
   event:unbind(core, TextInputEvent.INPUT, self.proxyKeyboardEvent)
@@ -171,7 +183,7 @@ function WebView:render(width, height)
       },
     })
 
-    self.image:setTexture(self.texture)
+    self.image:setTexture(self.textureID)
 
     local window = game:getWindowManager():getWindow(self.windowName)
     local windowHandle = window:getWindowHandle()

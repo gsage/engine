@@ -8,6 +8,9 @@
         <script src="./codemirror/addon/lint/lint.js"></script>
         <script src="./codemirror/addon/runmode/colorize.js"></script>
         <script src="./codemirror/addon/dialog/dialog.js"></script>
+        <script src="./codemirror/addon/search/search.js"></script>
+        <script src="./codemirror/addon/search/searchcursor.js"></script>
+        <script src="./codemirror/addon/search/jump-to-line.js"></script>
         <script src="./codemirror/mode/lua/lua.js"></script>
         <script src="./codemirror/mode/javascript/javascript.js"></script>
         <script src="./codemirror/keymap/vim.js"></script>
@@ -62,6 +65,7 @@
 
             setText = function(string) {
                 editor.getDoc().setValue(string);
+                editor.getDoc().clearHistory();
             }
 
             setMode = function(mode) {
@@ -70,6 +74,10 @@
 
             syncEditor = function() {
                 engine.syncEditor(editor.getValue());
+            }
+
+            execCommand = function(command) {
+                editor.execCommand(command);
             }
         </script>
     </body>

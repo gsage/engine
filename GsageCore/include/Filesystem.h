@@ -140,6 +140,19 @@ namespace Gsage {
       inline bool isAbsolute(const std::string& path) const { return Poco::Path(path).isAbsolute(); }
 
       /**
+       * Get last modified time
+       */
+      inline signed long getLastModified(const std::string& path) const {
+        Poco::Path p(path);
+        Poco::File f(p);
+        if(!f.exists()) {
+          return 0;
+        }
+
+        return f.getLastModified().utcTime();
+      }
+
+      /**
        * Get all files in directory
        *
        * @param path

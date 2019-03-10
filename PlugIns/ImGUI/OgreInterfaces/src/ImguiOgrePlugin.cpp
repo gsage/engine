@@ -114,7 +114,10 @@ namespace Gsage {
       return std::make_shared<OgreView>(render, col);
     };
     lua.new_usertype<OgreView>("OgreView",
-        "setTexture", &OgreView::setTexture,
+        "setTexture", sol::overload(
+          (void(OgreView::*)(TexturePtr))&OgreView::setTexture,
+          (bool(OgreView::*)(const std::string&))&OgreView::setTexture
+        ),
         "render", &OgreView::render
     );
 

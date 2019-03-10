@@ -12,6 +12,7 @@ local eal = require 'lib.eal.manager'
 local event = require 'lib.event'
 local lm = require 'lib.locales'
 local async = require 'lib.async'
+local bindings = require 'lib.bindings'
 
 local imguiInterface = require 'imgui.base'
 local icons = require 'imgui.icons'
@@ -20,7 +21,7 @@ local projectManager = require 'editor.projectManager'
 if imguiInterface:available() then
   require 'imgui.menu'
   require 'imgui.console'
-  require 'imgui.ogreView'
+  require 'imgui.sceneEditor'
   require 'imgui.stats'
   require 'imgui.transform'
   require 'imgui.sceneExplorer'
@@ -43,9 +44,11 @@ local dockspace = imgui.createDockspace("workspace")
 local wizard = ProjectWizard("wizard", "wizard", true)
 
 local globalEditorState = editor:getGlobalState()
-if globalEditorState.settings then
+if globalEditorState.settings and globalEditorState.settings.locale then
   lm:setLocale(globalEditorState.settings.locale)
 end
+
+bindings:configure(globalEditorState.bindings)
 
 local rocketInitialized = false
 
@@ -96,33 +99,24 @@ local initialized = false
 local dockstates = {}
 local mode = "world"
 
-local function saveDockState()
+local function saveSettings()
   log.info("Saving imgui dock state")
   dockstates[mode] = dockspace:getState()
   projectManager.openProjectFile:setWorkspace(dockstates)
   projectManager.openProjectFile:write()
+  editor:putToGlobalState("bindings", bindings:getConfig())
+  editor:saveGlobalState()
 end
 
 local views = {}
-local function onSelect(e)
-  local target = eal:getEntity(e.entity)
-  if not target then
-    return
-  end
-
-  views.ogreView:setGizmoTarget(target)
-end
-
-event:onOgreSelect(core, SelectEvent.OBJECT_SELECTED, onSelect)
-
 local modalView = ModalView()
 local viewsMenu = {}
 
 local function createViews()
   views.luaConsole = Console(256, true)
-  views.ogreView = OgreView("viewport", "viewport", true)
+  views.sceneEditor = SceneEditor(modalView, "viewport", "viewport", true)
   views.scriptEditor = ScriptEditor("script", "script_editor", true)
-  views.transform = Transform(views.ogreView, "transform", true)
+  views.transform = Transform(views.sceneEditor, "transform", true)
   views.stats = Stats("stats", true)
   views.sceneExplorer = SceneExplorer("scene explorer", true)
   views.settings = SettingsView(true)
@@ -261,7 +255,7 @@ imgui.manager:addView("sidePanel", {
 })
 
 local function onAreaLoad(event)
-  views.ogreView:createCamera("free", "editorMain", {utility = true, policy = EntityFactory.REUSE})
+  views.sceneEditor:createCamera("free", "editorMain", {utility = true, policy = EntityFactory.REUSE})
 end
 
 local function openProject(event)
@@ -392,7 +386,7 @@ if imguiInterface:available() then
       dockspace:setState(dockstates[mode] or {})
     end
     views.assets:configure()
-    event:bind(core, EngineEvent.STOPPING, saveDockState)
+    event:bind(core, EngineEvent.STOPPING, saveSettings)
   end)
 
   projectManager:beforeProjectClose(function(projectFile)

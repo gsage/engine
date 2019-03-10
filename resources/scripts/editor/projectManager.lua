@@ -488,17 +488,19 @@ function ProjectManager:open(projectPath)
   end
 
 
-  for system, resources in pairs(self.openProjectFile.data.resources) do
-    local folders = {}
-    for i, folder in ipairs(resources) do
-      folders[i] = fs.path.join(self.openProjectFile:getSourceRoot(), folder)
-    end
+  if self.openProjectFile.data.resources then
+    for system, resources in pairs(self.openProjectFile.data.resources) do
+      local folders = {}
+      for i, folder in ipairs(resources) do
+        folders[i] = fs.path.join(self.openProjectFile:getSourceRoot(), folder)
+      end
 
-    if not settings[system] then
-      settings[system] = {}
-    end
+      if not settings[system] then
+        settings[system] = {}
+      end
 
-    settings[system].resources = folders
+      settings[system].resources = folders
+    end
   end
 
   self.openingProject = true

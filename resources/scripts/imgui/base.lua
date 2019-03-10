@@ -1,11 +1,14 @@
 require 'lib.class'
 local lm = require 'lib.locales'
+local contextManager = require 'lib.context'
 
 -- base class for all windowed views
 ImguiWindow = class(function(self, label, docked, open)
   self.docked = docked
   self.flags = 0
   self.dockFlags = 0
+  self.context = nil
+
   if self.open == nil then
     self.open = true
   else
@@ -16,24 +19,55 @@ ImguiWindow = class(function(self, label, docked, open)
     self.imguiBegin = function(self)
       local active
       active, self.open = imgui.BeginDockTitleOpen(self.label, self:getLocalizedTitle(), self.open, self.flags, self.dockFlags)
+      if imgui.IsMouseHoveringWindow() and imgui.IsMouseDown(1) then
+        imgui.SetWindowFocus()
+      end
       return active
     end
     self.imguiEnd = function(self)
       self.dragging = imgui.IsMouseDragging(0) and imgui.IsMouseHoveringWindow()
+      self:updateContext()
       imgui.EndDock()
     end
   else
     self.imguiBegin = function(self)
       local active
       active, self.open = imgui.Begin(self.label, self.open, self.flags)
+      if imgui.IsMouseHoveringWindow() and imgui.IsMouseDown(1) then
+        imgui.SetWindowFocus()
+      end
       return active
     end
     self.imguiEnd = function(self)
       self.dragging = imgui.IsMouseDragging(0) and imgui.IsMouseHoveringWindow()
+      self:updateContext()
       imgui.End()
     end
   end
 end)
+
+function ImguiWindow:registerContext(actions)
+  self.context = actions
+  contextManager:register(self.label, actions)
+end
+
+function ImguiWindow:updateContext()
+  if not self.context then
+    return
+  end
+
+  local activate = imgui.IsWindowFocused()
+  if activate == self.contextActive then
+    return
+  end
+
+  self.contextActive = activate
+  if activate then
+    contextManager:activate(self.label)
+  else
+    contextManager:deactivate(self.label)
+  end
+end
 
 function ImguiWindow:getLocalizedTitle()
   local res
@@ -118,6 +152,11 @@ function ImguiInterface:removeView(dest, name, view)
     view:destroy()
   end
   return removed
+end
+
+-- get view with name
+function ImguiInterface:getView(name)
+  return self.views[name]
 end
 
 -- open/close view

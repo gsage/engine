@@ -3,6 +3,7 @@ require 'lib.class'
 local time = require 'lib.time'
 local lm = require 'lib.locales'
 local eal = require 'lib.eal.manager'
+local imguiInterface = require 'imgui.base'
 
 local function decorate(cls)
   local RENDER_QUEUE_ASSET_VIEWER = 103
@@ -27,11 +28,12 @@ local function decorate(cls)
     if not renderTarget then
       renderTarget = core:render():createRenderTarget(self.textureID, RenderTarget.Rtt, {
         autoUpdated = true,
+        backgroundColor = "0x00000000",
         renderQueueSequence = {RENDER_QUEUE_ASSET_VIEWER},
         workspaceName = "assetViewer"
       });
     end
-    self.viewport:setTexture(core:render():getTexture(self.textureID))
+    self.viewport:setTexture(self.textureID)
     self.camera:attach(renderTarget)
   end)
 
@@ -120,7 +122,7 @@ local function getAssetViewer()
   local e  = data:createEntity({
     id = "__assetViewer__",
     flags = {"dynamic"},
-    props = {
+    vars = {
       class = "__assetViewer__",
       utility = true,
       enabled = false,
@@ -169,7 +171,7 @@ local function getAssetViewer()
               colourShadow = "0x00000000",
               colourDiffuse = "0xFFFFFFFF",
               lightType = "directional",
-              powerScale = 10
+              powerScale = 0
             }}
           }
         }
@@ -218,23 +220,25 @@ return {
                 textBuffer:write("")
                 local choices = {}
                 choices[lm("modals.ok")] = function()
-                  local name = textBuffer:read()
-                  local entity = {
-                    render = {
-                      root = {
-                        position = position,
-                        children = {{
-                          type = "model",
-                          mesh = asset.file
-                        }}
+                  local sceneEditor = imguiInterface:getView("sceneEditor")
+                  if sceneEditor then
+                    local name = textBuffer:read()
+                    local entity = {
+                      render = {
+                        root = {
+                          position = position,
+                          children = {{
+                            type = "model",
+                            mesh = asset.file
+                          }}
+                        }
                       }
                     }
-                  }
-                  if name ~= "" then
-                    entity.id = name
-                  end
-                  if data:createEntity(entity) == nil then
-                    error("failed to create entity")
+                    if name ~= "" then
+                      entity.id = name
+                    end
+
+                    sceneEditor:addEntity(entity)
                   end
                 end
                 choices[lm("modals.cancel")] = function()

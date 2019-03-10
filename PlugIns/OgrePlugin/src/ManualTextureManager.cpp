@@ -212,6 +212,7 @@ namespace Gsage {
 
     datablock->setTexture(Ogre::PBSM_DIFFUSE, 0, mTexture);
 #endif
+    mTexture->addListener(this);
     LOG(TRACE) << "Created texture " << mHandle << " with size " << width << "x" << height;
     mValid = true;
     if(usage & Ogre::TU_RENDERTARGET) {
@@ -319,7 +320,7 @@ namespace Gsage {
     if(!mTexture.isNull()) {
       Ogre::TextureManager* texManager = Ogre::TextureManager::getSingletonPtr();
       if(texManager) {
-        texManager->remove(mTexture->getHandle());
+        texManager->remove(mHandle);
       }
       mTexture.setNull();
     }

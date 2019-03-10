@@ -26,11 +26,15 @@ THE SOFTWARE.
 
 #include "ogre/EntityWrapper.h"
 #include "ogre/OgreObjectManager.h"
+#include "FileLoader.h"
+#include "systems/OgreRenderSystem.h"
+#include "MaterialLoader.h"
 
 #include <OgreMeshManager.h>
 #include <OgreEntity.h>
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
+#include <OgreSubMesh.h>
 
 #if OGRE_VERSION_MAJOR == 2
 #include <OgreOldSkeletonInstance.h>
@@ -113,6 +117,23 @@ namespace Gsage {
     OgreV1::MeshPtr mesh = OgreV1::MeshManager::getSingleton().load(
       model, mResourceGroup,
       OgreV1::HardwareBuffer::HBU_STATIC, OgreV1::HardwareBuffer::HBU_STATIC);
+    for(int i = 0; i < mesh->getNumSubMeshes(); i++) {
+      OgreV1::SubMesh* sm = mesh->getSubMesh(i);
+      if(sm->isMatInitialised()) {
+        Ogre::String materialName = sm->getMaterialName();
+//#if OGRE_VERSION >= 0x020100
+        if(!mObjectManager->getRenderSystem()->getMaterialLoader()->load(materialName, mesh->getGroup())) {
+          LOG(ERROR) << "Failed to load material " << materialName;
+        }
+/*#else
+        Ogre::MaterialManager::getSingletonPtr()->load(
+            materialName,
+            mesh->getGroup()
+        );
+#endif*/
+      }
+    }
+
     mObject = mSceneManager->createEntity(mesh);
     mObject->setQueryFlags(mQuery);
     mObject->getUserObjectBindings().setUserAny("entity", Ogre::Any(mOwnerId));

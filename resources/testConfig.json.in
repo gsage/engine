@@ -108,14 +108,14 @@
     {
       "General":
       [
-        "FileSystem:bundles/materials/",
-        "FileSystem:bundles/particles/PU",
-        "FileSystem:bundles/particles/Ogre"
+        "FileSystem;bundles/materials/",
+        "FileSystem;bundles/particles/PU",
+        "FileSystem;bundles/particles/Ogre"
       ],
       "Hlms": {
-        "common": "FileSystem:ogre/materials/Common",
-        "pbs": "FileSystem:ogre/materials/Pbs",
-        "unlit": "FileSystem:ogre/materials/Unlit"
+        "common": "FileSystem;ogre/materials/Common",
+        "pbs": "FileSystem;ogre/materials/Pbs",
+        "unlit": "FileSystem;ogre/materials/Unlit"
       }
     },
     "window":

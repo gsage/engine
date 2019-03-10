@@ -37,10 +37,11 @@ end
 camera:register("free", function(name, settings)
   settings.mixins = {"freeCamera"}
   settings.class = "camera"
+  settings.enabled = true
   local config = {
     id = name,
     flags = {"dynamic"},
-    props = settings,
+    vars = settings,
     render = {
       root =  {
         position = settings.position or Vector3.ZERO,
@@ -88,7 +89,7 @@ camera:register("orbit", function(name, settings)
   end
   local config = {
     id = name,
-    props = settings,
+    vars = settings,
     render = {
       root = {
         position = settings.position or Vector3.ZERO,

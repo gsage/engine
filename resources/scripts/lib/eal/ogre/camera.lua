@@ -3,14 +3,14 @@ local event = require 'lib.event'
 
 currentCamera = currentCamera or nil
 
-local defaultMouseSensivity = 0.4
+local defaultMouseSensivity = 0.3
 
 -- base camera decorator
 -- attach requires cameraPath to be set
 -- mixin can add update method
 local function decorate(cls)
   cls.onCreate(function(self)
-    self.mouseSensivity = self.props.mouseSensivity or defaultMouseSensivity
+    self.mouseSensivity = self.vars.mouseSensivity or defaultMouseSensivity
     self.handlerId = self.id .. ".camera.update"
     self.renderTargetName = nil
   end)
@@ -21,7 +21,7 @@ local function decorate(cls)
 
   -- attach camera to viewport
   function cls:attach(targetName)
-    if not self.props.cameraPath then
+    if not self.vars.cameraPath then
       -- TODO: search for cameras in render
       log.error("Can't attach camera: must have \"cameraPath\" defined in properties")
       return false
@@ -29,7 +29,7 @@ local function decorate(cls)
     if currentCamera then
       currentCamera:detach()
     end
-    local cam = self.render.root:getCamera(self.props.cameraPath)
+    local cam = self.render.root:getCamera(self.vars.cameraPath)
     local renderTarget = core:render().mainRenderTarget
 
     if targetName then
@@ -60,7 +60,7 @@ local function decorate(cls)
     if not renderTarget then
       renderTarget = core:render():createRenderTarget(textureID, RenderTarget.Rtt, parameters or {});
     end
-    local cam = self.render.root:getCamera(self.props.cameraPath)
+    local cam = self.render.root:getCamera(self.vars.cameraPath)
     cam:attach(renderTarget)
     self.renderTargetName = textureID
     if self.update and not self.hasHandler then
@@ -120,18 +120,18 @@ local function freeCamera(cls)
       return node
     end
 
-    self.props.cameraPath = "yaw.pitch.roll." .. self.entity.id
+    self.vars.cameraPath = "yaw.pitch.roll." .. self.entity.id
     self.rotate = false
     self.movementVector = Vector3.ZERO
-    self.mouseSensivity = self.props.mouseSensivity or defaultMouseSensivity
-    self.speed = self.props.speed or 5
+    self.mouseSensivity = self.vars.mouseSensivity or defaultMouseSensivity
+    self.speed = self.vars.speed or 5
     self.yawNode = getNode("yaw")
     self.pitchNode = getNode("yaw.pitch")
     self.rollNode = getNode("yaw.pitch.roll")
 
     self.onKeyPress = function(event)
       -- TODO: handle keypress events for different targets
-      if not self.renderTargetName then
+      if not self.renderTargetName or not self.vars.enabled then
         return true
       end
 
@@ -195,6 +195,16 @@ local function freeCamera(cls)
     end
   end)
 
+  function cls:setEnabled(value)
+    if not self.vars then
+      self.vars = {}
+    end
+    self.vars.enabled = value
+    if not value then
+      self.movementVector = Vector3.ZERO
+    end
+  end
+
   function cls:update(time)
     self:translate(self.yawNode.orientation * self.pitchNode.orientation * self.movementVector * time * 10)
   end
@@ -216,30 +226,30 @@ local function orbitCamera(cls)
       return node
     end
 
-    self.props.cameraPath = "pitch.flip." .. self.entity.id
+    self.vars.cameraPath = "pitch.flip." .. self.entity.id
     self.mousePosition = Vector3.ZERO
     self.moveCamera = false
     self.center = Vector3.ZERO
     self.uAngle = 45
     self.vAngle = 45
 
-    self.distance = self.props.distance or 10
-    self.maxDistance = self.props.maxDistance or 100
-    self.minDistance = self.props.minDistance or 1
-    self.maxAngle = self.props.maxAngle or 80
-    self.minAngle = self.props.minAngle or 10
-    self.zoomStepMultiplier = self.props.zoomStepMultiplier or 0.1
-    self.mouseSensivity = self.props.mouseSensivity or 0.5
-    if type(self.props.cameraOffset) == "string" then
-      self.cameraOffset, _ = Vector3.parse(self.props.cameraOffset or "0,0,0")
-    elseif self.props.cameraOffset then
-      self.cameraOffset = self.props.cameraOffset
+    self.distance = self.vars.distance or 10
+    self.maxDistance = self.vars.maxDistance or 100
+    self.minDistance = self.vars.minDistance or 1
+    self.maxAngle = self.vars.maxAngle or 80
+    self.minAngle = self.vars.minAngle or 10
+    self.zoomStepMultiplier = self.vars.zoomStepMultiplier or 0.1
+    self.mouseSensivity = self.vars.mouseSensivity or 0.5
+    if type(self.vars.cameraOffset) == "string" then
+      self.cameraOffset, _ = Vector3.parse(self.vars.cameraOffset or "0,0,0")
+    elseif self.vars.cameraOffset then
+      self.cameraOffset = self.vars.cameraOffset
     else
       self.cameraOffset = Vector3.ZERO
     end
 
     self.onTargetCreate = function(event)
-      if self.props and event.id == self.props.target then
+      if self.vars and event.id == self.vars.target then
         self:setTarget(event.id)
       end
     end
@@ -253,8 +263,8 @@ local function orbitCamera(cls)
       end
     end
 
-    if self.props.target ~= nil then
-      self:setTarget(self.props.target)
+    if self.vars.target ~= nil then
+      self:setTarget(self.vars.target)
     end
     local targetCreateId = event:onEntity(core, EntityEvent.CREATE, self.onTargetCreate)
 

@@ -57,6 +57,10 @@ class GsageConan(ConanFile):
     def config_options(self):
         lua, version = str(self.options.with_lua_version).split("-")
 
+        if self.settings.os == "Windows":
+            # only MD is supported on Windows
+            self.settings.compiler.runtime = "MD"
+
         lua_package = "{}-rocks".format(lua)
 
         self.requires.add("{}/{}@gsage/master".format(lua_package, version))

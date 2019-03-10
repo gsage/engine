@@ -140,9 +140,9 @@
         "ogre/materials/"
       ],
       "Hlms": {
-        "common": "FileSystem:ogre/materials/Common",
-        "pbs": "FileSystem:ogre/materials/Pbs",
-        "unlit": "FileSystem:ogre/materials/Unlit"
+        "common": "FileSystem;ogre/materials/Common",
+        "pbs": "FileSystem;ogre/materials/Pbs",
+        "unlit": "FileSystem;ogre/materials/Unlit"
       }
     },
     "backgroundWorkersCount": 1,

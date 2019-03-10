@@ -42,6 +42,13 @@ local icons = {
 
   -- TODO: define all supported material icons
 
+  -- these icons names may not match with material icons naming
+  copy = "",
+  cut = "",
+  paste = "",
+  play = "",
+  stop = "",
+  pause = "",
 }
 
 return icons

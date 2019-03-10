@@ -125,9 +125,24 @@ namespace Gsage
       inline const std::string& getSavesFolder() const { return mSavesFolder; }
 
       /**
-       * Load area, without loading characters
+       * Load scene
        */
-      bool loadArea(const std::string& area);
+      bool loadScene(const std::string& area);
+
+      /*
+       * Save scene
+       */
+      void saveScene(const std::string& filename);
+
+      /**
+       * Get scene data
+       */
+      DataProxy getSceneData() const;
+
+      /**
+       * Set scene data
+       */
+      void setSceneData(const DataProxy& data);
     private:
       static const std::string CONFIG_SECTION;
 

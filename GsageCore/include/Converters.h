@@ -80,6 +80,7 @@ namespace Gsage {
   TYPE_CASTER(IntCaster, int, std::string)
   TYPE_CASTER(UIntCaster, unsigned int, std::string)
   TYPE_CASTER(UlongCaster, unsigned long, std::string)
+  TYPE_CASTER(LongCaster, long, std::string)
   TYPE_CASTER(FloatCaster, float, std::string)
   TYPE_CASTER(BoolCaster, bool, std::string)
   TYPE_CASTER(StringCaster, std::string, std::string)

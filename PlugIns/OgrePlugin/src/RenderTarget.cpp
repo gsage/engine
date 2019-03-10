@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <OgreMovableObject.h>
 #include <OgreVector3.h>
 #include "RenderEvent.h"
+#include "Entity.h"
 
 #if OGRE_VERSION_MAJOR == 1
 #include <OgreRenderQueueInvocation.h>
@@ -193,20 +194,30 @@ namespace Gsage {
     return std::make_tuple(ray, true);
   }
 
-  std::tuple<Ogre::Vector3, Ogre::MovableObject*> RenderTarget::raycast(Ogre::Real defaultDistance, Ogre::Real closestDistance, unsigned int flags) const
+  std::tuple<Ogre::Vector3, Entity*> RenderTarget::raycast(Ogre::Real defaultDistance, Ogre::Real closestDistance, unsigned int flags) const
   {
     Ogre::Vector3 result = Ogre::Vector3::ZERO;
     if(!mMouseOver || !mCurrentCamera) {
       return std::make_tuple(result, nullptr);
     }
 
-    Ogre::MovableObject* target = nullptr;
-    if(!mCollisionTools->raycastFromCamera(mWidth, mHeight, mCurrentCamera, mMousePosition, result, target, closestDistance, flags)) {
+    Ogre::MovableObject* hit = nullptr;
+    if(!mCollisionTools->raycastFromCamera(mWidth, mHeight, mCurrentCamera, mMousePosition, result, hit, closestDistance, flags)) {
       bool success = false;
       Ogre::Ray ray;
       std::tie(ray, success) = getRay();
       if(success) {
         result = ray.getPoint(defaultDistance);
+      }
+    }
+
+    Entity* target = nullptr;
+
+    if(hit) {
+      const Ogre::Any& entityId = hit->getUserObjectBindings().getUserAny("entity");
+      if(!entityId.isEmpty()) {
+        const std::string& id = entityId.get<const std::string>();
+        target = mEngine->getEntity(id);
       }
     }
 

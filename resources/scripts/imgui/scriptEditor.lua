@@ -10,23 +10,70 @@ ScriptEditor = class(ImguiWindow, function(self, textureID, title, docked, open)
   ImguiWindow.init(self, title, docked, open)
   self.webview = WebView(textureID, "client:/scriptEditor.html")
   self.textureID = textureID
-  self.filepath = imgui.TextBuffer(1024)
-  self.filepathCallback = function(data)
-  end
 
   self.code = ""
 
   cef:addMessageHandler("syncEditor", function(text)
     local p = path or self.currentFilePath
     self.code = text
-    if not p then
+    local writeFile = function(file)
+      data:write(file, self.code, core.env.workdir)
+      log.info("Saving file " .. file)
+    end
+
+    if p then
+      writeFile(p)
+    else
+      local assets = imguiInterface:getView("assets")
+      if not assets then
+        self.modal:showError(lm("modals.errors.failed_to_create_asset"))
+        return
+      end
+
+      local sceneName = nil
+      assets:createAsset("new", "json", nil, true, function(file)
+        writeFile(file)
+        self.currentFilePath = file
+      end)
+
       return
     end
-    data:write(p, self.code, core.env.workdir)
-    log.info("Saving file " .. p)
   end)
   self.icon = icons.code
   self.titleBase = self.title
+
+  self:registerContext({
+    {
+      icon = icons.insert_drive_file,
+      action = "new",
+      callback = function()
+        self:reset()
+      end
+    },
+    {
+      icon = icons.save,
+      action = "save",
+      callback = function()
+        self:saveFile()
+      end,
+      padding = 10
+    },
+    {
+      icon = icons.undo,
+      action = "undo",
+      callback = function()
+        self:undo()
+      end
+    },
+    {
+      icon = icons.redo,
+      action = "redo",
+      callback = function()
+        self:redo()
+      end,
+      padding = 10
+    }
+  })
 end)
 
 -- render script editor
@@ -47,18 +94,6 @@ function ScriptEditor:__call()
   end
 
   imguiInterface:captureMouse(not imgui.IsWindowHovered())
-
-  if imgui.Button("save") then
-    self:saveFile()
-  end
-
-  imgui.SameLine()
-  if imgui.InputTextWithCallback(lm("script_editor.file_path"), self.filepath, ImGuiInputTextFlags_EnterReturnsTrue, self.filepathCallback) then
-    local path = self.filepath:read()
-    if text ~= "" then
-      self:openFile(path)
-    end
-  end
 
   local w, h = imgui.GetContentRegionAvail()
   local x, y = imgui.GetCursorScreenPos()
@@ -103,7 +138,23 @@ function ScriptEditor:openFile(path)
   end
 end
 
+function ScriptEditor:reset()
+  local script = [[
+    setText('');
+  ]]
+  self.webview:executeJavascript(script)
+  self.currentFilePath = nil
+end
+
 -- save file
 function ScriptEditor:saveFile(path)
   self.webview:executeJavascript("syncEditor()")
+end
+
+function ScriptEditor:undo()
+  self.webview:executeJavascript([[execCommand("undo");]])
+end
+
+function ScriptEditor:redo()
+  self.webview:executeJavascript([[execCommand("redo");]])
 end

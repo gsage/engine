@@ -103,7 +103,7 @@ namespace Gsage
       /**
        * Get entity id
        */
-      const std::string& getId() { return mId; }
+      inline const std::string& getId() const { return mId; }
       /**
        * Adds flag to flag list
        *
@@ -130,15 +130,20 @@ namespace Gsage
       void setClass(const std::string& cls);
 
       /**
-       * Get entity properties
+       * Get entity construction data
        */
-      DataProxy& getProps();
+      DataProxy getProps() const;
 
       /**
-       * Set set entity props
+       * Get entity variables
+       */
+      DataProxy& getVars();
+
+      /**
+       * Set set entity variables
        * @param props DataProxy
        */
-      void setProps(const DataProxy& props);
+      void setVars(const DataProxy& value);
 
       /**
        * Get component names in a vector
@@ -157,7 +162,7 @@ namespace Gsage
       typedef std::vector<std::string> Flags;
       Flags mFlags;
       std::string mClass;
-      DataProxy mProps;
+      DataProxy mVars;
   };
 }
 

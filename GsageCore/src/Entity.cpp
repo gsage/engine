@@ -79,14 +79,36 @@ namespace Gsage
     mClass = cls;
   }
 
-  DataProxy& Entity::getProps()
+  DataProxy Entity::getProps() const
   {
-    return mProps;
+    DataProxy result;
+    result.put("id", mId);
+    result.put("vars", mVars);
+    if(mFlags.size() > 0) {
+      DataProxy flags;
+      for(auto& flag : mFlags) {
+        flags.push(flag);
+      }
+      result.put("flags", flags);
+    }
+    result.put("class", mClass);
+    for(auto& pair : mComponents) {
+      DataProxy cd;
+      pair.second->dump(cd);
+      result.put(pair.first, cd);
+    }
+
+    return result;
   }
 
-  void Entity::setProps(const DataProxy& props)
+  DataProxy& Entity::getVars()
   {
-    mProps = props;
+    return mVars;
+  }
+
+  void Entity::setVars(const DataProxy& value)
+  {
+    mVars = value;
   }
 
   std::vector<std::string> Entity::getComponentNames() const

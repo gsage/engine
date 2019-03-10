@@ -77,6 +77,7 @@ namespace Gsage
   class Entity;
   class Engine;
   class EngineEvent;
+  class MaterialLoader;
   class OgreInteractionManager;
   class WindowEventListener;
 
@@ -364,6 +365,11 @@ namespace Gsage
        */
       RenderTargetPtr getMainRenderTarget();
 
+      /**
+       * Get material loader
+       */
+      inline MaterialLoader* getMaterialLoader() { return mMaterialLoader; }
+
 #if OGRE_VERSION >= 0x020100
       /**
        * Register new Hlms
@@ -412,6 +418,7 @@ namespace Gsage
       WindowEventListener* mWindowEventListener;
 
       ResourceManager* mResourceManager;
+      MaterialLoader* mMaterialLoader;
 
       typedef std::queue<DataProxy> ComponentLoadQueue;
       ComponentLoadQueue mLoadQueue;
@@ -429,8 +436,6 @@ namespace Gsage
 
       RenderTargetPtr mWindow;
 #if OGRE_VERSION >= 0x020100
-      OgreV1::Rectangle2DFactory* mRectangle2DFactory;
-
       CustomPassProvider mCustomPassProvider;
 #endif
 #if OGRE_STATIC

@@ -71,7 +71,7 @@ namespace Gsage {
 
   class Webview;
 
-  class BrowserClient : public CefClient, public CefLoadHandler, public CefDialogHandler
+  class BrowserClient : public CefClient, public CefLoadHandler, public CefDialogHandler, public CefContextMenuHandler
   {
     public:
       BrowserClient(RenderHandler* renderHandler, CEFPlugin* cef, Webview* webview);
@@ -82,6 +82,15 @@ namespace Gsage {
         return this;
       }
 
+      // Allow overwrite of context menu functions
+      virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() OVERRIDE {
+        return this;
+      }
+
+      void OnBeforeContextMenu( CefRefPtr< CefBrowser > browser, CefRefPtr< CefFrame > frame, CefRefPtr< CefContextMenuParams > params, CefRefPtr< CefMenuModel > model ) OVERRIDE;
+
+      bool OnContextMenuCommand( CefRefPtr< CefBrowser > browser, CefRefPtr< CefFrame > frame, CefRefPtr< CefContextMenuParams > params, int command_id, CefContextMenuHandler::EventFlags event_flags ) OVERRIDE;
+
       bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId sourceProcess, CefRefPtr<CefProcessMessage> message) OVERRIDE;
 
       /**
@@ -89,7 +98,7 @@ namespace Gsage {
        *
        * @param data lua table or json object to use for template rendering
        */
-      inline void setPageData(const DataProxy& data) { 
+      inline void setPageData(const DataProxy& data) {
         std::lock_guard<std::mutex> lock(mPageDataLock);
         mPageData = data;
       }
@@ -132,6 +141,10 @@ namespace Gsage {
 
       static const Event::Type MOUSE_LEAVE;
 
+      static const Event::Type UNDO;
+
+      static const Event::Type REDO;
+
       typedef ThreadSafeQueue<Event> Events;
       typedef ThreadSafeQueue<KeyboardEvent> KeyboardEvents;
       typedef ThreadSafeQueue<MouseEvent> MouseEvents;
@@ -167,6 +180,9 @@ namespace Gsage {
 
       inline void setCefWasStopped() {
         mCefWasStopped = true;
+        if(mBrowser.get()) {
+          mBrowser->GetHost()->CloseBrowser(false);
+        }
         mBrowser = nullptr;
         mClient = nullptr;
         mRenderHandler = nullptr;

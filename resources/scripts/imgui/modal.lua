@@ -1,4 +1,6 @@
 require 'lib.class'
+local icons = require 'imgui.icons'
+local lm = require 'lib.locales'
 
 ModalView = class(function(self)
   self.open = false
@@ -20,6 +22,17 @@ function ModalView:show(title, contentDraw, choices, width, height)
   for _ in pairs(self.choices) do
     self.choiceCount = self.choiceCount + 1
   end
+end
+
+function ModalView:showError(text)
+  local choices = {
+    [lm("modals.ok")] = function() end
+  }
+  self:show(lm("modals.errors.error"), function()
+    imgui.Text(icons.error)
+    imgui.SameLine()
+    imgui.TextWrapped(text)
+  end, choices, 150, 100)
 end
 
 function ModalView:__call()

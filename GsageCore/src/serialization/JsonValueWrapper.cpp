@@ -87,6 +87,16 @@ namespace Gsage {
   }
 
   template<>
+  Json::ValueType JsonValueWrapper::getJsonType<unsigned long>() const {
+    return Json::uintValue;
+  }
+
+  template<>
+  Json::ValueType JsonValueWrapper::getJsonType<signed long>() const {
+    return Json::intValue;
+  }
+
+  template<>
   bool JsonValueWrapper::readValue<int>(const Json::Value& v, int& dest) const
   {
     dest = v.asInt();
@@ -97,6 +107,20 @@ namespace Gsage {
   bool JsonValueWrapper::readValue<unsigned int>(const Json::Value& v, unsigned int& dest) const
   {
     dest = v.asUInt();
+    return true;
+  }
+
+  template<>
+  bool JsonValueWrapper::readValue<unsigned long>(const Json::Value& v, unsigned long& dest) const
+  {
+    dest = v.asLargestUInt();
+    return true;
+  }
+
+  template<>
+  bool JsonValueWrapper::readValue<signed long>(const Json::Value& v, signed long& dest) const
+  {
+    dest = v.asLargestInt();
     return true;
   }
 
@@ -221,8 +245,13 @@ namespace Gsage {
     return res;
   }
 
-  std::string JsonValueWrapper::toString() const
+  std::string JsonValueWrapper::toString(bool pretty) const
   {
+    if(pretty) {
+      Json::StyledWriter writer;
+      return writer.write(getObject());
+    }
+
     Json::FastWriter writer;
     return writer.write(getObject());
   }
@@ -237,13 +266,19 @@ namespace Gsage {
                                template<> void JsonValueWrapper::put<t>(int key, const t& value) { getObject()[key] = value; }\
                                template<> void JsonValueWrapper::set<t>(const t& value) { Json::Value wrap(value); getObject().swap(wrap); }
 
+#define _PRIMITIVE_TYPE_PUT_AS(t, v) template<> void JsonValueWrapper::put<t>(const std::string& key, const t& value) { getObject()[key] = (v)value; }\
+                               template<> void JsonValueWrapper::put<t>(int key, const t& value) { getObject()[key] = (v)value; }\
+                               template<> void JsonValueWrapper::set<t>(const t& value) { Json::Value wrap((v)value); getObject().swap(wrap); }
+
   _PRIMITIVE_TYPE_PUT(int)
   _PRIMITIVE_TYPE_PUT(unsigned int)
   _PRIMITIVE_TYPE_PUT(double)
   _PRIMITIVE_TYPE_PUT(float)
   _PRIMITIVE_TYPE_PUT(bool)
-
+  _PRIMITIVE_TYPE_PUT_AS(unsigned long, Json::LargestUInt)
+  _PRIMITIVE_TYPE_PUT_AS(signed long, Json::LargestInt)
 #undef _PRIMITIVE_TYPE_PUT
+#undef _PRIMITIVE_TYPE_PUT_AS
 
   void JsonValueWrapper::set(const std::string& value)
   {
@@ -262,10 +297,10 @@ namespace Gsage {
           dest = typename TranslatorBetween<std::string, bool>::type().from(value.asBool());
           break;
         case Json::intValue:
-          dest = typename TranslatorBetween<std::string, int>::type().from(value.asInt());
+          dest = typename TranslatorBetween<std::string, long>::type().from(value.asLargestInt());
           break;
         case Json::uintValue:
-          dest = typename TranslatorBetween<std::string, unsigned int>::type().from(value.asUInt());
+          dest = typename TranslatorBetween<std::string, unsigned long>::type().from(value.asLargestUInt());
           break;
         case Json::realValue:
           dest = typename TranslatorBetween<std::string, double>::type().from(value.asDouble());

@@ -204,7 +204,7 @@ namespace Gsage {
       scanned.push_back(rf.second);
     }
 
-    LOG(ERROR) << "Failed to find file path in any of resource folders " << file << ":\n" << join(scanned, '\n');
+    LOG(ERROR) << "Failed to find file path in any of resource folders " << file << ":" << join(scanned, '\n');
     return "";
   }
 

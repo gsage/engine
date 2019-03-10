@@ -91,14 +91,14 @@ function EALManager:assemble(name)
     components = {},
     types = {}
   }
-  local cls = e.props.class
+  local cls = e.vars.class
   if cls then
     parts[#parts + 1] = cls
     info.class = cls
   end
 
-  if e.props.mixins then
-    info.mixins = e.props.mixins
+  if e.vars.mixins then
+    info.mixins = e.vars.mixins
     local mixinsSorted = info.mixins
     table.sort(mixinsSorted)
     hashString = table.concat(mixinsSorted)

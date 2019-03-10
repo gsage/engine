@@ -14,7 +14,7 @@ describe("#recast #ogre", function()
     render = {
       resources = {
         Gunspider = {
-          "Zip:bundles/models/".. version .. "/packs/gunspider.zip"
+          "Zip;bundles/models/".. version .. "/packs/gunspider.zip"
         }
       },
       animations = {
