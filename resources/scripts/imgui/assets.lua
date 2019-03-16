@@ -297,6 +297,7 @@ function Assets:refresh()
     table.insert(asset.actions, {
       id = "delete",
       callback = function(a)
+        local sx, sy = imgui.Scale()
         local choices = {}
         choices[lm("modals.ok")] = function()
           if fs.rmdir(a.fullpath, true) then
@@ -307,7 +308,7 @@ function Assets:refresh()
         end
         self.modal:show(lm("modals.confirm_deletion.title", {asset = a.file}), function()
           imgui.TextWrapped(lm("modals.confirm_deletion.desc", {fullpath = a.fullpath}))
-        end, choices, 350, 150)
+        end, choices, 350 * sx, 150 * sy)
       end
     })
 
@@ -545,7 +546,7 @@ function Assets:__call()
     end
     imgui.SameLine(0, 2)
     if imgui.Button(icons.insert_drive_file) then
-      self:createAsset()
+      self:createAsset(nil, nil, nil, true)
     end
   end
 

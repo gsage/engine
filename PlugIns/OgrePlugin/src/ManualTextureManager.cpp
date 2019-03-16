@@ -110,7 +110,7 @@ namespace Gsage {
   bool OgreTexture::AllocateScalingPolicy::resize()
   {
     bool created = false;
-    if(!mTexture.isValid() || mTexture.mTexture->getWidth() < mWidth || mTexture.mTexture->getHeight() < mHeight) {
+    if(!mTexture.isValid() || mTexture.mTexture->getWidth() < (Ogre::uint32)mWidth || mTexture.mTexture->getHeight() < (Ogre::uint32)mHeight) {
       mTexture.create(mWidth * mScalingFactor, mHeight * mScalingFactor);
       if(!mTexture.isValid()) {
         return false;
@@ -154,7 +154,7 @@ namespace Gsage {
     unsigned int depth = mParams.get("depth", 1);
     int numMipmaps = mParams.get("numMipmaps", 0);
     Ogre::PixelFormat pixelFormat = (Ogre::PixelFormat)mParams.get("pixelFormat", (int)Ogre::PF_R8G8B8A8);
-    int usage = mParams.get("usage", (int)Ogre::TU_DEFAULT);
+    Ogre::TextureUsage usage = (Ogre::TextureUsage)mParams.get("usage", (unsigned int)Ogre::TU_DEFAULT);
     bool hwGammaCorrection = mParams.get("hwGammaCorrection", true);
     unsigned int fsaa = mParams.get("fsaa", 0);
     std::string fsaaHint = mParams.get("fsaaHint", _BLANKSTRING);
@@ -165,6 +165,9 @@ namespace Gsage {
 
     Ogre::ResourcePtr resource = texManager->getResourceByName(mHandle, group);
     if(!resource.isNull()) {
+      if(!mTexture.isNull()) {
+        mTexture->removeListener(this);
+      }
       texManager->remove(resource);
     }
 
@@ -192,10 +195,15 @@ namespace Gsage {
         shareableDepthBuffer
 #endif
     );
-    OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
-    texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
-    memset(texBuf->getCurrentLock().data, 0, width * height * Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat()));
-    texBuf->unlock();
+#if GSAGE_PLATFORM != GSAGE_APPLE
+    if((usage & Ogre::TU_RENDERTARGET) == 0) {
+      OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
+      texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
+      memset(texBuf->getCurrentLock().data, 0, width * height * Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat()));
+      texBuf->unlock();
+    }
+#endif
+
 #if OGRE_VERSION >= 0x020100
     // additionally set up Hlms for 2.1
     Ogre::HlmsManager *hlmsManager = Ogre::Root::getSingletonPtr()->getHlmsManager();
@@ -397,9 +405,9 @@ namespace Gsage {
               float aspect = (float)img.getWidth() / (float)img.getHeight();
 
               if(aspect > 1) {
-                height = width / aspect;
+                height = (int)(width / aspect);
               } else {
-                width = height * aspect;
+                width = (int)(height * aspect);
               }
             } else {
               std::tie(width, height) = tex->getSize();

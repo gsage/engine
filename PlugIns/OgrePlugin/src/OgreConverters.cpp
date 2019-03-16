@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include "OgreConverters.h"
+#include "ScopedLocale.h"
 
 namespace Gsage {
   inline float fromHex(unsigned int value, int offset)
@@ -44,6 +45,7 @@ namespace Gsage {
     if(src.empty())
       return false;
 
+    ScopedCLocale l(true);
     dst = Ogre::Degree((float)atof(src.c_str()));
     return true;
   }
@@ -97,6 +99,7 @@ namespace Gsage {
     {
       return false;
     }
+    ScopedCLocale l(true);
     std::stringstream stream;
 
     for(unsigned int i = 0; i < values.size(); i++)
@@ -138,6 +141,7 @@ namespace Gsage {
       return false;
     }
 
+    ScopedCLocale l(true);
     std::stringstream stream;
 
     for(unsigned int i = 0; i < values.size(); i++)
@@ -182,6 +186,7 @@ namespace Gsage {
     }
 
     std::stringstream stream;
+    ScopedCLocale l(true);
 
     for(unsigned int i = 0; i < values.size(); i++)
     {

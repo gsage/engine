@@ -142,7 +142,9 @@ namespace Gsage {
       return std::shared_ptr<Gizmo>(new Gizmo(render));
     };
     lua.new_usertype<Gizmo>("Gizmo",
-        "setTarget", &Gizmo::setTarget,
+        "addTarget", &Gizmo::addTarget,
+        "removeTarget", &Gizmo::removeTarget,
+        "resetTargets", &Gizmo::resetTargets,
         "enable", &Gizmo::enable,
         "render", &Gizmo::render,
         "operation", sol::property(&Gizmo::getOperation, &Gizmo::setOperation),

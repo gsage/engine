@@ -312,7 +312,7 @@ namespace Gsage {
 
     for(auto pair : mUIManagers) {
       if(!pair.second->initialized()) {
-        pair.second->initialize(&mEngine, mLuaInterface->getState());
+        pair.second->initialize(this, mLuaInterface->getState());
       }
     }
 
@@ -398,10 +398,12 @@ namespace Gsage {
 
   void GsageFacade::reset(sol::function f)
   {
+    mEngine.fireEvent(Event(BEFORE_RESET));
     mEngine.unloadMatching([f](Entity* e) -> bool {
       bool match = f(e);
       return match;
     });
+    mEngine.fireEvent(Event(RESET));
   }
 
   bool GsageFacade::loadScene(const std::string& name)
@@ -433,7 +435,7 @@ namespace Gsage {
     int handle = mUIManagers.size();
     mUIManagers[handle] = value;
     if(mLuaInterface != 0 && mLuaInterface->getState()) {
-      mUIManagers[handle]->initialize(&mEngine, mLuaInterface->getState());
+      mUIManagers[handle]->initialize(this, mLuaInterface->getState());
     }
     return handle;
   }

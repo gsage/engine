@@ -91,6 +91,15 @@ static bool contains(const std::map<K, T>& m, K value)
 }
 
 /**
+ * Short definition of std::map key search
+ */
+template<class K, class T, class CompStr>
+static bool contains(const std::map<K, T, CompStr>& m, K value)
+{
+  return m.find(value) != m.end();
+}
+
+/**
  * Short definition of std::vector key search
  */
 template<class T>

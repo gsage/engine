@@ -382,7 +382,7 @@ TEST_P(TestSerialization, TestDumpRead)
   auto validate = [] (DataProxy& read) {
     ASSERT_EQ(read["string"].as<std::string>(), "abcd");
     ASSERT_EQ(read["int"].as<int>(), 1);
-    ASSERT_FLOAT_EQ(read["double"].as<double>(), 1.1);
+    ASSERT_DOUBLE_EQ(read["double"].as<double>(), 1.1);
     ASSERT_EQ(read["nested"][0].as<int>(), 1);
     ASSERT_EQ(read["nested"][1].as<int>(), 2);
   };

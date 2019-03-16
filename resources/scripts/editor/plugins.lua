@@ -88,6 +88,7 @@ local function decorate(cls)
     if pcall(function()
       self.render.props = renderData
     end) then
+      self.render.position = Vector3.ZERO
       self.enabled = true
       local entity = self.aligner:getEntity(meshID)
       self.aligner.position = Vector3.ZERO
@@ -100,6 +101,9 @@ local function decorate(cls)
       self.container.orientation = Quaternion.IDENTITY
       self.cameraNode.position = dirvec * distance
       self.cameraNode:lookAt(Vector3.ZERO + Vector3.new(0, self.cameraNode.position.y, 0), OgreNode.TS_WORLD)
+
+      -- move asset viewer to some far away position to avoid clashing with real scene elements
+      self.render.position = Vector3.new(100000, 100000, 100000)
     else
       self.enabled = false
     end

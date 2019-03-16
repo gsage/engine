@@ -149,7 +149,7 @@ namespace Gsage {
           return 0;
         }
 
-        return f.getLastModified().utcTime();
+        return (long)f.getLastModified().utcTime();
       }
 
       /**
@@ -187,6 +187,13 @@ namespace Gsage {
        */
       inline std::string filename(const std::string& path) const {
         return Poco::Path(path).getFileName();
+      }
+
+      /**
+       * Get file basename
+       */
+      inline std::string basename(const std::string& path) const {
+        return Poco::Path(path).getBaseName();
       }
 
       /**

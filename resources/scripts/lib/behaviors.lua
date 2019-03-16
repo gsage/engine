@@ -58,6 +58,7 @@ end
 BehaviorTree = class(function(self, context)
   self.currentBehavior = nil
   self.context = context
+  self.context.delta = 0
   self.mainCoroutine = nil
   self.context.waitSeconds = function(time)
     async.waitSeconds(time)
@@ -78,6 +79,7 @@ function BehaviorTree:update(time)
     return
   end
 
+  self.context.delta = time
   coroutine.resume(self.mainCoroutine)
 end
 

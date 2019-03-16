@@ -502,8 +502,8 @@ namespace Gsage {
   void Webview::handleMouseEvent(const MouseEvent& event)
   {
     CefMouseEvent evt;
-    mMouseX = evt.x = event.mouseX;
-    mMouseY = evt.y = event.mouseY;
+    mMouseX = evt.x = (int)event.mouseX;
+    mMouseY = evt.y = (int)event.mouseY;
 
     int mouseModifier = 0;
 

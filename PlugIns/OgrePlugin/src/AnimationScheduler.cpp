@@ -102,7 +102,7 @@ namespace Gsage {
     mFadeIn = true;
     mFadeOut = false;
 
-    mFadeTime = time;
+    mFadeTime = (float)time;
 
     setEnabled(true);
   }
@@ -112,7 +112,7 @@ namespace Gsage {
     mFadeIn = false;
     mFadeOut = true;
 
-    mFadeTime = time;
+    mFadeTime = (float)time;
   }
 
   float Animation::getTimePosition()
@@ -164,7 +164,7 @@ namespace Gsage {
     return mSpeed;
   }
 
-  void Animation::setSpeed(double value)
+  void Animation::setSpeed(float value)
   {
     mSpeed = value;
   }
@@ -262,7 +262,7 @@ namespace Gsage {
     return mSpeed;
   }
 
-  void AnimationGroup::setSpeed(double value)
+  void AnimationGroup::setSpeed(float value)
   {
     for(auto& pair : mAnimations)
     {

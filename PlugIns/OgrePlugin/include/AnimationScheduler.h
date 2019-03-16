@@ -86,7 +86,7 @@ namespace Gsage {
       float getTimePosition();
       /**
        * Sets current time position of anim
-       * 
+       *
        * @param value Time in seconds
        */
       void setTimePosition(double value);
@@ -125,7 +125,7 @@ namespace Gsage {
       /**
        * Sets animation speed
        */
-      void setSpeed(double speed);
+      void setSpeed(float speed);
       /**
        * Animation has anim state
        */
@@ -174,7 +174,7 @@ namespace Gsage {
        *
        * @param value 1 is normal speed
        */
-      void setSpeed(double value);
+      void setSpeed(float value);
       /**
        * Checks that all animations ended
        */
@@ -290,7 +290,7 @@ namespace Gsage {
        * @param group Animation group, queue name
        * @param anim Animation instance
        */
-      inline bool isQueued(const std::string& group, Animation& anim) 
+      inline bool isQueued(const std::string& group, Animation& anim)
       {
         if(mAnimationQueues.count(group) == 0)
           return false;

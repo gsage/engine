@@ -250,7 +250,7 @@ void MovableText::_setupGeometry()
   Real spaceWidth = mSpaceWidth;
   // Derive space width from a capital A
   if (spaceWidth == 0)
-    spaceWidth = mpFont->getGlyphAspectRatio('A') * mCharHeight * 2.0;
+    spaceWidth = mpFont->getGlyphAspectRatio('A') * mCharHeight * Ogre::Real(2.0f);
 
   // for calculation of AABB
   Ogre::Vector3 min, max, currPos;
@@ -270,7 +270,7 @@ void MovableText::_setupGeometry()
       verticalOffset = mCharHeight;
       break;
     case MovableText::V_CENTER:
-      verticalOffset = 0.5*mCharHeight;
+      verticalOffset = Ogre::Real(0.5)*mCharHeight;
       break;
     case MovableText::V_BELOW:
       verticalOffset = 0;

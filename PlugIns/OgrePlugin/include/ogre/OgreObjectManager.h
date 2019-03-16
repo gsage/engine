@@ -50,10 +50,10 @@ namespace Gsage {
   /**
    * Event related to factory lifecycle
    */
-  class OgreObjectManagerEvent : public Event
+  class GSAGE_OGRE_PLUGIN_API OgreObjectManagerEvent : public Event
   {
     public:
-      OgreObjectManagerEvent(Event::ConstType type, const std::string& factoryId) : Event(type), mId(factoryId) {}
+      OgreObjectManagerEvent(Event::ConstType type, const std::string& id, OgreObject* object = 0) : Event(type), mId(id), mObject(object) {}
       virtual ~OgreObjectManagerEvent() {}
 
       /**
@@ -62,11 +62,23 @@ namespace Gsage {
       static const Event::Type FACTORY_UNREGISTERED;
 
       /**
-       * Get factory id that was unregistered
+       * Object was destroyed
        */
-      const std::string& getId() const { return mId; }
+      static const Event::Type OBJECT_DESTROYED;
+
+      /**
+       * Get factory id that was unregistered or object id related to event
+       */
+      inline const std::string& getId() const { return mId; }
+
+      /**
+       * Related object
+       */
+      inline const OgreObject* getObject() const { return mObject; }
     private:
       std::string mId;
+      OgreObject* mObject;
+
   };
 
   class OgreObjectManager : public EventDispatcher

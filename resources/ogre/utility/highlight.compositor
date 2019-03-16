@@ -1,0 +1,103 @@
+
+
+compositor Utility/Highlight
+{
+    technique
+    {
+        // Temporary textures
+        texture outline target_width target_height PF_A8R8G8B8
+        texture stencil target_width target_height PF_A8R8G8B8
+
+        texture rt0 target_width target_height PF_A8R8G8B8
+
+        target stencil
+        {
+          visibility_mask 4294967280
+          pass clear
+          {
+            colour_value 0 0 0 0
+            stencil_value 0
+          }
+
+          pass render_scene
+          {
+            first_render_queue 50
+            last_render_queue  50
+          }
+
+          pass stencil
+          {
+            check       true
+            ref_value   1
+            fail_op     keep
+            depth_fail_op   keep
+            pass_op     replace
+            comp_func   equal
+          }
+        }
+
+        target outline
+        {
+          visibility_mask 15
+
+          pass clear
+          {
+            buffers colour
+            colour_value 0 0 0 0
+          }
+
+          pass stencil
+          {
+            check       true
+            ref_value   1
+            fail_op     keep
+            depth_fail_op   keep
+            pass_op     replace
+            comp_func   not_equal
+          }
+
+          pass render_scene
+          {
+            first_render_queue 50
+            last_render_queue  50
+          }
+
+          pass stencil
+          {
+            check false
+          }
+        }
+
+        target rt0
+        {
+          pass clear
+          {
+            colour_value 0.2 0.6 0.9 1
+          }
+
+          pass render_scene
+          {
+            first_render_queue 0
+            last_render_queue  100
+          }
+        }
+
+        target_output
+        {
+            // Start with clear output
+            input none
+
+            pass render_quad
+            {
+                material stdquad
+                input 0 rt0
+            }
+
+            pass render_quad
+            {
+                material Outline
+                input 0 outline
+            }
+        }
+    }
+}

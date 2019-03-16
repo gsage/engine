@@ -45,14 +45,14 @@ MouseEvent::~MouseEvent()
 {
 }
 
-void MouseEvent::setRelativePosition(double x, double y, double z)
+void MouseEvent::setRelativePosition(float x, float y, float z)
 {
   relativeX = x;
   relativeY = y;
   relativeZ = z;
 }
 
-void MouseEvent::setAbsolutePosition(double x, double y, double z)
+void MouseEvent::setAbsolutePosition(float x, float y, float z)
 {
   mouseX = x;
   mouseY = y;

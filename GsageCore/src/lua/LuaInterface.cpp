@@ -268,6 +268,7 @@ namespace Gsage {
         "rmdir", &Filesystem::rmdir,
         "directory", &Filesystem::directory,
         "extension", &Filesystem::extension,
+        "basename", &Filesystem::basename,
         "filename", &Filesystem::filename,
         "mkdir", &Filesystem::mkdir,
         "join", [](Filesystem* fs, DataProxy data) {
@@ -295,6 +296,7 @@ namespace Gsage {
         "getSize", &Window::getSize,
         "setSize", &Window::setSize,
         "getDisplayBounds", &Window::getDisplayBounds,
+        "getScaleFactor", &Window::getScaleFactor,
 
         "FILE_DIALOG_OPEN_FOLDER", sol::var(Window::FILE_DIALOG_OPEN_FOLDER),
         "FILE_DIALOG_OPEN", sol::var(Window::FILE_DIALOG_OPEN),
@@ -660,13 +662,13 @@ namespace Gsage {
     lua.new_usertype<LuaEventProxy>("LuaEventProxy",
         "new", sol::constructors<void()>()
     );
-    lua["LuaEventProxy"]["bind"] = (bool(LuaEventProxy::*)(EventDispatcher*, const std::string&, const sol::object&))&LuaEventProxy::addEventListener;
+    lua["LuaEventProxy"]["bind"] = (bool(LuaEventProxy::*)(EventDispatcher*, Event::ConstType, const sol::object&))&LuaEventProxy::addEventListener;
     lua["LuaEventProxy"]["unbind"] = &LuaEventProxy::removeEventListener;
 
     lua.new_usertype<LuaEventConnection>("LuaEventConnection",
         "new", sol::constructors<sol::types<sol::protected_function>>()
     );
-    lua["LuaEventConnection"]["bind"] = (long(LuaEventConnection::*)(EventDispatcher*, const std::string&))&LuaEventConnection::bind;
+    lua["LuaEventConnection"]["bind"] = (long(LuaEventConnection::*)(EventDispatcher*, Event::ConstType))&LuaEventConnection::bind;
     lua["LuaEventConnection"]["unbind"] = &LuaEventConnection::unbind;
 
     // events

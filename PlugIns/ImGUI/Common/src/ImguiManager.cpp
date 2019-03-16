@@ -31,6 +31,7 @@ THE SOFTWARE.
 
 #include "MouseEvent.h"
 #include "Engine.h"
+#include "GsageFacade.h"
 #include "EngineSystem.h"
 #include "EngineEvent.h"
 #include "ImGuiDockspaceState.h"
@@ -269,27 +270,28 @@ namespace Gsage {
       delete mRenderer;
   }
 
-  void ImguiManager::initialize(Engine* engine, lua_State* luaState)
+  void ImguiManager::initialize(GsageFacade* facade, lua_State* luaState)
   {
-    UIManager::initialize(engine, luaState);
+    UIManager::initialize(facade, luaState);
+    Engine* engine = facade->getEngine();
     setUp();
     addEventListener(engine, SystemChangeEvent::SYSTEM_STOPPING, &ImguiManager::handleSystemChange);
     addEventListener(engine, SystemChangeEvent::SYSTEM_STARTED, &ImguiManager::handleSystemChange);
     // mouse events
-    addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &ImguiManager::handleMouseEvent, -100);
-    addEventListener(mEngine, MouseEvent::MOUSE_UP, &ImguiManager::handleMouseEvent, -100);
-    addEventListener(mEngine, MouseEvent::MOUSE_MOVE, &ImguiManager::handleMouseEvent, -100);
+    addEventListener(engine, MouseEvent::MOUSE_DOWN, &ImguiManager::handleMouseEvent, -100);
+    addEventListener(engine, MouseEvent::MOUSE_UP, &ImguiManager::handleMouseEvent, -100);
+    addEventListener(engine, MouseEvent::MOUSE_MOVE, &ImguiManager::handleMouseEvent, -100);
     // keyboard events
-    addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &ImguiManager::handleKeyboardEvent, -100);
-    addEventListener(mEngine, KeyboardEvent::KEY_UP, &ImguiManager::handleKeyboardEvent, -100);
+    addEventListener(engine, KeyboardEvent::KEY_DOWN, &ImguiManager::handleKeyboardEvent, -100);
+    addEventListener(engine, KeyboardEvent::KEY_UP, &ImguiManager::handleKeyboardEvent, -100);
     // input event
-    addEventListener(mEngine, TextInputEvent::INPUT, &ImguiManager::handleInputEvent, -100);
+    addEventListener(engine, TextInputEvent::INPUT, &ImguiManager::handleInputEvent, -100);
   }
 
   bool ImguiManager::handleSystemChange(EventDispatcher* sender, const Event& event)
   {
     const SystemChangeEvent& e = static_cast<const SystemChangeEvent&>(event);
-    
+
     if(e.mSystemId != "render") {
       return true;
     }
@@ -312,7 +314,7 @@ namespace Gsage {
     if(mIsSetUp)
       return;
 
-    EngineSystem* render = mEngine->getSystem("render");
+    EngineSystem* render = mFacade->getEngine()->getSystem("render");
     if(render == 0 || !render->isReady()) {
       return;
     }
@@ -339,18 +341,18 @@ namespace Gsage {
     }
 
     mRenderer->mManager = this;
-    mRenderer->initialize(mEngine, mLuaState);
+    mRenderer->initialize(mFacade->getEngine(), mLuaState);
     setLuaState(mLuaState);
 
     mIsSetUp = true;
 
     // subscribe for engine updates to handle UI
-    addEventListener(mEngine, EngineEvent::UPDATE, &ImguiManager::render);
+    addEventListener(mFacade->getEngine(), EngineEvent::UPDATE, &ImguiManager::render);
   }
 
   void ImguiManager::tearDown()
   {
-    removeEventListener(mEngine, EngineEvent::UPDATE, &ImguiManager::render);
+    removeEventListener(mFacade->getEngine(), EngineEvent::UPDATE, &ImguiManager::render);
     mIsSetUp = false;
     delete mRenderer;
     mRenderer = 0;
@@ -517,13 +519,19 @@ namespace Gsage {
       return mContexts[name];
     }
 
+    WindowPtr window = mFacade->getWindowManager()->getWindow(name);
+    float scale = 1.0f;
+    if(window) {
+      scale = std::max(1.0f, window->getScaleFactor() * .75f);
+    }
+
     LOG(INFO) << "Creating ImGui context " << name;
     ImGuiContext* ctx = ImGui::CreateContext(mFontAtlas);
     ImGui::SetCurrentContext(ctx);
 
     DataProxy theme = DataProxy::create(DataWrapper::JSON_OBJECT);
-    if(!mEngine->settings().read(std::string("imgui.theme.") + name, theme)) {
-      mEngine->settings().read("imgui.theme", theme);
+    if(!mFacade->getEngine()->settings().read(std::string("imgui.theme.") + name, theme)) {
+      mFacade->getEngine()->settings().read("imgui.theme", theme);
     }
 
     ImGuiStyle& style = ImGui::GetStyle();
@@ -588,9 +596,12 @@ namespace Gsage {
     style.GrabRounding          = theme.get("grabRounding", 3.0f);
     style.CurveTessellationTol  = theme.get("curveTessellationTol", 1.25f);
 
-    auto additionalFonts = mEngine->settings().get<DataProxy>("imgui.fonts");
+    style.ScaleAllSizes(scale);
+
+    auto additionalFonts = mFacade->getEngine()->settings().get<DataProxy>("imgui.fonts");
 
     ImGuiIO& io = ImGui::GetIO();
+    io.DisplayFramebufferScale = ImVec2(scale, scale);
     if(!mFontAtlas) {
       // Build texture atlas
       unsigned char* pixels;
@@ -636,7 +647,7 @@ namespace Gsage {
 
           auto glyphOffset = pair.second.get<ImVec2>("glyphOffset");
           if(glyphOffset.second) {
-            config.GlyphOffset = glyphOffset.first;
+            config.GlyphOffset = glyphOffset.first * scale;
           }
           builder.BuildRanges(&mGlyphRanges[i]);
           config.PixelSnapH = pair.second.get("pixelSnapH", false);
@@ -647,7 +658,7 @@ namespace Gsage {
             continue;
           }
 
-          ImFont* pFont = io.Fonts->AddFontFromFileTTF(path.c_str(), size.first, &config, mGlyphRanges[i].Data);
+          ImFont* pFont = io.Fonts->AddFontFromFileTTF(path.c_str(), (int)((float)size.first * scale), &config, mGlyphRanges[i].Data);
           mFonts.push_back(pFont);
           i++;
         }
@@ -658,7 +669,7 @@ namespace Gsage {
       mFontAtlas = io.Fonts;
     }
 
-    io.MouseDrawCursor = mEngine->settings().get("imgui.drawCursor", true);
+    io.MouseDrawCursor = mFacade->getEngine()->settings().get("imgui.drawCursor", true);
 
     io.DisplaySize = initialSize;
     ImGui::NewFrame();
@@ -686,7 +697,7 @@ namespace Gsage {
     io.KeyMap[ImGuiKey_Space] = KeyboardEvent::KC_SPACE;
     mContexts[name] = ctx;
 
-    mEngine->fireEvent(ImguiEvent(ImguiEvent::CONTEXT_CREATED, name));
+    mFacade->getEngine()->fireEvent(ImguiEvent(ImguiEvent::CONTEXT_CREATED, name));
     return ctx;
   }
 

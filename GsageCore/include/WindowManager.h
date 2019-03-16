@@ -98,6 +98,12 @@ namespace Gsage {
        */
       virtual std::tuple<int, int, int, int> getDisplayBounds() = 0;
 
+      /**
+       * Get DPI for the screen where the window is located
+       */
+      virtual float getScaleFactor() const = 0;
+
+
     private:
       std::string mName;
   };

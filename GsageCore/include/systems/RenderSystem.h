@@ -40,9 +40,9 @@ namespace Gsage {
   class Geom
   {
     public:
-      typedef std::tuple<int*, int> Tris;
-      typedef std::tuple<float*, int> Verts;
-      typedef std::tuple<float*, int> Normals;
+      typedef std::tuple<int*, size_t> Tris;
+      typedef std::tuple<float*, size_t> Verts;
+      typedef std::tuple<float*, size_t> Normals;
 
       Geom();
       virtual ~Geom();
@@ -84,11 +84,11 @@ namespace Gsage {
       inline bool empty() { return ntris == 0 && nverts == 0; }
 
       int* tris;
-      int ntris;
+      size_t ntris;
       float* verts;
-      int nverts;
+      size_t nverts;
       float* normals;
-      int nnormals;
+      size_t nnormals;
       float* bmax;
       float* bmin;
   };

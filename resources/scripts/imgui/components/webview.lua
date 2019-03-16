@@ -198,6 +198,7 @@ function WebView:render(width, height)
         pageData = self.pageData,
       }
     )
+    self.cefwebview:setZoom(window:getScaleFactor())
 
     self.onScreenPositionX, self.onScreenPositionY = window:getPosition()
   end
@@ -213,7 +214,8 @@ function WebView:render(width, height)
 
   imgui.SetCursorScreenPos(x + width/2 - 10, y + height/2 - 10)
   if self.loading then
-    imgui.Spinner("Loading Page", 15, 4, 0xffaa5119)
+    local sx, sy = imgui.Scale()
+    imgui.Spinner("Loading Page", 15 * sx, 4 * sx, 0xffaa5119)
   end
 
   self.handleInput = imgui.IsWindowFocused()

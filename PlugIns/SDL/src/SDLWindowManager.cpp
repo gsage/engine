@@ -94,22 +94,9 @@ namespace Gsage {
 
   std::tuple<int, int, int, int> SDLWindow::getDisplayBounds()
   {
-    int displays = SDL_GetNumVideoDisplays();
-    SDL_Point p = {0, 0};
-    SDL_Point points[1] = {p};
-    std::tie(p.x, p.y) = getPosition();
+    int index = getDisplay();
     SDL_Rect displayBounds;
-    for(int i = 0; i < displays; i++) {
-      SDL_GetDisplayUsableBounds(i, &displayBounds);
-      if(p.x < 0 || p.y < 0) {
-        break;
-      }
-
-      SDL_Rect r;
-      if(SDL_EnclosePoints(&points[0], 1, &displayBounds, &r)) {
-        break;
-      }
-    }
+    SDL_GetDisplayUsableBounds(index, &displayBounds);
 #if GSAGE_PLATFORM != GSAGE_APPLE
     int top;
     int left;
@@ -130,6 +117,40 @@ namespace Gsage {
     }
 
     return (void*) mGLContext;
+  }
+
+  float SDLWindow::getScaleFactor() const
+  {
+    float ddpi, hdpi, vdpi;
+    SDL_GetDisplayDPI(getDisplay(), &ddpi, &hdpi, &vdpi);
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    float defaultDPI = 72.0f;
+#else
+    float defaultDPI = 96.0f;
+#endif
+    return hdpi/defaultDPI;
+  }
+
+  int SDLWindow::getDisplay() const
+  {
+    int displays = SDL_GetNumVideoDisplays();
+    SDL_Point p = {0, 0};
+    SDL_Point points[1] = {p};
+    std::tie(p.x, p.y) = getPosition();
+    SDL_Rect displayBounds;
+    for(int i = 0; i < displays; i++) {
+      SDL_GetDisplayUsableBounds(i, &displayBounds);
+      if(p.x < 0 || p.y < 0) {
+        return i;
+      }
+
+      SDL_Rect r;
+      if(SDL_EnclosePoints(&points[0], 1, &displayBounds, &r)) {
+        return i;
+      }
+    }
+
+    return 0;
   }
 
   SDLWindowManager::SDLWindowManager(const std::string& type)

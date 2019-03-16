@@ -32,10 +32,11 @@ function ModalView:showError(text)
     imgui.Text(icons.error)
     imgui.SameLine()
     imgui.TextWrapped(text)
-  end, choices, 150, 100)
+  end, choices, 400 * self.sx, 150 * self.sy)
 end
 
 function ModalView:__call()
+  self.sx, self.sy = imgui.Scale()
   if self.open then
     imgui.OpenPopup(self.title)
   else
@@ -51,15 +52,15 @@ function ModalView:__call()
     if self.contentDraw then
       self.contentDraw()
     end
-    imgui.Dummy(0, 40)
-    local buttonWidth = 120
+    imgui.Dummy(0, 40 * self.sy)
+    local buttonWidth = 120 * self.sx
     local w, h = imgui.GetWindowContentRegionMax()
     local x = w / 2 - self.choiceCount * (buttonWidth + 10) / 2
     imgui.SetCursorPos(x, h - imgui.GetItemsLineHeightWithSpacing())
     imgui.Dummy(0, 0)
     imgui.SameLine()
     for key, value in pairs(self.choices) do
-      if imgui.Button(key, buttonWidth, 30) then
+      if imgui.Button(key, buttonWidth, 30 * self.sy) then
         value()
         imgui.CloseCurrentPopup()
         self.open = false

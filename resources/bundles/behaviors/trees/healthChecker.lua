@@ -1,5 +1,4 @@
 local function isDead(self, context)
-  local dead = self.stats:getNumber("hp", 0) <= 0
   return false
 end
 
@@ -15,7 +14,7 @@ local function inRange(self, context)
     return false
   end
 
-  return self.render.position:squaredDistance(context.target.render.position) < self.stats:getNumber("attackDistance", 5) * 2
+  return self.render.position:squaredDistance(context.target.render.position) < 5 --self.stats:getNumber("attackDistance", 5) * 2
 end
 
 local function attack(self, context)
@@ -27,7 +26,7 @@ local function attack(self, context)
   if context.target == nil then
     return false
   end
-  local aspd = self.stats:getNumber('aspd', 1)
+  local aspd =  1 --self.stats:getNumber('aspd', 1)
 
   self.render:lookAt(context.target.render.position, geometry.Y_AXIS, geometry.TS_WORLD)
   local anims = {"attack1", "attack2"}

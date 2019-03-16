@@ -48,14 +48,14 @@ namespace Gsage {
     Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(name, data.get("resourceGroup", "General"));
     material->setReceiveShadows(data.get("receiveShadows", false));
     int techniqueIndex = 0;
-    for(auto t : data.get("techniques", DataProxy::create(DataWrapper::JSON_OBJECT))) {
+    for(auto& t : data.get("techniques", DataProxy::create(DataWrapper::JSON_OBJECT))) {
       Ogre::Technique* tech = material->getTechnique(techniqueIndex);
 #if OGRE_VERSION_MAJOR == 1
       tech->setLightingEnabled(t.second.get("lightingEnabled", true));
       tech->setDepthCheckEnabled(t.second.get("depthCheckEnabled", true));
 #endif
       int passIndex = 0;
-      for(auto p : t.second.get("passes", DataProxy::create(DataWrapper::JSON_OBJECT))) {
+      for(auto& p : t.second.get("passes", DataProxy::create(DataWrapper::JSON_OBJECT))) {
         Ogre::Pass* pass = tech->getPass(passIndex++);
         if(!pass) {
           LOG(ERROR) << "Can't get pass " << passIndex << ", material name: " << name;
@@ -76,6 +76,34 @@ namespace Gsage {
 
         if(selfIllumination.second) {
           pass->setSelfIllumination(selfIllumination.first);
+        }
+
+        auto textures = p.second.get<DataProxy>("textures");
+        if(textures.second) {
+          int textureIndex = 0;
+          for(auto& pair : textures.first) {
+            Ogre::String textureName = pair.second.get("textureName", "");
+            if(textureName.empty()) {
+              LOG(ERROR) << textureIndex << " texture unit does not have \"textureName\" defined. Skipped";
+              continue;
+            }
+            pass->createTextureUnitState(
+              textureName,
+              textureIndex++
+            );
+
+            // TODO support all texture unit state parameters
+          }
+        }
+
+        auto vp = p.second.get<std::string>("vertexProgram");
+        if(vp.second) {
+          pass->setVertexProgram(vp.first);
+        }
+
+        auto fp = p.second.get<std::string>("fragmentProgram");
+        if(fp.second) {
+          pass->setFragmentProgram(fp.first);
         }
       }
 

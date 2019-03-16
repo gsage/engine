@@ -41,8 +41,10 @@ namespace Gsage  {
 
   bool LuaEventProxy::addEventListener(EventDispatcher* dispatcher, Event::ConstType eventType, const sol::object& callback)
   {
-    if(callback.get_type() != sol::type::function)
+    if(callback.get_type() != sol::type::function) {
+      LOG(ERROR) << "Failed to bind event " << eventType << " handler for dispatcher " << dispatcher << ", bad object passed " << (int)callback.get_type();
       return false;
+    }
 
     Callbacks* cb = getCallbacks(dispatcher, eventType);
     Callbacks& callbacks = cb != 0 ? *cb : subscribe(dispatcher, eventType);

@@ -16,7 +16,9 @@ function recast.visualizePath(points, drawPoints, name)
               diffuse = "0xFFCC00",
               ambient = "0xffcc00",
               illumination = "0xFFCC00",
-            }
+            },
+            vertexProgram = "stdquad_vp",
+            fragmentProgram = "stdquad_fp",
           },}
         },}
       },
@@ -37,7 +39,9 @@ function recast.visualizePath(points, drawPoints, name)
                 diffuse = "0xFFDD33",
                 ambient = "0xFFDD33",
                 illumination = "0xFFDD33",
-              }
+              },
+              vertexProgram = "stdquad_vp",
+              fragmentProgram = "stdquad_fp",
             },}
           },}
         },
@@ -74,7 +78,9 @@ function recast.visualizeNavmesh()
                 diffuse = "0x335555",
                 ambient = "0x335555",
                 illumination = "0x114499",
-              }
+              },
+              vertexProgram = "stdquad_vp",
+              fragmentProgram = "stdquad_fp",
             },}
           },}
         },
@@ -92,7 +98,9 @@ function recast.visualizeNavmesh()
                 diffuse = "0x335555",
                 ambient = "0x335555",
                 illumination = "0x1199FF",
-              }
+              },
+              vertexProgram = "stdquad_vp",
+              fragmentProgram = "stdquad_fp",
             },}
           },}
         },
@@ -124,7 +132,9 @@ function recast.visualizeNavmesh()
                   diffuse = "0x114444",
                   ambient = "0x114444",
                   illumination = "0x113355",
-                }
+                },
+                vertexProgram = "stdquad_vp",
+                fragmentProgram = "stdquad_fp",
               },}
             },}
           },
@@ -141,7 +151,9 @@ function recast.visualizeNavmesh()
           position = Vector3.new(0, 0, 0),
           rotation = Quaternion.new(1, 0, 0, 0),
           children = children
-        }
+        },
+        vertexProgram = "stdquad_vp",
+        fragmentProgram = "stdquad_fp",
       }
     })
   end

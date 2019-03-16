@@ -1,0 +1,25 @@
+
+material Grid
+{
+    receive_shadows off
+    technique
+    {
+        pass Grid
+        {
+            scene_blend add
+
+            vertex_program_ref stdquad_vp
+            {
+            }
+
+            fragment_program_ref stdquad_fp
+            {
+            }
+
+            texture_unit
+            {
+                texture grid.png 2d
+            }
+        }
+    }
+}

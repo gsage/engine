@@ -1,6 +1,7 @@
 require 'lib.class'
 
 local event = require 'lib.event'
+local factories = {}
 
 -- base factory
 EntityFactory = class(function(self, id, definitions)
@@ -14,12 +15,18 @@ EntityFactory = class(function(self, id, definitions)
   end
 
   event:bind(core, Facade.RESET, onReset, true)
+
+  factories[id] = self
 end)
 
 -- creation policies
 EntityFactory.REPLACE = "replace"
 EntityFactory.NOTHING = "do nothing"
 EntityFactory.REUSE = "reuse"
+
+function EntityFactory:getAvailableTypes()
+  return self.availableTypes or {}
+end
 
 function EntityFactory:create(type, name, settings)
   local objectName = name or type .. tostring(self.createdObjectsCount)
@@ -41,7 +48,7 @@ function EntityFactory:create(type, name, settings)
     end
   end
 
-  local constructor = self.definitions[type]
+  local constructor = self:getConstructor(type)
   if not constructor then
     log.error("No constructor defined for type " .. tostring(type))
     return nil
@@ -56,6 +63,20 @@ function EntityFactory:create(type, name, settings)
   return result
 end
 
+function EntityFactory:getConstructor(type)
+  return self.definitions[type]
+end
+
 function EntityFactory:register(type, func)
   self.definitions[type] = func
+  self:updateAvailableTypes()
 end
+
+function EntityFactory:updateAvailableTypes()
+  self.availableTypes = {}
+  for key in pairs(self.definitions) do
+    table.insert(self.availableTypes, key)
+  end
+end
+
+return factories

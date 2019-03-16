@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "Filesystem.h"
 #include "Engine.h"
 #include "EngineEvent.h"
+#include "ScopedLocale.h"
 
 #if OGRE_VERSION >= 0x020100
 #include <OgreHlmsManager.h>
@@ -85,10 +86,13 @@ namespace Gsage {
       datablock = NULL;
     }
 #endif
-    std::ifstream ifs(info.path, std::ios::in);
-    Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(info.path, &ifs, false));
-    Ogre::MaterialManager::getSingletonPtr()->parseScript(dataStream, group);
-    ifs.close();
+    {
+      ScopedCLocale l(true);
+      std::ifstream ifs(info.path, std::ios::in);
+      Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(info.path, &ifs, false));
+      Ogre::MaterialManager::getSingletonPtr()->parseScript(dataStream, group);
+      ifs.close();
+    }
     return true;
   }
 

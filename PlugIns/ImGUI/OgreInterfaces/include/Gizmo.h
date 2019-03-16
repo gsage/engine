@@ -27,12 +27,16 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "Definitions.h"
 #if OGRE_VERSION >= 0x020100
 #include "v2/ImGuizmo.h"
 #else
 #include "v1/ImGuizmo.h"
 #endif
 #include <string>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+#include "EventSubscriber.h"
 
 namespace Ogre {
   class Matrix4;
@@ -59,7 +63,7 @@ namespace Gsage {
    *  if render == nil then
    *    exit(1)
    *  end
-   *  gizmo:setTarget(render.root)
+   *  gizmo:addTarget(render.root)
    *
    *  -- enable
    *  gizmo:enable(true)
@@ -81,7 +85,7 @@ namespace Gsage {
       "rotation")
    * \endverbatim
    */
-  class Gizmo
+  class Gizmo : public EventSubscriber<Gizmo>
   {
     public:
       Gizmo(OgreRenderSystem* rs);
@@ -100,7 +104,17 @@ namespace Gsage {
       /**
        * Set target
        */
-      void setTarget(SceneNodeWrapper* target);
+      void addTarget(SceneNodeWrapper* target);
+
+      /**
+       * Remove target
+       */
+      void removeTarget(const SceneNodeWrapper* target);
+
+      /**
+       * Reset all targets in Gizmo
+       */
+      void resetTargets();
 
       /**
        * Set gizmo operation
@@ -126,16 +140,42 @@ namespace Gsage {
        * Draw coordinates editor
        */
       bool drawCoordinatesEditor(float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const std::string& display_format = "%.3f", float power = 1.0f, const std::string& posLabel = "position", const std::string& scaleLabel = "scale", const std::string& rotationLabel = "rotation");
+
     private:
+
+      const Ogre::Vector3& getPosition();
+
+      const Ogre::Vector3& getScale();
+
+      const Ogre::Quaternion& getOrientation();
+
+      bool onTargetDestroyed(EventDispatcher* sender, const Event& event);
+
+      void updateTargetNode(bool reset = true);
+
+      void rotate(float delta[3]);
+
+      void setScale(float scale[3]);
+
       OgreRenderSystem* mRenderSystem;
-      SceneNodeWrapper* mTarget;
+      typedef std::vector<SceneNodeWrapper*> Targets;
+      Targets mTargets;
+      typedef std::map<const SceneNodeWrapper*, Ogre::Vector3> Positions;
+      Positions mPositions;
+      Positions mInitialPositions;
+      Positions mInitialScales;
+
       float mModelMatrix[16];
+
+      Ogre::Vector3 mPosition;
+      Ogre::Vector3 mScale;
+      Ogre::Quaternion mOrientation;
 
       ImGuizmo::OPERATION mOperation;
       ImGuizmo::MODE mMode;
 
       bool mEnabled;
-
+      bool mUsing;
       bool extractMatrix(Ogre::Matrix4, float* dest, int length);
   };
 }

@@ -128,6 +128,7 @@ namespace Gsage {
     LOG(TRACE) << "Create camera with id " << name;
     // toss camera object to the movable wrapper
     mObject = mSceneManager->createCamera(name);
+    mObject->setQueryFlags(0);
     mObject->setListener(this);
     attachObject(mObject);
   }

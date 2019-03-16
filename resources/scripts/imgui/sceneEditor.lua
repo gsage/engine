@@ -1,4 +1,6 @@
 local camera = require 'factories.camera'
+local factoryUtils = require 'factories.utils'
+local factories = require 'factories.base'
 local event = require 'lib.event'
 local lm = require 'lib.locales'
 local imguiInterface = require 'imgui.base'
@@ -17,8 +19,9 @@ SceneEditor = class(ImguiWindow, function(self, modal, textureID, title, docked,
   self.modal = modal
   self.history = {}
   self.gizmo = imgui.createGizmo()
-  self.targetID = nil
-  self.gizmoEnabled = false
+
+  self.selectedObjects = {}
+  self.clipboard = {}
 
   self:registerContext({
     {
@@ -112,12 +115,14 @@ SceneEditor = class(ImguiWindow, function(self, modal, textureID, title, docked,
       icon = icons.copy,
       action = "copy",
       callback = function()
-        if self.targetID then
-          local e = eal:getEntity(self.targetID)
+        self.clipboard = {}
+        for id in pairs(self.selectedObjects) do
+          local e = eal:getEntity(id)
           if e then
-            self.clipboard = deepcopy(e.props)
+            local copy = deepcopy(e.props)
             -- erase object id for duplication
-            self.clipboard.id = nil
+            copy.id = nil
+            table.insert(self.clipboard, copy)
           end
         end
       end
@@ -127,8 +132,11 @@ SceneEditor = class(ImguiWindow, function(self, modal, textureID, title, docked,
       action = "paste",
       callback = function()
         if self.clipboard then
-          local e = deepcopy(self.clipboard)
-          self:addEntity(e)
+          self:resetSelection()
+          for _, e in ipairs(self.clipboard) do
+            self:addEntity(deepcopy(e), false)
+          end
+          self:pushHistory()
         end
       end
     },
@@ -136,9 +144,22 @@ SceneEditor = class(ImguiWindow, function(self, modal, textureID, title, docked,
       icon = icons.delete,
       action = "delete",
       callback = function()
-        if self.targetID then
-          self:removeEntity(self.targetID)
+        local entities = {}
+        for id in pairs(self.selectedObjects) do
+          table.insert(entities, id)
         end
+
+        for _, id in pairs(entities) do
+          self:removeEntity(id, false)
+        end
+        self:pushHistory()
+      end,
+    },
+    {
+      icon = icons.plus,
+      action = "createObject",
+      callback = function()
+        self:createObject()
       end,
       padding = 20
     },
@@ -185,7 +206,7 @@ SceneEditor = class(ImguiWindow, function(self, modal, textureID, title, docked,
   end
 
   self.onSceneUnload = function(event)
-    self.reset(event)
+    self:resetSelection()
     self.scene = nil
     self.loadingScene = nil
     self.history = {}
@@ -193,23 +214,33 @@ SceneEditor = class(ImguiWindow, function(self, modal, textureID, title, docked,
   end
 
   self.reset = function(event)
-    if Facade.BEFORE_RESET or (event.type == EntityEvent.REMOVE and event.id == self.targetID) then
-      self:resetSelection()
+    if event.type == EntityEvent.REMOVE and self.selectedObjects[event.id] then
+      self.selectedObjects[event.id] = nil
     end
   end
 
   event:bind(core, Facade.LOAD, self.onSceneLoaded)
   event:bind(core, Facade.BEFORE_RESET, self.onSceneUnload)
   event:onEntity(core, EntityEvent.REMOVE, self.reset)
+
+  self.popupID = "sceneEditorPopup"
 end)
+
+SceneEditor.ENTITIES = 0x01
+SceneEditor.SETTINGS = 0x02
 
 -- create camera
 function SceneEditor:createCamera(type, name, settings)
   self.camera = camera:create(type, name, settings)
   local texture = self.camera:renderToTexture(self.textureID, {
     autoUpdated = true,
+    -- V2 workspace
     workspaceName = "ogreview",
+    -- V1 viewport settings
     viewport = {
+      compositors = {
+        "Utility/Highlight"
+      },
       backgroundColor = "0x00000000",
       renderQueueSequence = {
         ogre.RENDER_QUEUE_BACKGROUND,
@@ -223,6 +254,37 @@ function SceneEditor:createCamera(type, name, settings)
   if texture then
     self.viewport:setTexture(texture.name)
   end
+
+  local grid = eal:getEntity("__grid__")
+  if not grid then
+    data:createEntity({
+      id = "grid",
+      vars = {
+        utility = true
+      },
+      render = {
+        root = {
+          children = {
+            {
+              type = "billboard",
+              name = "__grid__",
+              commonUpVector = Vector3.new(0, 0, 1),
+              commonDirection = Vector3.new(0, 1, 0),
+              billboardType = "BBT_PERPENDICULAR_COMMON",
+              materialName = "Utility.Grid",
+              billboards = {
+                {
+                  position = Vector3.new(0, 0, 0),
+                  width = 20,
+                  height = 20
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  end
 end
 
 -- render scene editor
@@ -230,6 +292,12 @@ function SceneEditor:__call()
   imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 5.0, 5.0)
   local render = self:imguiBegin()
   imgui.PopStyleVar(ImGuiStyleVar_WindowPadding)
+  if self.openPopup then
+    imgui.OpenPopup(self.openPopup)
+    self.openPopup = nil
+  end
+
+  self:renderPopup(self.popupID, self.popupContent)
 
   if not self.open or not render then
     if self.camera then
@@ -264,18 +332,48 @@ function SceneEditor:__call()
     end
   end
 
-  if not usingGizmo and imgui.IsMouseClicked(0) and imgui.IsWindowHovered() and self.camera then
+  local target = nil
+  if imgui.IsWindowHovered() and self.camera then
     local rt = self:getRenderTarget()
     if rt then
-      local _, target = rt:raycast(30, 0.1, 0xFF)
-      if target then
-        target = eal:getEntity(target.id)
-        if not target then
-          return
+      local point
+      point, target = rt:raycast(30, 0.1, 0xFF + ogre.QUERY_FX_DEFAULT_MASK)
+    end
+  end
+
+  if self.hovered and (not target or target.id ~= self.hovered.id) then
+    self.hovered:setHovered(false)
+    self.hovered = nil
+  end
+
+  if not usingGizmo and imgui.IsWindowHovered() then
+    if target then
+      target = eal:getEntity(target.id)
+      if not target then
+        return
+      end
+
+      if imgui.IsMouseClicked(0) then
+        -- deselect all if not modifiers are pressed
+        if not imgui.KeyShift() then
+          self:resetSelection()
         end
 
-        self:setSelection(target)
+        -- deselect
+        if imgui.KeyShift() and self.selectedObjects[target.id] then
+          self:resetSelection(target)
+        else
+          -- select
+          self:setSelection(target)
+        end
       end
+
+      if target.setHovered then
+        target:setHovered(true)
+        self.hovered = target
+      end
+    elseif imgui.IsMouseClicked(0) and not imgui.KeyShift() then
+      self:resetSelection()
     end
   end
 
@@ -294,20 +392,37 @@ function SceneEditor:setSelection(entity)
     return
   end
 
-  self.targetID = entity.id
-  self.gizmo:setTarget(render.root)
-  self.gizmo:enable(true)
-  self.gizmoEnabled = true
+  if entity.setSelected then
+    entity:setSelected(true)
+    self.gizmo:addTarget(render.root)
+  end
+  self.selectedObjects[entity.id] = entity
 end
 
 -- reset gizmo target
-function SceneEditor:resetSelection()
-  if not self.gizmoEnabled then
-    return
+function SceneEditor:resetSelection(target)
+  local function deselect(id)
+    if not self.selectedObjects[id] then
+      return
+    end
+
+    local e = eal:getEntity(id)
+    if e and e.setSelected then
+      e:setSelected(false)
+      self.gizmo:removeTarget(e.render.root)
+    end
+    self.selectedObjects[id] = nil
   end
-  self.gizmoEnabled = false
-  self.gizmo:setTarget(nil)
-  self.gizmo:enable(false)
+
+  if target then
+    deselect(target.id)
+  else
+    for id in pairs(self.selectedObjects) do
+      deselect(id)
+    end
+
+    self.gizmo:resetTargets()
+  end
 end
 
 function SceneEditor:getRenderTarget()
@@ -319,29 +434,30 @@ function SceneEditor:getRenderTarget()
 end
 
 -- add entity to scene
-function SceneEditor:addEntity(props)
+function SceneEditor:addEntity(props, pushHistory)
   local entity = data:createEntity(props)
   if not entity then
-    self.modal:showError(lm("modals.errors.failed_to_add_entity", {entity = json.dumps(props)}))
+    self.modal:showError(lm("modals.errors.failed_to_add_entity", {entity = json.dumps(props), details = lm("modals.errors.details.failed_to_create_object")}))
     return
   end
 
-  self:pushHistory()
+  if pushHistory == nil or pushHistory then
+    self:pushHistory()
+  end
   self:setSelection(eal:getEntity(entity.id))
 end
 
 -- remove entity from scene
-function SceneEditor:removeEntity(id)
-  if self.targetID == id then
-    self:resetSelection()
-  end
+function SceneEditor:removeEntity(id, pushHistory)
   if data:removeEntity(id) then
-    self:pushHistory()
+    if pushHistory == nil or pushHistory then
+      self:pushHistory()
+    end
   end
 end
 
 -- saves current scene state in the history object
-function SceneEditor:pushHistory()
+function SceneEditor:pushHistory(flags)
   if self.historyIndex and self.historyIndex < #self.history then
     local newHistory = {}
     for i = 1,self.historyIndex do
@@ -350,20 +466,24 @@ function SceneEditor:pushHistory()
     self.history = newHistory
   end
 
-  table.insert(self.history, data:getSceneData())
+  flags = flags or SceneEditor.ENTITIES
+
+  local historyRecord = data:getSceneData()
+  if bit.band(flags, SceneEditor.ENTITIES) == 0 then
+    historyRecord.entities = nil
+  end
+
+  if bit.band(flags, SceneEditor.SETTINGS) == 0 then
+    historyRecord.settings = nil
+  end
+
+  table.insert(self.history, historyRecord)
   self.historyIndex = #self.history
 end
 
 -- loads scene
 function SceneEditor:loadScene(scene)
-  if self.scene ~= nil then
-    -- TODO: check if saved
-    self:unloadScene()
-  end
-
-  game:reset(function(entity)
-    return entity.vars.utility ~= true
-  end)
+  self:unloadScene()
   self.scene = nil
   self.loadingScene = scene
   game:loadScene(scene)
@@ -410,4 +530,67 @@ function SceneEditor:redo()
     self.historyIndex = self.historyIndex + 1
     data:setSceneData(self.history[self.historyIndex])
   end
+end
+
+function SceneEditor:createObject()
+  -- load all entity factories
+  factoryUtils.loadAll()
+  self.popupContent = {}
+  for id, value in pairs(factories) do
+    local popupID = self.popupID .. "." .. id
+
+    table.insert(self.popupContent,
+      function()
+        local menuText = lm("viewport.factories." .. id .. ".menu")
+        if menuText == lm.MISSING then
+          menuText = id
+        end
+        if imgui.BeginMenu(menuText) then
+          for _, t in ipairs(value:getAvailableTypes()) do
+            text = lm("viewport.factories." .. id .. "." .. t)
+            if text == lm.MISSING then
+              text = t
+            end
+            if imgui.MenuItem(text) then
+              if not self.camera or not self.scene then
+                self.modal:showError(lm("modals.errors.failed_to_add_entity", {entity = text .. " " .. menuText, details = lm("modals.errors.details.no_scene_opened")}))
+              else
+                local success, result = pcall(function()
+                  return value:create(t)
+                end)
+                local entity = result
+
+                if entity and success then
+                  self:resetSelection()
+                  self:setSelection(entity)
+                else
+                  local details = lm("modals.errors.details.failed_to_create_object")
+                  if not success then
+                    details = ": " .. tostring(result)
+                  end
+
+                  self.modal:showError(lm("modals.errors.failed_to_add_entity", {entity = text .. " " .. menuText, details = details}))
+                end
+              end
+            end
+          end
+          imgui.EndMenu()
+        end
+      end
+    )
+  end
+
+  self.openPopup = self.popupID
+end
+
+function SceneEditor:renderPopup(id, items)
+  if imgui.BeginPopup(id) and items then
+    for _, item in ipairs(items) do
+      item()
+    end
+    imgui.EndPopup()
+    return true
+  end
+
+  return false
 end

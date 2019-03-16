@@ -53,8 +53,13 @@
 
   "modals": {
     "errors": {
-      "failed_to_add_entity": "Failed to add entity %{entity} to scene",
-      "failed_to_create_asset": "Failed to create asset: asset manager is not installed"
+      "error": "Error",
+      "failed_to_add_entity": "Failed to add entity %{entity} to scene%{details}",
+      "failed_to_create_asset": "Failed to create asset: asset manager is not installed",
+      "details": {
+        "no_scene_opened": ": open or create a scene",
+        "failed_to_create_object": ": failed to create object"
+      }
     },
     "confirm_deletion": {
       "title": "Delete Asset %{asset}",
@@ -113,6 +118,27 @@
   },
 
   "viewport": {
+    "factories": {
+      "light": {
+        "menu": "Light",
+        "point": "Point",
+        "directional": "Directional",
+        "spot": "Spot"
+      },
+      "emitter": {
+        "menu": "Emitter",
+        "damage": "Damage Points Emitter"
+      },
+      "camera":
+      {
+        "menu": "Camera",
+        "free": "Free WASD Camera",
+        "orbit": "Orbit Camera"
+      },
+      "character": {
+        "menu": "Character"
+      }
+    },
     "actions": {
       "new": "New Scene",
       "save": "Save Scene",
@@ -126,7 +152,8 @@
       "move": "Transform Entity",
       "simulationStart": "Start Simulation",
       "simulationStop": "Stop Simulation",
-      "simulationPause": "Pause simulation"
+      "simulationPause": "Pause Simulation",
+      "createObject": "Create Scene Object"
     }
   },
 

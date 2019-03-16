@@ -117,14 +117,14 @@ namespace Gsage
         virtual void update(const double& time)
         {
           typename ObjectPool<T>::PointerVector components = mComponents.getElements();
-          const int len = components.size();
+          size_t len = components.size();
           if(len == 0)
             return;
 
           if(mConfigDirty)
             configUpdated();
 
-          for(int i = 0; i < len; ++i)
+          for(size_t i = 0; i < len; ++i)
           {
             updateComponent(components[i], components[i]->getOwner(), time);
           }

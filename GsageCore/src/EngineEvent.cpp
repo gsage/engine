@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "EngineEvent.h"
 #include "EngineSystem.h"
+#include "EventDispatcher.h"
 
 namespace Gsage {
 
@@ -79,7 +80,7 @@ namespace Gsage {
   {
   }
 
-  DropFileEvent::DropFileEvent(Event::ConstType type, const std::string& pfile) 
+  DropFileEvent::DropFileEvent(Event::ConstType type, const std::string& pfile)
     : Event(type)
     , file(pfile)
   {

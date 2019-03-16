@@ -35,7 +35,7 @@ namespace msgpack {
       template<>
       struct convert<Gsage::DataProxy> {
         void create_array(msgpack::object const& o, Gsage::DataProxy& v) const {
-          for(int i = 0; i < o.via.array.size; ++i) {
+          for(unsigned int i = 0; i < o.via.array.size; ++i) {
             Gsage::DataProxy child = Gsage::DataProxy::create(v.getWrappedType());
             (*this)(o.via.array.ptr[i], child);
             v.put(i, child);

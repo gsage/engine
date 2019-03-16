@@ -82,6 +82,16 @@ namespace Gsage {
        */
       virtual std::tuple<int, int, int, int> getDisplayBounds();
 
+      /**
+       * Get screen DPI that is used to display the window
+       */
+      virtual float getScaleFactor() const;
+
+      /**
+       * Get display index that contains the window
+       */
+      virtual int getDisplay() const;
+
     private:
       friend class SDLWindowManager;
       SDL_Window* mWindow;

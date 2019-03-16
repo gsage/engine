@@ -30,7 +30,7 @@ namespace Gsage {
 
   const Event::Type StatEvent::STAT_CHANGE = "statChange";
 
-  StatEvent::StatEvent(const std::string& type, const std::string& statId)
+  StatEvent::StatEvent(Event::ConstType type, const std::string& statId)
     : Event(type)
     , mStatId(statId)
   {

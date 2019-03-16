@@ -64,10 +64,10 @@ function common.base()
   -- destruction handlers
   function CoreEntity:__destroy()
     log.trace("EAL: destroying lua extensions for entity " .. self.entity.id)
-    self.entity = nil
     for _, method in pairs(self.destroyChain) do
       method(self)
     end
+    self.entity = nil
   end
 
   CoreEntity.configureChain = {}

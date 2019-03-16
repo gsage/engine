@@ -42,6 +42,7 @@ namespace Gsage {
   class LuaInterface;
   class RenderEvent;
   class Engine;
+  class GsageFacade;
 
   class RenderSystemWrapper {
     public:
@@ -103,7 +104,7 @@ namespace Gsage {
        * @param called by gsage facade on setup
        * @param L init with lua state
        */
-      virtual void initialize(Engine* engine, lua_State* L = 0);
+      virtual void initialize(GsageFacade* facade, lua_State* L = 0);
       /**
        * Gets Rocket lua state
        */

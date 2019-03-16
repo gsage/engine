@@ -37,6 +37,8 @@ else
   return
 end
 
+require 'editor.ogre.objects'
+
 -- create main dockspace view
 local dockspace = imgui.createDockspace("workspace")
 
@@ -67,11 +69,6 @@ function initLibrocket(event)
       resource.loadFont(font)
     end
   end
-
-  main = resource.loadDocument(ctx, "minimal.rml")
-  cursor = resource.loadCursor(ctx, "cursor.rml")
-
-  main:Show()
 end
 
 -- librocket initialization
@@ -200,7 +197,8 @@ local renderDockspace = false
 imguiInterface:addView(imgui.manager, "mainMenu", Menu(menus))
 local tools = ToolsView(true, function()
   local width, height = imgui.DisplaySize()
-  return 90, 35, width - 95, 40
+  local sx, sy = imgui.Scale()
+  return 90 * sx, 35 * sy, width - 95 * sx, 40 * sy
 end)
 imgui.manager:addView("modal", modalView)
 imgui.manager:addView("tools", tools)
@@ -210,8 +208,9 @@ imgui.manager:addView("workspace", {
       return
     end
 
+    local sx, sy = imgui.Scale()
     local width, height = imgui.DisplaySize()
-    dockspace:render(90, 35 + 43, width - 95, height - 83)
+    dockspace:render(90 * sx, 35 * sy + 43 *sy, width - 95 * sx, height - 83 * sy)
   end
 })
 
@@ -220,13 +219,14 @@ local flags = ImGuiWindowFlags_NoTitleBar + ImGuiWindowFlags_NoResize + ImGuiWin
 imgui.manager:addView("sidePanel", {
   __call = function()
     local width, height = imgui.DisplaySize()
-    imgui.SetNextWindowPos(5, 35)
-    imgui.SetNextWindowSize(82, height - 40)
+    local sx, sy = imgui.Scale()
+    imgui.SetNextWindowPos(5 * sx, 35 * sy)
+    imgui.SetNextWindowSize(82 * sx, height - 40 * sy)
     imgui.PushStyleColor_U32(ImGuiCol_WindowBg, imgui.GetColorU32(ImGuiCol_FrameBg, 1))
     imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 0, 0)
     local drawing = imgui.Begin("sidePanel", true, flags)
     if drawing then
-      imgui.PushStyleVar_2(ImGuiStyleVar_ItemSpacing, 0, 3)
+      imgui.PushStyleVar_2(ImGuiStyleVar_ItemSpacing, 0, 3 * sy)
       imgui.PushStyleVar(ImGuiStyleVar_FrameRounding, 0)
       local size = imgui.GetContentRegionAvailWidth()
       if imgui.Button("   " .. icons.home .. "\n" .. lm("side_panel.home"), size, size) then
@@ -323,6 +323,7 @@ function hideWizard()
 end
 
 if imguiInterface:available() then
+
   local function getLocalizedString(...)
     return lm(table.concat({...}, "."))
   end

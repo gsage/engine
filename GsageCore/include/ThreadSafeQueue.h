@@ -84,10 +84,10 @@ namespace Gsage {
        * Get queue item
        * @param dest to write item to
        */
-      int get(C& dest)
+      size_t get(C& dest)
       {
         mMutex.lock();
-        int tail = mQueue.size();
+        size_t tail = mQueue.size();
         if(tail > 0) {
           dest = mQueue.front();
           mQueue.pop();

@@ -60,7 +60,7 @@ namespace msgpack {
       struct convert<Gsage::Dictionary> {
         void create_array(msgpack::object const& o, Gsage::Dictionary& v) const {
           v = Gsage::Dictionary(true);
-          for(int i = 0; i < o.via.array.size; ++i) {
+          for(unsigned int i = 0; i < o.via.array.size; ++i) {
             Gsage::Dictionary child;
             (*this)(o.via.array.ptr[i], child);
             v.put(std::to_string(i), child);

@@ -228,6 +228,9 @@ namespace MOC {
       mRaySceneQuery->setRay(ray);
       mRaySceneQuery->setSortByDistance(true);
       mRaySceneQuery->setQueryMask(queryMask);
+#if OGRE_VERSION < 0x020100
+      mRaySceneQuery->setQueryTypeMask(Ogre::SceneManager::FX_TYPE_MASK | Ogre::SceneManager::ENTITY_TYPE_MASK);
+#endif
       // execute the query, returns a vector of hits
       if (mRaySceneQuery->execute().size() <= 0)
       {
@@ -246,7 +249,6 @@ namespace MOC {
     // there are some minor optimizations (distance based) that mean we wont have to
     // check all of the objects most of the time, but the worst case scenario is that
     // we need to test every triangle of every object.
-    //Ogre::Ogre::Real closest_distance = -1.0f;
     closest_distance = -1.0f;
     Ogre::Vector3 closest_result;
     Ogre::RaySceneQueryResult &query_result = mRaySceneQuery->getLastResults();
@@ -261,35 +263,62 @@ namespace MOC {
       }
 
       // only check this result if its a hit against an entity
-      if ((query_result[qr_idx].movable != NULL)  &&
-          (query_result[qr_idx].movable->getMovableType().compare("Entity") == 0))
+      if (query_result[qr_idx].movable != NULL)
       {
         // get the entity to check
         Ogre::MovableObject *pentity = static_cast<Ogre::MovableObject*>(query_result[qr_idx].movable);
+
 
         // mesh data to retrieve
         size_t vertex_count;
         size_t index_count;
         Ogre::Vector3 *vertices;
         Ogre::uint32 *indices;
-
-        // get the mesh information
-        GetMeshInformation(((OgreV1::Entity*)pentity)->getMesh(), vertex_count, vertices, index_count, indices,
-            pentity->getParentNode()->_getDerivedPosition(),
-            pentity->getParentNode()->_getDerivedOrientation(),
-            pentity->getParentNode()->_getDerivedScale());
-
-        // test for hitting individual triangles on the mesh
         bool new_closest_found = false;
-        for (size_t i = 0; i < index_count; i += 3)
-        {
-          // check for a hit against this triangle
-          std::pair<bool, Ogre::Real> hit = Ogre::Math::intersects(ray, vertices[indices[i]],
-              vertices[indices[i+1]], vertices[indices[i+2]], true, false);
 
-          // if it was a hit check if its the closest
-          if (hit.first)
+        // closest object is an entity
+        if(query_result[qr_idx].movable->getMovableType().compare("Entity") == 0) {
+          // get the mesh information
+          GetMeshInformation(((OgreV1::Entity*)pentity)->getMesh(), vertex_count, vertices, index_count, indices,
+              pentity->getParentNode()->_getDerivedPosition(),
+              pentity->getParentNode()->_getDerivedOrientation(),
+              pentity->getParentNode()->_getDerivedScale());
+          // test for hitting individual triangles on the mesh
+          for (size_t i = 0; i < index_count; i += 3)
           {
+            // check for a hit against this triangle
+            std::pair<bool, Ogre::Real> hit = Ogre::Math::intersects(ray, vertices[indices[i]],
+                vertices[indices[i+1]], vertices[indices[i+2]], true, false);
+
+            // if it was a hit check if its the closest
+            if (hit.first)
+            {
+              if ((closest_distance < 0.0f) ||
+                  (hit.second < closest_distance))
+              {
+                // this is the closest so far, save it off
+                closest_distance = hit.second;
+                new_closest_found = true;
+              }
+            }
+          }
+
+          // free the verticies and indicies memory
+          delete[] vertices;
+          delete[] indices;
+        } else {
+          // fallback to bounds
+#if OGRE_VERSION >= 0x020100
+          Ogre::Aabb box = pentity->getWorldAabb();
+          Ogre::AxisAlignedBox aabb(box.getMinimum(), box.getMaximum());
+#else
+          Ogre::AxisAlignedBox aabb = pentity->getBoundingBox();
+          Ogre::Node* node = pentity->getParentNode();
+          if(node)
+            aabb.transformAffine(node->_getFullTransform());
+#endif
+          std::pair<bool, Ogre::Real> hit = ray.intersects(aabb);
+          if (hit.first) {
             if ((closest_distance < 0.0f) ||
                 (hit.second < closest_distance))
             {
@@ -299,10 +328,6 @@ namespace MOC {
             }
           }
         }
-
-        // free the verticies and indicies memory
-        delete[] vertices;
-        delete[] indices;
 
         // if we found a new closest raycast for this object, update the
         // closest_result before moving on to the next object.

@@ -100,9 +100,6 @@ namespace Gsage {
 #if OGRE_VERSION >= 0x020100
     mPsoCache = OGRE_NEW Ogre::PsoCacheHelper(mSceneMgr->getDestinationRenderSystem());
     sol::state_view lua(L);
-#if GSAGE_PLATFORM == GSAGE_APPLE
-    lua["imgui"]["Scale"] = GetScreenScaleFactor();
-#endif
 #endif
   }
 
@@ -445,7 +442,6 @@ namespace Gsage {
         "varying vec2 Texcoord;\n"
         "varying vec4 col;\n"
         "uniform sampler2D sampler0;\n"
-        "varying vec4 out_col;\n"
         "void main()\n"
         "{\n"
         "gl_FragColor = col * texture2D(sampler0, Texcoord); \n"

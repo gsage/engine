@@ -50,6 +50,14 @@ namespace Gsage {
         }
       }
 
+      void defineUserBindings()
+      {
+        if(mObject) {
+          mObject->Ogre::MovableObject::getUserObjectBindings().setUserAny("entity", Ogre::Any(mOwnerId));
+          resetVisibilityFlags();
+        }
+      }
+
       void setRenderQueueGroup(const unsigned char& queueId)
       {
         if(mObject == 0) {
@@ -58,7 +66,7 @@ namespace Gsage {
         }
 
         mObject->setRenderQueueGroup((Ogre::uint8) queueId);
-        LOG(INFO) << mObjectId << " set render queue group to " << queueId;
+        LOG(TRACE) << mObjectId << " set render queue group to " << (int)queueId;
       }
 
       unsigned char getRenderQueueGroup()
@@ -68,9 +76,18 @@ namespace Gsage {
 
         return mObject->getRenderQueueGroup();
       }
+
+      void setVisibilityFlags(unsigned int mask)
+      {
+        mObject->setVisibilityFlags((Ogre::uint32)mask);
+      }
+
+      void resetVisibilityFlags()
+      {
+        mObject->setVisibilityFlags(0xFFFFFFF0);
+      }
     protected:
       T* mObject;
-      std::string mAttachedTo;
   };
 }
 #endif

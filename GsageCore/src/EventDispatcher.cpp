@@ -77,7 +77,7 @@ namespace Gsage {
   void EventDispatcher::removeAllListeners()
   {
     mMutationMutex.lock();
-    for(std::pair<Event::Type, EventSignal*> element : mSignals)
+    for(std::pair<Event::ConstType, EventSignal*> element : mSignals)
     {
       if (element.first == DispatcherEvent::FORCE_UNSUBSCRIBE)
       {

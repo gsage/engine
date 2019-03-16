@@ -113,9 +113,9 @@
         "FileSystem;bundles/particles/Ogre"
       ],
       "Hlms": {
-        "common": "FileSystem;ogre/materials/Common",
-        "pbs": "FileSystem;ogre/materials/Pbs",
-        "unlit": "FileSystem;ogre/materials/Unlit"
+        "common": "FileSystem;ogre/hlms/Common",
+        "pbs": "FileSystem;ogre/hlms/Pbs",
+        "unlit": "FileSystem;ogre/hlms/Unlit"
       }
     },
     "window":

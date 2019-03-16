@@ -59,7 +59,7 @@ CefRefPtr<CefV8Value> CefValueToCefV8Value(CefRefPtr<CefValue> value) {
         CefRefPtr<CefDictionaryValue> dict = value->GetDictionary();
         CefDictionaryValue::KeyList keys;
         dict->GetKeys(keys);
-        for (unsigned int i = 0; i < keys.size(); i++) {
+        for (size_t i = 0; i < keys.size(); i++) {
           CefString key = keys[i];
           result->SetValue(key, CefValueToCefV8Value(dict->GetValue(key)), V8_PROPERTY_ATTRIBUTE_NONE);
         }
@@ -68,9 +68,9 @@ CefRefPtr<CefV8Value> CefValueToCefV8Value(CefRefPtr<CefValue> value) {
     case VTYPE_LIST:
       {
         CefRefPtr<CefListValue> list = value->GetList();
-        int size = list->GetSize();
-        result = CefV8Value::CreateArray(size);
-        for (int i = 0; i < size; i++) {
+        size_t size = list->GetSize();
+        result = CefV8Value::CreateArray((int)size);
+        for (size_t i = 0; i < size; i++) {
           result->SetValue(i, CefValueToCefV8Value(list->GetValue(i)));
         }
       }
@@ -149,7 +149,7 @@ class JSFunctionHandler : public CefV8Handler {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(name);
         CefRefPtr<CefListValue> args = msg->GetArgumentList();
         args->SetInt(0, id);
-        for(int i = 2; i < arguments.size(); i++) {
+        for(size_t i = 2; i < arguments.size(); i++) {
           if(arguments[i]->IsString()) {
             args->SetString(args->GetSize(), arguments[i]->GetStringValue());
           }
