@@ -42,7 +42,7 @@ function Transform:__call()
 
     imgui.Text(lm("transform.dimensions"))
     imgui.Separator()
-    if not self.gizmo:drawCoordinatesEditor(1, 0, 0, "%.3f", 1,
+    if not self.gizmo:drawCoordinatesEditor(0.05, 0, 0, "%.3f", 1,
       lm("transform.position"),
       lm("transform.scale"),
       lm("transform.rotation")) then

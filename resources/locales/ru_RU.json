@@ -28,6 +28,27 @@
   },
 
   "viewport": {
+    "factories": {
+      "light": {
+        "menu": "Источник света",
+        "point": "Точечный",
+        "directional": "Направленный",
+        "spot": "Прожектор"
+      },
+      "emitter": {
+        "menu": "Генератор частиц",
+        "damage": "Генератор для отображения едениц урона"
+      },
+      "camera":
+      {
+        "menu": "Камера",
+        "free": "Свободная WASD",
+        "orbit": "Орбитальная"
+      },
+      "character": {
+        "menu": "Персонаж"
+      }
+    },
     "actions": {
       "new": "Новая сцена",
       "save": "Сохранить сцену",
@@ -39,6 +60,7 @@
       "rotate": "Вращать объект",
       "scale": "Масштабировать объект",
       "move": "Перемещать объект",
+      "createObject": "Создать объект",
       "simulationStart": "Запустить симуляцию",
       "simulationStop": "Остановить симуляцию",
       "simulationPause": "Приостановить симуляцию"
@@ -69,8 +91,13 @@
 
   "modals": {
     "errors": {
-      "failed_to_add_entity": "Не удалось добавить объект %{entity} на сцену",
-      "failed_to_create_asset": "Не удалось создать объект. Менеджер ассетов не найден"
+      "error": "Ошибка",
+      "failed_to_add_entity": "Не удалось добавить объект %{entity} на сцену%{details}",
+      "failed_to_create_asset": "Не удалось создать объект. Менеджер ассетов не найден",
+      "details": {
+        "no_scene_opened": ": откройте или создайте сцену",
+        "failed_to_create_object": ": ошибка при создании entity. Проверьте логи"
+      }
     },
 
     "confirm_deletion": {

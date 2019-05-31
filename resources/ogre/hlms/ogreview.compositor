@@ -1,3 +1,5 @@
+
+
 abstract target cubemap_target_shadow
 {
 	pass clear { colour_value 1 1 1 1 }
@@ -78,16 +80,101 @@ compositor_node_shadow PbsMaterialsShadowNode
 compositor_node ogreview_node
 {
     in 0 renderwindow
+
+    texture outline target_width target_height PF_A8R8G8B8 no_fsaa
+    texture stencil target_width target_height PF_A8R8G8B8 no_fsaa
+
+    target stencil
+    {
+      pass clear
+      {
+        colour_value 0 0 0 0
+        stencil_value 0
+      }
+
+      pass render_scene
+      {
+          visibility_mask 0xFFFFFFF0
+
+          // render only main queue
+          rq_first    0
+          rq_last     2
+      }
+
+      pass stencil
+      {
+        check       true
+        mask        0xff
+        read_mask   0xff
+        ref_value   1
+        both
+        {
+          fail_op     keep
+          depth_fail_op   keep
+          pass_op     replace
+          comp_func equal
+        }
+      }
+    }
+
+    target outline
+    {
+        pass clear
+        {
+          buffers colour
+          colour_value 0 0 0 0
+        }
+
+        pass stencil
+        {
+          check       true
+          mask        0xff
+          read_mask   0xff
+          ref_value   1
+          both
+          {
+            fail_op     keep
+            depth_fail_op   keep
+            pass_op     replace
+            comp_func not_equal
+          }
+        }
+
+        pass render_scene
+        {
+            visibility_mask 0x0000000F
+
+            // render only main queue
+            rq_first    0
+            rq_last     2
+        }
+
+        pass stencil
+        {
+          check false
+        }
+    }
+
     target renderwindow
     {
         pass clear
         {
-          colour_value 0.2 0.4 0.6 1
+          colour_value 0.2 0.4 0.6 1.0
         }
+
         pass render_scene
         {
+            visibility_mask 0xFFFFFFFF
+
             rq_first    0
             rq_last     102
+						shadows		  PbsMaterialsShadowNode
+        }
+
+        pass render_quad
+        {
+          material Outline
+          input 0 outline
         }
     }
 }

@@ -63,6 +63,7 @@ namespace Gsage {
   RenderTarget::RenderTarget(const std::string& name, RenderTargetType::Type type, const DataProxy& parameters, Engine* engine)
     : mName(name)
     , mParameters(parameters)
+    , mWrappedTarget(0)
     , mCurrentCamera(0)
     , mDefaultCamera(0)
     , mAutoUpdate(mParameters.get("autoUpdated", true))
@@ -444,6 +445,22 @@ namespace Gsage {
     }
     vp->setBackgroundColour(mParameters.get<Ogre::ColourValue>("viewport.backgroundColor", Ogre::ColourValue::Black));
     mWrappedTarget->setAutoUpdated(mAutoUpdate);
+    Ogre::CompositorManager& compManager = Ogre::CompositorManager::getSingleton();
+    Ogre::CompositorChain* chain = nullptr;
+    if(compManager.hasCompositorChain(vp)) {
+      chain = compManager.getCompositorChain(vp);
+      // remove all compositors except the first one
+      for(size_t i = 1; i < chain->getNumCompositors(); i++) {
+        chain->removeCompositor(i);
+      }
+    }
+
+    // enable compositors
+    for(auto& pair : mParameters.get("viewport.compositors", DataProxy())) {
+      const std::string name = pair.second.as<std::string>();
+      compManager.addCompositor(vp, name);
+      compManager.setCompositorEnabled(vp, name, true);
+    }
   }
 #else
   void RenderTarget::configureWorkspace(Ogre::CompositorWorkspace* workspace)
@@ -530,7 +547,6 @@ namespace Gsage {
       unsigned int samples,
       Ogre::PixelFormat pixelFormat) {
 
-
     OgreRenderSystem* rs = mEngine->getSystem<OgreRenderSystem>();
     if(!rs) {
       return;
@@ -550,7 +566,7 @@ namespace Gsage {
     params.put("height", height);
     params.put("fsaa", samples);
     params.put("pixelFormat", pixelFormat);
-    params.put("usage", (int)Ogre::TU_RENDERTARGET);
+    params.put("usage", (unsigned int)Ogre::TU_RENDERTARGET);
 
     TexturePtr texture = rs->getTexture(name);
     if(texture) {

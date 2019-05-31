@@ -100,7 +100,7 @@ namespace Gsage {
       }
 
       int size() const {
-        return mObject.get_type() == sol::type::table ? getTable().size() : 0;
+        return mObject.get_type() == sol::type::table ? (int)getTable().size() : 0;
       }
 
       int count(const std::string& key) const {

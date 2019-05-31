@@ -44,13 +44,23 @@ namespace Gsage {
       // Definitions
       //
       // Identification pair for each subscribed event -- EventDispatcher instance + event type string
-      typedef std::pair<EventDispatcher*, Event::Type> EventSubscription;
+      typedef std::pair<EventDispatcher*, Event::ConstType> EventSubscription;
+      struct CmpEventSubscription {
+        bool operator()(const EventSubscription& a, const EventSubscription& b) const
+        {
+          if(a.first == b.first) {
+            return std::strcmp(a.second, b.second) > 0;
+          }
+
+          return a.first < b.first;
+        }
+      };
       // List of handler descriptors for subscription
       typedef std::vector<HandlerDescriptor> Handlers;
       // Iterator for handlers vector
       typedef typename Handlers::iterator HandlerIterator;
       // Map of subscriptions
-      typedef std::map<EventSubscription, Handlers> EventConnections;
+      typedef std::map<EventSubscription, Handlers, CmpEventSubscription> EventConnections;
       // Event callback format
       typedef bool (C::*CallbackMemFn)(EventDispatcher*, const Event&);
 

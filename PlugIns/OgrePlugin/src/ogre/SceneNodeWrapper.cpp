@@ -38,6 +38,9 @@ namespace Gsage {
     mNode(0),
     mOffset(Ogre::Vector3::ZERO),
     mOrientationVector(Ogre::Vector3::UNIT_Z)
+#if OGRE_VERSION >= 0x020100
+    , mDirtyProperties(0)
+#endif
   {
     BIND_PROPERTY("offset", &mOffset);
 
@@ -119,11 +122,16 @@ namespace Gsage {
 
   void SceneNodeWrapper::setPosition(const Ogre::Vector3& position)
   {
+    setPositionWithoutOffset(position + (mOffset * getScale()));
+  }
+
+  void SceneNodeWrapper::setPositionWithoutOffset(const Ogre::Vector3& position)
+  {
     assert(mNode != 0);
-    mNode->setPosition(position + (mOffset * getScale()));
+    mNode->setPosition(position);
 #if OGRE_VERSION >= 0x020100
-    // update cached position value
-    mNode->_getDerivedPositionUpdated();
+    // mark position property dirty
+    markDirty(SceneNodeWrapper::Position);
 #endif
   }
 
@@ -137,6 +145,9 @@ namespace Gsage {
     if(mNode == 0) {
       return Ogre::Vector3::ZERO;
     }
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Position);
+#endif
     return mNode->getPosition();
   }
 
@@ -144,8 +155,8 @@ namespace Gsage {
   {
     mNode->setScale(scale);
 #if OGRE_VERSION >= 0x020100
-    // update cached scale value
-    mNode->_getDerivedScaleUpdated();
+    // mark scale property dirty
+    markDirty(SceneNodeWrapper::Scale);
 #endif
   }
 
@@ -155,6 +166,9 @@ namespace Gsage {
       return Ogre::Vector3::ZERO;
     }
 
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Scale);
+#endif
     return mNode->getScale();
   }
 
@@ -162,8 +176,8 @@ namespace Gsage {
   {
     mNode->setOrientation(orientation);
 #if OGRE_VERSION >= 0x020100
-    // update cached position value
-    mNode->_getDerivedOrientationUpdated();
+    // mark orientation property dirty
+    markDirty(SceneNodeWrapper::Orientation);
 #endif
   }
 
@@ -172,6 +186,9 @@ namespace Gsage {
     if(mNode == 0) {
       return Ogre::Quaternion();
     }
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
     return mNode->getOrientation();
   }
 
@@ -242,6 +259,9 @@ namespace Gsage {
     {
       for(auto& childPair : pair.second)
       {
+        if(!childPair.second->writeable()) {
+          continue;
+        }
         DataProxy item;
         childPair.second->dump(item);
         values.push(item);
@@ -262,12 +282,35 @@ namespace Gsage {
 
   void SceneNodeWrapper::rotate(const Ogre::Quaternion& rotation, const Ogre::Node::TransformSpace ts)
   {
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
     mNode->rotate(rotation, ts);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Orientation);
+#endif
+  }
+
+  void SceneNodeWrapper::rotate(const Ogre::Vector3& axis, const Ogre::Degree& degree, const Ogre::Node::TransformSpace ts)
+  {
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
+    mNode->rotate(axis, degree, ts);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Orientation);
+#endif
   }
 
   void SceneNodeWrapper::lookAt(const Ogre::Vector3& position, Ogre::Node::TransformSpace relativeTo)
   {
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
     mNode->lookAt(position, relativeTo, mOrientationVector);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Orientation);
+#endif
   }
 
   void SceneNodeWrapper::destroy()
@@ -283,6 +326,8 @@ namespace Gsage {
 
     if(mParentNode != 0)
       mParentNode->removeChild(mNode);
+
+    OgreObject::destroy();
 
     if(mNode != 0)
     {
@@ -343,17 +388,35 @@ namespace Gsage {
 
   void SceneNodeWrapper::pitch(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
     mNode->pitch(angle, relativeTo);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Orientation);
+#endif
   }
 
   void SceneNodeWrapper::yaw(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
     mNode->yaw(angle, relativeTo);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Orientation);
+#endif
   }
 
   void SceneNodeWrapper::roll(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)
   {
+#if OGRE_VERSION >= 0x020100
+    updateProperty(SceneNodeWrapper::Orientation);
+#endif
     mNode->roll(angle, relativeTo);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Orientation);
+#endif
   }
 
   void SceneNodeWrapper::translate(const Ogre::Vector3& d) {
@@ -363,6 +426,9 @@ namespace Gsage {
   void SceneNodeWrapper::translate(const Ogre::Vector3& d, Ogre::Node::TransformSpace relativeTo)
   {
     mNode->translate(d, relativeTo);
+#if OGRE_VERSION >= 0x020100
+    markDirty(SceneNodeWrapper::Position);
+#endif
   }
 
   bool SceneNodeWrapper::onFactoryUnregister(EventDispatcher* sender, const Event& event)

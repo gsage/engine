@@ -107,10 +107,22 @@ namespace Gsage {
           }
       };
 
+      typedef std::pair<EventDispatcher*, const Event::ConstType> CallbackBinding;
+      struct CmpCallbackBinding {
+        bool operator()(const CallbackBinding& a, const CallbackBinding& b) const
+        {
+          if(a.first == b.first) {
+            return std::strcmp(a.second, b.second) > 0;
+          }
+
+          return a.first < b.first;
+        }
+      };
+
       typedef std::shared_ptr<GenericCallback> GenericCallbackPtr;
-      typedef std::pair<EventDispatcher*, const Event::Type> CallbackBinding;
+
       typedef std::vector<GenericCallbackPtr> Callbacks;
-      typedef std::map<CallbackBinding, Callbacks> CallbackBindings;
+      typedef std::map<CallbackBinding, Callbacks, CmpCallbackBinding> CallbackBindings;
 
       LuaEventProxy();
       virtual ~LuaEventProxy();

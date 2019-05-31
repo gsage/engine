@@ -230,7 +230,7 @@ namespace Gsage {
 
     float* verts;
     int* tris;
-    int nverts, ntris;
+    size_t nverts, ntris;
     int tileTriCount = 0;
 
     std::tie(verts, nverts) = geom.getVerts();
@@ -290,7 +290,7 @@ namespace Gsage {
     {
       const rcChunkyTriMeshNode& node = chunkyMesh->nodes[cid[i]];
       const int* ctris = &chunkyMesh->tris[node.i * 3];
-      const int nctris = node.n;
+      const size_t nctris = node.n;
 
       tileTriCount += nctris;
 

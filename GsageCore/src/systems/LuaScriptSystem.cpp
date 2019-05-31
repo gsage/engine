@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "Engine.h"
 #include "lua/LuaInterface.h"
 #include "lua.hpp"
+#include "FileLoader.h"
 
 namespace Gsage {
 
@@ -84,7 +85,7 @@ namespace Gsage {
       component->setData(t);
       return true;
     }
-    
+
     return true;
   }
 
@@ -226,31 +227,10 @@ namespace Gsage {
     std::string scriptData;
     if (parts.size() == 2 && parts[0] == "@File")
     {
-      std::string filename = mWorkdir + GSAGE_PATH_SEPARATOR + parts[1];
-      std::ifstream stream(filename);
-      stream.seekg(0, std::ios::end);
-      long int size = stream.tellg();
-      if(size == -1)
-      {
-        LOG(ERROR) << "Failed to read script file: " << filename;
-		    return "";
+      if(!FileLoader::getSingletonPtr()->load(parts[1], scriptData)) {
+        LOG(ERROR) << "Failed to read script file: " << parts[1];
+        return "";
       }
-
-      scriptData.reserve(size);
-      stream.seekg(0, std::ios::beg);
-      try
-      {
-        scriptData.assign((std::istreambuf_iterator<char>(stream)),
-            std::istreambuf_iterator<char>());
-      }
-      catch(std::ifstream::failure e)
-      {
-        LOG(ERROR) << "Failed to read script file: " << data;
-        stream.close();
-		    return "";
-      }
-
-      stream.close();
     } else {
       scriptData = data;
     }
@@ -259,6 +239,10 @@ namespace Gsage {
 
   bool LuaScriptSystem::runScript(const std::string& script)
   {
+    if(script == "") {
+      return true;
+    }
+
     try {
       auto res = mState->script(getScriptData(script).c_str());
       if(!res.valid()) {

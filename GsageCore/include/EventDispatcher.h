@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include <string>
 #include <functional>
 #include <mutex>
+#include <cstring>
 #include "GsageDefinitions.h"
 
 namespace Gsage {
@@ -109,8 +110,8 @@ namespace Gsage {
   class GSAGE_API Event
   {
     public:
-      typedef std::string Type;
-      typedef const std::string& ConstType;
+      typedef char* const Type;
+      typedef const char* ConstType;
 
       Event() {}
       Event(ConstType type) : mType(type) {}
@@ -121,8 +122,19 @@ namespace Gsage {
        */
       ConstType getType() const { return mType; };
     private:
-      Type mType;
+      ConstType mType;
 
+  };
+
+  /**
+   * Const char comparison function for std::map
+   */
+  struct CmpEventType
+  {
+     bool operator()(Event::ConstType a, Event::ConstType b) const
+     {
+        return std::strcmp(a, b) < 0;
+     }
   };
 
   class DispatcherEvent : public Event
@@ -143,7 +155,7 @@ namespace Gsage {
       /**
        * All event bindings
        */
-      typedef std::map<Event::Type, EventSignal*> EventTypes;
+      typedef std::map<Event::ConstType, EventSignal*, CmpEventType> EventTypes;
 
       /**
        * Dispatch event to all subscribers of the type, defined in the event.

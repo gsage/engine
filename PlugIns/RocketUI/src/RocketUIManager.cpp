@@ -36,6 +36,7 @@ THE SOFTWARE.
 
 #include "MouseEvent.h"
 #include "Engine.h"
+#include "GsageFacade.h"
 #include "EngineSystem.h"
 #include "EngineEvent.h"
 
@@ -110,12 +111,12 @@ namespace Gsage {
     }
   }
 
-  void RocketUIManager::initialize(Engine* engine, lua_State* luaState)
+  void RocketUIManager::initialize(GsageFacade* facade, lua_State* luaState)
   {
-    UIManager::initialize(engine, luaState);
+    UIManager::initialize(facade, luaState);
     setUp();
-    addEventListener(engine, SystemChangeEvent::SYSTEM_ADDED, &RocketUIManager::handleSystemChange);
-    addEventListener(engine, SystemChangeEvent::SYSTEM_REMOVED, &RocketUIManager::handleSystemChange);
+    addEventListener(mFacade->getEngine(), SystemChangeEvent::SYSTEM_ADDED, &RocketUIManager::handleSystemChange);
+    addEventListener(mFacade->getEngine(), SystemChangeEvent::SYSTEM_REMOVED, &RocketUIManager::handleSystemChange);
   }
 
   bool RocketUIManager::handleSystemChange(EventDispatcher* sender, const Event& event)
@@ -146,7 +147,8 @@ namespace Gsage {
     if(mIsSetUp)
       return;
 
-    EngineSystem* render = mEngine->getSystem("render");
+    Engine* engine = mFacade->getEngine();
+    EngineSystem* render = engine->getSystem("render");
     if(render == 0) {
       return;
     }
@@ -156,7 +158,7 @@ namespace Gsage {
 #ifdef OGRE_INTERFACE
     if(type == "ogre") {
       LOG(INFO) << "Initialize for render system ogre3d";
-      mRenderSystemWrapper = new RocketOgreWrapper(mEngine);
+      mRenderSystemWrapper = new RocketOgreWrapper(engine);
       initialized = true;
     }
 
@@ -168,14 +170,14 @@ namespace Gsage {
       return;
     }
     // mouse events
-    addEventListener(mEngine, MouseEvent::MOUSE_DOWN, &RocketUIManager::handleMouseEvent, -100);
-    addEventListener(mEngine, MouseEvent::MOUSE_UP, &RocketUIManager::handleMouseEvent, -100);
-    addEventListener(mEngine, MouseEvent::MOUSE_MOVE, &RocketUIManager::handleMouseEvent, -100);
+    addEventListener(engine, MouseEvent::MOUSE_DOWN, &RocketUIManager::handleMouseEvent, -100);
+    addEventListener(engine, MouseEvent::MOUSE_UP, &RocketUIManager::handleMouseEvent, -100);
+    addEventListener(engine, MouseEvent::MOUSE_MOVE, &RocketUIManager::handleMouseEvent, -100);
     // keyboard events
-    addEventListener(mEngine, KeyboardEvent::KEY_DOWN, &RocketUIManager::handleKeyboardEvent, -100);
-    addEventListener(mEngine, KeyboardEvent::KEY_UP, &RocketUIManager::handleKeyboardEvent, -100);
+    addEventListener(engine, KeyboardEvent::KEY_DOWN, &RocketUIManager::handleKeyboardEvent, -100);
+    addEventListener(engine, KeyboardEvent::KEY_UP, &RocketUIManager::handleKeyboardEvent, -100);
     // text input event
-    addEventListener(mEngine, TextInputEvent::INPUT, &RocketUIManager::handleInputEvent, -100);
+    addEventListener(engine, TextInputEvent::INPUT, &RocketUIManager::handleInputEvent, -100);
     mIsSetUp = true;
   }
 
@@ -207,7 +209,7 @@ namespace Gsage {
     {
       int keyModifierState = getKeyModifierState();
 
-      ctx->ProcessMouseMove(e.mouseX, e.mouseY, keyModifierState);
+      ctx->ProcessMouseMove((int)e.mouseX, (int)e.mouseY, keyModifierState);
       if (e.relativeZ != 0)
       {
         ctx->ProcessMouseWheel(e.relativeZ / -120, keyModifierState);

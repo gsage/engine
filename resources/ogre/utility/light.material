@@ -1,0 +1,85 @@
+-- v1 materials
+
+material Pictogramm
+{
+    receive_shadows off
+    technique
+    {
+        pass 0
+        {
+            vertex_program_ref stdquad_vp
+            {
+            }
+
+            fragment_program_ref stdquad_fp
+            {
+            }
+
+            scene_blend add
+            depth_write off
+            depth_check off
+            
+            texture_unit
+            {
+                tex_address_mode clamp
+                filtering none
+            }
+        }
+    }
+}
+
+material Bulb : Pictogramm
+{
+    technique
+    {
+        pass 0
+        {
+            texture_unit
+            {
+                texture bulb.jpg 2d
+            }
+        }
+    }
+}
+
+material Bulb/Hovered : Bulb
+{
+    technique
+    {
+        pass 0
+        {
+            texture_unit
+            {
+                colour_op_ex modulate src_manual src_texture 0.6 0.7 1
+            }
+        }
+    }
+}
+
+material Sun : Pictogramm
+{
+    technique
+    {
+        pass 0
+        {
+            texture_unit
+            {
+                texture sun.jpg 2d
+            }
+        }
+    }
+}
+
+material Sun/Hovered :  Sun
+{
+    technique
+    {
+        pass 0
+        {
+            texture_unit
+            {
+              colour_op_ex modulate src_manual src_texture 0.6 0.7 1
+            }
+        }
+    }
+}

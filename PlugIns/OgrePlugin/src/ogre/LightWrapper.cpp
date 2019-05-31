@@ -61,15 +61,19 @@ namespace Gsage {
     }
     mObject = mSceneManager->createLight(
 #if OGRE_VERSION_MAJOR == 1
-    name
+      generateName()
 #endif
     );
+#if OGRE_VERSION_MAJOR == 1
+    mObject->setQueryFlags(Ogre::SceneManager::LIGHT_TYPE_MASK);
+#endif
+    defineUserBindings();
     attachObject(mObject);
   }
 
   const std::string& LightWrapper::getName() const
   {
-    return mObject->getName();
+    return mObjectId;
   }
 
   void LightWrapper::setType(const std::string& type)
@@ -172,7 +176,7 @@ namespace Gsage {
       return Ogre::Light::LightTypes::LT_POINT;
     else if(type == "directional")
       return Ogre::Light::LightTypes::LT_DIRECTIONAL;
-    else if(type == "spotlight")
+    else if(type == "spot")
       return Ogre::Light::LightTypes::LT_SPOTLIGHT;
 
     return Ogre::Light::LightTypes::LT_POINT;
@@ -185,7 +189,7 @@ namespace Gsage {
     else if(type == Ogre::Light::LightTypes::LT_DIRECTIONAL)
       return "directional";
     else if(type == Ogre::Light::LightTypes::LT_SPOTLIGHT)
-      return "spotlight";
+      return "spot";
 
     return "unknown";
   }

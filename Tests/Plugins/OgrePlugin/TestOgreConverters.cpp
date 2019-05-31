@@ -57,8 +57,8 @@ TEST_F(TestDataProxyConverters, TestColourValue)
   ASSERT_FLOAT_EQ(80.0 / 255.0, res.g);
   ASSERT_FLOAT_EQ(48.0 / 255.0, res.b);
 
-  res.a = 0.4;
-  res.r = 0.4;
+  res.a = 0.4f;
+  res.r = 0.4f;
   mDataProxy.put("colour_modified", res);
   ASSERT_EQ("0x66665030", mDataProxy.get<std::string>("colour_modified").first);
 }

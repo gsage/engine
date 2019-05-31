@@ -11,10 +11,10 @@ using namespace Gsage;
 class TestEvent : public Event
 {
   public:
-    static const std::string PING;
-    static const std::string ECHO;
+    static const Event::Type PING;
+    static const Event::Type ECHO;
 
-    TestEvent(const std::string& type, int value) : Event(type), mValue(value) {};
+    TestEvent(Event::ConstType type, int value) : Event(type), mValue(value) {};
     int getValue() { return mValue; };
 
     void setHandled(const std::string& name) { mHandlerName = name; };
@@ -24,8 +24,8 @@ class TestEvent : public Event
     std::string mHandlerName;
 };
 
-const std::string TestEvent::PING = "ping";
-const std::string TestEvent::ECHO = "echo";
+const Event::Type TestEvent::PING = "ping";
+const Event::Type TestEvent::ECHO = "echo";
 
 class TestEventDispatcher : public ::testing::Test
 {

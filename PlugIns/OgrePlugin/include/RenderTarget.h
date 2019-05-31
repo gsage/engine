@@ -177,7 +177,7 @@ namespace Gsage {
     protected:
       virtual void updateCameraAspectRatio();
 
-#if OGRE_VERSION >= 0x020100
+#if OGRE_VERSION_MAJOR == 2
       virtual void configureWorkspace(Ogre::CompositorWorkspace* workspace);
 #else
       virtual void configureViewport(Ogre::Viewport* viewport);

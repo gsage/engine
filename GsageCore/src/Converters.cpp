@@ -25,12 +25,14 @@ THE SOFTWARE.
 */
 
 #include "Converters.h"
+#include "ScopedLocale.h"
 
 namespace Gsage {
   // -----------------------------------------------------------------------------
 
   bool FloatCaster::to(const FloatCaster::FromType& src, FloatCaster::Type& dst) const
   {
+    ScopedCLocale l(true);
     dst = std::stof(src);
     return true;
   }

@@ -129,10 +129,10 @@ namespace Gsage {
       /**
        * Set engine, setup lua bindings
        *
-       * @param engine Engine instance
+       * @param engine Gsage CE
        * @param L lua state
        */
-      virtual void initialize(Engine* engine, lua_State* L);
+      virtual void initialize(Engine* facade, lua_State* L);
 
       /**
        * Update mouse position for the render target
@@ -200,9 +200,10 @@ namespace Gsage {
        * Initialize ui manager
        *
        * @param called by gsage facade on setup
+       * @param facade Gsage Facade
        * @param L init with lua state
        */
-      virtual void initialize(Engine* engine, lua_State* L = 0);
+      virtual void initialize(GsageFacade* facade, lua_State* L = 0);
       /**
        * Gets Rocket lua state
        */

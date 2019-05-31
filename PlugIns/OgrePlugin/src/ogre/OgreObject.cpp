@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include <OgreSceneManager.h>
 
 namespace Gsage {
-
   static long counter = 0;
 
   OgreObject::OgreObject()

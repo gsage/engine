@@ -43,6 +43,8 @@ THE SOFTWARE.
 #include "ogre/LightWrapper.h"
 #include "ogre/ParticleSystemWrapper.h"
 #include "ogre/CameraWrapper.h"
+#include "ogre/BillboardWrapper.h"
+#include "ogre/MaterialBuilder.h"
 
 namespace Gsage {
 
@@ -94,7 +96,11 @@ namespace Gsage {
           "getEntity", &SceneNodeWrapper::getChildOfType<EntityWrapper>,
           "getParticleSystem", &SceneNodeWrapper::getChildOfType<ParticleSystemWrapper>,
           "getCamera", &SceneNodeWrapper::getChildOfType<CameraWrapper>,
-          "rotate", &SceneNodeWrapper::rotate,
+          "getBillboardSet", &SceneNodeWrapper::getChildOfType<BillboardSetWrapper>,
+          "rotate", sol::overload(
+            (void(SceneNodeWrapper::*)(const Ogre::Quaternion&, Ogre::Node::TransformSpace))&SceneNodeWrapper::rotate,
+            (void(SceneNodeWrapper::*)(const Ogre::Vector3&, const Ogre::Degree&, Ogre::Node::TransformSpace))&SceneNodeWrapper::rotate
+          ),
           "pitch", &SceneNodeWrapper::pitch,
           "yaw", &SceneNodeWrapper::yaw,
           "roll", &SceneNodeWrapper::roll,
@@ -109,7 +115,12 @@ namespace Gsage {
       lua.new_usertype<EntityWrapper>("OgreEntity",
           sol::base_classes, sol::bases<OgreObject>(),
           "attachToBone", &EntityWrapper::attachToBone,
-          "getAabb", &EntityWrapper::getAabb
+          "getAabb", &EntityWrapper::getAabb,
+          "setRenderQueueGroup", &EntityWrapper::setRenderQueueGroup,
+          "setVisibilityFlags", &EntityWrapper::setVisibilityFlags,
+          "resetVisibilityFlags", &EntityWrapper::resetVisibilityFlags,
+          "createCloneWithMaterial", &EntityWrapper::createCloneWithMaterial,
+          "removeClone", &EntityWrapper::removeClone
       );
 
       lua.new_usertype<ParticleSystemWrapper>("OgreParticleSystem",
@@ -132,6 +143,11 @@ namespace Gsage {
           "getViewMatrix", &CameraWrapper::getViewMatrix,
           "getCamera", (Ogre::Camera*(CameraWrapper::*)())&CameraWrapper::getCamera,
           "renderTarget", sol::property(&CameraWrapper::getRenderTarget)
+      );
+
+      lua.new_usertype<BillboardSetWrapper>("OgreBillboardSet",
+          sol::base_classes, sol::bases<OgreObject>(),
+          "setMaterial", &BillboardSetWrapper::setMaterialName
       );
 
       lua.new_usertype<RenderTarget>("RenderTarget",
@@ -175,9 +191,13 @@ namespace Gsage {
       );
 
       lua["ogre"] = lua.create_table_with(
+          "AUTODETECT_RESOURCE_GROUP_NAME", Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,
+          // fixel formats
           "PF_R8G8B8A8", Ogre::PF_R8G8B8A8,
+          // texture unit types
           "TU_DEFAULT", Ogre::TU_DEFAULT,
           "TU_RENDERTARGET", Ogre::TU_RENDERTARGET,
+          // texture types
           "TEX_TYPE_1D", Ogre::TEX_TYPE_1D,
           "TEX_TYPE_2D", Ogre::TEX_TYPE_2D,
           "TEX_TYPE_3D", Ogre::TEX_TYPE_3D,
@@ -190,10 +210,23 @@ namespace Gsage {
           "OT_LINE_STRIP", Ogre::OT_LINE_STRIP,
           "OT_TRIANGLE_LIST", Ogre::OT_TRIANGLE_LIST,
           "OT_TRIANGLE_STRIP", Ogre::OT_TRIANGLE_STRIP,
-          "OT_TRIANGLE_FAN", Ogre::OT_TRIANGLE_FAN
+          "OT_TRIANGLE_FAN", Ogre::OT_TRIANGLE_FAN,
+          "QUERY_ENTITY_DEFAULT_MASK", Ogre::SceneManager::QUERY_ENTITY_DEFAULT_MASK,
+          "QUERY_FRUSTUM_DEFAULT_MASK", Ogre::SceneManager::QUERY_FRUSTUM_DEFAULT_MASK,
+          "QUERY_FX_DEFAULT_MASK", Ogre::SceneManager::QUERY_FX_DEFAULT_MASK,
+          "QUERY_LIGHT_DEFAULT_MASK", Ogre::SceneManager::QUERY_LIGHT_DEFAULT_MASK,
+          "QUERY_STATICGEOMETRY_DEFAULT_MASK", Ogre::SceneManager::QUERY_STATICGEOMETRY_DEFAULT_MASK,
+          "RENDER_QUEUE_BACKGROUND", 0,
+          "RENDER_QUEUE_SKIES_EARLY", 5,
+          "RENDER_QUEUE_MAIN", 50,
+          "RENDER_QUEUE_6", 51,
+          "RENDER_QUEUE_OUTLINED", 49,
+          "RENDER_QUEUE_OVERLAY", 100,
 #else
           "RENDER_QUEUE_BACKGROUND", Ogre::RENDER_QUEUE_BACKGROUND,
           "RENDER_QUEUE_SKIES_EARLY", Ogre::RENDER_QUEUE_SKIES_EARLY,
+          "RENDER_QUEUE_6", 51,
+          "RENDER_QUEUE_OUTLINED", 49,
           "RENDER_QUEUE_MAIN", Ogre::RENDER_QUEUE_MAIN,
           "RENDER_QUEUE_OVERLAY", Ogre::RENDER_QUEUE_OVERLAY,
           "OT_POINT_LIST", Ogre::RenderOperation::OT_POINT_LIST,
@@ -201,8 +234,19 @@ namespace Gsage {
           "OT_LINE_STRIP", Ogre::RenderOperation::OT_LINE_STRIP,
           "OT_TRIANGLE_LIST", Ogre::RenderOperation::OT_TRIANGLE_LIST,
           "OT_TRIANGLE_STRIP", Ogre::RenderOperation::OT_TRIANGLE_STRIP,
-          "OT_TRIANGLE_FAN", Ogre::RenderOperation::OT_TRIANGLE_FAN
+          "OT_TRIANGLE_FAN", Ogre::RenderOperation::OT_TRIANGLE_FAN,
+          "QUERY_ENTITY_DEFAULT_MASK", Ogre::SceneManager::ENTITY_TYPE_MASK,
+          "QUERY_FRUSTUM_DEFAULT_MASK", Ogre::SceneManager::FRUSTUM_TYPE_MASK,
+          "QUERY_FX_DEFAULT_MASK", Ogre::SceneManager::FX_TYPE_MASK,
+          "QUERY_LIGHT_DEFAULT_MASK", Ogre::SceneManager::LIGHT_TYPE_MASK,
+          "QUERY_STATICGEOMETRY_DEFAULT_MASK", Ogre::SceneManager::STATICGEOMETRY_TYPE_MASK,
 #endif
+          "getMaterial", [] (const Ogre::String& name, const Ogre::String& group) {
+            return Ogre::MaterialManager::getSingletonPtr()->getByName(name, group);
+          },
+          "parseMaterial", [] (const std::string& name, const DataProxy& data) {
+            return MaterialBuilder::parse(name, data);
+          }
       );
 
       // Components
@@ -264,6 +308,20 @@ namespace Gsage {
           "center", sol::property(&Ogre::AxisAlignedBox::getCenter)
       );
 #endif
+
+      lua.new_usertype<Ogre::Material>("OgreMaterial",
+          "getTechnique", sol::overload(
+            (Ogre::Technique*(Ogre::Material::*)(unsigned short index))&Ogre::Material::getTechnique,
+            (Ogre::Technique*(Ogre::Material::*)(const Ogre::String& name))&Ogre::Material::getTechnique
+          )
+      );
+
+      lua.new_usertype<Ogre::Technique>("OgreTechnique", 
+          "getPass", sol::overload(
+            (Ogre::Pass*(Ogre::Technique::*)(unsigned short index))&Ogre::Technique::getPass,
+            (Ogre::Pass*(Ogre::Technique::*)(const Ogre::String& name))&Ogre::Technique::getPass
+          )
+      );
 
       lua.new_usertype<Ogre::Vector3>("Vector3",
           sol::constructors<sol::types<const Ogre::Real&, const Ogre::Real&, const Ogre::Real&>>(),

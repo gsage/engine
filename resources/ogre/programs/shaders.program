@@ -1,0 +1,161 @@
+// stdquad ------------------------------------------------
+
+vertex_program GLSL/stdquad_vp glsl
+{
+	source GLSL/stdquad_vp.glsl
+}
+
+fragment_program GLSL/stdquad_fp glsl
+{
+	source GLSL/stdquad_fp.glsl
+  default_params
+  {
+    param_named diffuseMap int 0
+  }
+}
+
+vertex_program HLSL/stdquad_vp hlsl
+{
+	source HLSL/stdquad_vp.hlsl
+	entry_point vp30
+	target vs_3_0
+}
+
+fragment_program HLSL/stdquad_fp hlsl
+{
+  source HLSL/stdquad_fp.hlsl
+	entry_point fp30
+	target ps_3_0
+}
+
+vertex_program Metal/stdquad_vp metal
+{
+	source Metal/stdquad_vp.metal
+	entry_point main_metal
+}
+
+fragment_program Metal/stdquad_fp metal
+{
+  source Metal/stdquad_fp.metal
+	entry_point main_metal
+  shader_reflection_pair_hint stdquad_vp
+}
+
+vertex_program stdquad_vp unified
+{
+	delegate Metal/stdquad_vp
+	delegate GLSL/stdquad_vp
+	delegate HLSL/stdquad_vp
+	default_params
+	{
+		param_named_auto worldViewProj worldviewproj_matrix
+	}
+}
+
+fragment_program stdquad_fp unified
+{
+	delegate Metal/stdquad_fp
+  delegate GLSL/stdquad_fp
+  delegate HLSL/stdquad_fp
+}
+
+// outline ------------------------------------------------
+
+vertex_program Metal/outline_vp metal
+{
+	source Metal/outline_vp.metal
+	entry_point main_metal
+}
+
+vertex_program GLSL/outline_vp glsl
+{
+	source GLSL/outline_vp.glsl
+}
+
+vertex_program HLSL/outline_vp hlsl
+{
+	source HLSL/outline_vp.hlsl
+	entry_point vp30
+	target vs_3_0
+}
+
+vertex_program outline_vp unified
+{
+	delegate Metal/outline_vp
+	delegate GLSL/outline_vp
+	delegate HLSL/outline_vp
+	default_params
+	{
+		param_named_auto worldViewProj worldviewproj_matrix
+	}
+}
+
+fragment_program Metal/outline_fp metal
+{
+	source Metal/outline_fp.metal
+	entry_point main_metal
+  shader_reflection_pair_hint outline_vp
+}
+
+fragment_program GLSL/outline_fp glsl
+{
+	source GLSL/outline_fp.glsl
+}
+
+fragment_program HLSL/outline_fp hlsl
+{
+	source HLSL/outline_fp.hlsl
+	entry_point fp30
+	target ps_3_0
+}
+
+fragment_program HLSL40/outline_fp hlsl
+{
+	source HLSL/outline_fp.hlsl
+	entry_point fp40
+	target ps_4_0
+}
+
+fragment_program outline_fp unified
+{
+  delegate Metal/outline_fp
+	delegate GLSL/outline_fp
+	delegate HLSL40/outline_fp
+	delegate HLSL/outline_fp
+	default_params
+	{
+    param_named_auto texelSize inverse_texture_size 0
+    param_named outlineColor float4 0.9 0.1 0.1 1.0
+    param_named borderSize int 1
+	}
+}
+
+// --------------------------------------------------------
+
+material stdquad
+{
+  technique
+  {
+
+    pass
+    {
+      depth_check off
+      polygon_mode_overrideable false
+
+      vertex_program_ref stdquad_vp
+      {
+      }
+
+      fragment_program_ref stdquad_fp
+      {
+      }
+
+      texture_unit
+      {
+        tex_coord_set 0
+        tex_address_mode clamp
+        filtering linear linear linear
+      }
+    }
+  }
+}

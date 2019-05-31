@@ -391,6 +391,11 @@ namespace Gsage
        * @param callback Mutation callback
        */
       void queueMutation(ObjectMutation::Callback callback);
+
+      /**
+       * Gets object manager
+       */
+      inline OgreObjectManager* getObjectManager() { return &mObjectManager; }
     protected:
       /**
        * Handle window resizing

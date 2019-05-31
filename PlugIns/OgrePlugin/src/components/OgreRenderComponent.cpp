@@ -40,7 +40,7 @@ namespace Gsage {
   /**
    * Fired on render component position change
    */
-  const std::string OgreRenderComponent::POSITION_CHANGE = "OgreRenderComponent.POSITION_CHANGE";
+  const Event::Type OgreRenderComponent::POSITION_CHANGE = "OgreRenderComponent.POSITION_CHANGE";
 
   OgreRenderComponent::OgreRenderComponent() :
     mAddedToScene(false),

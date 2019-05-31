@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "GsageFacade.h"
 #include "FileLoader.h"
 #include "MaterialLoader.h"
+#include "ScopedLocale.h"
 
 #if OGRE_VERSION >= 0x020100
 #include "ogre/v2/HlmsUnlit.h"
@@ -149,9 +150,12 @@ namespace Gsage {
 
       if(initialize) {
 #if OGRE_VERSION_MAJOR == 2
-        orgm.initialiseResourceGroup(section, false);
+        orgm.initialiseResourceGroup(section, true);
 #else
-        orgm.initialiseResourceGroup(section);
+        {
+          ScopedCLocale l(true);
+          orgm.initialiseResourceGroup(section);
+        }
 #endif
       }
     }

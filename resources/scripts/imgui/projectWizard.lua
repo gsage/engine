@@ -97,10 +97,11 @@ function ProjectWizard:__call()
     return
   end
 
-  imgui.SetNextWindowPos(90, 35)
+  local sx, sy = imgui.Scale()
+  imgui.SetNextWindowPos(90 * sx, 35 * sy)
   local width, height = imgui.DisplaySize()
-  imgui.SetNextWindowSize(width - 95, height - 40)
-  imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 3.0, 3.0)
+  imgui.SetNextWindowSize(width - 95 * sx, height - 40 * sy)
+  imgui.PushStyleVar_2(ImGuiStyleVar_WindowPadding, 3.0 * sx, 3.0 * sy)
   local drawing = self:imguiBegin()
   imgui.PopStyleVar(ImGuiStyleVar_WindowPadding)
 

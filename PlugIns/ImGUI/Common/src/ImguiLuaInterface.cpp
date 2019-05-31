@@ -638,6 +638,18 @@ namespace Gsage {
       return ImGui::GetIO().WantCaptureMouse;
     };
 
+    imgui["KeyCtrl"] = []() {
+      return ImGui::GetIO().KeyCtrl;
+    };
+
+    imgui["KeyShift"] = []() {
+      return ImGui::GetIO().KeyShift;
+    };
+
+    imgui["KeyAlt"] = []() {
+      return ImGui::GetIO().KeyAlt;
+    };
+
     imgui["Texture"] = [](TexturePtr texture) {
       if (!texture->isValid() || !texture->hasData()) {
         return false;
@@ -649,6 +661,11 @@ namespace Gsage {
 
       ImGui::Image(texture.get(), size);
       return true;
+    };
+
+    imgui["Scale"] = []() {
+      ImGuiIO io = ImGui::GetIO();
+      return std::make_tuple(io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
     };
   }
 }

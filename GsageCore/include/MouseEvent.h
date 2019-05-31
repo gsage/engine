@@ -54,8 +54,8 @@ namespace Gsage
 
       ButtonType button;
 
-      void setRelativePosition(double x, double y, double z);
-      void setAbsolutePosition(double x, double y, double z);
+      void setRelativePosition(float x, float y, float z);
+      void setAbsolutePosition(float x, float y, float z);
       float mouseX;
       float mouseY;
       float mouseZ;

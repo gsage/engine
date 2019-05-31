@@ -125,6 +125,18 @@ namespace Gsage {
       }
 
       /**
+       * Clone and assign entity material
+       *
+       * @param material
+       */
+      void createCloneWithMaterial(Ogre::MaterialPtr material, Ogre::uint8 renderQueue);
+
+      /**
+       * Remove cloned entity
+       */
+      void removeClone();
+
+      /**
        * Get AABB
        */
 #if OGRE_VERSION >= 0x020100
@@ -148,6 +160,8 @@ namespace Gsage {
       typedef std::vector<OgreObject*> AttachedEntities;
 
       AttachedEntities mAttachedEntities;
+
+      OgreV1::Entity* mClone;
 
   };
 }

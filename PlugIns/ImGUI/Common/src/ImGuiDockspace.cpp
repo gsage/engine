@@ -93,11 +93,12 @@ namespace Gsage {
 
   ImGuiDockspaceStyle getDefaultStyle()
   {
+    float lineHeight = ImGui::GetTextLineHeight();
     ImGuiDockspaceStyle style;
-    style.splitterThickness = 4.0f;
-    style.tabbarHeight = 26.0f;
-    style.tabbarTextMargin = 15.0f;
-    style.tabbarPadding = 1.0f;
+    style.tabbarHeight = lineHeight * 1.2f;
+    style.splitterThickness = lineHeight / 6.5f;
+    style.tabbarTextMargin = lineHeight / 1.7f;
+    style.tabbarPadding = lineHeight / 26.0f;
     style.windowRounding = ImGui::GetStyle().WindowRounding;
 
     style.windowBGColor = ImGui::GetColorU32(ImGuiCol_ChildWindowBg);
@@ -1153,6 +1154,7 @@ namespace Gsage {
         {
           selection = dockTab;
         }
+        ImGuiIO io = ImGui::GetIO();
 
         if (ImGui::IsItemActive() && ImGui::IsMouseDragging())
         {
@@ -1160,7 +1162,7 @@ namespace Gsage {
           mDraggedDock = dockTab;
           ImGuiWindow* window = ImGui::FindWindowByName(dockTab->getLabel());
 
-          ImVec2 mousePos = ImGui::GetIO().MousePos;
+          ImVec2 mousePos = io.MousePos;
 
           if(window) {
             ImVec2 windowSize = window->Size;
@@ -1225,7 +1227,7 @@ namespace Gsage {
 
         center.y += 1;
 
-        ImVec2 crossSize = ImVec2(5.0f, 5.0f);
+        ImVec2 crossSize = ImVec2(5.0f * io.DisplayFramebufferScale.x, 5.0f * io.DisplayFramebufferScale.y);
 
         if (ImGui::IsItemHovered()) {
           drawList->PathClear();
@@ -1235,7 +1237,7 @@ namespace Gsage {
               center + ImVec2(crossSize.x, -crossSize.y), center + ImVec2(-crossSize.x, crossSize.y), black, 5);
         }
 
-        crossSize = ImVec2(4.0f, 4.0f);
+        crossSize = ImVec2(4.0f * io.DisplayFramebufferScale.x, 4.0f * io.DisplayFramebufferScale.y);
 
         drawList->PathClear();
         drawList->AddLine(

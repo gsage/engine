@@ -113,14 +113,14 @@ namespace Gsage {
   template<>
   bool JsonValueWrapper::readValue<unsigned long>(const Json::Value& v, unsigned long& dest) const
   {
-    dest = v.asLargestUInt();
+    dest = (unsigned long)v.asLargestUInt();
     return true;
   }
 
   template<>
   bool JsonValueWrapper::readValue<signed long>(const Json::Value& v, signed long& dest) const
   {
-    dest = v.asLargestInt();
+    dest = (long)v.asLargestInt();
     return true;
   }
 
@@ -207,7 +207,7 @@ namespace Gsage {
 
   const DataWrapper* JsonValueWrapper::getChildAt(int key) const
   {
-    if(getObject().size() <= key) {
+    if(getObject().size() <= (unsigned int)key) {
       return 0;
     }
     const Json::Value& value = getObject()[key];

@@ -43,13 +43,6 @@ namespace Gsage {
       virtual ~ScriptComponent();
 
       /**
-       * Read script from the file
-       *
-       * @param value Script file path
-       */
-      void readScript(const std::string& path);
-
-      /**
        * Set behavior id for this component
        * @param value Id of behavior
        */

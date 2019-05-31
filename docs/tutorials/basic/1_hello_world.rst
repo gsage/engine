@@ -24,7 +24,7 @@ By running :code:`GsageExe` executable, you can start the simple isometric RPG e
 
 Editor is not very usefull at the moment, however it can show some realtime scene state.
 
-.. image:: ../../images/editor.png
+.. image:: ../../images/editor.v0.3.png
 
 Modifying Level
 ---------------

@@ -1,11 +1,14 @@
 local eal = require 'lib.eal.manager'
+require 'factories.base'
 
-emitter = emitter or {}
+local EmitterFactory = class(EntityFactory, function(self)
+  EntityFactory.init(self, "emitter")
+end)
 
-local systems = {}
+emitter = emitter or EmitterFactory()
 
-function systems.damage(name)
-  local data = {
+emitter:register("damage", function(name)
+  local e = {
     id = name,
     vars = {
       class = "damageEmitter",
@@ -36,18 +39,11 @@ function systems.damage(name)
     }
   }
 
-  return data
-end
-
-
-function emitter.create(name)
-  local factory = systems[name]
-  if not factory then
+  if not data:createEntity(e) then
     return nil
   end
 
-  if not data:createEntity(factory(name)) then
-    return nil
-  end
   return eal:getEntity(name)
-end
+end)
+
+return emitter

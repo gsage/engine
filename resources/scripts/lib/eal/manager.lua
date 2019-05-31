@@ -39,9 +39,9 @@ local EALManager = class(function(self)
       -- invalidate linked entity
       local e = self.entities[event.id]
       if e then
+        e:__destroy()
         e.entity = nil
         self.entities[event.id] = nil
-        e:__destroy()
       end
     end
     return true
@@ -51,7 +51,6 @@ local EALManager = class(function(self)
   event:onSystemChange(core, SystemChangeEvent.SYSTEM_REMOVED, self.systemUpdateHandler)
   event:onEntity(core, EntityEvent.CREATE, self.entityUpdateHandler)
   event:onEntity(core, EntityEvent.REMOVE, self.entityUpdateHandler)
-  event:bind(core, Facade.BEFORE_RESET, self.entityUpdateHandler)
 end)
 
 -- add system to the eal

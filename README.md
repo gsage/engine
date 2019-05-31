@@ -12,7 +12,7 @@ Graphics System Agnostic Game Engine
 example will be replaced by proper template project that will be
 available from the editor**
 
-![Editor](/docs/images/editor.png)
+![Editor](/docs/images/editor.v0.3.png)
 ![ExampleGame](/docs/images/game2.png)
 See [documentation](http://engine.readthedocs.io/) for more examples.
 
@@ -105,4 +105,3 @@ This project is licensed under MIT license
 
 ## Issue Tracker
 - [Pivotal Tracker](https://www.pivotaltracker.com/n/projects/963480)
-

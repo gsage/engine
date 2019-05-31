@@ -210,7 +210,7 @@ namespace Gsage {
       };
 
       KeyboardEvent() {}
-      KeyboardEvent(const std::string& type, const Key& key, const unsigned int text, const unsigned int modifierState);
+      KeyboardEvent(Event::ConstType type, const Key& key, const unsigned int text, const unsigned int modifierState);
       virtual ~KeyboardEvent();
 
       Key key;
@@ -245,7 +245,7 @@ namespace Gsage {
       static const Event::Type INPUT;
 
       TextInputEvent() {};
-      TextInputEvent(const std::string& type, const char* text);
+      TextInputEvent(Event::ConstType type, const char* text);
       virtual ~TextInputEvent();
 
       /**

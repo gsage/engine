@@ -47,6 +47,7 @@ namespace Gsage {
   EntityWrapper::EntityWrapper()
     : mQuery(STATIC)
     , mAnimBlendMode(OgreV1::ANIMBLEND_CUMULATIVE)
+    , mClone(0)
     , mResourceGroup(Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME)
   {
     BIND_ACCESSOR_WITH_PRIORITY("resourceGroup", &EntityWrapper::setResourceGroup, &EntityWrapper::getResourceGroup, 2);
@@ -121,22 +122,15 @@ namespace Gsage {
       OgreV1::SubMesh* sm = mesh->getSubMesh(i);
       if(sm->isMatInitialised()) {
         Ogre::String materialName = sm->getMaterialName();
-//#if OGRE_VERSION >= 0x020100
         if(!mObjectManager->getRenderSystem()->getMaterialLoader()->load(materialName, mesh->getGroup())) {
           LOG(ERROR) << "Failed to load material " << materialName;
         }
-/*#else
-        Ogre::MaterialManager::getSingletonPtr()->load(
-            materialName,
-            mesh->getGroup()
-        );
-#endif*/
       }
     }
 
     mObject = mSceneManager->createEntity(mesh);
     mObject->setQueryFlags(mQuery);
-    mObject->getUserObjectBindings().setUserAny("entity", Ogre::Any(mOwnerId));
+    defineUserBindings();
     auto skeleton = static_cast<OgreV1::Entity*>(mObject)->getSkeleton();
     if(skeleton != 0)
       skeleton->setBlendMode(mAnimBlendMode);
@@ -184,6 +178,39 @@ namespace Gsage {
     mObject->attachObjectToBone(boneID, object);
 
     return true;
+  }
+
+  void EntityWrapper::createCloneWithMaterial(Ogre::MaterialPtr material, Ogre::uint8 renderQueue)
+  {
+    if(mObject == 0) {
+      LOG(ERROR) << "Can't clone, no entity created";
+      return;
+    }
+
+    // remove old clone object
+    removeClone();
+    if(material.isNull()) {
+      return;
+    }
+
+    mClone = mObject->clone(
+#if OGRE_VERSION < 0x020100
+      generateName() + "clone"
+#endif
+    );
+    mClone->setMaterial(material);
+    mClone->setRenderQueueGroup(renderQueue);
+    mClone->setCastShadows(false);
+    attachObject(mClone);
+  }
+
+  void EntityWrapper::removeClone()
+  {
+    if(mClone) {
+      mClone->detachFromParent();
+      mSceneManager->destroyEntity(mClone);
+      mClone = 0;
+    }
   }
 
   void EntityWrapper::attachToBone(const DataProxy& params, const std::string& entityId, DataProxy movableObjectData)

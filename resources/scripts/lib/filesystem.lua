@@ -11,6 +11,9 @@ local fs = {
     ls = function(folder)
       return cfs:ls(folder)
     end,
+    basename = function(path)
+      return cfs:basename(path)
+    end,
     filename = function(path)
       return cfs:filename(path)
     end,

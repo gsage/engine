@@ -33,7 +33,9 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  const Event::Type OgreObjectManagerEvent::FACTORY_UNREGISTERED = "factoryUnregistered";
+  const Event::Type OgreObjectManagerEvent::FACTORY_UNREGISTERED = "OOME.FACTORY_UNREGISTERED";
+
+  const Event::Type OgreObjectManagerEvent::OBJECT_DESTROYED = "OOME.OBJECT_DESTROYED";
 
   OgreObjectManager::OgreObjectManager(OgreRenderSystem* rs)
     : mRenderSystem(rs)
@@ -113,6 +115,7 @@ namespace Gsage {
       return;
     }
 
+    fireEvent(OgreObjectManagerEvent(OgreObjectManagerEvent::OBJECT_DESTROYED, object->getObjectId(), object));
     mObjects[type]->remove(object);
   }
 }

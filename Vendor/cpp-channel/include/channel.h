@@ -525,7 +525,7 @@ private:
 public:
   select()
   : m_try_functions(),
-    random_gen(std::time(nullptr)) {}
+    random_gen((std::mt19937)std::time(nullptr)) {}
 
   /* send cases */
 

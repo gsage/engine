@@ -66,10 +66,16 @@ namespace Gsage {
       const std::string& getId() const;
 
       /**
-       * Set node position
+       * Set node position with defined offset
        * @param position Ogre::Vector3 position
        */
       void setPosition(const Ogre::Vector3& position);
+
+      /**
+       * Set node position without defined offset
+       * @param position Ogre::Vector3 position
+       */
+      void setPositionWithoutOffset(const Ogre::Vector3& position);
 
       /**
        * Get node position
@@ -123,6 +129,14 @@ namespace Gsage {
        * @param rotation Ogre::Quaternion that defines rotation
        */
       void rotate(const Ogre::Quaternion& rotation, const Ogre::Node::TransformSpace ts);
+
+      /**
+       * Rotate node
+       * @param axis Axis to rotate around
+       * @param degree Rotation degree
+       * @param ts Transform space
+       */
+      void rotate(const Ogre::Vector3& axis, const Ogre::Degree& degree, const Ogre::Node::TransformSpace ts);
 
       /**
        * Rotate node to look at position
@@ -230,6 +244,48 @@ namespace Gsage {
       typedef std::map<const std::string, OgreObject*> ObjectCollection;
       typedef std::map<const std::string, ObjectCollection> Objects;
       Objects mChildren;
+
+#if OGRE_VERSION >= 0x020100
+      enum Property {
+        Orientation = 0x01,
+        Position    = 0x02,
+        Scale       = 0x04
+      };
+      // used to properly get updated node position/orientation and scale
+      char mDirtyProperties;
+
+      void markDirty(Property p)
+      {
+        mDirtyProperties |= (char)p;
+      }
+
+      void updateProperty(Property p)
+      {
+        if(!mNode) {
+          return;
+        }
+
+        if(isDirty(p)) {
+          switch(p) {
+            case Position:
+              mNode->_getDerivedPositionUpdated();
+              break;
+            case Orientation:
+              mNode->_getDerivedOrientationUpdated();
+              break;
+            case Scale:
+              mNode->_getDerivedScaleUpdated();
+              break;
+          }
+        }
+        mDirtyProperties &= ~p;
+      }
+
+      bool isDirty(char props)
+      {
+        return (mDirtyProperties & props) == props;
+      }
+#endif
   };
 }
 #endif

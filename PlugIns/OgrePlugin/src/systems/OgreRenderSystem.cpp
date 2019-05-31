@@ -37,6 +37,7 @@ THE SOFTWARE.
 #else
 #include "ogre/v2/ManualObjectWrapper.h"
 #include "ogre/v2/ItemWrapper.h"
+#include <OgreBitwise.h>
 #endif
 
 #include "RenderEvent.h"
@@ -146,6 +147,7 @@ namespace Gsage {
   {
     mSystemInfo.put("type", OgreRenderSystem::ID);
     mSystemInfo.put("version", OGRE_VERSION);
+    mSystemInfo.put("majorVersion", OGRE_VERSION_MAJOR);
   }
 
   OgreRenderSystem::~OgreRenderSystem()
@@ -344,7 +346,7 @@ namespace Gsage {
     // TODO: make this configurable
     Ogre::Hlms *hlms = mRoot->getHlmsManager()->getHlms(Ogre::HLMS_PBS);
     Ogre::HlmsPbs *pbs = static_cast<Ogre::HlmsPbs*>(hlms);
-    pbs->setShadowSettings(Ogre::HlmsPbs::PCF_2x2);
+    pbs->setShadowSettings(Ogre::HlmsPbs::PCF_4x4);
 
     // configure forward3D if it's defined
     auto forward3D = settings.get<DataProxy>("forward3D");
@@ -365,8 +367,9 @@ namespace Gsage {
         4, 4, 5, 96, 3.0f, 200.f
       );
     }
+    mSceneManager->getRenderQueue()->setRenderQueueMode(51, Ogre::RenderQueue::Modes::V1_FAST);
+    //---------------------------------------------------------------------------------
 #endif
-
     mRenderSystem = mRoot->getRenderSystem();
 
     assert(mRenderSystem != 0);
@@ -408,7 +411,7 @@ namespace Gsage {
       pair.second->initialize(mSceneManager);
       mRenderTargetsReverseIndex[pair.second->getOgreRenderTarget()] = pair.first;
     }
-
+    
     return EngineSystem::initialize(settings);
   }
 

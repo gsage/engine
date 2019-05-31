@@ -1,6 +1,8 @@
 -- path loading utils
 require 'lib.class'
 
+local fs = require 'lib.filesystem'
+
 function split(inputstr, sep)
   if sep == nil then
     sep = "%s"
@@ -27,13 +29,13 @@ function PathUtils:addDefaultPaths()
   local version = _VERSION:match("%d+%.%d+")
 
   self:_addPaths({
-    getResourcePath('luarocks/packages/share/lua/' .. version .. '/?.lua'),
+    getResourcePath('luarocks/packages/share/lua/' .. version .. '/'),
     getResourcePath('luarocks/packages/share/lua/' .. version .. '/?/init.lua')
   }, "path")
 
   self:_addPaths({
-    getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.so'),
-    getResourcePath('luarocks/packages/lib/lua/' .. version .. '/?.dll')
+    getResourcePath('luarocks/packages/lib/lua/' .. version),
+    getResourcePath('luarocks/packages/lib/lua/' .. version)
   }, "cpath")
 
   self.hasDefaultPaths = true
@@ -68,9 +70,20 @@ end
 
 function PathUtils:_addPaths(paths, ptype)
   local currentPaths = split(package[ptype], ";")
+  local extensions = {"lua"}
+  if ptype == "cpath" then
+    extensions = {"so", "dll"}
+  end
 
   for _, path in ipairs(paths) do
-    currentPaths[#currentPaths + 1] = path
+    if fs.path.extension(path) ~= "" then
+      currentPaths[#currentPaths + 1] = path
+    else
+      for _, extension in ipairs(extensions) do
+        currentPaths[#currentPaths + 1] = fs.path.join(path, "?." .. extension)
+      end
+    end
+
   end
 
   package[ptype] = table.concat(currentPaths, ";")

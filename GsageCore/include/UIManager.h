@@ -33,6 +33,7 @@ struct lua_State;
 
 namespace Gsage
 {
+  class GsageFacade;
   class Engine;
   class LuaInterface;
 
@@ -44,7 +45,7 @@ namespace Gsage
     public:
       UIManager()
         : mLuaState(0)
-        , mEngine(0)
+        , mFacade(0)
         , mInitialized(false)
       {
       }
@@ -52,11 +53,11 @@ namespace Gsage
       /**
        * Does initial setup of the UIManager
        *
-       * @param engine Engine core instance
+       * @param facade Gsage facade instance
        * @param L Initialize UI manager with lua state
        */
-      virtual void initialize(Engine* engine, lua_State* L = 0) {
-        mEngine = engine;
+      virtual void initialize(GsageFacade* facade, lua_State* L = 0) {
+        mFacade = facade;
         mLuaState = L;
         mInitialized = true;
       };
@@ -80,7 +81,7 @@ namespace Gsage
 
       inline bool initialized() const { return mInitialized; }
     protected:
-      Engine* mEngine;
+      GsageFacade* mFacade;
       lua_State* mLuaState;
       bool mInitialized;
   };

@@ -38,7 +38,7 @@
   },
 
   "cef": {
-    "dedicatedThread": true,
+    "dedicatedThread": false,
     "webRoot": "editor/webviews"
   },
 
@@ -137,12 +137,16 @@
   {
     "globalResources": {
       "General": [
-        "ogre/materials/"
+        "ogre/programs",
+        "ogre/hlms/"
+      ],
+      "Utility": [
+        "ogre/utility"
       ],
       "Hlms": {
-        "common": "FileSystem;ogre/materials/Common",
-        "pbs": "FileSystem;ogre/materials/Pbs",
-        "unlit": "FileSystem;ogre/materials/Unlit"
+        "common": "FileSystem;ogre/hlms/Common",
+        "pbs": "FileSystem;ogre/hlms/Pbs",
+        "unlit": "FileSystem;ogre/hlms/Unlit"
       }
     },
     "backgroundWorkersCount": 1,
@@ -154,11 +158,6 @@
         "RTT Preferred Mode": "FBO"
       }
     ],
-    "forward3D": {
-      "width": 4,
-      "height": 4,
-      "numSlices": 5
-    },
     "plugins": [
       "RenderSystem_Direct3D11",
       "RenderSystem_GL",

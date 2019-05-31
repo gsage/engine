@@ -52,34 +52,6 @@ namespace Gsage {
   {
   }
 
-  void ScriptComponent::readScript(const std::string& path)
-  {
-    std::ifstream stream(path);
-    std::string res;
-    stream.seekg(0, std::ios::end);
-    long int size = stream.tellg();
-    if(size == -1)
-    {
-      LOG(ERROR) << "Failed to read script file: " << path;
-      return;
-    }
-
-    res.reserve(size);
-    stream.seekg(0, std::ios::beg);
-    try
-    {
-      res.assign((std::istreambuf_iterator<char>(stream)),
-                  std::istreambuf_iterator<char>());
-    }
-    catch(std::ifstream::failure e)
-    {
-      LOG(ERROR) << "Failed to read script file: " << path;
-      return;
-    }
-
-    stream.close();
-  }
-
   void ScriptComponent::setBehavior(const std::string& value)
   {
     mBehavior = value;
@@ -167,6 +139,10 @@ namespace Gsage {
 
   DataProxy ScriptComponent::getContext()
   {
+    if(!mData.valid()) {
+      return DataProxy();
+    }
+
     return DataProxy::wrap(mData);
   }
 

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <assert.h>
 #include <Poco/Path.h>
 #include <Poco/File.h>
+#include "ScopedLocale.h"
 
 
 namespace Gsage {
@@ -347,6 +348,7 @@ namespace Gsage {
 
   std::pair<std::string, bool> FileLoader::loadFile(const std::string& path, std::ios_base::openmode mode) const
   {
+    ScopedCLocale l(true);
     std::string fullPath;
     if(Poco::Path(path).isAbsolute()) {
       fullPath = path;

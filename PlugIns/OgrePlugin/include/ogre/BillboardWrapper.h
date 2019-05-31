@@ -221,10 +221,7 @@ namespace Gsage {
 
         typedef std::vector<BillboardWrapper> Billboards;
         Billboards mBillboards;
-
-#if OGRE_VERSION_MAJOR == 2
         std::string mMaterialName;
-#endif
     };
 }
 

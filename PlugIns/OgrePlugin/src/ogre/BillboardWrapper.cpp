@@ -184,7 +184,19 @@ namespace Gsage {
 
   bool BillboardSetWrapper::read(const DataProxy& dict)
   {
+    if(mObject) {
+      mObject->detachFromParent();
+      mSceneManager->destroyBillboardSet(mObject);
+    }
+
     mObject = mSceneManager->createBillboardSet();
+#if OGRE_VERSION >= 0x020100
+    mObject->setRenderQueueGroup(51);
+    mObject->setQueryFlags(Ogre::SceneManager::QUERY_FX_DEFAULT_MASK);
+#else
+    mObject->setQueryFlags(Ogre::SceneManager::FX_TYPE_MASK);
+#endif
+    defineUserBindings();
     bool res = OgreObject::read(dict);
     attachObject(mObject);
     return res;
@@ -222,37 +234,72 @@ namespace Gsage {
 
   void BillboardSetWrapper::setMaterialName(const std::string& id)
   {
-#if OGRE_VERSION_MAJOR == 1
-    mObject->setMaterialName(id);
-#else
+    Ogre::String group = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
+    Ogre::String materialName;
     auto parts = split(id, '.');
     if(parts.size() == 2) {
-      mObject->setMaterialName(parts[1], parts[0]);
-      mMaterialName = id;
+      group = parts[0];
+      materialName = parts[1];
     } else {
-      mObject->setMaterialName(id, "General");
-      mMaterialName = std::string("General.") + id;
+      materialName = id;
     }
+    mMaterialName = group + "." + materialName;
+
+#if OGRE_VERSION >= 0x020100
+    mObject->setDatablockOrMaterialName(materialName, group);
+#else
+    mObject->setMaterialName(materialName, group);
 #endif
+    mObject->setSortingEnabled(true);
   }
 
   const std::string& BillboardSetWrapper::getMaterialName() const
   {
-#if OGRE_VERSION_MAJOR == 1
-    return mObject->getMaterialName();
-#else
     return mMaterialName;
-#endif
   }
 
   void BillboardSetWrapper::setBillboards(const DataProxy& dict)
   {
+    for(int i = 0; i < mObject->getNumBillboards(); i++) {
+      mObject->removeBillboard(i);
+    }
+
+    mBillboards.clear();
+    Ogre::Vector3 min;
+    Ogre::Vector3 max;
     for(auto& pair : dict)
     {
       mBillboards.emplace_back();
-      if(!mBillboards.back().initialize(pair.second, mObject))
+      BillboardWrapper& billboard = mBillboards.back();
+      if(!billboard.initialize(pair.second, mObject)) {
         mBillboards.pop_back();
+        continue;
+      }
+
+      Ogre::Vector3 pos = billboard.getPosition();
+      if(mBillboards.size() == 1) {
+        min = max = pos;
+      }
+      // cubic bounds for the BBT_POINT billboard set
+      if(mObject->getBillboardType() == OgreV1::BBT_POINT) {
+        Ogre::Real bounds = std::max(billboard.getWidth(), billboard.getHeight());
+        min.makeFloor(
+            pos
+#if OGRE_VERSION < 0x020100
+            - bounds / 2
+#endif
+        );
+        max.makeCeil(pos + bounds / 2);
+      }
     }
+#if OGRE_VERSION >= 0x020100
+    Ogre::Aabb aabb(min, max);
+    Ogre::Real radius = aabb.getRadiusOrigin();
+#else
+    Ogre::AxisAlignedBox aabb(min, max);
+    Ogre::Real radius = Ogre::Math::boundingRadiusFromAABB(aabb);
+#endif
+    mObject->setBounds(aabb, radius);
   }
 
   DataProxy BillboardSetWrapper::getBillboards()
