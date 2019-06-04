@@ -110,7 +110,7 @@ namespace Gsage {
   class GSAGE_API Event
   {
     public:
-      typedef char* const Type;
+      typedef char const* Type;
       typedef const char* ConstType;
 
       Event() {}

@@ -52,14 +52,14 @@ endif
 
 UNIT_CMD :=  cd ./build/bin/ && $(PREFIX)unit-tests
 FUNCTIONAL_CMD := cd ./build/bin/ && $(PREFIX)functional-tests
-RUN_CMD := cd ./build/bin/ && $(PREFIX)GsageExe
-EDITOR_CMD := cd ./build/bin/ && $(PREFIX)GsageEditor
+RUN_CMD := cd ./build/bin/ && $(PREFIX)game
+EDITOR_CMD := cd ./build/bin/ && $(PREFIX)editor
 
 ifeq ($(UNAME_S),Darwin)
 UNIT_CMD := ./build/bin/unit-tests.app/Contents/MacOS/unit-tests
 FUNCTIONAL_CMD := ./build/bin/functional-tests.app/Contents/MacOS/functional-tests
-RUN_CMD := ./build/bin/GsageExe.app/Contents/MacOS/GsageExe
-EDITOR_CMD := ./build/bin/GsageEditor.app/Contents/MacOS/GsageEditor
+RUN_CMD := ./build/bin/game.app/Contents/MacOS/game
+EDITOR_CMD := ./build/bin/editor.app/Contents/MacOS/editor
 LOGS := ./build/bin/functional-tests.app/Contents/test.log
 else
 ifeq ($(CMAKE_BUILD_TYPE),Debug)

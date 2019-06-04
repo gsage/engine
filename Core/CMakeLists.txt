@@ -10,8 +10,8 @@ if(APPLE)
 endif(APPLE)
 
 include_directories(
-  include/
-  ${gsage_SOURCE_DIR}/Vendor/Sol2/include
+  PRIVATE include/
+  SYSTEM PUBLIC ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/easylogging/include
   ${gsage_SOURCE_DIR}/Vendor/gmath/src
@@ -74,3 +74,28 @@ install(TARGETS ${LIB_NAME}
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 install(TARGETS ${LIB_NAME} DESTINATION "${CMAKE_INSTALL_PATH}/lib")
+
+set(APP_NAME "game")
+set(PACKAGER_NAME "packager")
+
+gsage_executable(${APP_NAME} cmd/app.cpp)
+console_executable(${PACKAGER_NAME} cmd/packager.cpp)
+
+set(LIBS
+  GsageCore
+  easyloggingpp
+  cpp-channel
+)
+
+if(APPLE)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/Main.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+  set(LIBS ${LIBS}
+    ${COREFOUNDATION_LIBRARY}
+    ${CARBON}
+    ${IOKIT}
+    ${COCOA_LIBRARY}
+    )
+endif(APPLE)
+
+target_link_libraries(${APP_NAME} ${LIBS})
+target_link_libraries(${PACKAGER_NAME} ${LIBS})

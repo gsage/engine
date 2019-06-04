@@ -1,10 +1,11 @@
+#ifndef _RENDERER_H_
+#define _RENDERER_H_
+
 /*
 -----------------------------------------------------------------------------
-This source file is part of OGRE
-(Object-oriented Graphics Rendering Engine)
-For the latest info, see http://www.ogre3d.org/
+This file is a part of Gsage engine
 
-Copyright (c) 2000-2014 Torus Knot Software Ltd
+Copyright (c) 2014-2019 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,31 +27,25 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-namespace Gsage {
+#include <memory>
 
-    class ScopedCLocale
-    {
-        char mSavedLocale[64];
-        bool mChangeLocaleTemporarily;
+#include "SDLWindowManager.h"
+
+namespace Gsage {
+  class RendererFactory;
+  class SDLCore;
+
+  class Renderer {
     public:
-        ScopedCLocale( bool changeLocaleTemporarily ) :
-            mChangeLocaleTemporarily( changeLocaleTemporarily )
-        {
-            if( mChangeLocaleTemporarily )
-            {
-                const char *currentLocale = setlocale( LC_NUMERIC, 0 );
-                strncpy( mSavedLocale, currentLocale, 64u );
-                mSavedLocale[63] = '\0';
-                setlocale( LC_NUMERIC, "C" );
-            }
-        }
-        ~ScopedCLocale()
-        {
-            if( mChangeLocaleTemporarily )
-            {
-                //Restore
-                setlocale( LC_NUMERIC, mSavedLocale );
-            }
-        }
-    };
+      Renderer(WindowPtr window, SDLCore* core) : mCore(core), mWindow(window) {}
+      virtual void render() = 0;
+    protected:
+      friend class RendererFactory;
+      SDLCore* mCore;
+      WindowPtr mWindow;
+  };
+
+  typedef std::shared_ptr<Renderer> RendererPtr;
 }
+
+#endif

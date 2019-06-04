@@ -38,7 +38,7 @@ TEST_F(TestGsageFacade, TestPlugins)
   std::string input = "Input";
   std::string empty = "Empty";
 
-  ASSERT_TRUE(mInstance->initialize("testConfig.json", RESOURCES_FOLDER));
+  ASSERT_TRUE(mInstance->initialize("testConfig.json", RESOURCES_FOLDER, FileLoader::Json, GsageFacade::All));
   // Loading after initialize
   ASSERT_TRUE(mInstance->loadPlugin(empty));
   ASSERT_TRUE(mInstance->loadPlugin(input));

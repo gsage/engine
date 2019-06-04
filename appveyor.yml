@@ -25,9 +25,9 @@ build_script:
 test_script:
   - |
    cd ./build/bin/
+   packager.exe ../../resources/testConfig.json
    unit-tests.exe --gtest_output=xml:unit.xml
-# functional tests do not work in appveyor yet
-# functional-tests.exe -o junit --exclude-tags benchmark --no-auto-insulate
+   functional-tests.exe -o junit --exclude-tags benchmark --no-auto-insulate -Xoutput functional.xml
 
 # scripts to run after build
 after_build:

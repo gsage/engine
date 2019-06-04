@@ -71,6 +71,7 @@ THE SOFTWARE.
 #include <OgrePCZPlugin.h>
 #else
 #include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
+#include <RenderSystems/NULL/OgreNULLPlugin.h>
 #ifdef WITH_METAL
 #include <RenderSystems/Metal/OgreMetalPlugin.h>
 #endif
@@ -193,14 +194,19 @@ namespace Gsage {
     DataProxy windowParams = p.first;
 
     std::string windowName = windowParams.get("name", "mainWindow");
+    std::string error = "window manager internal error";
 
+    WindowPtr window = nullptr;
     if(windowParams.get("useWindowManager", false)) {
-      WindowPtr window;
       auto createWindow = [&]() {
         WindowManagerPtr wm = mFacade->getWindowManager();
         if(!wm) {
+          error = "window manager not initialized";
           return;
         }
+
+        // start with hidden window
+        windowParams.put("hidden", true);
 
         window = wm->getWindow(windowName);
         if(!window) {
@@ -226,7 +232,7 @@ namespace Gsage {
         createWindow();
       }
       if(window == nullptr) {
-        LOG(ERROR) << "Failed to create window";
+        LOG(ERROR) << "Failed to create window: " << error;
         return false;
       }
 
@@ -406,12 +412,17 @@ namespace Gsage {
     mRoot->clearEventTimes();
     mRenderSystem->_initRenderTargets();
 
-    // finally initialize render targets defined in configs
+    // initialize render targets defined in configs
     for(auto pair : mRenderTargets) {
       pair.second->initialize(mSceneManager);
       mRenderTargetsReverseIndex[pair.second->getOgreRenderTarget()] = pair.first;
     }
-    
+
+    // finally show targeted window
+    if(window) {
+      window->show();
+    }
+
     return EngineSystem::initialize(settings);
   }
 
@@ -509,7 +520,16 @@ namespace Gsage {
 
     bool continueRendering = !getRenderWindow()->isClosed();
     if(continueRendering) {
+#if OGRE_VERSION >= 0x020100
+      if(mRenderSystem->getFriendlyName() == "NULL_RS") {
+        mSceneManager->updateSceneGraph();
+        mSceneManager->clearFrameData();
+      } else {
+        continueRendering = mRoot->renderOneFrame();
+      }
+#else
       continueRendering = mRoot->renderOneFrame();
+#endif
     }
 
     mManualTextureManager.updateDirtyTexures();
@@ -529,7 +549,6 @@ namespace Gsage {
 
   bool OgreRenderSystem::configure(const DataProxy& config)
   {
-
     auto resources = mConfig.get<DataProxy>("resources");
     if(resources.second)
       mResourceManager->unload(resources.first);
@@ -595,6 +614,8 @@ namespace Gsage {
 #else
     else if(id == "RenderSystem_GL" || id == "RenderSystem_GL3Plus") {
       plugin = new Ogre::GL3PlusPlugin();
+    } else if(id == "RenderSystem_NULL") {
+      plugin = new Ogre::NULLPlugin();
     }
 #ifdef WITH_METAL
     else if(id == "RenderSystem_Metal") {

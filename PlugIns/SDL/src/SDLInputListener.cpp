@@ -30,17 +30,22 @@ THE SOFTWARE.
 
 namespace Gsage {
 
-  InputHandler* SDLInputFactory::create(size_t windowHandle, Engine* engine)
+  InputHandlerPtr SDLInputFactory::create(size_t windowHandle, Engine* engine)
   {
+    if(mListener) {
+      return mListener;
+    }
+
     if(!mCore) {
       return 0;
     }
 
     SDL_StartTextInput();
-    SDL_ShowCursor(false);
+    SDL_ShowCursor(engine->settings().get("sdl.showCursor", false));
     SDLInputListener* l = new SDLInputListener(windowHandle, engine);
     mCore->addEventListener(l);
-    return l;
+    mListener = InputHandlerPtr(l);
+    return mListener;
   }
 
   void SDLInputFactory::setSDLCore(SDLCore* core)

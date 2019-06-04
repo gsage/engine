@@ -27,6 +27,7 @@ macro(configure)
   endif(NOT EXISTS BINARY_OUTPUT_DIR)
 
   if(WIN32)
+    add_definitions( -DWIN32 )
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
@@ -71,10 +72,6 @@ macro(configure)
     endif (NOT CMAKE_OSX_ARCHITECTURES AND BUILD_UNIVERSAL_BINARIES)
   endif(APPLE AND NOT ANDROID)
 
-  if(WIN32)
-    add_definitions( -DWIN32 )
-  endif(WIN32)
-
   if(UNIX)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -83,9 +80,9 @@ macro(configure)
   if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
   endif(MSVC)
-  add_definitions(-DSOL_SAFE_USERTYPE=0)
-  add_definitions(-DSOL_EXCEPTIONS_SAFE_PROPAGATION=0)
-  add_definitions(-DSOL_SAFE_REFERENCES=0)
+  add_definitions(-DSOL_SAFE_USERTYPE=1)
+  add_definitions(-DSOL_EXCEPTIONS_SAFE_PROPAGATION=1)
+  add_definitions(-DSOL_SAFE_REFERENCES=1)
   add_definitions(-DSOL_SAFE_FUNCTIONS=1)
 endmacro()
 
@@ -141,7 +138,7 @@ macro(gsage_includes)
     ${LUAJIT_INCLUDE_DIR}
     ${gsage_SOURCE_DIR}/Vendor/Sol2/include
     ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
-    ${gsage_SOURCE_DIR}/GsageCore/include
+    ${gsage_SOURCE_DIR}/Core/include
 
     ${MSGPACK_INCLUDE_DIR}
   )
@@ -176,36 +173,13 @@ macro(cef_helper_app executable_name)
   endif(MINGW OR UNIX)
 endmacro()
 
+macro(console_executable executable_name)
+  gsage_executable_generic(${executable_name} ${ARGN})
+  set_target_properties(${executable_name} PROPERTIES DEBUG_POSTFIX _d)
+endmacro()
+
 macro(gsage_executable executable_name)
-  add_executable(${executable_name} ${ARGN})
-
-  if(APPLE)
-    set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
-    set(MACOSX_BUNDLE_BUNDLE_NAME "${executable_name}")
-    set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
-
-    set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
-
-    set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
-    set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
-
-    set(APP_CONTENTS "${BINARY_OUTPUT_DIR}/${executable_name}.app/Contents")
-    set(APP_FRAMEWORKS_DIRECTORY "${APP_CONTENTS}/Frameworks")
-    set(APP_RESOURCES_DIRECTORY "${APP_CONTENTS}/Resources")
-
-    add_custom_command(TARGET ${executable_name} POST_BUILD
-      COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
-    )
-    add_custom_command(TARGET ${executable_name} POST_BUILD
-      COMMAND [ -L ${APP_RESOURCES_DIRECTORY} ] || ln -s ${PROJECT_SOURCE_DIR}/resources/ ${APP_RESOURCES_DIRECTORY}
-    )
-    add_custom_command(TARGET ${executable_name} POST_BUILD
-      COMMAND [ -L ${APP_CONTENTS}/PlugIns ] || ln -s ${PLUGINS_PATH} ${APP_CONTENTS}/PlugIns
-    )
-    add_definitions(-DRESOURCES_FOLDER="../Resources")
-  else(APPLE)
-    add_definitions(-DRESOURCES_FOLDER="../../resources")
-  endif(APPLE)
+  gsage_executable_generic(${executable_name} ${ARGN})
 
   if(WIN32)
     set(LINK_FLAGS "/SUBSYSTEM:WINDOWS")
@@ -214,6 +188,40 @@ macro(gsage_executable executable_name)
   else(WIN32)
     set_target_properties(${executable_name} PROPERTIES DEBUG_POSTFIX _d)
   endif(WIN32)
+endmacro()
+
+macro(gsage_executable_generic executable_name)
+  add_executable(${executable_name} ${ARGN})
+
+  if(APPLE)
+    if(NOT console)
+      set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+      set(MACOSX_BUNDLE_BUNDLE_NAME "${executable_name}")
+      set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
+
+      set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
+
+      set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
+      set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
+
+      set(APP_CONTENTS "${BINARY_OUTPUT_DIR}/${executable_name}.app/Contents")
+      set(APP_FRAMEWORKS_DIRECTORY "${APP_CONTENTS}/Frameworks")
+      set(APP_RESOURCES_DIRECTORY "${APP_CONTENTS}/Resources")
+
+      add_custom_command(TARGET ${executable_name} POST_BUILD
+        COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
+      )
+      add_custom_command(TARGET ${executable_name} POST_BUILD
+        COMMAND [ -L ${APP_RESOURCES_DIRECTORY} ] || ln -s ${PROJECT_SOURCE_DIR}/resources/ ${APP_RESOURCES_DIRECTORY}
+      )
+      add_custom_command(TARGET ${executable_name} POST_BUILD
+        COMMAND [ -L ${APP_CONTENTS}/PlugIns ] || ln -s ${PLUGINS_PATH} ${APP_CONTENTS}/PlugIns
+      )
+    endif(NOT console)
+    add_definitions(-DRESOURCES_FOLDER="../Resources")
+  else(APPLE)
+    add_definitions(-DRESOURCES_FOLDER="../../resources")
+  endif(APPLE)
 
   if(MINGW OR UNIX)
     set(EXECUTABLE_OUTPUT_PATH "${BINARY_OUTPUT_DIR}")

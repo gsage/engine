@@ -25,7 +25,11 @@ THE SOFTWARE.
 */
 
 #include "SDLWindowManager.h"
+#include "SDLRenderer.h"
+#include "SDLCore.h"
+
 #include "EngineEvent.h"
+#include "Engine.h"
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #include "OSXUtils.h"
@@ -33,6 +37,39 @@ THE SOFTWARE.
 #include <SDL_syswm.h>
 
 namespace Gsage {
+
+  int SDL_GetDisplayForPoint(SDL_Point p)
+  {
+    int displays = SDL_GetNumVideoDisplays();
+    SDL_Point points[1] = {p};
+    SDL_Rect displayBounds;
+    for(int i = 0; i < displays; i++) {
+      SDL_GetDisplayUsableBounds(i, &displayBounds);
+      if(p.x < 0 || p.y < 0) {
+        return i;
+      }
+
+      SDL_Rect r;
+      if(SDL_EnclosePoints(&points[0], 1, &displayBounds, &r)) {
+        return i;
+      }
+    }
+
+    return 0;
+  }
+
+  float SDL_GetScaleFactor(SDL_Point p)
+  {
+    float ddpi, hdpi, vdpi;
+    SDL_GetDisplayDPI(SDL_GetDisplayForPoint(p), &ddpi, &hdpi, &vdpi);
+//#if GSAGE_PLATFORM == GSAGE_APPLE
+//  TODO: fix DPI awareness on OSX
+//    float defaultDPI = 72.0f;
+//#else
+    float defaultDPI = 96.0f;
+//#endif
+    return hdpi/defaultDPI;
+  }
 
   SDLWindow::SDLWindow(const std::string& name, SDL_Window* window)
     : Window(name)
@@ -43,6 +80,10 @@ namespace Gsage {
 
   SDLWindow::~SDLWindow()
   {
+    if(mGLContext) {
+      SDL_GL_DeleteContext(mGLContext);
+      LOG(INFO) << "GL Context destroyed";
+    }
     SDL_DestroyWindow(mWindow);
   }
 
@@ -60,7 +101,6 @@ namespace Gsage {
 #elif GSAGE_PLATFORM == GSAGE_LINUX
     handle = (unsigned long long) windowInfo.info.x11.window;
 #elif GSAGE_PLATFORM == GSAGE_WIN32
-    LOG(INFO) << "Win handle " << windowInfo.info.win.window;
     handle = (unsigned long long) windowInfo.info.win.window;
 #endif
 
@@ -121,45 +161,38 @@ namespace Gsage {
 
   float SDLWindow::getScaleFactor() const
   {
-    float ddpi, hdpi, vdpi;
-    SDL_GetDisplayDPI(getDisplay(), &ddpi, &hdpi, &vdpi);
-#if GSAGE_PLATFORM == GSAGE_APPLE
-    float defaultDPI = 72.0f;
-#else
-    float defaultDPI = 96.0f;
-#endif
-    return hdpi/defaultDPI;
+    SDL_Point p = {0, 0};
+    std::tie(p.x, p.y) = getPosition();
+    return SDL_GetScaleFactor(p);
   }
 
   int SDLWindow::getDisplay() const
   {
-    int displays = SDL_GetNumVideoDisplays();
     SDL_Point p = {0, 0};
-    SDL_Point points[1] = {p};
     std::tie(p.x, p.y) = getPosition();
-    SDL_Rect displayBounds;
-    for(int i = 0; i < displays; i++) {
-      SDL_GetDisplayUsableBounds(i, &displayBounds);
-      if(p.x < 0 || p.y < 0) {
-        return i;
-      }
-
-      SDL_Rect r;
-      if(SDL_EnclosePoints(&points[0], 1, &displayBounds, &r)) {
-        return i;
-      }
-    }
-
-    return 0;
+    return SDL_GetDisplayForPoint(p);
   }
 
-  SDLWindowManager::SDLWindowManager(const std::string& type)
-    : WindowManager(type)
+  void SDLWindow::show()
   {
+    SDL_ShowWindow(mWindow);
+  }
+
+  void SDLWindow::hide()
+  {
+    SDL_HideWindow(mWindow);
+  }
+
+  SDLWindowManager::SDLWindowManager(const std::string& type, SDLCore* core)
+    : WindowManager(type)
+    , mCore(core)
+  {
+    mCore->setWindowManager(this);
   }
 
   SDLWindowManager::~SDLWindowManager()
   {
+    mCore->setWindowManager(nullptr);
   }
 
   bool SDLWindowManager::initialize(const DataProxy& config)
@@ -177,10 +210,7 @@ namespace Gsage {
 
     for(auto pair : windows.first) {
       LOG(TRACE) << "Creating window " << pair.first;
-      WindowPtr w = createWindow(pair.first, pair.second.get("width", 320), pair.second.get("height", 240), pair.second.get("fullscreen", false), pair.second);
-      if(w == nullptr) {
-        LOG(WARNING) << "Failed to create window " << pair.first;
-      }
+      createWindow(pair.first, pair.second.get("width", 320), pair.second.get("height", 240), pair.second.get("fullscreen", false), pair.second);
     }
 
     return true;
@@ -214,18 +244,24 @@ namespace Gsage {
       flags |= SDL_WINDOW_FULLSCREEN;
     }
 
-    SDL_Window* window = SDL_CreateWindow(name.c_str(), x, y, width, height, flags);
+#if GSAGE_PLATFORM == GSAGE_WIN32 || GSAGE_PLATFORM == GSAGE_LINUX
+    SDL_Point position = {x, y};
+    float factor = SDL_GetScaleFactor(position);
+#else
+    float factor = 1.0f;
+#endif
+
+    SDL_Window* window = SDL_CreateWindow(name.c_str(), x, y, width * factor, height * factor, flags);
     if(window == NULL) {
+      LOG(ERROR) << "Failed to create window " << SDL_GetError();
       return nullptr;
     }
 
     SDL_GLContext sdlContext = nullptr;
     if((flags & SDL_WINDOW_OPENGL) != 0) {
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
       sdlContext = SDL_GL_CreateContext(window);
       if(!sdlContext) {
-        LOG(ERROR) << "Failed to create SDL GL context";
+        LOG(ERROR) << "Failed to create SDL GL context " <<  SDL_GetError();
         SDL_DestroyWindow(window);
         return nullptr;
       }
@@ -236,10 +272,19 @@ namespace Gsage {
       wrapper->mGLContext = sdlContext;
     }
 
+    SDL_Renderer* renderer = nullptr;
+
     mWindowsMutex.lock();
     WindowPtr res = WindowPtr(wrapper);
     windowCreated(res);
     fireWindowEvent(WindowEvent::CREATE, wrapper->getWindowHandle(), width, height);
+
+    auto rendererParams = params.get<DataProxy>("renderer");
+    if(rendererParams.second) {
+      renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+      mRenderers[name] = std::move(std::make_unique<SDLRenderer>(res, rendererParams.first, renderer, mCore));
+    }
+
     mWindowsMutex.unlock();
     return res;
   }
@@ -248,8 +293,19 @@ namespace Gsage {
   {
     mWindowsMutex.lock();
     bool res = windowDestroyed(window);
+    // delete window renderer if any
+    if(res && contains(mRenderers, window->getName())) {
+      mRenderers.erase(window->getName());
+    }
     mWindowsMutex.unlock();
     return res;
+  }
+
+  void SDLWindowManager::update(double time)
+  {
+    for(auto& pair : mRenderers) {
+      pair.second->render();
+    }
   }
 
 }

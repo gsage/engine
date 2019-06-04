@@ -259,9 +259,6 @@ namespace Gsage {
     {
       for(auto& childPair : pair.second)
       {
-        if(!childPair.second->writeable()) {
-          continue;
-        }
         DataProxy item;
         childPair.second->dump(item);
         values.push(item);

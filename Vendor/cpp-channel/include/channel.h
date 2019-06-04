@@ -524,8 +524,10 @@ private:
 
 public:
   select()
-  : m_try_functions(),
-    random_gen((std::mt19937)std::time(nullptr)) {}
+  : m_try_functions()
+  {
+    random_gen.seed((unsigned int)std::time(nullptr));
+  }
 
   /* send cases */
 

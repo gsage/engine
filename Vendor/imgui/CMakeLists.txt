@@ -1,7 +1,7 @@
 set(LIB_NAME "imgui")
 
 include_directories(./)
-include_directories(${gsage_SOURCE_DIR}/GsageCore/include)
+include_directories(${gsage_SOURCE_DIR}/Core/include)
 FILE(GLOB sources ./*.cpp)
 
 add_library(${LIB_NAME} STATIC ${sources})

@@ -66,6 +66,7 @@ namespace Gsage {
       mSystemManager(&mEngine),
       mPreviousUpdateTime(std::chrono::high_resolution_clock::now()),
       mExitCode(0),
+      mReady(0),
       mWindowManager(nullptr)
   {
     el::Configurations defaultConf;
@@ -117,17 +118,14 @@ namespace Gsage {
 
   bool GsageFacade::initialize(const std::string& configFile,
       const std::string& resourcePath,
-      DataProxy* configOverride,
-      FileLoader::Encoding configEncoding)
+      FileLoader::Encoding configEncoding,
+      unsigned short configureFlags
+    )
   {
-    assert(mStarted == false);
-    mStarted = true;
-
     DataProxy environment;
     environment.put("workdir", resourcePath);
     FileLoader::init(configEncoding, environment);
     DataProxy config;
-
     if(!FileLoader::getSingletonPtr()->load(configFile, DataProxy(), config))
     {
       LOG(ERROR) << "Failed to load file " << configFile;
@@ -136,43 +134,50 @@ namespace Gsage {
 
     LOG(INFO) << "Starting GSAGE, config:\n\t" << configFile;
 
-    if (configOverride != 0)
-    {
-      mergeInto(config, *configOverride);
-    }
+    return initialize(config, resourcePath, configureFlags);
+  }
+
+  bool GsageFacade::initialize(const DataProxy& config,
+    const std::string& resourcePath,
+    unsigned short configureFlags
+  )
+  {
+    assert(mStarted == false);
+    mStarted = true;
+    mResourcePath = resourcePath;
 
     addEventListener(&mEngine, EngineEvent::SHUTDOWN, &GsageFacade::onEngineShutdown);
     addEventListener(&mEngine, EngineEvent::LUA_STATE_CHANGE, &GsageFacade::onLuaStateChange);
+
+    DataProxy environment;
+    environment.put("workdir", resourcePath);
 
     if(!mEngine.initialize(config, environment))
       return false;
 
     mGameDataManager = new GameDataManager(&mEngine);
-    mLuaInterface->setResourcePath(resourcePath);
+    mLuaInterface->setResourcePath(mResourcePath);
+    mConfig = config;
     if(config.get<bool>("startLuaInterface", true)) {
       mLuaInterface->initialize(mLuaState);
       // execute lua package manager, if it's enabled
       auto pair = config.get<DataProxy>("packager");
 
-      auto scriptsPath = config.get<std::string>("scriptsPath", resourcePath);
-      if(pair.second) {
+      auto scriptsPath = config.get<std::string>("scriptsPath", mResourcePath);
+      if(pair.second && pair.first.get("installOnStartup", false)) {
         DataProxy deps = pair.first.get("deps", DataProxy::create(DataWrapper::JSON_OBJECT));
-        std::string scriptPath = pair.first.get(
-            "script",
-            resourcePath + GSAGE_PATH_SEPARATOR + "scripts" + GSAGE_PATH_SEPARATOR + "lib" + GSAGE_PATH_SEPARATOR + "packager.lua"
-        );
-        if(!mLuaInterface->runPackager(scriptPath, deps)) {
+        if(!installLuaPackages(deps)) {
           LOG(ERROR) << "Failed to run lua packager";
           return false;
         }
       }
     }
 
-    if(!configure(config)) {
+    if(!configure(config, configureFlags)) {
       return false;
     }
 
-    auto scriptsPath = config.get<std::string>("scriptsPath", resourcePath);
+    auto scriptsPath = config.get<std::string>("scriptsPath", mResourcePath);
     auto startupScript = config.get<std::string>("startupScript");
     if(startupScript.second) {
       mStartupScript = scriptsPath + GSAGE_PATH_SEPARATOR + startupScript.first;
@@ -180,30 +185,60 @@ namespace Gsage {
     return true;
   }
 
-  bool GsageFacade::configure(const DataProxy& configuration, bool restart)
+  bool GsageFacade::configure(const DataProxy& configuration, unsigned short configureFlags)
   {
-    mPluginsFolders.clear();
-    auto pluginsFolders = configuration.get<DataProxy>("pluginsFolders");
-    if(pluginsFolders.second) {
-      for(auto& pair : pluginsFolders.first) {
-        mPluginsFolders.push_back(pair.second.as<std::string>());
-      }
-    }
-
-    std::string resourcePath = mEngine.env().get("workdir", "");
-    auto logConfig = configuration.get<std::string>("logConfig");
+    mConfig = configuration;
+    auto logConfig = mConfig.get<std::string>("logConfig");
     if (logConfig.second) {
-      std::string fullLogConfigPath = resourcePath + GSAGE_PATH_SEPARATOR + logConfig.first;
+      std::string fullLogConfigPath = mResourcePath + GSAGE_PATH_SEPARATOR + logConfig.first;
       if(mFilesystem.exists(fullLogConfigPath)) {
         el::Configurations conf(fullLogConfigPath);
         el::Loggers::reconfigureLogger("default", conf);
       }
     }
 
+    if((configureFlags & ConfigureFlags::Plugins) == ConfigureFlags::Plugins) {
+      LOG(TRACE) << "Configure plugins";
+      if(!configurePlugins()) {
+        LOG(ERROR) << "Failed to configure plugins";
+        return false;
+      }
+    }
+
+    if((configureFlags & ConfigureFlags::Managers) == ConfigureFlags::Managers) {
+      LOG(TRACE) << "Configure managers";
+      if(!configureManagers()) {
+        LOG(ERROR) << "Failed to configure managers";
+        return false;
+      }
+    }
+
+    if((configureFlags & ConfigureFlags::Systems) == ConfigureFlags::Systems) {
+      LOG(TRACE) << "Configure systems";
+      if(!configureSystems((configureFlags & ConfigureFlags::RestartSystems) > 0)) {
+        LOG(ERROR) << "Failed to configure systems";
+        return false;
+      }
+    }
+
+    mGameDataManager->configure(configuration);
+    return true;
+  }
+
+  bool GsageFacade::configurePlugins()
+  {
+    mPluginsFolders.clear();
+    auto pluginsFolders = mConfig.get<DataProxy>("pluginsFolders");
+    if(pluginsFolders.second) {
+      for(auto& pair : pluginsFolders.first) {
+        mPluginsFolders.push_back(pair.second.as<std::string>());
+      }
+    }
+
     std::map<std::string, bool> installedPlugins;
-    if(configuration.count(PLUGINS_SECTION) != 0)
+    if(mConfig.count(PLUGINS_SECTION) != 0)
     {
-      for(auto& pair : configuration.get<DataProxy>(PLUGINS_SECTION).first)
+      for(auto& pair : mConfig.get<DataProxy>(PLUGINS_SECTION).first)
       {
         std::string path = pair.second.as<std::string>();
         if(!loadPlugin(path, true)) {
@@ -226,15 +261,20 @@ namespace Gsage {
       unloadPlugin(name);
     }
 
+    mReady |= ConfigureFlags::Plugins;
+    return true;
+  }
+
+  bool GsageFacade::configureManagers() {
     // note that old windows will still use old inputHandler
-    auto inputHandler = configuration.get<std::string>("inputHandler");
-    if(inputHandler.second && inputHandler.first != mConfig.get<std::string>("inputHandler", "")) {
+    auto inputHandler = mConfig.get<std::string>("inputHandler");
+    if(inputHandler.second && mInputManager.getCurrentFactoryId() != mConfig.get<std::string>("inputHandler", "")) {
       LOG(INFO) << "Using input handler " << inputHandler.first;
       mInputManager.useFactory(inputHandler.first);
     }
 
-    auto windowManager = configuration.get<DataProxy>("windowManager");
-    if(windowManager.second && mConfig.get("windowManager.type", "") != configuration.get("windowManager.type", "")) {
+    auto windowManager = mConfig.get<DataProxy>("windowManager");
+    if((windowManager.second && !mWindowManager) || (mWindowManager->getType() != mConfig.get("windowManager.type", ""))) {
       auto type = windowManager.first.get<std::string>("type");
       if(!type.second) {
         LOG(ERROR) << "Malformed window manager config was provided";
@@ -256,7 +296,18 @@ namespace Gsage {
       LOG(INFO) << "Using " << type.first << " window manager";
     }
 
-    auto systems = configuration.get<DataProxy>("systems");
+    for(auto pair : mUIManagers) {
+      if(!pair.second->initialized()) {
+        pair.second->initialize(this, mLuaInterface->getState());
+      }
+    }
+
+    mReady |= ConfigureFlags::Managers;
+    return true;
+  }
+
+  bool GsageFacade::configureSystems(bool restart) {
+    auto systems = mConfig.get<DataProxy>("systems");
     std::map<std::string, bool> installedSystems;
     if(systems.second) {
       for(auto pair : systems.first) {
@@ -267,7 +318,7 @@ namespace Gsage {
         }
 
         std::string systemType = st.first;
-        auto id = configuration.get<std::string>(std::string("systemTypes.") + systemType);
+        auto id = mConfig.get<std::string>(std::string("systemTypes.") + systemType);
         if(!id.second) {
           LOG(INFO) << "Skipping system create " << st.first << ", no system type is defined";
           continue;
@@ -289,7 +340,7 @@ namespace Gsage {
           LOG(TRACE) << "Installed system " << systemType << " " << id.first;
         }
 
-        if(!mEngine.configureSystem(systemType, configuration.get(systemType, DataProxy()), restart)) {
+        if(!mEngine.configureSystem(systemType, mConfig.get(systemType, DataProxy()), restart)) {
           LOG(ERROR) << "Failed to configure engine system " << systemType;
           return false;
         }
@@ -297,7 +348,7 @@ namespace Gsage {
       }
     }
 
-    toRemove.clear();
+    std::vector<std::string> toRemove;
     // uninstall not used systems
     for(auto& pair : mEngine.getSystems()) {
       if(!installedSystems[pair.first]) {
@@ -310,14 +361,7 @@ namespace Gsage {
       mEngine.removeSystem(name);
     }
 
-    for(auto pair : mUIManagers) {
-      if(!pair.second->initialized()) {
-        pair.second->initialize(this, mLuaInterface->getState());
-      }
-    }
-
-    mGameDataManager->configure(configuration);
-    mConfig = configuration;
+    mReady |= ConfigureFlags::Systems;
     return true;
   }
 
@@ -348,7 +392,7 @@ namespace Gsage {
 
   bool GsageFacade::update()
   {
-    if(!mStartupScriptRun)
+    if(!mStartupScriptRun && isReady(GsageFacade::All))
     {
       if(!mStartupScript.empty())
         mLuaInterface->runScript(mStartupScript);
@@ -640,5 +684,29 @@ namespace Gsage {
   const GsageFacade::PluginOrder& GsageFacade::getInstalledPlugins() const
   {
     return mPluginOrder;
+  }
+
+  bool GsageFacade::installLuaPackages(const DataProxy& deps) {
+    auto pair = mConfig.get<DataProxy>("packager");
+    if(!pair.second) {
+      LOG(ERROR) << "Installing lua packages is not supported";
+      return false;
+    }
+
+    std::string scriptPath = pair.first.get(
+        "script",
+        mResourcePath + GSAGE_PATH_SEPARATOR + "scripts" + GSAGE_PATH_SEPARATOR + "lib" + GSAGE_PATH_SEPARATOR + "packager.lua"
+    );
+    if(!mLuaInterface->runPackager(scriptPath, deps)) {
+      LOG(ERROR) << "Failed to run lua packager";
+      return false;
+    }
+
+    return true;
+  }
+
+  bool GsageFacade::isReady(unsigned short flags) const
+  {
+    return (mReady & flags) == flags;
   }
 }

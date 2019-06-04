@@ -49,7 +49,7 @@ namespace Gsage {
   {
     // TODO: get parameters from config somehow?
     mSDLCore.initialize(DataProxy(), mFacade);
-    mFacade->registerWindowManager<SDLWindowManager>("SDL");
+    mFacade->registerWindowManager<SDLWindowManager>("SDL", &mSDLCore);
     SDLInputFactory* f = mFacade->registerInputFactory<SDLInputFactory>("SDL");
     if(!f) {
       return false;

@@ -1,8 +1,10 @@
 /*
 -----------------------------------------------------------------------------
-This file is a part of Gsage engine
+This source file is part of OGRE
+(Object-oriented Graphics Rendering Engine)
+For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2014-2017 Artem Chernyshev
+Copyright (c) 2000-2014 Torus Knot Software Ltd
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,21 +26,37 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "SDLEventListener.h"
-#include "SDLCore.h"
+#include "GsageDefinitions.h"
 
 namespace Gsage {
 
-  SDLEventListener::SDLEventListener()
-    : mSDLCore(nullptr)
-  {
-  }
-
-  SDLEventListener::~SDLEventListener()
-  {
-    if(mSDLCore) {
-      mSDLCore->removeEventListener(this);
-    }
-  }
-
+    class ScopedCLocale
+    {
+        char mSavedLocale[64];
+        bool mChangeLocaleTemporarily;
+    public:
+        ScopedCLocale( bool changeLocaleTemporarily ) :
+            mChangeLocaleTemporarily( changeLocaleTemporarily )
+        {
+            if( mChangeLocaleTemporarily )
+            {
+                const char *currentLocale = setlocale( LC_NUMERIC, 0 );
+#if GSAGE_PLATFORM == GSAGE_WIN32
+                strncpy_s( mSavedLocale, currentLocale, 64u );
+#else
+                strncpy( mSavedLocale, currentLocale, 64u );
+#endif
+                mSavedLocale[63] = '\0';
+                setlocale( LC_NUMERIC, "C" );
+            }
+        }
+        ~ScopedCLocale()
+        {
+            if( mChangeLocaleTemporarily )
+            {
+                //Restore
+                setlocale( LC_NUMERIC, mSavedLocale );
+            }
+        }
+    };
 }

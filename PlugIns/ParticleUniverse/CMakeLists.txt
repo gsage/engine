@@ -2,7 +2,7 @@ set(LIB_NAME "Plugin_ParticleUniverseFactory")
 
 include_directories(
   include
-  ${gsage_SOURCE_DIR}/GsageCore/include
+  ${gsage_SOURCE_DIR}/Core/include
   ${gsage_SOURCE_DIR}/PlugIns/OgrePlugin/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
 )
@@ -36,4 +36,3 @@ if(WIN32)
 	add_custom_command(TARGET ${LIB_NAME} POST_BUILD
 		COMMAND copy \"$(TargetPath)\" .\\bin\\Plugins)
 endif(WIN32)
-

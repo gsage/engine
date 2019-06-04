@@ -81,7 +81,7 @@ namespace Gsage {
       /**
        * Create ois input handler
        */
-      InputHandler* create(size_t windowHandle, Engine* engine);
+      InputHandlerPtr create(size_t windowHandle, Engine* engine);
   };
 
   class OisInputListener : public InputHandler, public OIS::MouseListener, public OIS::KeyListener, public EventDispatcher, AutoRepeatKey

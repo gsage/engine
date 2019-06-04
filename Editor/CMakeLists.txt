@@ -1,7 +1,7 @@
-set(APP_NAME "GsageEditor")
+set(APP_NAME "editor")
 
 include_directories(include)
-include_directories(${gsage_SOURCE_DIR}/GsageCore/include)
+include_directories(${gsage_SOURCE_DIR}/Core/include)
 include_directories(${gsage_SOURCE_DIR}/Vendor/OgreCrowd/include)
 include_directories(${gsage_SOURCE_DIR}/Vendor/Sol2/include)
 include_directories(${gsage_SOURCE_DIR}/Vendor/jsoncpp/include)

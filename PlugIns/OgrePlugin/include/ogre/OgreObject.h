@@ -119,12 +119,6 @@ namespace Gsage {
        */
       void sync();
 
-      /**
-       * Writeonly objects are visible as children of SceneNodeWrapper
-       * This way it won't be written to the serialized object
-       */
-      inline bool writeable() const { return mWriteable; }
-
     protected:
       struct PendingPropertyUpdate {
         std::string propertyName;
@@ -133,8 +127,6 @@ namespace Gsage {
       std::string mObjectId;
       std::string mOwnerId;
       std::string mType;
-
-      bool mWriteable;
 
       OgreObjectManager* mObjectManager;
 

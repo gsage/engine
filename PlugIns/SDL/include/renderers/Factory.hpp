@@ -1,11 +1,11 @@
-#ifndef _InputPlugin_H_
-#define _InputPlugin_H_
+#ifndef _RENDERER_FACTORY_H_
+#define _RENDERER_FACTORY_H_
 
 /*
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2019 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,60 +27,29 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "IPlugin.h"
-#include "input/InputFactory.h"
+#include <SDL.h>
+#include "DataProxy.h"
+#include "renderers/Image.hpp"
 
 namespace Gsage {
+  class SDLCore;
 
-  /**
-   * Fake input handler
-   */
-  class FakeInputHandler : public InputHandler
-  {
+  class RendererFactory {
     public:
-    FakeInputHandler(size_t h, Engine* e) : InputHandler(h,e) {};
-    virtual ~FakeInputHandler() {};
-    virtual void handleResize(unsigned int width, unsigned int height) {}
-    virtual void handleClose() {};
-    virtual void update(double time) {}
-  };
+      RendererPtr create(const DataProxy& params, SDL_Renderer* renderer, SDLCore* core, WindowPtr window) {
+        std::string type;
+        if(!params.read("type", type)) {
+          return nullptr;
+        }
 
-  /**
-   * Minimal implementation for an input factory
-   */
-  class FakeInputFactory : public AbstractInputFactory
-  {
-    virtual ~FakeInputFactory() {};
-    /**
-     * Create fake input handler
-     */
-    InputHandlerPtr create(size_t windowHandle, Engine* engine)
-    {
-      return InputHandlerPtr(new FakeInputHandler(windowHandle, engine));
-    }
-  };
-  /**
-   * Test plugin
-   */
-  class InputPlugin : public IPlugin
-  {
-    public:
-      InputPlugin();
-      virtual ~InputPlugin();
-      /**
-       * Get ois plugin name
-       */
-      const std::string& getName() const;
+        RendererPtr res = nullptr;
 
-      /**
-       * Unregisters input system
-       */
-      bool installImpl();
+        if(type == "image") {
+          res = RendererPtr(new ImageRenderer(params, renderer, core, window));
+        }
 
-      /**
-       * Registers input system
-       */
-      void uninstallImpl();
+        return res;
+      }
   };
 }
 

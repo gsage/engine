@@ -69,7 +69,7 @@ namespace Gsage {
     }
 
     EventSubscriber::EventSubscription b(target, event.getType());
-    if(mRouter.count(b) == 0) {
+    if(!contains(mRouter, b)) {
       removeEventListener(target, event.getType(), &LuaEventConnection::handle);
       return true;
     }

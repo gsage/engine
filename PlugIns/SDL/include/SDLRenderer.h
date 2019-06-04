@@ -1,11 +1,11 @@
-#ifndef _InputPlugin_H_
-#define _InputPlugin_H_
+#ifndef _SDLImageRenderer_H_
+#define _SDLImageRenderer_H_
 
 /*
 -----------------------------------------------------------------------------
 This file is a part of Gsage engine
 
-Copyright (c) 2014-2016 Artem Chernyshev
+Copyright (c) 2014-2019 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,60 +27,31 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "IPlugin.h"
-#include "input/InputFactory.h"
+#include <vector>
+#include "renderers/Factory.hpp"
+#include "SDLWindowManager.h"
 
 namespace Gsage {
-
+  class SDLCore;
   /**
-   * Fake input handler
+   * Wraps SDL renderer and call updates on each engine update
    */
-  class FakeInputHandler : public InputHandler
+  class SDLRenderer
   {
     public:
-    FakeInputHandler(size_t h, Engine* e) : InputHandler(h,e) {};
-    virtual ~FakeInputHandler() {};
-    virtual void handleResize(unsigned int width, unsigned int height) {}
-    virtual void handleClose() {};
-    virtual void update(double time) {}
-  };
-
-  /**
-   * Minimal implementation for an input factory
-   */
-  class FakeInputFactory : public AbstractInputFactory
-  {
-    virtual ~FakeInputFactory() {};
-    /**
-     * Create fake input handler
-     */
-    InputHandlerPtr create(size_t windowHandle, Engine* engine)
-    {
-      return InputHandlerPtr(new FakeInputHandler(windowHandle, engine));
-    }
-  };
-  /**
-   * Test plugin
-   */
-  class InputPlugin : public IPlugin
-  {
-    public:
-      InputPlugin();
-      virtual ~InputPlugin();
-      /**
-       * Get ois plugin name
-       */
-      const std::string& getName() const;
+      SDLRenderer(WindowPtr window, const DataProxy& params, SDL_Renderer* renderer, SDLCore* core);
+      virtual ~SDLRenderer();
 
       /**
-       * Unregisters input system
+       * Update underlying views
        */
-      bool installImpl();
+      void render();
 
-      /**
-       * Registers input system
-       */
-      void uninstallImpl();
+    private:
+      SDL_Renderer* mRenderer;
+      typedef std::vector<RendererPtr> Renderers;
+
+      Renderers mRenderers;
   };
 }
 

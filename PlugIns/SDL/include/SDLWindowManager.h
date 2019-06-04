@@ -33,6 +33,8 @@ THE SOFTWARE.
 
 namespace Gsage {
   class SDLWindowManager;
+  class SDLRenderer;
+  class SDLCore;
 
   class SDLWindow : public Window
   {
@@ -92,6 +94,16 @@ namespace Gsage {
        */
       virtual int getDisplay() const;
 
+      /**
+       * Show window
+       */
+      virtual void show();
+
+      /**
+       * Hide window
+       */
+      virtual void hide();
+
     private:
       friend class SDLWindowManager;
       SDL_Window* mWindow;
@@ -104,7 +116,7 @@ namespace Gsage {
   class SDLWindowManager : public WindowManager
   {
     public:
-      SDLWindowManager(const std::string& type);
+      SDLWindowManager(const std::string& type, SDLCore* core);
       virtual ~SDLWindowManager();
 
       /**
@@ -134,8 +146,18 @@ namespace Gsage {
        * @returns true if succeed
        */
       virtual bool destroyWindow(WindowPtr window);
+
+      /**
+       * Update is used to render windows, whose rendering is handled by SDL2 itself
+       *
+       * @param time Delta time
+       */
+      virtual void update(double time);
     private:
+      typedef std::unique_ptr<SDLRenderer> SDLRendererPtr;
       std::mutex mWindowsMutex;
+      SDLCore* mCore;
+      std::map<std::string, SDLRendererPtr> mRenderers;
   };
 }
 

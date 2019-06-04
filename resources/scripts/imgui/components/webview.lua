@@ -198,7 +198,9 @@ function WebView:render(width, height)
         pageData = self.pageData,
       }
     )
-    self.cefwebview:setZoom(window:getScaleFactor())
+    if gsage.platform ~= "apple" then
+      self.cefwebview:setZoom(window:getScaleFactor())
+    end
 
     self.onScreenPositionX, self.onScreenPositionY = window:getPosition()
   end

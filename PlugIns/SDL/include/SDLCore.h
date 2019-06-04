@@ -33,6 +33,7 @@ THE SOFTWARE.
 
 namespace Gsage {
   class GsageFacade;
+  class SDLWindowManager;
 
   class SDLCore : public UpdateListener
   {
@@ -61,12 +62,32 @@ namespace Gsage {
        * @param listener SDLEventListener
        */
       void addEventListener(SDLEventListener* listener);
+
+      /**
+       * Remove SDL event listener
+       * @param listener SDLEventListener
+       */
+      void removeEventListener(SDLEventListener *listener);
+
+      /**
+       * Sets active window manager. SDLCore will call update for each window
+       *
+       * @param value SDLWindowManager
+       */
+       void setWindowManager(SDLWindowManager* value);
+
+       /**
+        * Get engine resources path
+        */
+       const std::string& getResourcePath() const;
     private:
       bool mInitialized;
       GsageFacade* mFacade;
 
       typedef std::vector<SDLEventListener*> EventListeners;
       EventListeners mEventListeners;
+
+      SDLWindowManager* mWindowManager;
   };
 }
 
