@@ -89,7 +89,7 @@ local runTests = function()
   if err then
     print("tests failed " .. tostring(err))
     async.signal("TestsComplete")
-    return nil, 2
+    return err
   end
 
   s:set("assertion.timing.positive", "Expected function to execute faster than: %s")
@@ -102,11 +102,13 @@ local runTests = function()
   assert:register("assertion", "close_enough", close_enough, "assertion.close_enough.positive")
 
   res, err = pcall(runner, ({standalone=false}))
+  async.signal("TestsComplete")
   if not res then
     exitCode = 1
+    return err
   end
-  async.signal("TestsComplete")
-  return res, err
+
+  return nil
 end
 
 function main()
@@ -114,8 +116,6 @@ function main()
   if os.getenv("OGRE_ENABLED") ~= "0" then
     local hasOgre = game:loadPlugin("OgrePlugin")
     if hasOgre then
-      game:loadPlugin("ImGUIPlugin")
-      game:loadPlugin("ImGUIOgreRenderer")
       game:createSystem("ogre")
       core:render():configure({
         colourAmbient = "0x403030",
@@ -126,6 +126,11 @@ function main()
           }
         }
       })
+
+      if core:render():getRenderer().name ~= "NULL_RS" then
+        game:loadPlugin("ImGUIPlugin")
+        game:loadPlugin("ImGUIOgreRenderer")
+      end
     end
   else
     if arg then
@@ -154,7 +159,10 @@ function main()
 
   arg[#arg+1] = TRESOURCES .. '/specs/'
   testsCoroutine = coroutine.create(runTests)
-  return coroutine.resume(testsCoroutine)
+  local res, err = coroutine.resume(testsCoroutine)
+  if err and type(err) ~= 'thread' then
+    error(err)
+  end
 end
 
 local shutdown = function()

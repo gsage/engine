@@ -70,9 +70,9 @@ namespace Gsage {
     m_fElapsed = 0;
   }
 
-  InputHandler* OisInputFactory::create(size_t windowHandle, Engine* engine)
+  InputHandlerPtr OisInputFactory::create(size_t windowHandle, Engine* engine)
   {
-    return new OisInputListener(windowHandle, engine);
+    return InputHandlerPtr(new OisInputListener(windowHandle, engine));
   }
 
   OisInputListener::OisInputListener(size_t handle, Engine* eventRedirect) :

@@ -13,7 +13,7 @@ set(TEST_DEPENDENCIES
 
 include_directories(
   include
-  ${gsage_SOURCE_DIR}/GsageCore/include
+  ${gsage_SOURCE_DIR}/Core/include
   ${gsage_SOURCE_DIR}/Vendor/Sol2/include
   ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include
   ${gsage_SOURCE_DIR}/Vendor/imgui

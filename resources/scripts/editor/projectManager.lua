@@ -505,7 +505,7 @@ function ProjectManager:open(projectPath)
 
   self.openingProject = true
   game:reset()
-  if not game:configure(settings, true) then
+  if not game:configure(settings, gsage.configure.All + gsage.configure.RestartSystems) then
     log.error("Failed to reconfigure game core")
     error("failed to reconfigure game core")
   end
@@ -538,7 +538,7 @@ function ProjectManager:close(withCallback)
   self.openProjectFile:write()
 
   -- reconfigure facade to the initial state
-  game:configure(self.initialSettings, true)
+  game:configure(self.initialSettings, gsage.configure.All + gsage.configure.RestartSystems)
   self.openProjectFile = nil
 end
 

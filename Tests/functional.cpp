@@ -91,6 +91,7 @@ extern "C" {
       int argc = 0;
       char** argv;
       fetchCmdArgs(&argc, &argv);
+      SetProcessDPIAware();
 #endif
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
@@ -107,47 +108,60 @@ extern "C" {
       chdir(p.str().c_str());
 #endif
       int retVal = 0;
-      Gsage::GsageFacade facade;
-      std::string coreConfig = "testConfig.json";
-      Gsage::DataProxy dp = Gsage::DataProxy::create(Gsage::DataWrapper::JSON_OBJECT);
-      dp.put("startupScript", "scripts/entrypoint.lua");
-      dp.put("startLuaInterface", true);
-      dp.put("scriptsPath", TEST_RESOURCES);
-      lua_State* L = lua_open();
-      sol::state_view lua(L);
-      if(!L) {
-        LOG(ERROR) << "Lua state is not initialized";
-        return 1;
-      }
-      lua["TRESOURCES"] = TEST_RESOURCES;
-      lua["RESOURCES_FOLDER"] = RESOURCES_FOLDER;
-      sol::table t = lua.create_named_table("arg");
+      lua_State* L = 0;
+
+      {
+        Gsage::GsageFacade facade;
+        std::string coreConfig = "testConfig.json";
+        L = lua_open();
+        if(!L) {
+          LOG(ERROR) << "Lua state is not initialized";
+          return 1;
+        }
+
+        sol::state_view lua(L);
+        lua["TRESOURCES"] = TEST_RESOURCES;
+        lua["RESOURCES_FOLDER"] = RESOURCES_FOLDER;
+        sol::table t = lua.create_named_table("arg");
 #if GSAGE_PLATFORM == GSAGE_APPLE
-      lua["PLUGINS_DIR"] = "../PlugIns";
+        lua["PLUGINS_DIR"] = "../PlugIns";
 #else
-      lua["PLUGINS_DIR"] = "PlugIns";
+        lua["PLUGINS_DIR"] = "PlugIns";
 #endif
-      // proxy c++ args to the lua entrypoint
-      for(int i = 0; i < argc; i++) {
-        t[i] = std::string(argv[i]);
+        // proxy c++ args to the lua entrypoint
+        for(int i = 0; i < argc; i++) {
+          t[i] = std::string(argv[i]);
+        }
+
+        facade.setLuaState(L, false);
+        Gsage::DataProxy env;
+        env.put("workdir", RESOURCES_FOLDER);
+        Gsage::FileLoader::init(Gsage::FileLoader::Json, env);
+        Gsage::DataProxy config;
+        if(!Gsage::FileLoader::getSingletonPtr()->load(coreConfig, Gsage::DataProxy(), config))
+        {
+          LOG(ERROR) << "Failed to load file " << coreConfig;
+          return 1;
+        }
+
+        config.put("startupScript", "scripts/entrypoint.lua");
+        config.put("startLuaInterface", true);
+        config.put("scriptsPath", TEST_RESOURCES);
+
+        if(!facade.initialize(config, RESOURCES_FOLDER))
+        {
+          LOG(ERROR) << "Failed to initialize game engine";
+          return 1;
+        }
+
+        while(facade.update())
+        {
+        }
+
+        retVal = facade.getExitCode();
       }
 
-      facade.setLuaState(L, false);
-
-      if(!facade.initialize(coreConfig, RESOURCES_FOLDER, &dp))
-      {
-        LOG(ERROR) << "Failed to initialize game engine";
-        return 1;
-      }
-
-      while(facade.update())
-      {
-      }
-
-      if(retVal != 0)
-        return retVal;
-
-      return facade.getExitCode();
+      return retVal;
     }
 #ifdef __cplusplus
 }

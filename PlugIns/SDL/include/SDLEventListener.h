@@ -30,6 +30,8 @@ THE SOFTWARE.
 #include <SDL2/SDL.h>
 
 namespace Gsage {
+  class SDLCore;
+
   class SDLEventListener
   {
     public:
@@ -40,6 +42,14 @@ namespace Gsage {
        * Abstract event handling interface
        */
       virtual void handleEvent(SDL_Event* event) = 0;
+
+      /**
+       * Inject sdl core instance
+       * @param core SDLCore pointer
+       */
+      virtual void setSDLCore(SDLCore* core) { mSDLCore = core; }
+    protected:
+      SDLCore* mSDLCore;
   };
 }
 

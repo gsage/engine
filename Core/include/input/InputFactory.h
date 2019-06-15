@@ -90,7 +90,7 @@ namespace Gsage {
        *
        * @returns pointer to handler. It should be wrapped into smart pointer
        */
-      virtual InputHandler* create(size_t windowHandle, Engine* engine) = 0;
+      virtual InputHandlerPtr create(size_t windowHandle, Engine* engine) = 0;
   };
 
   /**
@@ -145,6 +145,11 @@ namespace Gsage {
        * @param time Elapsed time
        */
       void update(double time);
+
+      /**
+       * Get current factory ID
+       */
+      inline const std::string& getCurrentFactoryId() const { return mCurrentFactoryId; }
     private:
       bool handleWindowEvent(EventDispatcher* sender, const Event& e);
       Engine* mEngine;

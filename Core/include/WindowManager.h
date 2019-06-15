@@ -103,8 +103,16 @@ namespace Gsage {
        */
       virtual float getScaleFactor() const = 0;
 
+      /**
+       * Show window
+       */
+      virtual void show() = 0;
 
-    private:
+      /**
+       * Hide window
+       */
+      virtual void hide() = 0;
+    protected:
       std::string mName;
   };
 
@@ -126,15 +134,9 @@ namespace Gsage {
       virtual ~WindowManager();
 
       /**
-       * Get window manager type
-       * @returns this window manager type
-       */
-      const std::string& getType() const;
-
-      /**
        * Initialize WindowManager
        *
-       * @param config Window manager configuration map
+       * @param config Window manager configuration params
        */
       virtual bool initialize(const DataProxy& config) = 0;
 
@@ -201,6 +203,11 @@ namespace Gsage {
         const std::string& defaultFilePath,
         const std::vector<std::string> filters
       );
+
+      /**
+       * Get window manager type
+       */
+      inline const std::string& getType() const { return mType; }
     protected:
       const std::string mType;
       std::map<std::string, WindowPtr> mWindows;

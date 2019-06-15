@@ -31,10 +31,25 @@
   ],
   "packager": {
     "deps": [
-      "tween",
-      "i18n",
-      "luacheck"
+      "i18n"
     ]
+  },
+  "splashScreen": {
+    "name": "Starting...",
+    "width": 400,
+    "height": 225,
+    "windowParams": {
+      "borderless": true,
+      "openGL": true,
+      "renderer": {
+        "render": [
+          {
+            "type": "image",
+            "image": "editor/splash.bmp"
+          }
+        ]
+      }
+    }
   },
 
   "cef": {
@@ -179,6 +194,7 @@
       "height": 830,
       "useWindowManager": true,
       "resizable": true,
+      "highDPI": true,
       "params":
       {
         "FSAA": 0,

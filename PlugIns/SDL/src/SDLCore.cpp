@@ -28,10 +28,13 @@ THE SOFTWARE.
 #include <SDL2/SDL.h>
 #include "GsageFacade.h"
 #include "EngineEvent.h"
+#include "SDLWindowManager.h"
 
 namespace Gsage {
 
   SDLCore::SDLCore()
+    : mWindowManager(nullptr)
+    , mFacade(nullptr)
   {
   }
 
@@ -84,6 +87,10 @@ namespace Gsage {
         listener->handleEvent(&event);
       }
     }
+
+    if(mWindowManager) {
+      mWindowManager->update(time);
+    }
   }
 
   void SDLCore::tearDown()
@@ -95,5 +102,19 @@ namespace Gsage {
   void SDLCore::addEventListener(SDLEventListener* listener)
   {
     mEventListeners.push_back(listener);
+  }
+
+  void SDLCore::removeEventListener(SDLEventListener* listener)
+  {
+    mEventListeners.erase(std::remove(mEventListeners.begin(), mEventListeners.end(), listener), mEventListeners.end());
+  }
+
+  void SDLCore::setWindowManager(SDLWindowManager* value)
+  {
+    mWindowManager = value;
+  }
+
+  const std::string& SDLCore::getResourcePath() const {
+    return mFacade->getResourcePath();
   }
 }

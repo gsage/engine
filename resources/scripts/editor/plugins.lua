@@ -57,6 +57,7 @@ local function decorate(cls)
     if w <= 0 or h <= 0 then
       return
     end
+
     self.viewport:render(w, h)
 
     if self.meshName == meshName then

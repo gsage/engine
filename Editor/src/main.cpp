@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <thread>
 
 #include "Logger.h"
+#include "DataProxy.h"
 
 #if GSAGE_PLATFORM == GSAGE_WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -44,10 +45,10 @@ THE SOFTWARE.
 #endif
 
 #include "sol.hpp"
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <atomic>
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,12 +79,12 @@ extern "C" {
       Gsage::Editor editor;
       std::string coreConfig = "editorConfig.json";
       lua_State* L = lua_open();
-      sol::state_view lua(L);
       if(!L) {
         LOG(ERROR) << "Lua state is not initialized";
         return 1;
       }
 
+      sol::state_view lua(L);
       lua.new_usertype<Gsage::Editor>("Editor",
           "putToGlobalState", &Gsage::Editor::putToGlobalState,
           "getGlobalState", &Gsage::Editor::getGlobalState,
@@ -93,19 +94,67 @@ extern "C" {
 
       facade.setLuaState(L, false);
 
-      if(!facade.initialize(coreConfig, RESOURCES_FOLDER))
+      if(!facade.initialize(
+        coreConfig,
+        RESOURCES_FOLDER,
+        Gsage::FileLoader::Json,
+        Gsage::GsageFacade::Managers | Gsage::GsageFacade::Plugins
+      ))
       {
         LOG(ERROR) << "Failed to initialize game engine";
-        return 1;
+        return 10;
       }
 
-      if(!editor.initialize(RESOURCES_FOLDER)) {
-        LOG(ERROR) << "Failed to initialize editor core";
-        return 1;
+      Gsage::WindowPtr window = nullptr;
+      auto pair = facade.getConfig().get<Gsage::DataProxy>("splashScreen");
+      Gsage::WindowManagerPtr wm = facade.getWindowManager();
+      if(pair.second && wm) {
+        window = wm->createWindow(
+          pair.first.get("windowName", "gsage"),
+          pair.first.get("width", 600),
+          pair.first.get("height", 400),
+          false,
+          pair.first.get("windowParams", Gsage::DataProxy())
+        );
       }
+
+      std::atomic_bool finalizeLoad(false);
+      bool packagesInstalled = false;
+
+      std::thread packager([&](){
+        Gsage::DataProxy deps = facade.getConfig().get("packager.deps", Gsage::DataProxy::create(Gsage::DataWrapper::JSON_OBJECT));
+        packagesInstalled = facade.installLuaPackages(deps);
+        finalizeLoad.store(true);
+      });
 
       while(facade.update())
       {
+        if(finalizeLoad.load()) {
+          if(packager.joinable())
+            packager.join();
+
+          // close splash screen
+          if(window) {
+            wm->destroyWindow(window);
+            window = nullptr;
+          }
+
+          if(!packagesInstalled) {
+            LOG(ERROR) << "Failed to install lua packages";
+            return 20;
+          }
+
+          if(!facade.configureSystems()) {
+            LOG(ERROR) << "Failed to configure systems";
+            return 30;
+          }
+
+          if(!editor.initialize(RESOURCES_FOLDER)) {
+            LOG(ERROR) << "Failed to initialize editor core";
+            return 40;
+          }
+          finalizeLoad.store(false);
+        }
       }
 
       if(retVal != 0)

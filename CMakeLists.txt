@@ -18,8 +18,7 @@ endif(CONAN_PACKAGE_NAME)
 
 process_templates()
 
-add_subdirectory(GsageCore)
-add_subdirectory(GsageExe)
+add_subdirectory(Core)
 add_subdirectory(PlugIns)
 add_subdirectory(Tests)
 add_subdirectory(Vendor)

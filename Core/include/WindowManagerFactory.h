@@ -42,16 +42,17 @@ namespace Gsage {
       /**
        * Register new kind of window manager
        */
-      template<class T>
-      void registerWindowManager(const std::string& id) {
+      template<class T, class ... Types>
+      void registerWindowManager(const std::string& id, Types ... args) {
         if(!std::is_base_of<WindowManager, T>::value) {
-          LOG(ERROR) << "Failed to register a WindowManager: window manager should inherit from WindowManager abstract class";
+          LOG(ERROR) << "Failed to register a WindowManager: window manager should inherit WindowManager abstract class";
+          return;
         }
 
         std::string managerType = id;
 
-        mRegisteredWindowManagers[id] = [managerType](const DataProxy* params) -> WindowManagerPtr {
-          WindowManagerPtr res = WindowManagerPtr((WindowManager*)(new T(managerType)));
+        mRegisteredWindowManagers[id] = [&, managerType, args...](const DataProxy* params) -> WindowManagerPtr {
+          WindowManagerPtr res = WindowManagerPtr((WindowManager*)(new T(managerType, args...)));
           if(params != nullptr && !res->initialize(*params)) {
             return nullptr;
           }

@@ -65,6 +65,16 @@ namespace Gsage
   class GsageFacade : public EventSubscriber<GsageFacade>
   {
     public:
+      enum ConfigureFlags {
+          Plugins  = 0x01,
+          Systems  = 0x03, // system configuration should include plugins config as well
+          Managers = 0x05, // managers configuration should also include plugins config
+
+          RestartSystems = 0x1000, // restart systems during reconfigure
+
+          All      = Plugins | Systems | Managers
+      };
+
       typedef bool(*INSTALL_PLUGIN)(GsageFacade*);
       typedef bool(*UNINSTALL_PLUGIN)(GsageFacade*);
 
@@ -85,20 +95,53 @@ namespace Gsage
 
       GsageFacade();
       virtual ~GsageFacade();
+
       /**
        * Initializes engine, configures systems
        *
        * @param gsageConfigPath Path to the file with facade settings
        */
-      virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, DataProxy* configOverride = 0, FileLoader::Encoding configEncoding = FileLoader::Json);
+      bool initialize(const DataProxy& config,
+        const std::string& resourcePath,
+        unsigned short configureFlags = ConfigureFlags::All
+      );
+
+      /**
+       * Initializes engine, configures systems
+       *
+       * @param gsageConfigPath Path to the file with facade settings
+       * @param resourcePath Main resource path
+       * @param configEncoding Config encoding to use for file loading
+       * @param configureFlags Allows setting what kind of configs run during startup
+       */
+      virtual bool initialize(const std::string& gsageConfigPath, const std::string& resourcePath, FileLoader::Encoding configEncoding = FileLoader::Json, unsigned short configureFlags = ConfigureFlags::All);
+
+      /**
+       * Set new config and run configuration functions
+       *
+       * @param config New configuration
+       * @param configureFlags Configuration flags
+       * @return true if succeed
+       */
+      virtual bool configure(const DataProxy& config, unsigned short configureFlags = ConfigureFlags::All);
+
+      /**
+       * Configure the engine and systems
+       */
+      virtual bool configurePlugins();
 
       /**
        * Configure the engine and systems
        *
-       * @param configuration Config data
        * @param restart Forces restart of all systems
        */
-      virtual bool configure(const DataProxy& configuration, bool restart = false);
+      virtual bool configureSystems(bool restart = false);
+
+      /**
+       * Configures managers
+       */
+      virtual bool configureManagers();
+
       /**
        * Add new system in the engine
        */
@@ -326,10 +369,10 @@ namespace Gsage
        * Register new window manager factory
        * @param id factory name
        */
-      template<class C>
-      void registerWindowManager(const std::string& id)
+      template<class C, class ... Types>
+      void registerWindowManager(const std::string& id, Types ... args)
       {
-        mWindowManagerFactory.registerWindowManager<C>(id);
+        mWindowManagerFactory.registerWindowManager<C>(id, args...);
       }
 
       /**
@@ -362,6 +405,21 @@ namespace Gsage
        * Get installed plugins
        */
       const PluginOrder& getInstalledPlugins() const;
+
+      /**
+       * Installs lua dependencies using luarocks
+       * @param deps Dependency list
+       */
+      bool installLuaPackages(const DataProxy& deps);
+
+      /**
+       * @return true if all passed subsystems were initialized at least one
+       */
+      bool isReady(unsigned short flags) const;
+
+      inline DataProxy& getConfig() { return mConfig; }
+
+      inline const std::string& getResourcePath() const { return mResourcePath; }
     protected:
       bool onEngineShutdown(EventDispatcher* sender, const Event& event);
       bool onLuaStateChange(EventDispatcher* sender, const Event& event);
@@ -369,6 +427,7 @@ namespace Gsage
       bool mStarted;
       bool mStartupScriptRun;
       std::string mStartupScript;
+      std::string mResourcePath;
       std::atomic<bool> mStopped;
       std::vector<std::string> mPluginsFolders;
 
@@ -392,8 +451,8 @@ namespace Gsage
 
       PluginOrder mPluginOrder;
 
-      typedef std::map<std::string, IPlugin*> Plugins;
-      Plugins mInstalledPlugins;
+      typedef std::map<std::string, IPlugin*> InstalledPlugins;
+      InstalledPlugins mInstalledPlugins;
 
       typedef std::vector<UpdateListener*> UpdateListeners;
       UpdateListeners mUpdateListeners;
@@ -402,6 +461,7 @@ namespace Gsage
       UIManagers mUIManagers;
 
       int mExitCode;
+      unsigned short mReady;
   };
 }
 #endif

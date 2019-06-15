@@ -55,6 +55,7 @@ THE SOFTWARE.
 #elif GSAGE_PLATFORM == GSAGE_WIN32
 #include <windows.h>
 #include <tchar.h>
+#include "WIN32/CommandLine.h"
 #endif
 
 namespace Gsage {
@@ -977,6 +978,110 @@ namespace Gsage {
 
     mInstance->getEngine()->fireEvent(EngineEvent(EngineEvent::LUA_STATE_CHANGE));
 
+    lua["game"] = mInstance;
+    lua["core"] = mInstance->getEngine();
+    lua["data"] = mInstance->getGameDataManager();
+
+    addCommonBindings(mState);
+
+    return true;
+  }
+
+  void LuaInterface::setResourcePath(const std::string& path)
+  {
+    mResourcePath = path;
+    if(mStateView) {
+      (*mStateView)["resourcePath"] = mResourcePath;
+      mStateView->script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
+    }
+  }
+
+  sol::state_view* LuaInterface::getSolState() {
+    return mStateView;
+  }
+
+  lua_State* LuaInterface::getState()
+  {
+    return mState;
+  }
+
+  bool LuaInterface::runPackager(const std::string& path, const DataProxy& dependencies)
+  {
+    sol::state lua;
+    luaL_openlibs(lua.lua_state());
+    lua["dependencies"] = dependencies;
+
+    addCommonBindings(lua.lua_state());
+
+    const std::string runPrefix = mResourcePath + GSAGE_PATH_SEPARATOR + "luarocks";
+#if GSAGE_PLATFORM == GSAGE_LINUX || GSAGE_PLATFORM == GSAGE_APPLE
+    char *resolvedName = NULL;
+    char *fullPath = realpath(runPrefix.c_str(), resolvedName);
+    if(!fullPath) {
+      LOG_IF(resolvedName != NULL, ERROR) << "Failed to resolve path " << resolvedName;
+      return false;
+    }
+    lua["run_prefix"] = std::string(fullPath);
+    free(fullPath);
+
+#elif GSAGE_PLATFORM == GSAGE_WIN32
+    TCHAR full_path[200];
+    GetFullPathName(_T(runPrefix.c_str()), 200, full_path, NULL);
+    lua["run_prefix"] = std::string(full_path);
+
+    lua.new_usertype<CommandPipe>("CommandPipe",
+      "lines", &CommandPipe::lines,
+      "close", &CommandPipe::close,
+      "read", &CommandPipe::read,
+      sol::meta_function::call, &CommandPipe::next
+    );
+
+    lua["os"]["execute"] = [](const std::string& cmd){
+      return Gsage::luaCmd(cmd);
+    };
+    lua["io"]["popen"] = [](const std::string& cmd) {
+      return Gsage::luaPopen(cmd);
+    };
+#else
+    lua["run_prefix"] = runPrefix;
+#endif
+    lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
+    return runScript(path, &lua);
+  }
+
+  bool LuaInterface::runScript(const std::string& script, sol::state_view* state)
+  {
+    sol::state_view* targetState = state ? state : mStateView;
+    if(!targetState)
+      return false;
+
+    try {
+      LOG(INFO) << "Executing script " << script;
+      auto res = targetState->script_file(script);
+      if(!res.valid()) {
+        sol::error err = res;
+        throw err;
+      }
+    } catch(sol::error& err) {
+      LOG(ERROR) << "Failed to execute lua script: " << err.what();
+      return false;
+    } catch(std::exception& err) {
+      LOG(ERROR) << "Failed to execute lua script: " << err.what();
+      return false;
+    } catch(...) {
+      LOG(ERROR) << "Failed to execute lua script: " << lua_tostring(mStateView->lua_state(), -1);
+      return false;
+    }
+
+    return true;
+  }
+
+  void LuaInterface::addCommonBindings(lua_State* L)
+  {
+    sol::state_view lua(L);
+
+    lua["resourcePath"] = mResourcePath;
+
     // Logging
     lua.new_usertype<LogProxy>("LogProxy",
         "subscribe", &LogProxy::subscribe,
@@ -1009,30 +1114,11 @@ namespace Gsage {
 
     lua["log"]["proxy"] = std::shared_ptr<LogProxy>(new LogProxy());
 
-    lua["resourcePath"] = mResourcePath;
-    lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
-    lua["game"] = mInstance;
-    lua["core"] = mInstance->getEngine();
-    lua["data"] = mInstance->getGameDataManager();
-    std::stringstream ss;
-    ss << GSAGE_VERSION_MAJOR << "." << GSAGE_VERSION_MINOR << "." << GSAGE_VERSION_BUILD;
-
-    lua["gsageVersion"] = ss.str();
-#if GSAGE_PLATFORM == GSAGE_APPLE
-    lua["gsagePlatform"] = "apple";
-#elif GSAGE_PLATFORM == GSAGE_LINUX
-    lua["gsagePlatform"] = "linux";
-#elif GSAGE_PLATFORM == GSAGE_WIN32
-    lua["gsagePlatform"] = "win32";
-#else
-    lua["gsagePlatform"] = "other";
-#endif
-
-    // some utility functions
-    lua["md5Hash"] = [] (const std::string& value) -> size_t {return std::hash<std::string>()(value);};
-    lua["split"] = [](const std::string& s, char delim) -> std::vector<std::string> {
-      return split(s, delim);
-    };
+    lua["bit"] = lua.create_table();
+    lua["bit"]["brshift"] = [](int n, size_t bits) { return bits >> n; };
+    lua["bit"]["blshift"] = [](int n, size_t bits) { return bits << n; };
+    lua["bit"]["band"] = [](size_t left, size_t right) { return left & right; };
+    lua["bit"]["bor"] = [](size_t left, size_t right) { return left | right; };
 
     // serialization
     lua["json"] = lua.create_table();
@@ -1041,99 +1127,37 @@ namespace Gsage {
     lua["json"]["loads"] = [](const std::string& str) { return loads(str, DataWrapper::JSON_OBJECT); };
     lua["json"]["dumps"] = [](const DataProxy& value) { return dumps(value, DataWrapper::JSON_OBJECT, true); };
 
-    // bit operations
-    lua["bit"] = lua.create_table();
-    lua["bit"]["brshift"] = [](int n, size_t bits) { return bits >> n; };
-    lua["bit"]["blshift"] = [](int n, size_t bits) { return bits << n; };
-    lua["bit"]["band"] = [](size_t left, size_t right) { return left & right; };
-    lua["bit"]["bor"] = [](size_t left, size_t right) { return left | right; };
-
-    return true;
-  }
-
-  void LuaInterface::setResourcePath(const std::string& path)
-  {
-    mResourcePath = path;
-    if(mStateView) {
-      (*mStateView)["resourcePath"] = mResourcePath;
-      mStateView->script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
-    }
-  }
-
-  sol::state_view* LuaInterface::getSolState() {
-    return mStateView;
-  }
-
-  lua_State* LuaInterface::getState()
-  {
-    return mState;
-  }
-
-  bool LuaInterface::runPackager(const std::string& path, const DataProxy& dependencies)
-  {
-    sol::state lua;
-    luaL_openlibs(lua.lua_state());
-    lua["dependencies"] = dependencies;
-    lua["resourcePath"] = mResourcePath;
-
-    lua["log"] = lua.create_table();
-    lua["log"]["info"] = [] (const char* message) { LOG(INFO) << message; };
-    lua["log"]["error"] = [] (const char* message) { LOG(ERROR) << message; };
-    lua["log"]["debug"] = [] (const char* message) { LOG(DEBUG) << message; };
-    lua["log"]["warn"] = [] (const char* message) { LOG(WARNING) << message; };
-    lua["log"]["trace"] = [] (const char* message) { LOG(TRACE) << message; };
-
+    std::string platform;
+    std::stringstream ss;
+    ss << GSAGE_VERSION_MAJOR << "." << GSAGE_VERSION_MINOR << "." << GSAGE_VERSION_BUILD;
 #if GSAGE_PLATFORM == GSAGE_APPLE
-    lua["gsage_platform"] = "apple";
+    platform = "apple";
 #elif GSAGE_PLATFORM == GSAGE_LINUX
-    lua["gsage_platform"] = "linux";
+    platform = "linux";
 #elif GSAGE_PLATFORM == GSAGE_WIN32
-    lua["gsage_platform"] = "win32";
+    platform = "win32";
 #else
-    lua["gsage_platform"] = "other";
+    platform = "other";
 #endif
-    const std::string runPrefix = mResourcePath + GSAGE_PATH_SEPARATOR + "luarocks";
-#if GSAGE_PLATFORM == GSAGE_LINUX || GSAGE_PLATFORM == GSAGE_APPLE
-    char *full_path = realpath(runPrefix.c_str(), NULL);
-    lua["run_prefix"] = std::string(full_path);
-    free(full_path);
 
-#elif GSAGE_PLATFORM == GSAGE_WIN32
-    TCHAR full_path[200];
-    GetFullPathName(_T(runPrefix.c_str()), 200, full_path, NULL);
-    lua["run_prefix"] = std::string(full_path);
-#else
-    lua["run_prefix"] = runPrefix;
-    lua["gsage_platform"] = "other";
-#endif
+    lua["gsage"] = lua.create_table_with(
+      "version", ss.str(),
+      "platform", platform
+    );
+
+    lua["gsage"]["configure"] = lua.create_table_with(
+      "All", GsageFacade::All,
+      "Plugins", GsageFacade::Plugins,
+      "Managers", GsageFacade::Managers,
+      "Systems", GsageFacade::Systems,
+      "RestartSystems", GsageFacade::RestartSystems
+    );
+
+    // some utility functions
+    lua["md5Hash"] = [] (const std::string& value) -> size_t {return std::hash<std::string>()(value);};
+    lua["split"] = [](const std::string& s, char delim) -> std::vector<std::string> {
+      return split(s, delim);
+    };
     lua.script("function getResourcePath(path) return resourcePath .. '/' .. path; end");
-    return runScript(path, &lua);
-  }
-
-  bool LuaInterface::runScript(const std::string& script, sol::state_view* state)
-  {
-    sol::state_view* targetState = state ? state : mStateView;
-    if(!targetState)
-      return false;
-
-    try {
-      LOG(INFO) << "Executing script " << script;
-      auto res = targetState->script_file(script);
-      if(!res.valid()) {
-        sol::error err = res;
-        throw err;
-      }
-    } catch(sol::error& err) {
-      LOG(ERROR) << "Failed to execute lua script: " << err.what();
-      return false;
-    } catch(std::exception& err) {
-      LOG(ERROR) << "Failed to execute lua script: " << err.what();
-      return false;
-    } catch(...) {
-      LOG(ERROR) << "Failed to execute lua script: " << lua_tostring(mStateView->lua_state(), -1);
-      return false;
-    }
-
-    return true;
   }
 }

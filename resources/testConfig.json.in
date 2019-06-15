@@ -76,6 +76,7 @@
     "script"
   ],
   "packager": {
+    "installOnStartup": true,
     "deps": [
       "busted",
       "i18n",
@@ -99,6 +100,7 @@
       {"id": "Direct3D11 Rendering Subsystem"},
       {"id": "Metal Rendering Subsystem"},
       {"id": "OpenGL 3+ Rendering Subsystem"},
+      {"id": "Direct3D9 Rendering Subsystem"},
       {"id": "OpenGL Rendering Subsystem",
         "Fixed Pipeline Enabled": "Yes",
         "RTT Preferred Mode": "FBO"
@@ -125,7 +127,7 @@
       },
       "viewport": {
         "renderQueueSequence": [0, 5, 25, 50, 100, {"id": 101, "suppressShadows": true}],
-        "backgroundColor": "#000000"
+        "backgroundColor": "0x000000"
       },
       "resizable": true,
       "useWindowManager": true,
@@ -140,9 +142,11 @@
       }
     },
     "plugins": [
+      "RenderSystem_NULL",
       "RenderSystem_GL",
-      "RenderSystem_GL3Plus",
       "RenderSystem_Metal",
+      "RenderSystem_Direct3D9",
+      "RenderSystem_GL3Plus",
       "OctreeSceneManager",
       "ParticleFX"
     ]

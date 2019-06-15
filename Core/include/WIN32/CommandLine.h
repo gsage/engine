@@ -1,8 +1,8 @@
 /*
 -----------------------------------------------------------------------------
-This file is a part of Gsage engine
+This file is part of Gsage engine
 
-Copyright (c) 2014-2017 Artem Chernyshev
+Copyright (c) 2014-2019 Gsage Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,21 +24,43 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include "SDLEventListener.h"
-#include "SDLCore.h"
+#include "GsageDefinitions.h"
+
+#if GSAGE_PLATFORM == GSAGE_WIN32
+#ifndef __COMMAND_LINE_TOOLS_H__
+#define __COMMAND_LINE_TOOLS_H__
+
+#include <memory>
+#include "sol_forward.hpp"
 
 namespace Gsage {
+  // this package is here to fix built-in Lua behaviour of using standard shell
+  // on Windows, which leads to opening countless cmd windows
 
-  SDLEventListener::SDLEventListener()
-    : mSDLCore(nullptr)
-  {
-  }
+  /**
+   * Represents command line run pipe object
+   */
+  struct CommandPipe {
+    void close();
+    sol::object next(sol::this_state s);
+    CommandPipe* lines();
+    void execute(const std::string& command);
+    sol::object read(sol::object arg, sol::this_state s);
+    std::string readLine();
 
-  SDLEventListener::~SDLEventListener()
-  {
-    if(mSDLCore) {
-      mSDLCore->removeEventListener(this);
-    }
-  }
+    unsigned long exitCode;
+    std::stringstream data;
+  };
 
+  typedef std::shared_ptr<CommandPipe> CommandPipePtr;
+
+  /**
+   * Run shell command and returns status
+   */
+  int luaCmd(const std::string& command);
+
+  CommandPipePtr luaPopen(const std::string& command);
 }
+
+#endif
+#endif

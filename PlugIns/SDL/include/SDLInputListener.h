@@ -35,11 +35,12 @@ THE SOFTWARE.
 
 namespace Gsage {
   class SDLCore;
+  class SDLInputListener;
 
   class SDLInputFactory : public AbstractInputFactory
   {
     public:
-      SDLInputFactory() : mCore(0) {};
+      SDLInputFactory() : mCore(0), mListener(0) {};
       virtual ~SDLInputFactory(){};
 
       /**
@@ -49,7 +50,7 @@ namespace Gsage {
        * @param engine Engine instance
        * @returns InputHandler
        */
-      InputHandler* create(size_t windowHandle, Engine* engine);
+      InputHandlerPtr create(size_t windowHandle, Engine* engine);
 
       /**
        * Inject SDL core instance
@@ -58,6 +59,7 @@ namespace Gsage {
       void setSDLCore(SDLCore* core);
     private:
       SDLCore* mCore;
+      InputHandlerPtr mListener;
   };
 
   class SDLInputListener : public InputHandler, public EventDispatcher, public SDLEventListener

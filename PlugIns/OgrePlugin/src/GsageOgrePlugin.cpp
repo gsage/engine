@@ -187,7 +187,8 @@ namespace Gsage {
           ),
           "createTexture", &OgreRenderSystem::createTexture,
           "getTexture", &OgreRenderSystem::getTexture,
-          "deleteTexture", &OgreRenderSystem::deleteTexture
+          "deleteTexture", &OgreRenderSystem::deleteTexture,
+          "getRenderer", &OgreRenderSystem::getRenderSystem
       );
 
       lua["ogre"] = lua.create_table_with(
@@ -285,6 +286,12 @@ namespace Gsage {
         return std::make_tuple(vector, succeed);
       };
 
+      lua.new_usertype<Ogre::RenderSystem>("OgreRS"
+#if OGRE_VERSION >= 0x020100
+          ,"name", sol::property(&Ogre::RenderSystem::getFriendlyName)
+#endif
+      );
+
       lua.new_usertype<Ogre::Camera>("Camera",
           "fovy", sol::property(&Ogre::Camera::getFOVy)
       );
@@ -316,7 +323,7 @@ namespace Gsage {
           )
       );
 
-      lua.new_usertype<Ogre::Technique>("OgreTechnique", 
+      lua.new_usertype<Ogre::Technique>("OgreTechnique",
           "getPass", sol::overload(
             (Ogre::Pass*(Ogre::Technique::*)(unsigned short index))&Ogre::Technique::getPass,
             (Ogre::Pass*(Ogre::Technique::*)(const Ogre::String& name))&Ogre::Technique::getPass

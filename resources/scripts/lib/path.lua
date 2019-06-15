@@ -34,8 +34,7 @@ function PathUtils:addDefaultPaths()
   }, "path")
 
   self:_addPaths({
-    getResourcePath('luarocks/packages/lib/lua/' .. version),
-    getResourcePath('luarocks/packages/lib/lua/' .. version)
+    getResourcePath('luarocks/packages/lib/lua/' .. version .. '/'),
   }, "cpath")
 
   self.hasDefaultPaths = true

@@ -305,6 +305,8 @@ namespace Gsage
       lua_State* mState;
       sol::state_view* mStateView;
       bool mStateCreated;
+
+      void addCommonBindings(lua_State* s);
   };
 }
 

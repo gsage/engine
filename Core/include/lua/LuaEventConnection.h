@@ -120,7 +120,7 @@ namespace Gsage {
       typedef std::function<bool(EventDispatcher*, const Event&, long)> Handler;
 
       typedef std::map<long, Handler> Listeners;
-      typedef std::map<EventSubscriber::EventSubscription, Listeners> Router;
+      typedef std::map<EventSubscriber::EventSubscription, Listeners, EventSubscriber::CmpEventSubscription> Router;
       Router mRouter;
 
       sol::function mHandler;
