@@ -357,7 +357,7 @@ namespace Gsage {
     }
 
     if(fullPath.empty()) {
-      LOG(ERROR) << "Failed to read file: " << fullPath;
+      LOG(ERROR) << "Failed to read file: " << path;
       return std::make_pair("", false);
     }
 

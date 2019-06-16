@@ -13,6 +13,10 @@ macro(configure)
     set(GSAGE_VERSION_MINOR $ENV{GSAGE_VERSION_MINOR})
   endif(DEFINED ENV{GSAGE_VERSION_MINOR})
 
+  if(DEFINED ENV{GSAGE_VERSION_PATCH})
+    set(GSAGE_VERSION_PATCH $ENV{GSAGE_VERSION_PATCH})
+  endif(DEFINED ENV{GSAGE_VERSION_PATCH})
+
   if(DEFINED ENV{GSAGE_VERSION_BUILD})
     set(GSAGE_VERSION_BUILD $ENV{GSAGE_VERSION_BUILD})
   endif(DEFINED ENV{GSAGE_VERSION_BUILD})
@@ -20,7 +24,6 @@ macro(configure)
   if(WITH_METAL)
     add_definitions("-DWITH_METAL")
   endif(WITH_METAL)
-  add_definitions(-DGSAGE_VERSION_MAJOR="${GSAGE_VERSION_MAJOR}" -DGSAGE_VERSION_MINOR="${GSAGE_VERSION_MINOR}" -DGSAGE_VERSION_BUILD="${GSAGE_VERSION_BUILD}")
 
   if(NOT EXISTS BINARY_OUTPUT_DIR)
     file(MAKE_DIRECTORY ${BINARY_OUTPUT_DIR})
@@ -76,6 +79,16 @@ macro(configure)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
+    if(NOT APPLE)
+      set(INSTALL_BINARY_DIR "local/bin/")
+      set(INSTALL_LIB_DIR "local/lib/")
+      set(INSTALL_PLUGINS_DIR "local/lib/gsage")
+      set(INSTALL_RESOURCE_DIR "share/gsage/")
+
+      list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PATH}/${INSTALL_LIB_DIR}")
+      list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PATH}/${INSTALL_PLUGINS_DIR}")
+    endif(NOT APPLE)
   endif(UNIX)
   if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
@@ -116,18 +129,24 @@ macro(gsage_plugin plugin_name)
       COMMAND copy ${src_path} ${dst_path}
     )
 
+    install(TARGETS ${plugin_name}
+            RUNTIME DESTINATION bin
+            LIBRARY DESTINATION lib)
+    install(TARGETS ${plugin_name} DESTINATION "${CMAKE_INSTALL_PATH}/PlugIns")
+
   else(WIN32)
-  set_target_properties(${plugin_name}
-    PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_PATH}
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PLUGINS_PATH}
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PLUGINS_PATH})
+    set_target_properties(${plugin_name}
+      PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_PATH}
+      LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PLUGINS_PATH}
+      LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PLUGINS_PATH})
+    install(TARGETS ${plugin_name} LIBRARY DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_PLUGINS_DIR}")
   endif(WIN32)
 
   if(APPLE)
     set_target_properties(${plugin_name}
       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
-      INSTALL_RPATH "@rpath;@executable_path/../"
+      INSTALL_RPATH "@executable_path/../Frameworks;@executable_path/../;@rpath"
       LINK_FLAGS "-Wl,-F${PROJECT_BINARY_DIR}/bin/Frameworks/"
     )
   endif(APPLE)
@@ -151,7 +170,7 @@ macro(cef_helper_app executable_name)
     set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
     set_target_properties(${executable_name}
       PROPERTIES BUILD_WITH_INSTALL_RPATH 1
-      INSTALL_RPATH "@rpath;@executable_path/../"
+      INSTALL_RPATH "@executable_path/../Frameworks;@executable_path/../;@rpath"
       LINK_FLAGS "-Wl,-F${PROJECT_BINARY_DIR}/bin/Frameworks/"
     )
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
@@ -171,6 +190,8 @@ macro(cef_helper_app executable_name)
   if(MINGW OR UNIX)
     set(EXECUTABLE_OUTPUT_PATH "${BINARY_OUTPUT_DIR}")
   endif(MINGW OR UNIX)
+
+  install(TARGETS ${executable_name} DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_BINARY_DIR}")
 endmacro()
 
 macro(console_executable executable_name)
@@ -194,30 +215,42 @@ macro(gsage_executable_generic executable_name)
   add_executable(${executable_name} ${ARGN})
 
   if(APPLE)
-    if(NOT console)
-      set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
-      set(MACOSX_BUNDLE_BUNDLE_NAME "${executable_name}")
-      set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
+    set_source_files_properties(${ARGN} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set(MACOSX_BUNDLE_BUNDLE_NAME "${executable_name}")
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.${executable_name}")
 
-      set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
+    set(CMAKE_FRAMEWORK_PATH ${CMAKE_FRAMEWORK_PATH} ${PROJECT_BINARY_DIR}/bin/Frameworks/)
 
-      set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
-      set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/resources/Info.plist)
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.gsage.engine.${executable_name}")
+    set(MACOSX_BUNDLE_BUNDLE_NAME "${executable_name}")
+    set(MACOSX_BUNDLE_ICON_FILE "editor/${executable_name}.icns")
+    set(MACOSX_BUNDLE_LONG_VERSION_STRING "${GSAGE_VERSION_MAJOR}.${GSAGE_VERSION_MINOR}.${GSAGE_VERSION_BUILD}")
+    set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${GSAGE_VERSION_MAJOR}.${GSAGE_VERSION_MINOR}")
 
-      set(APP_CONTENTS "${BINARY_OUTPUT_DIR}/${executable_name}.app/Contents")
-      set(APP_FRAMEWORKS_DIRECTORY "${APP_CONTENTS}/Frameworks")
-      set(APP_RESOURCES_DIRECTORY "${APP_CONTENTS}/Resources")
+    set(INFO_PLIST_FILE ${CMAKE_CURRENT_BINARY_DIR}/${executable_name}.plist)
+    configure_file(${gsage_SOURCE_DIR}/Info.plist.in ${INFO_PLIST_FILE})
 
-      add_custom_command(TARGET ${executable_name} POST_BUILD
-        COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
-      )
-      add_custom_command(TARGET ${executable_name} POST_BUILD
-        COMMAND [ -L ${APP_RESOURCES_DIRECTORY} ] || ln -s ${PROJECT_SOURCE_DIR}/resources/ ${APP_RESOURCES_DIRECTORY}
-      )
-      add_custom_command(TARGET ${executable_name} POST_BUILD
-        COMMAND [ -L ${APP_CONTENTS}/PlugIns ] || ln -s ${PLUGINS_PATH} ${APP_CONTENTS}/PlugIns
-      )
-    endif(NOT console)
+    set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE TRUE)
+    set_property(TARGET ${executable_name} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${INFO_PLIST_FILE})
+
+    set(APP_CONTENTS "${BINARY_OUTPUT_DIR}/${executable_name}.app/Contents")
+    set(APP_FRAMEWORKS_DIRECTORY "${APP_CONTENTS}/Frameworks")
+    set(APP_RESOURCES_DIRECTORY "${APP_CONTENTS}/Resources")
+    set(APP_PLUGINS_DIRECTORY "${APP_CONTENTS}/PlugIns")
+
+    add_custom_command(TARGET ${executable_name} POST_BUILD
+      COMMAND [ -L ${APP_FRAMEWORKS_DIRECTORY} ] || ln -s ${PROJECT_BINARY_DIR}/bin/Frameworks/ ${APP_FRAMEWORKS_DIRECTORY}
+    )
+    add_custom_command(TARGET ${executable_name} POST_BUILD
+      COMMAND [ -L ${APP_RESOURCES_DIRECTORY} ] || ln -s ${PROJECT_SOURCE_DIR}/resources/ ${APP_RESOURCES_DIRECTORY}
+    )
+    add_custom_command(TARGET ${executable_name} POST_BUILD
+      COMMAND [ -L ${APP_PLUGINS_DIRECTORY} ] || ln -s ${PLUGINS_PATH} ${APP_PLUGINS_DIRECTORY}
+    )
+    set_target_properties(${executable_name}
+      PROPERTIES BUILD_WITH_INSTALL_RPATH 1
+      INSTALL_RPATH "@executable_path/../Frameworks;@executable_path/../;@executable_path/../Plugins;@rpath"
+    )
     add_definitions(-DRESOURCES_FOLDER="../Resources")
   else(APPLE)
     add_definitions(-DRESOURCES_FOLDER="../../resources")
@@ -226,6 +259,8 @@ macro(gsage_executable_generic executable_name)
   if(MINGW OR UNIX)
     set(EXECUTABLE_OUTPUT_PATH "${BINARY_OUTPUT_DIR}")
   endif(MINGW OR UNIX)
+
+  install(TARGETS ${executable_name} DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_BINARY_DIR}" COMPONENT "${executable_name}")
 endmacro()
 
 macro(process_templates)
@@ -240,4 +275,72 @@ macro(process_templates)
   endif(APPLE)
   configure_file(resources/testConfig.json.in ${gsage_SOURCE_DIR}/resources/testConfig.json)
   configure_file(resources/editorConfig.json.in ${gsage_SOURCE_DIR}/resources/editorConfig.json)
+endmacro()
+
+macro(gsage_library library_name type)
+  add_library(${library_name} ${type} ${ARGN})
+
+  # build library as a framework
+  if("${type}" STREQUAL "SHARED" AND APPLE)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
+    set_target_properties(${library_name} PROPERTIES
+      FRAMEWORK TRUE
+      MACOSX_FRAMEWORK_IDENTIFIER org.gsage.engine.GsageCore
+      MACOSX_FRAMEWORK_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
+    )
+    install(TARGETS ${library_name} DESTINATION "${PROJECT_BINARY_DIR}/bin/Frameworks/")
+  else("${type}" STREQUAL "SHARED" AND APPLE)
+    install(TARGETS ${library_name} DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_LIB_DIR}")
+  endif("${type}" STREQUAL "SHARED" AND APPLE)
+
+endmacro()
+
+macro(install_includes)
+  foreach(include IN ITEMS ${ARGN})
+    install(DIRECTORY "${include}"
+            DESTINATION "${CMAKE_INSTALL_PATH}/include"
+            COMPONENT "headers"
+            FILES_MATCHING REGEX ".*")
+  endforeach(include)
+endmacro()
+
+macro(install_resources)
+  install(DIRECTORY cmake DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_RESOURCE_DIR}")
+  if(APPLE)
+    set(DYNLIB_PATTERN "*.dylib")
+  elseif(WIN32)
+    set(DYNLIB_PATTERN "*.dll")
+  else(APPLE)
+    set(DYNLIB_PATTERN "*.so")
+  endif(APPLE)
+
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bundle/"
+    DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_RESOURCE_DIR}"
+    FILES_MATCHING
+    PATTERN "${DYNLIB_PATTERN}" EXCLUDE
+    PATTERN "locales/*.pak"
+  )
+
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bundle/"
+    DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_BINARY_DIR}"
+    FILES_MATCHING
+    PATTERN "cef*.pak"
+    PATTERN "devtools_resources.pak"
+    PATTERN "*.bin"
+    PATTERN "*.dat"
+  )
+
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bundle/"
+    DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_LIB_DIR}"
+    FILES_MATCHING
+    PATTERN "${DYNLIB_PATTERN}"
+  )
+
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/"
+    DESTINATION "${CMAKE_INSTALL_PATH}/${INSTALL_RESOURCE_DIR}/resources"
+    COMPONENT "resources")
+
+  set(DESKTOP_FILE "${gsage_SOURCE_DIR}/resources/editor/gsage.desktop")
+  configure_file("${DESKTOP_FILE}.in" "${DESKTOP_FILE}")
+  install(FILES "${DESKTOP_FILE}" DESTINATION share/applications)
 endmacro()

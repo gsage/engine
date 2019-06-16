@@ -9,22 +9,28 @@ configuration: Release
 
 install:
   - set PATH=%PATH%;%PYTHON%/Scripts/
-  - pip.exe install conan_package_tools==0.19.8  # It install conan too
+  - pip.exe install conan_package_tools==0.19.8  # It will install Conan too
   - conan remote add gsage https://api.bintray.com/conan/gsage/main --insert && conan user -p 3d14168da7de2092522ed90f72e9b6bf20db89e5 -r gsage gsage-ci
 
 # scripts to run before build
 before_build:
-  - conan install -s compiler.runtime=MD -g cmake -o gsage:with_ogre=1.9.0 -o gsage:with_librocket=True -o with_lua_version=luajit-2.0.5 --build=outdated .
+  - conan install -s compiler.runtime=MD -g cmake -o gsage:with_ogre=2.1.0 -o gsage:with_librocket=True -o with_lua_version=luajit-2.0.5 --build=outdated .
   - conan upload "*" --all -r gsage -c
 
 build_script:
   - conan build .
   - cd build && cmake ..
+  - |
+   cd c:\projects\gsage\build\sdk
+   packager.exe resources\editorConfig.json
+   cd ..\
+   cpack .
 
 # scripts to run after build
 test_script:
   - |
-   cd ./build/bin/
+   set OGRE_ENABLED=0
+   cd c:\projects\gsage\build\bin
    packager.exe ../../resources/testConfig.json
    unit-tests.exe --gtest_output=xml:unit.xml
    functional-tests.exe -o junit --exclude-tags benchmark --no-auto-insulate -Xoutput functional.xml
@@ -36,10 +42,10 @@ after_build:
   - cd c:\projects\gsage
 
 artifacts:
-  - path: .
-    name: gsage.zip
+  - path: 'build/*.msi'
+    name: gsage.msi
 
-  - path: build/bin
+  - path: build/bin/test.log
     name: test.log
 
 after_test:
@@ -49,3 +55,17 @@ after_test:
         Foreach-Object {
             $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $_))
         }
+
+deploy:
+  appveyor_repo_tag: true
+  release: $(APPVEYOR_REPO_TAG_NAME)
+  tag: $(APPVEYOR_REPO_TAG_NAME)
+  description: 'Binaries'
+  provider: GitHub
+  auth_token:
+    secure: WGF5Rq6J6dwuSQ99+Kr/ZFMquK5SOAdJw3xWUxfAe2pHsyKy9p2JFdIsI0gBH/ID
+  artifact: /.*\.msi/
+  draft: false
+  prerelease: false
+  on:
+    APPVEYOR_REPO_TAG: true

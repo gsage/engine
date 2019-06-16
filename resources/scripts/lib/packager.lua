@@ -119,12 +119,7 @@ local function replace_tree(tree)
   path.use_tree(tree)
 end
 
-local relative_to = run_prefix
-if gsage.platform == "apple" then
-  relative_to = nil
-end
-
-local root_dir = fs.absolute_name(gsageTree, relative_to)
+local root_dir = fs.absolute_name(gsageTree)
 replace_tree(root_dir)
 
 local success, err = pcall(function()

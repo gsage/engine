@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <thread>
 #include <chrono>
+#include <cstdlib>
 
 #include "GsageFacade.h"
 #include "UIManager.h"
@@ -43,6 +44,14 @@ THE SOFTWARE.
 
 #if GSAGE_PLATFORM == GSAGE_APPLE
 #include "macUtils.h"
+#endif
+
+#if GSAGE_PLATFORM == GSAGE_WIN32
+#include <direct.h>
+#define changeDirectory _chdir
+#else
+#include <unistd.h>
+#define changeDirectory chdir
 #endif
 
 
@@ -82,6 +91,14 @@ namespace Gsage {
     registerSystemFactory<CombatSystem>();
     registerSystemFactory<MovementSystem>();
     mSystemManager.registerFactory(LuaScriptSystem::ID, new LuaScriptSystemFactory(mLuaInterface));
+
+    // Change run directory if env variable is defined
+    const char* runDir = std::getenv("GSAGE_RUN_DIRECTORY");
+    if(runDir) {
+      if(changeDirectory(runDir) != 0) {
+        LOG(ERROR) << "Failed to change directory " << runDir;
+      }
+    }
   }
 
 
@@ -122,8 +139,18 @@ namespace Gsage {
       unsigned short configureFlags
     )
   {
+    std::string rpath = resourcePath;
+    if(!mFilesystem.exists(rpath)) {
+      rpath = "resources";
+      if(!mFilesystem.exists(rpath)) {
+        LOG(ERROR) << "Failed to find resource path";
+        return false;
+      }
+    }
+
+    LOG(DEBUG) << "Using resource path " << rpath;
     DataProxy environment;
-    environment.put("workdir", resourcePath);
+    environment.put("workdir", rpath);
     FileLoader::init(configEncoding, environment);
     DataProxy config;
     if(!FileLoader::getSingletonPtr()->load(configFile, DataProxy(), config))
@@ -134,7 +161,7 @@ namespace Gsage {
 
     LOG(INFO) << "Starting GSAGE, config:\n\t" << configFile;
 
-    return initialize(config, resourcePath, configureFlags);
+    return initialize(config, rpath, configureFlags);
   }
 
   bool GsageFacade::initialize(const DataProxy& config,
@@ -142,15 +169,24 @@ namespace Gsage {
     unsigned short configureFlags
   )
   {
+    std::string rpath = resourcePath;
+    if(!mFilesystem.exists(rpath)) {
+      rpath = "resources";
+      if(!mFilesystem.exists(rpath)) {
+        LOG(ERROR) << "Failed to find resource path";
+        return false;
+      }
+    }
+
     assert(mStarted == false);
     mStarted = true;
-    mResourcePath = resourcePath;
+    mResourcePath = rpath;
 
     addEventListener(&mEngine, EngineEvent::SHUTDOWN, &GsageFacade::onEngineShutdown);
     addEventListener(&mEngine, EngineEvent::LUA_STATE_CHANGE, &GsageFacade::onLuaStateChange);
 
     DataProxy environment;
-    environment.put("workdir", resourcePath);
+    environment.put("workdir", rpath);
 
     if(!mEngine.initialize(config, environment))
       return false;
@@ -234,6 +270,18 @@ namespace Gsage {
         mPluginsFolders.push_back(pair.second.as<std::string>());
       }
     }
+#if GSAGE_PLATFORM == GSAGE_APPLE
+    mPluginsFolders.push_back("Contents/Plugins");
+#endif
+
+    // additional plugins scan folders
+    const char* pluginDirs = std::getenv("GSAGE_PLUGINS_DIRECTORIES");
+    if(pluginDirs) {
+      LOG(INFO) << "Using additional plugin directories " << pluginDirs;
+      std::vector<std::string> dirs = split(pluginDirs, ',');
+      mPluginsFolders.insert(mPluginsFolders.end(), dirs.begin(), dirs.end());
+    }
+
 
     std::map<std::string, bool> installedPlugins;
     if(mConfig.count(PLUGINS_SECTION) != 0)

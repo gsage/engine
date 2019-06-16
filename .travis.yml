@@ -1,70 +1,94 @@
 language: cpp
 python:
-  - "3.6"
+- '3.6'
 services:
-  - xvfb
+- xvfb
 matrix:
   include:
-    - compiler: gcc
-      dist: xenial
-      sudo: required
-      env:
-        - GSAGE_VERSION_BUILD=${TRAVIS_BUILD_NUMBER}
-      addons:
-        apt:
-          packages:
-            # install toolchains
-            - xvfb
-            - cmake
-            - gcc
-            - g++
-            - clang-3.6
-            - libglu-dev
-            - libois-dev
-            - python-dev
-            - libxt-dev
-            - libxaw7-dev
-            - libxrandr-dev
-            - libglu-dev
-            - libglew-dev
-
-    - compiler: clang
-      os: osx
-      osx_image: xcode9.1
-      env:
-        - OGRE_ENABLED=0
-        - GSAGE_VERSION_BUILD=${TRAVIS_BUILD_NUMBER}
-
+  - compiler: gcc
+    dist: xenial
+    sudo: required
+    env:
+    - GSAGE_VERSION_BUILD=${TRAVIS_BUILD_NUMBER}
+    - BINARY_EXTENSION=deb
+    - OGRE_VERSION=2.1.0
+    addons:
+      apt:
+        packages:
+        - xvfb
+        - cmake
+        - gcc
+        - g++
+        - clang-3.6
+        - libglu-dev
+        - libois-dev
+        - python-dev
+        - libxt-dev
+        - libxaw7-dev
+        - libxrandr-dev
+        - libglu-dev
+        - libglew-dev
+  - compiler: clang
+    os: osx
+    osx_image: xcode9.1
+    env:
+    - OGRE_ENABLED=0
+    - GSAGE_VERSION_BUILD=${TRAVIS_BUILD_NUMBER}
+    - BINARY_EXTENSION=dmg
+    - OGRE_VERSION=2.1.0
 before_install:
-  - |
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew update
-      brew install glew
-      brew install conan
-    fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo pip install --ignore-installed conan; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then ( sudo Xvfb :99 -ac -screen 0 1024x768x8; echo "Started Xvfb" ) & fi
-  - sleep 3
+- |
+  if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    brew update
+    brew install glew
+    brew install conan
+  fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo pip install --ignore-installed conan;
+  fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then ( sudo Xvfb :99 -ac -screen 0 1024x768x8;
+  echo "Started Xvfb" ) & fi
+- sleep 3
 install:
-  - make upload-deps
+- make upload-deps
 script:
-  - make ci
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" -a $(git branch | grep \* | cut -d ' ' -f2) == "master" ]; then
-      go get github.com/calmh/git-autotag
-      git fetch --tags
-      git autotag -l patch
-      GITHUB_TOKEN=1f64968a87c7fbfd2c810cf645a1cc4f696ce565 git push origin --tags
+- conan build .
+- make unit functional
+- |
+  # run autotag on Linux master
+  if [ "$TRAVIS_OS_NAME" == "linux" -a $(git branch | grep \* | cut -d ' ' -f2) == "master" ]; then
+    go get github.com/calmh/git-autotag
+    git fetch --tags
+    git autotag -l patch
+    git push origin --tags
+    echo "Version bumped"
+  fi
+- |-
+  if [ -n "$TRAVIS_TAG" ]; then
+    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      ./tools/osx_post_install.sh build/bin/gsage.app
     fi
+    cd build
+    cpack .
+  fi
 notifications:
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/5ec885fc0b74db2feac0
+    - https://webhooks.gitter.im/e/5ec885fc0b74db2feac0
     on_success: change
     on_failure: always
     on_start: never
 after_failure:
-  - find ./ -name "*.log" | xargs cat
-branches:
-  exclude:
-    - /^\d+.\d+.[\d\w]+$/
+- find ./ -name "*.log" | xargs cat
+env:
+  matrix:
+    secure: qw5QOLFhlZ671wBC0k79FfAurMvV27gsN15/+5hX8eR/YxEUfI4RoOGhJaxPec8t+8y3fKAE3+WWP7mWzJ0EFR8hzsnYyVSh9Rmm5hRNu5FR0Zpl9tYkl0TfBUB6bDpIM3a8JGbNgDu/+ipxOGRLYzzHJNiUTyFPoGaJWwQ/2T9uEhot0yJ9LwGXbd48EEf5pU6uH2ZEHHRFTmPlQDC4IWnoYvoKZN6jrWbY8YmQPyMiX0mYO2Q8lIu5TS7kxFNBlEL1sL8+xJANDTrP8l5lCIt8dbTYExLyK3jEUmHJqti6ofSA28voHqhkyTQ0d0ZQZh7Wvr9KcagWUj5EjZSaBbNvBH+uoqLxgfVvUU0Lo5BI64QyOwY6qre4N92xkcDOhrtVez99tGeDsIcg5RL27qCBSCubfDr1mNL/Vbh5DsBUbvFP8L4IvigceDf81wDDpAqZdIQ32u4pzh/aBSrHcJJoIPpN961HrS0KbsfM4+emgmX8N0eXQjRza5sZRWJ9kUzE5ffRnlUCL3W+b+u98hUm14tliGQdCzs6mUbMaXgS4utexNrk4A8vfHWNNfr+ckHhQUCrRJ8BrWaq/+PT9pn9unRXpDOu+qePlXEdXWmIDVTWkCfHExeyXb7XNV1a3nBv/YiXpkzCJvly0gHhqvvq2OjxoYQYjKd1UcAfqnQ=
+deploy:
+  provider: releases
+  skip_cleanup: true
+  file_glob: true
+  file: $TRAVIS_BUILD_DIR/build/*.$BINARY_EXTENSION
+  overwrite: true
+  on:
+    tags: true
+  api_key:
+    secure: BHsiaDd4YG7eqPveYufl8Ic6mtoo0SEvrjtsifUJSRnYsEzI4ozVQmbGHNEciCHpdny/NWkM8UMRbXwnp0bPIKC0jqJLUiReXjCchdL373rl4zp0mF0CsTzAXX6brS1W6/Q5Ud/ljKcNZH/5X/WcomxfnT1WkCy0W1NDQYhJR/keGZIGYs9N0un0VGwpUb6cllKLhLamR5KDiCaD2ROzo6mf+kWL2B5iDXrL9IfdiCik8Oy315vG1NIiZjTgUXowSgyss2rC2H/SRTiMlruHaTnncIcVh8kZ8MP+P/y8uKiB7l/xHCeDlopGJZZWgWAsHKVDNuUxev/PPNUA5CNvRAk9yYDf+8NMnZQaUGrrqXiLvQZeS81LAzdwdnqTAhxh6G8lc+lxFXoukJgYBrtj0ILrlYdOqMU1ZqvgUapvkv8/Lys+R8utYPv74/GX7+a01jKuyfQ2Ct7ViL0yiYUx2DSJZHFxbgOXaYyOZNUUvEe26+O0bMqpyP3oP+/Zw+TmFgbGu2Bp9S0x28NHARlJco6RjmED0d3akZwmAZ4dM+6ZL27xgC9tIsHtE5Ib5M4X31zALrlcSAEVOs9+ES6Olff3gpjPCWlm7gjMrySIhY8Khr0DLEARe5MSdXd/N9MBOs0pCLdHyVi/CbF5D7hdf8UrBfPXlGlyKMKh+mynetw=

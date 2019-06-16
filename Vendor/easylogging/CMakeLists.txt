@@ -12,6 +12,6 @@ endif(WIN32)
 
 set(LIB_COMPILE_FLAGS "${LIB_COMPILE_FLAGS} -DELPP_THREAD_SAFE -DELPP_FORCE_USE_STD_THREAD")
 
-add_library(${LIB_NAME} ${LIB_TYPE} ${sources})
+gsage_library(${LIB_NAME} ${LIB_TYPE} ${sources})
 
 set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS "${LIB_COMPILE_FLAGS}")

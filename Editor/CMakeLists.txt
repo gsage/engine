@@ -1,4 +1,4 @@
-set(APP_NAME "editor")
+set(APP_NAME "gsage")
 
 include_directories(include)
 include_directories(${gsage_SOURCE_DIR}/Core/include)
@@ -19,7 +19,11 @@ set(LIBS
   ${LUAJIT_LIBRARIES}
 )
 
-gsage_executable(${APP_NAME} ${sources})
+if(WIN32)
+  gsage_executable(${APP_NAME} ${sources} ${gsage_SOURCE_DIR}/resources/editor/gsage.ico ${gsage_SOURCE_DIR}/resources/editor/gsage.rc)
+else(WIN32)
+  gsage_executable(${APP_NAME} ${sources})
+endif(WIN32)
 
 if(APPLE)
   set(LIBS ${LIBS}

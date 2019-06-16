@@ -1,4 +1,4 @@
-OGRE_VERSION ?= 1.9.0
+OGRE_VERSION ?= 2.1.0
 LUA_VERSION ?= luajit-2.0.5
 OIS_ENABLED ?= False
 WITH_LIBROCKET ?= True
@@ -14,7 +14,6 @@ export CMAKE_BUILD_TYPE=Release
 ifeq ($(BUILD_TYPE),debug)
 	export CMAKE_BUILD_TYPE=Debug
 endif
-
 
 #using integration api_key/user by default
 API_KEY ?= 3d14168da7de2092522ed90f72e9b6bf20db89e5
@@ -52,14 +51,12 @@ endif
 
 UNIT_CMD :=  cd ./build/bin/ && $(PREFIX)unit-tests
 FUNCTIONAL_CMD := cd ./build/bin/ && $(PREFIX)functional-tests
-RUN_CMD := cd ./build/bin/ && $(PREFIX)game
-EDITOR_CMD := cd ./build/bin/ && $(PREFIX)editor
+EDITOR_CMD := cd ./build/bin/ && $(PREFIX)gsage
 
 ifeq ($(UNAME_S),Darwin)
 UNIT_CMD := ./build/bin/unit-tests.app/Contents/MacOS/unit-tests
 FUNCTIONAL_CMD := ./build/bin/functional-tests.app/Contents/MacOS/functional-tests
-RUN_CMD := ./build/bin/game.app/Contents/MacOS/game
-EDITOR_CMD := ./build/bin/editor.app/Contents/MacOS/editor
+EDITOR_CMD := ./build/bin/gsage.app/Contents/MacOS/gsage
 LOGS := ./build/bin/functional-tests.app/Contents/test.log
 else
 ifeq ($(CMAKE_BUILD_TYPE),Debug)
@@ -69,7 +66,6 @@ endif
 
 UNIT_CMD := $(UNIT_CMD)$(POSTFIX)$(FILE_EXTENSION)
 FUNCTIONAL_CMD := $(FUNCTIONAL_CMD)$(POSTFIX)$(FILE_EXTENSION)
-RUN_CMD := $(RUN_CMD)$(POSTFIX)$(FILE_EXTENSION)
 EDITOR_CMD := $(EDITOR_CMD)$(POSTFIX)$(FILE_EXTENSION)
 
 .repo: conanfile.py
@@ -95,9 +91,6 @@ functional: build
 
 benchmark: build
 	@$(FUNCTIONAL_CMD) -o gtest $(TEST_PARAMS) --t benchmark --no-auto-insulate
-
-run: build
-	@$(RUN_CMD)
 
 editor: build
 	@$(EDITOR_CMD)

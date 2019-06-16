@@ -27,3 +27,8 @@ conan_imports_manifest.txt
 logs/
 .deps
 .repo
+Core/include/Version.h
+resources/editor/gsage.desktop
+**/.materials.index
+**/.luarocks
+package

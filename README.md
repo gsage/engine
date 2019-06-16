@@ -6,11 +6,12 @@ Graphics System Agnostic Game Engine
 [![Build Status](https://travis-ci.org/gsage/engine.svg?branch=master)](https://travis-ci.org/gsage/engine)
 [![Gitter](https://badges.gitter.im/gsage/engine.svg)](https://gitter.im/gsage/engine?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-## Showcase
+## Downloads
 
-**GsageExe example is not working right now, that's known issue. This
-example will be replaced by proper template project that will be
-available from the editor**
+Binary downloads, created by CI are available on Github releases.
+[Get latest release](https://github.com/gsage/engine/releases/latest) (MSI, DMG and DEB are available).
+
+## Showcase
 
 ![Editor](/docs/images/editor.v0.3.png)
 ![ExampleGame](/docs/images/game2.png)
@@ -42,16 +43,16 @@ The Core also provides a set of convenient tools:
 * implementation agnostic events for Mouse and Keyboard.
 * executable fully configurable via json configuration file.
 * logging.
-* has built in lua script component and system.
 * dynamic plugin loader.
 * delegates, with support of event propagation to lua.
+* some generic systems bundled into the core (script, movement).
 
 You can read more documentation on [http://engine.readthedocs.io/](http://engine.readthedocs.io/).
 
-This engine supports three OS systems at the moment:
-* Windows, Visual Studio 2015 and later.
-* OSX, ci is using Xcode 7.3.
-* Linux, ci is using Ubuntu 14.04 with GCC 4.9.
+This engine supports three OS at the moment:
+* Windows, Visual Studio 2017 and later.
+* OSX, ci is using Xcode 9.1.
+* Linux, ci is using Ubuntu 16.04 with GCC 5.4.
 
 There are plans to support iOS and Android.
 
@@ -98,7 +99,7 @@ NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 
 ## LICENSE
 
-This project is licensed under MIT license
+This project is licensed under MIT license.
 
 ## Other Plugins
 - [Audio system plugin based on SFML](https://github.com/gsage/SFMLAudioSystemPlugin)
