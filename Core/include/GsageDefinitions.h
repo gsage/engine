@@ -31,18 +31,6 @@ THE SOFTWARE.
 #define COMPONENT_POOL_SIZE 1024
 #define NOMINMAX
 
-#ifndef GSAGE_VERSION_MAJOR
-#define GSAGE_VERSION_MAJOR 0
-#endif
-
-#ifndef GSAGE_VERSION_MINOR
-#define GSAGE_VERSION_MINOR 0
-#endif
-
-#ifndef GSAGE_VERSION_BUILD
-#define GSAGE_VERSION_BUILD 0
-#endif
-
 #include <sstream>
 #include <istream>
 #include <iterator>

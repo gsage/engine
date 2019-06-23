@@ -10,24 +10,27 @@ If you have not built the engine yet, check out these build tutorials:
 
 After you build the engine you will have the following file structure:
 
-* :code:`GsageExe`/:code:`GsageExe.app`/:code:`GsageExe.exe` executable file should be
+* :code:`game`/:code:`game.app`/:code:`game.exe` executable file should be
   in the **build/bin** folder. This file is the main game executable.
 
-* All resources are located in **./resources** folder. This folder is symlinked to **GsageExe.app/Contents/Resources**
+* All resources are located in **./resources** folder. This folder is symlinked to **game.app/Contents/Resources**
   on the Mac OS X systems.
 
-* :code:`GsageEditor`/:code:`GsageEditor.app`/:code:`GsageEditor.exe` should also be in the game folder.
+* :code:`editor`/:code:`editor.app`/:code:`editor.exe` should also be in the game folder.
 
-By running :code:`GsageExe` executable, you can start the simple isometric RPG example.
+Old example of :code:`game` executable in action:
 
 .. image:: ../../images/game.png
 
-Editor is not very usefull at the moment, however it can show some realtime scene state.
+:code:`editor`:
 
 .. image:: ../../images/editor.v0.3.png
 
 Modifying Level
 ---------------
+
+.. note::
+    Information below is outdated, use editor application instead. Manuals for editor will be available later.
 
 If you open **resources/levels** folder, you will find the file named **exampleLevel.json** there.
 This file provides some basic level example.
@@ -59,10 +62,11 @@ You can modify it the way you want:
   ...
 
 
-If you run **GsageExe**, you should see your model on the scene.
+If you run **game**, you should see your model on the scene.
 MovementSystem should automatically calculate walkable areas for this mesh.
 
 For more information about entities format refer to :ref:`entity-format-label`.
+
 
 Modifying level demo:
 
@@ -73,7 +77,7 @@ Modifying level demo:
 Creating Characters
 -------------------
 
-If you open **resources/characters** folder, you will see couple entities defined there:
+If you open **resources/bundles/characters** folder, you will see couple entities defined there:
 
 * **sinbad.json** which is controlled by player.
 * **ninja.json** which are hostile NPC.

@@ -24,7 +24,7 @@ include_directories(
   ${POCO_INCLUDE_DIRS}
 )
 
-add_library(${LIB_NAME} SHARED ${headers} ${sources})
+gsage_library(${LIB_NAME} SHARED ${sources})
 
 set_target_properties(${LIB_NAME} PROPERTIES DEBUG_POSTFIX _d COMPILE_FLAGS -DGSAGE_DLL_EXPORT)
 
@@ -41,7 +41,9 @@ set(LIBS
 
 if(APPLE)
   set(LIBS ${LIBS}
-    ${COREFOUNDATION_LIBRARY})
+    ${COREFOUNDATION_LIBRARY}
+    ${COCOA_LIBRARY}
+  )
 elseif(UNIX)
   find_package(Threads REQUIRED)
   set(LIBS ${CMAKE_DL_LIBS}
@@ -57,29 +59,23 @@ target_link_libraries(
   ${LIBS}
 )
 
-install(DIRECTORY include/ DESTINATION include/gsage
-  FILES_MATCHING PATTERN "*.h"
+install_includes(
+  include/
+  ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include/json
+  ${gsage_SOURCE_DIR}/Vendor/Sol2/include/
 )
 
-install(DIRECTORY ${gsage_SOURCE_DIR}/Vendor/jsoncpp/include/json DESTINATION include/gsage
-  FILES_MATCHING PATTERN "*.h"
-)
-
-install(DIRECTORY ${gsage_SOURCE_DIR}/Vendor/Sol2/include/ DESTINATION include/gsage
-  FILES_MATCHING PATTERN "*.hpp"
-)
-
-install(TARGETS ${LIB_NAME}
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/static)
-install(TARGETS ${LIB_NAME} DESTINATION "${CMAKE_INSTALL_PATH}/lib")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/Version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version.h)
 
 set(APP_NAME "game")
 set(PACKAGER_NAME "packager")
 
 gsage_executable(${APP_NAME} cmd/app.cpp)
-console_executable(${PACKAGER_NAME} cmd/packager.cpp)
+if(WIN32)
+  console_executable(${PACKAGER_NAME} cmd/packager.cpp ${gsage_SOURCE_DIR}/resources/editor/packager.ico ${gsage_SOURCE_DIR}/resources/editor/packager.rc)
+else(WIN32)
+  console_executable(${PACKAGER_NAME} cmd/packager.cpp)
+endif(WIN32)
 
 set(LIBS
   GsageCore
@@ -88,13 +84,12 @@ set(LIBS
 )
 
 if(APPLE)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/Main.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/cmd/app.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
   set(LIBS ${LIBS}
     ${COREFOUNDATION_LIBRARY}
-    ${CARBON}
     ${IOKIT}
     ${COCOA_LIBRARY}
-    )
+  )
 endif(APPLE)
 
 target_link_libraries(${APP_NAME} ${LIBS})

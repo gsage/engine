@@ -76,7 +76,7 @@ extern "C" {
 #endif
       int retVal = 0;
       Gsage::GsageFacade facade;
-      Gsage::Editor editor;
+      Gsage::Editor editor(&facade);
       std::string coreConfig = "editorConfig.json";
       lua_State* L = lua_open();
       if(!L) {

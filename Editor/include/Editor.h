@@ -28,6 +28,7 @@ THE SOFTWARE.
 */
 
 #include "DataProxy.h"
+#include "GsageFacade.h"
 
 struct lua_State;
 
@@ -35,7 +36,7 @@ namespace Gsage {
   class Editor
   {
     public:
-      Editor();
+      Editor(GsageFacade* facade);
       virtual ~Editor();
 
       /**
@@ -67,6 +68,8 @@ namespace Gsage {
     private:
       DataProxy mGlobalEditorState;
       std::string mResourcePath;
+      std::string mConfigHome;
+      GsageFacade* mFacade;
   };
 }
 

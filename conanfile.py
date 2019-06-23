@@ -97,13 +97,17 @@ class GsageConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        (major_version, minor_version, build_version) = version.split(".")
+        (major_version, minor_version, patch_version) = version.split(".")
+        parts = patch_version.split("-")
+        patch_version = parts[0]
+
         options = {
             "CMAKE_INSTALL_PREFIX": "./sdk",
             "CMAKE_BUILD_TYPE": self.settings.build_type,
             "GSAGE_VERSION_MAJOR": major_version,
             "GSAGE_VERSION_MINOR": minor_version,
-            "GSAGE_VERSION_BUILD": os.environ.get("APPVEYOR_BUILD_VERSION", os.environ.get("GSAGE_VERSION_BUILD", build_version)),
+            "GSAGE_VERSION_PATCH": patch_version,
+            "GSAGE_VERSION_BUILD": os.environ.get("APPVEYOR_BUILD_VERSION", os.environ.get("GSAGE_VERSION_BUILD", "-".join(parts[1:]))),
         }
 
         if self.options.with_ogre != "disabled":
@@ -153,6 +157,16 @@ class GsageConan(ConanFile):
         self.copy("*.*", dst="resources/luarocks/tools", src="tools")
         self.copy("lua*.h*", dst="resources/luarocks/include", src="include")
         self.copy("lauxlib.h*", dst="resources/luarocks/include", src="include")
+
+        self.copy("*.dll", dst="build/bundle", src="bin")
+        self.copy("*.so", dst="build/bundle", src="bin")
+        self.copy("*.so", dst="build/bundle", src="lib")
+        self.copy("chrome-sandbox", dst="build/bundle", src="bin")
+        self.copy("*.dylib", dst="build/bundle", src="lib")
+        self.copy("*.bin", dst="build/bundle", src="bin")
+        self.copy("*.dat", dst="build/bundle", src="bin")
+        self.copy("*.pak", dst="build/bundle", src="bin")
+        self.copy("locales", dst="build/bundle", src="bin")
 
     def package(self):
         pass

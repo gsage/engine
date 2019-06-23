@@ -29,13 +29,26 @@ THE SOFTWARE.
 #include "Logger.h"
 #include "FileLoader.h"
 
+#include <cstdlib>
+
 #define DEFAULT_STATE_FILE "defaultWorkspace.json"
 #define GLOBAL_STATE_FILE "workspace.json"
 
 namespace Gsage {
 
-  Editor::Editor()
+  Editor::Editor(GsageFacade* facade)
+    : mFacade(facade)
   {
+    const char* home = std::getenv(
+#if GSAGE_PLATFORM == GSAGE_WIN32
+      "USERPROFILE"
+#else
+      "HOME"
+#endif
+    );
+    std::stringstream ss;
+    ss << home << GSAGE_PATH_SEPARATOR << ".gsage";
+    mConfigHome = ss.str();
   }
 
   Editor::~Editor()
@@ -46,7 +59,12 @@ namespace Gsage {
   bool Editor::initialize(const std::string& resourceFolder)
   {
     mResourcePath = resourceFolder;
-    if(!FileLoader::getSingletonPtr()->load(GLOBAL_STATE_FILE, DataProxy(), mGlobalEditorState)) {
+    if(!mFacade->filesystem()->mkdir(mConfigHome)) {
+      LOG(ERROR) << "Failed to create config home dir " << mConfigHome;
+      return false;
+    }
+
+    if(!FileLoader::getSingletonPtr()->load(mConfigHome + GSAGE_PATH_SEPARATOR + GLOBAL_STATE_FILE, DataProxy(), mGlobalEditorState)) {
       if(!FileLoader::getSingletonPtr()->load(DEFAULT_STATE_FILE, DataProxy(), mGlobalEditorState)) {
         LOG(WARNING) << "No saved global state";
       }
@@ -67,7 +85,7 @@ namespace Gsage {
 
   bool Editor::saveGlobalState()
   {
-    FileLoader::getSingletonPtr()->dump(mResourcePath + "/" + GLOBAL_STATE_FILE, mGlobalEditorState);
+    FileLoader::getSingletonPtr()->dump(mConfigHome + GSAGE_PATH_SEPARATOR + GLOBAL_STATE_FILE, mGlobalEditorState);
     return true;
   }
 

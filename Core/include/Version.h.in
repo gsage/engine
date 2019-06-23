@@ -1,0 +1,23 @@
+// this file is generated automatically
+
+#ifndef __GSAGE_VERSION_H_
+#define __GSAGE_VERSION_H_
+
+#ifndef GSAGE_VERSION_MAJOR
+#define GSAGE_VERSION_MAJOR "${GSAGE_VERSION_MAJOR}"
+#endif
+
+#ifndef GSAGE_VERSION_MINOR
+#define GSAGE_VERSION_MINOR "${GSAGE_VERSION_MINOR}"
+
+#endif
+
+#ifndef GSAGE_VERSION_BUILD
+#define GSAGE_VERSION_BUILD "${GSAGE_VERSION_BUILD}"
+#endif
+
+#ifndef GSAGE_VERSION_PATCH
+#define GSAGE_VERSION_PATCH "${GSAGE_VERSION_PATCH}"
+#endif
+
+#endif
