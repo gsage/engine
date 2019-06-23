@@ -308,7 +308,7 @@ function ProjectManager:create(settings, onProgress, onComplete)
     end
     message(msg, color)
 
-    if percent == 100 then
+    if percent >= 99.9 then
       finalize(true)
     end
   end
@@ -337,7 +337,7 @@ function ProjectManager:create(settings, onProgress, onComplete)
     message(msg, color)
     percent = percent + step / filecount
 
-    if percent == 100 then
+    if percent >= 99.9 then
       finalize(true)
     end
   end

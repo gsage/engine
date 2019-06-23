@@ -25,6 +25,9 @@ local fs = {
     end,
     exists = function(path)
       return cfs:exists(path)
+    end,
+    homedir = function(path)
+      return os.getenv("HOME") or os.getenv("USERPROFILE")
     end
   },
   rmdir = function(path, recursive)

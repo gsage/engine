@@ -1,15 +1,19 @@
 require 'lib.class'
 
+local excludeModifiers = Modifiers.Num + Modifiers.Caps + Modifiers.Mode
+
 function decodeShortcut(value)
   if type(value) == "string" then
     value = tonumber(value)
   end
   local modifiers = bit.band(0x0000FFFF, value)
   local key = bit.brshift(16, bit.band(0xFFFF0000, value))
+  modifiers = bit.breset(modifiers, excludeModifiers)
   return modifiers, key
 end
 
 function encodeShortcut(modifiers, key)
+  modifiers = bit.breset(modifiers, excludeModifiers)
   return tostring(bit.bor(bit.blshift(16, key), modifiers))
 end
 

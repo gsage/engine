@@ -78,7 +78,7 @@
   "packager": {
     "installOnStartup": true,
     "deps": [
-      "busted",
+      "busted == 2.0.rc13-0",
       "i18n",
       "luafilesystem"
     ]

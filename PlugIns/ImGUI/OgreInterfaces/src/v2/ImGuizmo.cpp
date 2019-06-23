@@ -26,6 +26,7 @@
 #endif
 #include "imgui_internal.h"
 #include "v2/ImGuizmo.h"
+#include "Logger.h"
 
 // includes patches for multiview from
 // https://github.com/CedricGuillemet/ImGuizmo/issues/15
@@ -637,9 +638,9 @@ namespace ImGuizmo
       rayOrigin.Transform(makeVect(mox, moy, 0.f, 1.f), mViewProjInverse);
       rayOrigin *= 1.f / rayOrigin.w;
       vec_t rayEnd;
-      rayEnd.Transform(makeVect(mox, moy, 1.f, 1.f), mViewProjInverse);
+      rayEnd.Transform(makeVect(mox, moy, 100.f, 1.f), mViewProjInverse);
       rayEnd *= 1.f / rayEnd.w;
-      rayDir = Normalized(rayEnd - rayOrigin);
+      rayDir = Normalized(rayOrigin - rayEnd);
    }
 
    static float GetSegmentLengthClipSpace(const vec_t& start, const vec_t& end)
@@ -829,7 +830,7 @@ namespace ImGuizmo
      vec_t rightViewInverse = viewInverse.v.right;
      rightViewInverse.TransformVector(gContext.mModelInverse);
      float rightLength = GetSegmentLengthClipSpace(makeVect(0.f, 0.f), rightViewInverse);
-     gContext.mScreenFactor = gGizmoSizeClipSpace / rightLength;
+      gContext.mScreenFactor = 0.1f * GetUniform(gContext.mModel.v.position, gContext.mViewProjection);
 
       ImVec2 centerSSpace = worldToPos(makeVect(0.f, 0.f), gContext.mMVP);
       gContext.mScreenSquareCenter = centerSSpace;
