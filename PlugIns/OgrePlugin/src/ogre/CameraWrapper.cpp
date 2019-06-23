@@ -77,6 +77,7 @@ namespace Gsage {
 #endif
       mRenderTarget->switchToDefaultCamera();
     }
+    mObject = nullptr;
   }
 
   const Ogre::Quaternion& CameraWrapper::getOrientation() const
@@ -116,6 +117,14 @@ namespace Gsage {
     mRenderTarget = renderTarget;
     mRenderTarget->setCamera(getCamera());
     LOG(INFO) << "Attached camera to render target " << mRenderTarget->getName();
+  }
+
+  void CameraWrapper::detach()
+  {
+    if(mRenderTarget) {
+      mRenderTarget->setCamera(nullptr);
+    }
+    mRenderTarget = nullptr;
   }
 
   void CameraWrapper::createCamera(const std::string& name)

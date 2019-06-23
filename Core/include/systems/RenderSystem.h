@@ -125,6 +125,17 @@ namespace Gsage {
       virtual void update(const void* buffer, size_t size, int width, int height) = 0;
 
       /**
+       * Update texture data using changed rectangle
+       *
+       * @param buffer buffer to use
+       * @param size provided buffer size
+       * @param width buffer width
+       * @param height buffer height
+       * @param area changed rect
+       */
+      virtual void update(const void* buffer, size_t size, int width, int height, const Rect<int>& area) = 0;
+
+      /**
        * Set texture size
        *
        * @param width texture width
@@ -174,6 +185,9 @@ namespace Gsage {
       inline DataProxy& getConfig() { return mParams; }
 
     protected:
+
+      char* allocateBuffer(size_t size);
+
       Gsage::Vector2 mUVTL;
       Gsage::Vector2 mUVBL;
       Gsage::Vector2 mUVTR;
@@ -193,6 +207,10 @@ namespace Gsage {
       std::string mHandle;
 
       std::mutex mLock;
+      
+    private:
+
+      void deleteBuffer();
   };
 
   typedef std::shared_ptr<Texture> TexturePtr;

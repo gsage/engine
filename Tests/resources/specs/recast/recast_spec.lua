@@ -103,20 +103,38 @@ describe("#recast #ogre", function()
     }
   }
 
-  -- 1x1x1 cube to verify navmesh generator
-  local simpleTestArea = {
-    id = "cube",
-    render = {
-      root = {
-        scale = Vector3.new(20, 20, 20),
-        children = {{
-          type = "model",
-          mesh = "Cube.mesh",
-          castShadows = true
-        },}
+  local navmeshVerifyCases = {
+    entity = {
+      id = "cube",
+      render = {
+        root = {
+          scale = Vector3.new(20, 20, 20),
+          children = {{
+            type = "model",
+            mesh = "Cube.mesh",
+            castShadows = true
+          },}
+        }
       }
     }
   }
+
+  -- test Ogre::Item
+  if core:render().info.type == "ogre" and core:render().info.version >= 0x020100 then
+    navmeshVerifyCases.item = {
+      id = "cube",
+      render = {
+        root = {
+          scale = Vector3.new(20, 20, 20),
+          children = {{
+            type = "item",
+            mesh = "CubeV2.mesh",
+            castShadows = true
+          },}
+        }
+      }
+    }
+  end
 
   local defaultRecastOptions = {
     walkableSlopeAngle = 45,
@@ -148,35 +166,41 @@ describe("#recast #ogre", function()
   }
 
   describe("rebuild", function()
-    game:reset()
-    local area = data:createEntity(simpleTestArea)
-    local orbit = camera:create('orbit', 'testcamera', {target=area.id, cameraOffset=Vector3.new(0, 0.5, 0), distance=20})
 
-    for name, settings in pairs(settingsTestCases) do
-      -- disable merging to make each iteration generate brand new navmesh
-      settings.merge = false
+    for id, entity in pairs(navmeshVerifyCases) do
+      for name, settings in pairs(settingsTestCases) do
+        -- disable merging to make each iteration generate brand new navmesh
+        settings.merge = false
 
-      describe(name .. " settings", function()
-        assert.truthy(core:navigation():rebuildNavMesh(settings))
-        local checkPoints = {
-          tl = geometry.Vector3.new(30, 30, 30),
-          tr = geometry.Vector3.new(30, 30, -30),
-          bl = geometry.Vector3.new(-30, 30, 30),
-          br = geometry.Vector3.new(30, 30, -30),
-        }
+        describe(id .. " " .. name .. " settings", function()
+          local checkPoints = {
+            tl = geometry.Vector3.new(30, 30, 30),
+            tr = geometry.Vector3.new(30, 30, -30),
+            bl = geometry.Vector3.new(-30, 30, 30),
+            br = geometry.Vector3.new(30, 30, -30),
+          }
 
-        for name, pos in pairs(checkPoints) do
-          it("check " .. name .. " point", function()
-            local result, found = core:navigation():findNearestPointOnNavmesh(pos)
-            assert.truthy(found)
-            local s = simpleTestArea.render.root.scale
-            pos = pos / 30
-            assert.close_enough(result.x, pos.x * s.x, 2, 0.1)
-            assert.close_enough(result.y, pos.y * s.y, 2, 0.1)
-            assert.close_enough(result.z, pos.z * s.z, 2, 0.1)
-          end)
-        end
-      end)
+          for name, pos in pairs(checkPoints) do
+            it("check " .. name .. " point", function()
+              game:reset()
+              local area = data:createEntity(entity)
+              assert.is_not.is_nil(area)
+              local entity = eal:getEntity(area.id)
+              assert.is_not.is_nil(entity.render.root)
+              local orbit = camera:create('orbit', 'testcamera', {target=area.id, cameraOffset=Vector3.new(0, 0.5, 0), distance=20})
+              assert.truthy(core:navigation():rebuildNavMesh(settings))
+
+              local result, found = core:navigation():findNearestPointOnNavmesh(pos)
+              assert.truthy(found)
+              local s = entity.render.root.scale
+              pos = pos / 30
+              assert.close_enough(result.x, pos.x * s.x, 2, 0.1)
+              assert.close_enough(result.y, pos.y * s.y, 2, 0.1)
+              assert.close_enough(result.z, pos.z * s.z, 2, 0.1)
+            end)
+          end
+        end)
+      end
     end
 
     it("must handle empty scene", function()
@@ -186,6 +210,7 @@ describe("#recast #ogre", function()
 
     describe("cache", function()
       it("reload works", function()
+        -- TODO
       end)
     end)
   end)
@@ -241,6 +266,7 @@ describe("#recast #ogre", function()
     end)
 
     it("agent paging works", function()
+      -- TODO
     end)
   end)
 end)

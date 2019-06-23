@@ -33,8 +33,19 @@ THE SOFTWARE.
 
 namespace Gsage {
 
+  /**
+   * Provides templateless base class for MovableObjectWrapper
+   */
+  class IMovableObjectWrapper : public OgreObject {
+    public:
+      virtual void setRenderQueueGroup(const unsigned char& queueId) = 0;
+      virtual unsigned char getRenderQueueGroup() = 0;
+      virtual void setVisibilityFlags(unsigned int mask) = 0;
+      virtual void resetVisibilityFlags() = 0;
+  };
+
   template<typename T>
-  class MovableObjectWrapper : public OgreObject
+  class MovableObjectWrapper : public IMovableObjectWrapper
   {
     public:
       MovableObjectWrapper()

@@ -815,41 +815,41 @@ namespace Gsage {
 
   OgreRenderSystem::OgreEntities OgreRenderSystem::getEntities(const unsigned int& query)
   {
-    OgreRenderSystem::OgreEntities res;
-    Ogre::SceneManager::MovableObjectIterator iterator = mSceneManager->getMovableObjectIterator("Entity");
-    while(iterator.hasMoreElements())
-    {
-      OgreV1::Entity* e = static_cast<OgreV1::Entity*>(iterator.getNext());
-      if((e->getQueryFlags() | query) == query)
-        res.push_back(e);
-    }
-    return res;
+    return getEntities(query, BoundingBox(BoundingBox::EXTENT_INFINITE));
   }
 
   OgreRenderSystem::OgreEntities OgreRenderSystem::getEntities(const unsigned int& query, const BoundingBox& bounds)
   {
-    if(bounds.extent != BoundingBox::EXTENT_FINITE) {
-      return getEntities(query);
+    std::vector<Ogre::String> types;
+    types.push_back("Entity");
+#if OGRE_VERSION >= 0x020100
+    types.push_back("Item");
+#endif
+
+    OgreRenderSystem::OgreEntities res;
+    Ogre::AxisAlignedBox bbox = BoundingBoxToAxisAlignedBox(bounds);
+
+    for(auto& type : types) {
+      Ogre::SceneManager::MovableObjectIterator iterator = mSceneManager->getMovableObjectIterator(type);
+      while(iterator.hasMoreElements())
+      {
+        Ogre::MovableObject* e = iterator.getNext();
+        if(bounds.extent == BoundingBox::EXTENT_FINITE) {
+#if OGRE_VERSION_MAJOR == 1
+          if(!e->getBoundingBox().intersects(bbox)) {
+            continue;
+          }
+#else
+          if(!e->getWorldAabb().intersects(Ogre::Aabb::newFromExtents(bbox.getMinimum(), bbox.getMaximum()))) {
+            continue;
+          }
+#endif
+        }
+        if((e->getQueryFlags() & query) != 0)
+          res.push_back(e);
+      }
     }
 
-    Ogre::AxisAlignedBox bbox = BoundingBoxToAxisAlignedBox(bounds);
-    OgreRenderSystem::OgreEntities res;
-    Ogre::SceneManager::MovableObjectIterator iterator = mSceneManager->getMovableObjectIterator("Entity");
-    while(iterator.hasMoreElements())
-    {
-      OgreV1::Entity* e = static_cast<OgreV1::Entity*>(iterator.getNext());
-#if OGRE_VERSION_MAJOR == 1
-      if(!e->getBoundingBox().intersects(bbox)) {
-        continue;
-      }
-#else
-      if(!e->getWorldAabb().intersects(Ogre::Aabb::newFromExtents(bbox.getMinimum(), bbox.getMaximum()))) {
-        continue;
-      }
-#endif
-      if((e->getQueryFlags() | query) == query)
-        res.push_back(e);
-    }
     return res;
   }
 

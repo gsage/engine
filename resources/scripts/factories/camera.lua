@@ -81,12 +81,6 @@ end)
 camera:register("orbit", function(name, settings)
   settings.mixins = {"orbitCamera"}
   settings.class = "camera"
-  if type(settings.cameraOffset) ~= "string" then
-    settings.cameraOffset =
-      tostring(settings.cameraOffset.x) .. "," ..
-      tostring(settings.cameraOffset.y) .. "," ..
-      tostring(settings.cameraOffset.z)
-  end
   local config = {
     id = name,
     vars = settings,
@@ -101,7 +95,6 @@ camera:register("orbit", function(name, settings)
               {
                 type = "node",
                 name = "flip",
-                rotation = Quaternion.new(0, 0, 90, 1),
                 children = {
                   createCamera(name, settings)
                 }

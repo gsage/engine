@@ -15,7 +15,8 @@ TEST(FileLoader, FileLoaderLoadAndDump)
 
   for(auto p : cases)
   {
-    FileLoader instance(p.first, environment);
+    environment.put<int>("configEncoding", p.first);
+    FileLoader instance(environment);
     DataProxy params;
     params.put("fromParam", "works");
     auto pair = instance.load(p.second, params);

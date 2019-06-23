@@ -34,6 +34,8 @@ THE SOFTWARE.
 #include "ogre/OgreObject.h"
 
 namespace Gsage {
+  class IMovableObjectWrapper;
+
   class SceneNodeWrapper : public OgreObject, public EventSubscriber<SceneNodeWrapper>
   {
     public:
@@ -180,6 +182,8 @@ namespace Gsage {
       {
         return static_cast<T*>(getChild(T::TYPE, name, true));
       }
+
+      IMovableObjectWrapper* getMovableObject(const std::string& type, const std::string& name);
 
       /**
        * Rotate the node around X axis

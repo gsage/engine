@@ -44,7 +44,7 @@ namespace Gsage {
         Json
       };
 
-      FileLoader(Encoding format, const DataProxy& environment);
+      FileLoader(const DataProxy& environment);
       virtual ~FileLoader();
 
       /**
@@ -85,10 +85,9 @@ namespace Gsage {
       /**
        * Initialize file loader instance
        *
-       * @param format: format to use for the file loading
        * @param environment: environment for the application
        */
-      static void init(FileLoader::Encoding format, const DataProxy& environment);
+      static void init(const DataProxy& environment);
 
       /**
        * Load raw file

@@ -136,7 +136,7 @@ extern "C" {
         facade.setLuaState(L, false);
         Gsage::DataProxy env;
         env.put("workdir", RESOURCES_FOLDER);
-        Gsage::FileLoader::init(Gsage::FileLoader::Json, env);
+        facade.setEnvironment(env);
         Gsage::DataProxy config;
         if(!Gsage::FileLoader::getSingletonPtr()->load(coreConfig, Gsage::DataProxy(), config))
         {

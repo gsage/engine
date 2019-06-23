@@ -11,7 +11,7 @@ ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
 
   local state = editor:getGlobalState()
   self.fileDialogState = state.fileDialogState or {}
-  local dialogFolder = self.fileDialogState.folder or os.getenv("HOME")
+  local dialogFolder = self.fileDialogState.folder or fs.path.homedir()
   local recent = projectManager:getRecentProjects(5)
   self.data = {
     wizard = core.settings.projectWizard,
@@ -168,7 +168,7 @@ function ProjectWizard:runCreationFlow(project)
     end
 
     pageData.settings = {
-      projectPath = fileDialogState.folder or os.getenv("HOME"),
+      projectPath = fileDialogState.folder or fs.path.homedir(),
       projectName = projectType .. " project",
       projectType = projectType,
       resources = template.resources,

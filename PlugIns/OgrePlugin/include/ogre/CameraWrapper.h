@@ -69,6 +69,11 @@ namespace Gsage {
       void attach(RenderTargetPtr renderTarget);
 
       /**
+       * Detach camera from the render target
+       */
+      void detach();
+
+      /**
        * Create camera
        * @param name: Camera name
        */
@@ -127,7 +132,7 @@ namespace Gsage {
        * Remove camera
        */
       void destroy();
-      
+
       void objectDestroyed(Ogre::MovableObject* cam);
 
       /**

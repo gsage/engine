@@ -121,6 +121,11 @@ namespace Gsage {
        * Get event type
        */
       ConstType getType() const { return mType; };
+
+      /**
+       * Check event type
+       */
+      bool is(ConstType type) const { return std::strcmp(mType, type) == 0; }
     private:
       ConstType mType;
 

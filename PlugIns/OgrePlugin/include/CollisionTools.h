@@ -78,18 +78,7 @@ namespace MOC {
     private:
 
       float _heightAdjust;
-
-      void GetMeshInformation(const OgreV1::MeshPtr mesh,
-          size_t &vertex_count,
-          Ogre::Vector3* &vertices,
-          size_t &index_count,
-          Ogre::uint32* &indices,
-          const Ogre::Vector3 &position,
-          const Ogre::Quaternion &orient,
-          const Ogre::Vector3 &scale);
-
   };
-
 };
 
 #endif

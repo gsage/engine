@@ -34,10 +34,10 @@ local function decorate(cls)
           scanChildren(value, path)
         end
 
-        if value.type == "model" then
+        if value.type == "model" or value.type == "item" then
           self.meshName = path .. value.name
           self.onSelect = function()
-            local mesh = self.render.root:getEntity(self.meshName)
+            local mesh = self.render.root:getMovableObject(value.type, self.meshName)
 
             if mesh then
               mesh:setVisibilityFlags(0xF)
@@ -45,7 +45,7 @@ local function decorate(cls)
           end
 
           self.onDeselect = function()
-            local mesh = self.render.root:getEntity(self.meshName)
+            local mesh = self.render.root:getMovableObject(value.type, self.meshName)
             if mesh then
               mesh:resetVisibilityFlags()
             end

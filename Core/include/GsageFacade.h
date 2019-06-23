@@ -97,6 +97,13 @@ namespace Gsage
       virtual ~GsageFacade();
 
       /**
+       * Sets environment settings
+       *
+       * @param env DataProxy
+       */
+      void setEnvironment(const DataProxy& env);
+
+      /**
        * Initializes engine, configures systems
        *
        * @param gsageConfigPath Path to the file with facade settings
@@ -432,6 +439,7 @@ namespace Gsage
       std::vector<std::string> mPluginsFolders;
 
       DataProxy mConfig;
+      DataProxy mEnvironment;
 
       std::chrono::high_resolution_clock::time_point mPreviousUpdateTime;
 

@@ -158,7 +158,11 @@ namespace Gsage {
         LOG(ERROR) << "Failed to create render component " << e.what();
       }
     } else {
-      mRootNode->read(value);
+      try {
+        mRootNode->read(value);
+      } catch(const Ogre::Exception& e) {
+        LOG(ERROR) << "Failed to create render component " << e.what();
+      }
     }
   }
 

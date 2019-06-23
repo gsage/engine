@@ -26,6 +26,7 @@
  ******************************************************************************************/
 #include "CollisionTools.h"
 #include "Logger.h"
+#include "MeshTools.h"
 
 namespace MOC {
 
@@ -268,27 +269,23 @@ namespace MOC {
         // get the entity to check
         Ogre::MovableObject *pentity = static_cast<Ogre::MovableObject*>(query_result[qr_idx].movable);
 
-
         // mesh data to retrieve
-        size_t vertex_count;
-        size_t index_count;
-        Ogre::Vector3 *vertices;
-        Ogre::uint32 *indices;
         bool new_closest_found = false;
 
+        Ogre::MeshTools* mt = Ogre::MeshTools::getSingletonPtr();
+        Ogre::MeshInformation info;
+
         // closest object is an entity
-        if(query_result[qr_idx].movable->getMovableType().compare("Entity") == 0) {
-          // get the mesh information
-          GetMeshInformation(((OgreV1::Entity*)pentity)->getMesh(), vertex_count, vertices, index_count, indices,
-              pentity->getParentNode()->_getDerivedPosition(),
-              pentity->getParentNode()->_getDerivedOrientation(),
-              pentity->getParentNode()->_getDerivedScale());
-          // test for hitting individual triangles on the mesh
-          for (size_t i = 0; i < index_count; i += 3)
+        if(mt->getMeshInformation(pentity, info,
+          pentity->getParentNode()->_getDerivedPosition(),
+          pentity->getParentNode()->_getDerivedOrientation(),
+          pentity->getParentNode()->_getDerivedScale())) {
+
+          for (size_t i = 0; i < info.indexCount; i += 3)
           {
             // check for a hit against this triangle
-            std::pair<bool, Ogre::Real> hit = Ogre::Math::intersects(ray, vertices[indices[i]],
-                vertices[indices[i+1]], vertices[indices[i+2]], true, false);
+            std::pair<bool, Ogre::Real> hit = Ogre::Math::intersects(ray, info.vertices[info.indices[i]],
+                info.vertices[info.indices[i+1]], info.vertices[info.indices[i+2]], true, false);
 
             // if it was a hit check if its the closest
             if (hit.first)
@@ -302,10 +299,6 @@ namespace MOC {
               }
             }
           }
-
-          // free the verticies and indicies memory
-          delete[] vertices;
-          delete[] indices;
         } else {
           // fallback to bounds
 #if OGRE_VERSION >= 0x020100
@@ -350,133 +343,6 @@ namespace MOC {
     {
       // raycast failed
       return (false);
-    }
-  }
-
-
-  // Get the mesh information for the given mesh.
-  // Code found on this forum link: http://www.ogre3d.org/wiki/index.php/RetrieveVertexData
-  void CollisionTools::GetMeshInformation(const OgreV1::MeshPtr mesh,
-      size_t &vertex_count,
-      Ogre::Vector3* &vertices,
-      size_t &index_count,
-      Ogre::uint32* &indices,
-      const Ogre::Vector3 &position,
-      const Ogre::Quaternion &orient,
-      const Ogre::Vector3 &scale)
-  {
-    bool added_shared = false;
-    size_t current_offset = 0;
-    size_t shared_offset = 0;
-    size_t next_offset = 0;
-    size_t index_offset = 0;
-
-    vertex_count = index_count = 0;
-
-    // Calculate how many vertices and indices we're going to need
-    for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
-    {
-      OgreV1::SubMesh* submesh = mesh->getSubMesh( i );
-
-      // We only need to add the shared vertices once
-      if(submesh->useSharedVertices)
-      {
-        if( !added_shared )
-        {
-          vertex_count += GET_IV_DATA(mesh->sharedVertexData)->vertexCount;
-          added_shared = true;
-        }
-      }
-      else
-      {
-        vertex_count += GET_IV_DATA(submesh->vertexData)->vertexCount;
-      }
-
-      // Add the indices
-      index_count += GET_IV_DATA(submesh->indexData)->indexCount;
-    }
-
-
-    // Allocate space for the vertices and indices
-    vertices = new Ogre::Vector3[vertex_count];
-    indices = new Ogre::uint32[index_count];
-
-    added_shared = false;
-
-    // Run through the submeshes again, adding the data into the arrays
-    for ( unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
-    {
-      OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
-
-      OgreV1::VertexData* vertex_data = submesh->useSharedVertices ? GET_IV_DATA(mesh->sharedVertexData) : GET_IV_DATA(submesh->vertexData);
-
-      if((!submesh->useSharedVertices)||(submesh->useSharedVertices && !added_shared))
-      {
-        if(submesh->useSharedVertices)
-        {
-          added_shared = true;
-          shared_offset = current_offset;
-        }
-
-        const OgreV1::VertexElement* posElem =
-          vertex_data->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
-
-        OgreV1::HardwareVertexBufferSharedPtr vbuf =
-          vertex_data->vertexBufferBinding->getBuffer(posElem->getSource());
-
-        unsigned char* vertex =
-          static_cast<unsigned char*>(vbuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
-
-        // There is _no_ baseVertexPointerToElement() which takes an Ogre::Ogre::Real or a double
-        //  as second argument. So make it float, to avoid trouble when Ogre::Ogre::Real will
-        //  be comiled/typedefed as double:
-        //      Ogre::Ogre::Real* pOgre::Real;
-        float* pReal;
-
-        for( size_t j = 0; j < vertex_data->vertexCount; ++j, vertex += vbuf->getVertexSize())
-        {
-          posElem->baseVertexPointerToElement(vertex, &pReal);
-
-          Ogre::Vector3 pt(pReal[0], pReal[1], pReal[2]);
-
-          vertices[current_offset + j] = (orient * (pt * scale)) + position;
-        }
-
-        vbuf->unlock();
-        next_offset += vertex_data->vertexCount;
-      }
-
-
-      OgreV1::IndexData* index_data = GET_IV_DATA(submesh->indexData);
-      size_t numTris = index_data->indexCount / 3;
-      OgreV1::HardwareIndexBufferSharedPtr ibuf = index_data->indexBuffer;
-
-      bool use32bitindexes = (ibuf->getType() == OgreV1::HardwareIndexBuffer::IT_32BIT);
-
-      Ogre::uint32*  pLong = static_cast<Ogre::uint32*>(ibuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
-      unsigned short* pShort = reinterpret_cast<unsigned short*>(pLong);
-
-
-      size_t offset = (submesh->useSharedVertices)? shared_offset : current_offset;
-
-      if ( use32bitindexes )
-      {
-        for ( size_t k = 0; k < numTris*3; ++k)
-        {
-          indices[index_offset++] = pLong[k] + static_cast<Ogre::uint32>(offset);
-        }
-      }
-      else
-      {
-        for ( size_t k = 0; k < numTris*3; ++k)
-        {
-          indices[index_offset++] = static_cast<Ogre::uint32>(pShort[k]) +
-            static_cast<Ogre::uint32>(offset);
-        }
-      }
-
-      ibuf->unlock();
-      current_offset = next_offset;
     }
   }
 

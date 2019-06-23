@@ -1,15 +1,19 @@
 require 'lib.class'
 
+local excludeModifiers = Modifiers.Num + Modifiers.Caps + Modifiers.Mode
+
 function decodeShortcut(value)
   if type(value) == "string" then
     value = tonumber(value)
   end
   local modifiers = bit.band(0x0000FFFF, value)
   local key = bit.brshift(16, bit.band(0xFFFF0000, value))
+  modifiers = bit.breset(modifiers, excludeModifiers)
   return modifiers, key
 end
 
 function encodeShortcut(modifiers, key)
+  modifiers = bit.breset(modifiers, excludeModifiers)
   return tostring(bit.bor(bit.blshift(16, key), modifiers))
 end
 
@@ -20,11 +24,19 @@ function shortcutToString(value)
 
   if modifiers > 0 then
     for name, value in pairs(Modifiers) do
-      if bit.band(modifiers, value) ~= 0 then
-        m[name] = true
+      if bit.band(modifiers, value) == value then
+        local cn = name:match("^[LR](%w+)")
+        local define = true
+        if cn and m[cn] then
+          define = false
+        end
 
-        m["L" .. name] = false
-        m["R" .. name] = false
+        m[name] = define
+
+        if cn then
+          m["L" .. name] = false
+          m["R" .. name] = false
+        end
       end
     end
   end
@@ -66,8 +78,8 @@ addShortcut(viewport, {Modifiers.Ctrl}, Keys.KC_S, "save")
 addShortcut(viewport, {Modifiers.Ctrl}, Keys.KC_C, "copy")
 addShortcut(viewport, {Modifiers.Ctrl}, Keys.KC_V, "paste")
 addShortcut(viewport, {}, Keys.KC_R, "rotate")
-addShortcut(viewport, {}, Keys.KC_S, "scale")
-addShortcut(viewport, {}, Keys.KC_M, "move")
+addShortcut(viewport, {}, Keys.KC_E, "scale")
+addShortcut(viewport, {}, Keys.KC_T, "move")
 
 local script_editor = {}
 addShortcut(script_editor, {Modifiers.Ctrl}, Keys.KC_Z, "undo")
@@ -120,6 +132,23 @@ function BindingsGroup:resolve(event)
   end
 
   return nil
+end
+
+-- add shortcut
+function BindingsGroup:addShortcut(modifiers, key, action)
+  local id = encodeShortcut(modifiers, key)
+  local str = shortcutToString(id)
+  local res = {
+    action = action,
+    str = str
+  }
+  self.data[id] = res
+  return res
+end
+
+-- remove all shortcuts from the group
+function BindingsGroup:clearShortcuts()
+  self.data = {}
 end
 
 BindingsManager = class(function(self)

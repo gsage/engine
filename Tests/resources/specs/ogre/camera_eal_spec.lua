@@ -69,4 +69,18 @@ describe("test camera eal #ogre", function()
     local free = camera:create('free')
     free:renderToTexture("texture")
   end)
+
+  it("should attach to and detach from renderTarget", function()
+    local rtex = 'rtex test'
+    local free1 = camera:create('free', 'free1')
+    free1:renderToTexture(rtex)
+
+    local free2 = camera:create('free', 'free2')
+    free2:renderToTexture(rtex)
+
+    game:reset()
+
+    local free2 = camera:create('free', 'free2')
+    free2:renderToTexture(rtex)
+  end)
 end)

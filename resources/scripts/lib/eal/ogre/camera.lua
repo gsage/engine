@@ -19,6 +19,16 @@ local function decorate(cls)
     self:detach()
   end)
 
+  function cls:setEnabled(value)
+    if not self.vars then
+      self.vars = {}
+    end
+    self.vars.enabled = value
+    if not value then
+      self.movementVector = Vector3.ZERO
+    end
+  end
+
   -- attach camera to viewport
   function cls:attach(targetName)
     if not self.vars.cameraPath then
@@ -84,7 +94,15 @@ local function decorate(cls)
       end
     end
 
-    currentCamera = nil
+    if self.render then
+      local cam = self.render.root:getCamera(self.vars.cameraPath)
+      cam:detach()
+    end
+
+    if currentCamera == self then
+      currentCamera = nil
+    end
+
     self.renderTargetName = nil
     if self.update then
       time.removeHandler(self.handlerId)
@@ -195,16 +213,6 @@ local function freeCamera(cls)
     end
   end)
 
-  function cls:setEnabled(value)
-    if not self.vars then
-      self.vars = {}
-    end
-    self.vars.enabled = value
-    if not value then
-      self.movementVector = Vector3.ZERO
-    end
-  end
-
   function cls:update(time)
     self:translate(self.yawNode.orientation * self.pitchNode.orientation * self.movementVector * time * 10)
   end
@@ -230,14 +238,14 @@ local function orbitCamera(cls)
     self.mousePosition = Vector3.ZERO
     self.moveCamera = false
     self.center = Vector3.ZERO
-    self.uAngle = 45
-    self.vAngle = 45
+    self.uAngle = 90
+    self.vAngle = 90
 
     self.distance = self.vars.distance or 10
     self.maxDistance = self.vars.maxDistance or 100
     self.minDistance = self.vars.minDistance or 1
-    self.maxAngle = self.vars.maxAngle or 80
-    self.minAngle = self.vars.minAngle or 10
+    self.maxAngle = self.vars.maxAngle or 90
+    self.minAngle = self.vars.minAngle or 0
     self.zoomStepMultiplier = self.vars.zoomStepMultiplier or 0.1
     self.mouseSensivity = self.vars.mouseSensivity or 0.5
     if type(self.vars.cameraOffset) == "string" then

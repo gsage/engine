@@ -337,7 +337,7 @@ function SceneEditor:__call()
     local rt = self:getRenderTarget()
     if rt then
       local point
-      point, target = rt:raycast(30, 0.1, 0xFF + ogre.QUERY_FX_DEFAULT_MASK)
+      point, target = rt:raycast(30, 0.1, ogre.RAYCAST_DEFAULT_MASK + ogre.QUERY_ENTITY_DEFAULT_MASK + ogre.QUERY_FX_DEFAULT_MASK)
     end
   end
 
@@ -394,7 +394,9 @@ function SceneEditor:setSelection(entity)
 
   if entity.setSelected then
     entity:setSelected(true)
-    self.gizmo:addTarget(render.root)
+    if render.root then
+      self.gizmo:addTarget(render.root)
+    end
   end
   self.selectedObjects[entity.id] = entity
 end

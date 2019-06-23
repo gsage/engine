@@ -30,6 +30,7 @@
 #include <OgreSceneManager.h>
 #include <OgreSubMesh.h>
 #include "Logger.h"
+#include "MeshTools.h"
 
 namespace Gsage {
 
@@ -41,7 +42,6 @@ namespace Gsage {
     }
 
     // get data
-    bool addedShared = false;
     size_t vertexCount = 0;
     size_t indexCount = 0;
     size_t indexOffset = 0;
@@ -49,33 +49,36 @@ namespace Gsage {
     size_t sharedOffset = 0;
     size_t nextOffset = 0;
 
+    Ogre::MeshInformation* meshData = new Ogre::MeshInformation[mSrcEntities.size()];
+    size_t meshCount = 0;
+    Ogre::MeshTools* meshTools = Ogre::MeshTools::getSingletonPtr();
+
     for(auto entity : mSrcEntities) {
-      addedShared = false;
-
-      OgreV1::MeshPtr mesh = entity->getMesh();
-
-      // Calculate how many vertices and indices we're going to need
-      for(unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i) {
-        OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
-        // We only need to add the shared vertices once
-        if(submesh->useSharedVertices)
-        {
-          if( !addedShared )
-          {
-            vertexCount += GET_IV_DATA(mesh->sharedVertexData)->vertexCount;
-            addedShared = true;
-          }
-        }
-        else
-        {
-          vertexCount += GET_IV_DATA(submesh->vertexData)->vertexCount;
-        }
-        // Add the indices
-        indexCount += GET_IV_DATA(submesh->indexData)->indexCount;
+      if (!entity->getParentSceneNode()) {
+        continue;
       }
+
+      Ogre::Matrix4 transform = referenceNode->_getFullTransform().inverse() * entity->getParentSceneNode()->_getFullTransform();
+
+      Ogre::MeshInformation& info = meshData[meshCount];
+      if(!meshTools->getMeshInformation(
+        entity,
+        info,
+        transform,
+        Ogre::MeshInformation::All
+      )) {
+        LOG(WARNING) << "Found movable object of incorrect type " << entity->getMovableType() << " in raw geom source list, skipped";
+        continue;
+      }
+
+      vertexCount += info.vertexCount;
+      indexCount += info.indexCount;
+      meshCount++;
     }
 
     vertexCount *= 3;
+
+    size_t vertexOffset = 0;
 
     verts = new float[vertexCount];
     nverts = vertexCount;
@@ -83,102 +86,26 @@ namespace Gsage {
     ntris = indexCount;
     normals = new float[vertexCount];
 
-    for(auto entity : mSrcEntities) {
-      OgreV1::MeshPtr mesh = entity->getMesh();
-
-      if (!entity->getParentSceneNode()) {
-        continue;
+    for(int i = 0; i < meshCount; ++i) {
+      Ogre::MeshInformation& info = meshData[i];
+      for (size_t j = 0; j < info.indexCount; ++j) {
+        tris[indexOffset++] = (int)info.indices[j];
       }
 
-      addedShared = false;
-
-      // Run through the submeshes again, adding the data into the arrays
-      for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
+      for( size_t j = 0; j < info.vertexCount; ++j)
       {
-        OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
+        verts[vertexOffset] = info.vertices[j].x;
+        verts[vertexOffset+1] = info.vertices[j].y;
+        verts[vertexOffset+2] = info.vertices[j].z;
 
-        OgreV1::VertexData* vertexData = submesh->useSharedVertices ? GET_IV_DATA(mesh->sharedVertexData) : GET_IV_DATA(submesh->vertexData);
-
-        if ((!submesh->useSharedVertices) || (submesh->useSharedVertices && !addedShared))
-        {
-          if(submesh->useSharedVertices)
-          {
-            addedShared = true;
-            sharedOffset = currentOffset;
-          }
-
-          const OgreV1::VertexElement* posElem =
-            vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
-
-          OgreV1::HardwareVertexBufferSharedPtr vbuf =
-            vertexData->vertexBufferBinding->getBuffer(posElem->getSource());
-
-          unsigned char* vertex =
-            static_cast<unsigned char*>(vbuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
-
-          const OgreV1::VertexElement* normElem =
-            vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL);
-
-          float* pReal;
-
-          Ogre::Matrix4 transform = referenceNode->_getFullTransform().inverse() * entity->getParentSceneNode()->_getFullTransform();
-
-          int vertexOffset = currentOffset * 3;
-
-          for( size_t j = 0; j < vertexData->vertexCount; ++j, vertex += vbuf->getVertexSize())
-          {
-            posElem->baseVertexPointerToElement(vertex, &pReal);
-            Ogre::Vector3 pt(pReal[0], pReal[1], pReal[2]);
-            Ogre::Vector3 vert = transform * pt;
-
-            verts[vertexOffset] = vert.x;
-            verts[vertexOffset+1] = vert.y;
-            verts[vertexOffset+2] = vert.z;
-
-            normElem->baseVertexPointerToElement(vertex, &pReal);
-            pt = Ogre::Vector3(pReal[0], pReal[1], pReal[2]);
-            vert = transform * pt;
-            normals[vertexOffset] = vert.x;
-            normals[vertexOffset+1] = vert.y;
-            normals[vertexOffset+2] = vert.z;
-            vertexOffset += 3;
-          }
-
-          vbuf->unlock();
-          nextOffset += vertexData->vertexCount;
-        }
-
-        OgreV1::IndexData* indexData = GET_IV_DATA(submesh->indexData);
-        size_t numTris = indexData->indexCount;
-        OgreV1::HardwareIndexBufferSharedPtr ibuf = indexData->indexBuffer;
-
-        bool use32bitindexes = (ibuf->getType() == OgreV1::HardwareIndexBuffer::IT_32BIT);
-
-        unsigned long* pLong = static_cast<unsigned long*>(ibuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
-        unsigned short* pShort = reinterpret_cast<unsigned short*>(pLong);
-
-        size_t offset = (submesh->useSharedVertices)? sharedOffset : currentOffset;
-
-        if(use32bitindexes)
-        {
-          for (size_t k = 0; k < numTris; ++k)
-          {
-            tris[indexOffset++] = pLong[k] + static_cast<unsigned long>(offset);
-          }
-        }
-        else
-        {
-          for (size_t k = 0; k < numTris; ++k)
-          {
-            tris[indexOffset++] = static_cast<unsigned long>(pShort[k]) +
-              static_cast<unsigned long>(offset);
-          }
-        }
-
-        ibuf->unlock();
-        currentOffset = nextOffset;
+        normals[vertexOffset] = info.normals[j].x;
+        normals[vertexOffset+1] = info.normals[j].y;
+        normals[vertexOffset+2] = info.normals[j].z;
+        vertexOffset += 3;
       }
     }
+
+    delete[] meshData;
   }
 
   OgreGeom::~OgreGeom()

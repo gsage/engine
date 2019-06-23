@@ -44,8 +44,10 @@ THE SOFTWARE.
 #include <codecvt>
 
 #include <include/wrapper/cef_helpers.h>
+#include <include/cef_app.h>
 #include <include/wrapper/cef_stream_resource_handler.h>
 #include <include/cef_parser.h>
+
 
 namespace Gsage {
   inline bool endsWith(std::string const & value, std::string const & ending)
@@ -53,6 +55,39 @@ namespace Gsage {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
   }
+
+  class AppHandler : public CefApp {
+     public:
+        void setArgs(std::vector<char*> args) {
+          std::stringstream ss;
+          for (int i = 0; i < args.size(); i++) {
+            if (i > 0) {
+              ss << " ";
+            }
+            ss << args[i];
+          }
+          mArgs = ss.str();
+        }
+
+        void OnBeforeCommandLineProcessing(const CefString &processType, CefRefPtr<CefCommandLine> commandLine) OVERRIDE {
+          CefApp::OnBeforeCommandLineProcessing(processType, commandLine);
+
+          std::stringstream ss;
+          ss << commandLine->GetCommandLineString().ToString();
+          if (!mArgs.empty()) {
+            ss << " " << mArgs;
+          }
+
+          CefString cmd = ss.str();
+          commandLine->InitFromString(cmd);
+        }
+
+     private:
+
+       std::string mArgs;
+
+     IMPLEMENT_REFCOUNTING(AppHandler)
+  };
 
   class ClientSchemeHandlerFactory : public CefSchemeHandlerFactory {
     public:
@@ -150,7 +185,16 @@ namespace Gsage {
 
   void RenderHandler::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList &dirtyRects, const void *buffer, int width, int height)
   {
-    mTexture->update(buffer, width * height * 4, width, height);
+    for(auto rect : dirtyRects) {
+      mTexture->update(buffer, width * height * 4, width, height,
+        Rect<int>(
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height
+        )
+      );
+    }
   }
 
   void RenderHandler::setTexture(TexturePtr texture)
@@ -431,17 +475,17 @@ namespace Gsage {
       Event event;
       for(size_t i = 0; i < count; i++) {
         if(mEvents.get(event)) {
-          if(event.getType() == Texture::RESIZE) {
+          if(event.is(Texture::RESIZE)) {
             mBrowser->GetHost()->WasResized();
-          } else if(event.getType() == Webview::MOUSE_LEAVE) {
+          } else if(event.is(Webview::MOUSE_LEAVE)) {
             CefMouseEvent evt;
             evt.x = mMouseX;
             evt.y = mMouseY;
             evt.modifiers = mMouseModifiers;
             mBrowser->GetHost()->SendMouseMoveEvent(evt, true);
-          } else if(event.getType() == Webview::UNDO) {
+          } else if(event.is(Webview::UNDO)) {
             mBrowser->GetMainFrame()->Undo();
-          } else if(event.getType() == Webview::REDO) {
+          } else if(event.is(Webview::REDO)) {
             mBrowser->GetMainFrame()->Redo();
           } else {
             LOG(WARNING) << "Unhandled event type " << event.getType();
@@ -683,6 +727,9 @@ namespace Gsage {
 
   CEFPlugin::~CEFPlugin()
   {
+    for(auto arg : mArgs) {
+      free(arg);
+    }
   }
 
   const std::string& CEFPlugin::getName() const
@@ -873,16 +920,23 @@ namespace Gsage {
 
   bool CEFPlugin::initialize()
   {
+    DataProxy configArgs;
+    mFacade->getConfig().read("cef.args", configArgs);
+    for(auto pair : configArgs) {
+      mArgs.push_back(strdup(pair.second.as<std::string>().c_str()));
+    }
+
+    CefRefPtr<AppHandler> appHandler = nullptr;
+
 #if GSAGE_PLATFORM == GSAGE_WIN32
     CefMainArgs args(0);
+    appHandler = new AppHandler();
+    appHandler->setArgs(mArgs);
 #else
-    //int argc = 2;
-    //char* argv[2] = {"--off-screen-rendering-enabled", "--v=0"};
-    //CefMainArgs args(argc, &argv[0]);
-    CefMainArgs args(0, nullptr);
+    CefMainArgs args(mArgs.size(), &mArgs[0]);
 #endif
     {
-      int result = CefExecuteProcess(args, nullptr, nullptr);
+      int result = CefExecuteProcess(args, appHandler, nullptr);
       if(result >= 0) {
         return false;
       }
@@ -940,7 +994,7 @@ namespace Gsage {
     }
 
     {
-      bool result = CefInitialize(args, settings, nullptr, nullptr);
+      bool result = CefInitialize(args, settings, appHandler, nullptr);
       if(!result) {
         return false;
       }
@@ -959,6 +1013,7 @@ namespace Gsage {
       }
       mViews.clear();
     }
+    CefDoMessageLoopWork();
     CefShutdown();
   }
 

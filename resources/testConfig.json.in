@@ -78,7 +78,7 @@
   "packager": {
     "installOnStartup": true,
     "deps": [
-      "busted",
+      "busted == 2.0.rc13-0",
       "i18n",
       "luafilesystem"
     ]
@@ -112,7 +112,12 @@
       [
         "FileSystem;bundles/materials/",
         "FileSystem;bundles/particles/PU",
-        "FileSystem;bundles/particles/Ogre"
+        "FileSystem;bundles/particles/Ogre",
+        "FileSystem;ogre/programs",
+        "FileSystem;ogre/hlms"
+      ],
+      "Utility": [
+        "FileSystem;ogre/utility"
       ],
       "Hlms": {
         "common": "FileSystem;ogre/hlms/Common",
@@ -127,7 +132,7 @@
       },
       "viewport": {
         "renderQueueSequence": [0, 5, 25, 50, 100, {"id": 101, "suppressShadows": true}],
-        "backgroundColor": "0x000000"
+        "backgroundColor": "0xff0a1f2c"
       },
       "resizable": true,
       "useWindowManager": true,
