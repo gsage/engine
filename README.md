@@ -51,7 +51,7 @@ You can read more documentation on [http://engine.readthedocs.io/](http://engine
 
 This engine supports three OS at the moment:
 * Windows, Visual Studio 2017 and later.
-* OSX, ci is using Xcode 9.1.
+* OSX, ci is using Xcode 9.4.
 * Linux, ci is using Ubuntu 16.04 with GCC 5.4.
 
 There are plans to support iOS and Android.
