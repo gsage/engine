@@ -119,6 +119,7 @@ namespace Gsage
     }
 
     mEngine->fireEvent(SystemChangeEvent(SystemChangeEvent::SYSTEM_STARTED, getName(), this));
+    LOG(INFO) << "System " << getName() << " was started";
     return true;
   }
 

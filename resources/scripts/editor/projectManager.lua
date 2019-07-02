@@ -191,7 +191,7 @@ local ProjectManager = class(function(self)
     end
     self.awaitedSystems[event.systemID] = true
     local ready = true
-    for _, started in pairs(self.awaitedSystems) do
+    for id, started in pairs(self.awaitedSystems) do
       if started ~= true then
         ready = false
         break
@@ -263,7 +263,6 @@ function ProjectManager:create(settings, onProgress, onComplete)
         message(tostring(err), "#FF0000", true)
       end
     end
-
     onComplete(success)
   end
 
@@ -308,7 +307,7 @@ function ProjectManager:create(settings, onProgress, onComplete)
     end
     message(msg, color)
 
-    if percent == 100 then
+    if percent >= 100 then
       finalize(true)
     end
   end
@@ -337,7 +336,7 @@ function ProjectManager:create(settings, onProgress, onComplete)
     message(msg, color)
     percent = percent + step / filecount
 
-    if percent == 100 then
+    if percent >= 100 then
       finalize(true)
     end
   end
@@ -416,7 +415,6 @@ function ProjectManager:open(projectPath)
     log.error("Failed to open project " .. err)
     return false
   end
-  log.info("Read project file")
 
   self.openProjectFile = projectFile
   local sourcesDir = fs.path.join(self.openProjectFile.projectRoot, "sources")

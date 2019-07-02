@@ -917,6 +917,14 @@ namespace Gsage {
     std::stringstream ss;
     ss << dirname(path) << "/" << "cef.helper";
     CefString(&settings.browser_subprocess_path).FromASCII(ss.str().c_str());
+
+    if(!getcwd(path, sizeof(path)-1)) {
+      LOG(ERROR) << "Failed to get current working directory";
+      return false;
+    }
+    ss = std::stringstream();
+    ss << path << "/locales";
+    CefString(&settings.locales_dir_path) = ss.str().c_str();
 #elif GSAGE_PLATFORM == GSAGE_WIN32
     char filename[] = "cef.helper.exe";
     char fullFilename[MAX_PATH];
@@ -924,6 +932,7 @@ namespace Gsage {
 
     CefString(&settings.browser_subprocess_path).FromASCII(fullFilename);
 #endif
+    CefString(&settings.cache_path) = (mFacade->filesystem()->getCacheHome() + "/gsage").c_str();
 
     if(!mFacade->filesystem()->exists(CefString(&settings.browser_subprocess_path).ToString())) {
       LOG(ERROR) << "Failed to locate cef.helper executable " << CefString(&settings.browser_subprocess_path).ToString();

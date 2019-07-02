@@ -2,8 +2,8 @@
 Version=${GSAGE_VERSION_MAJOR}.${GSAGE_VERSION_MINOR}.${GSAGE_VERSION_PATCH}
 Name=GSAGE Editor
 Comment=Open source game engine
-Exec=env GSAGE_RUN_DIRECTORY=/usr/share/gsage/ env GSAGE_PLUGINS_DIRECTORIES=/usr/local/lib/gsage/ /usr/local/bin/gsage
-Icon=/usr/share/gsage/resources/editor/editor.ico
+Exec=env GSAGE_RUN_DIRECTORY=/usr/share/gsage/ env GSAGE_PLUGINS_DIRECTORIES=/usr/local/lib/gsage/ /usr/local/bin/gsage/gsage
+Icon=/usr/share/gsage/resources/editor/gsage.ico
 Terminal=false
 Type=Application
 Categories=Development

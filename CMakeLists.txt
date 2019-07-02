@@ -8,13 +8,8 @@ configure()
 
 include(${CMAKE_SOURCE_DIR}/conanbuildinfo.cmake OPTIONAL)
 
-if(CONAN_PACKAGE_NAME)
-  set(CMAKE_INSTALL_PATH "./")
-  include(cmake/ConanDependencies.cmake)
-else(CONAN_PACKAGE_NAME)
-  set(CMAKE_INSTALL_PATH "/usr/local")
-  include(cmake/Dependencies.cmake)
-endif(CONAN_PACKAGE_NAME)
+set(CMAKE_INSTALL_PATH "./")
+include(cmake/ConanDependencies.cmake)
 
 process_templates()
 
@@ -64,8 +59,14 @@ elseif(UNIX)
   set(CPACK_DEBIAN_PACKAGE_NAME "gsage")
   set(CPACK_DEBIAN_PACKAGE_VERSION "${GSAGE_VERSION_MAJOR}.${GSAGE_VERSION_MINOR}.${GSAGE_VERSION_PATCH}")
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Artem Chernyshev")
+  # additional dependencies for cef
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libcups2, libgconf-2-4, libgtk2.0-dev, libgdk-pixbuf2.0-dev, freeglut3-dev")
+
+  # other deps will be generated automatically
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Open source game engine")
+
+  set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${gsage_SOURCE_DIR}/tools/postinst;${gsage_SOURCE_DIR}/tools/prerm")
 
   set(CPACK_GENERATOR "DEB")
 endif(APPLE)

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+#DEBHELPER#
+
+set -e
+
+echo "
+* TRACE:
+   ENABLED              = false
+* DEBUG:
+   ENABLED              = false
+* GLOBAL:
+   FORMAT               =  "%datetime [%level] [%fbase:%line] %msg"
+   ENABLED              = true
+   TO_FILE              = true
+" > /usr/share/gsage/log.cfg
+
+chmod 755 /usr/share/gsage/log.cfg
+
+# update editor configuration
+python -c "
+import sys, json;
+
+config_path = '/usr/share/gsage/resources/editorConfig.json'
+
+config = None
+
+with open(config_path, 'r') as f:
+  config = json.load(f)
+  config['logConfig'] = '/usr/share/gsage/log.cfg'
+
+with open(config_path, 'w') as f:
+  json.dump(config, f)
+
+"
