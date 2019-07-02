@@ -81,7 +81,7 @@ macro(configure)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
     if(NOT APPLE)
-      set(INSTALL_BINARY_DIR "local/bin/")
+      set(INSTALL_BINARY_DIR "local/bin/gsage")
       set(INSTALL_LIB_DIR "local/lib/")
       set(INSTALL_PLUGINS_DIR "local/lib/gsage")
       set(INSTALL_RESOURCE_DIR "share/gsage/")

@@ -197,6 +197,20 @@ namespace Gsage {
       }
 
       /**
+       * Same as Poco::Path::cacheHome
+       */
+      inline std::string getCacheHome() const {
+        return expand(Poco::Path::cacheHome());
+      }
+
+      /**
+       * Same as Poco::Path::expand
+       */
+      inline std::string expand(const std::string& path) const {
+        return Poco::Path::expand(path);
+      }
+
+      /**
        * Flush all copy complete events
        */
       void update(double time);

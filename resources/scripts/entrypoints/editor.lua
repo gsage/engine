@@ -99,8 +99,10 @@ local mode = "world"
 local function saveSettings()
   log.info("Saving imgui dock state")
   dockstates[mode] = dockspace:getState()
-  projectManager.openProjectFile:setWorkspace(dockstates)
-  projectManager.openProjectFile:write()
+  if projectManager.openProjectFile then
+    projectManager.openProjectFile:setWorkspace(dockstates)
+    projectManager.openProjectFile:write()
+  end
   editor:putToGlobalState("bindings", bindings:getConfig())
   editor:saveGlobalState()
 end
@@ -378,14 +380,13 @@ if imguiInterface:available() then
 
   projectManager:onProjectOpen(function(projectFile)
     hideWizard()
-    if globalEditorState and globalEditorState.dockState then
-      log.info("Restoring imgui dock state")
-      dockstates = projectFile:getWorkspace() or globalEditorState.dockState or {
-        world = {},
-        character = {}
-      }
-      dockspace:setState(dockstates[mode] or {})
-    end
+    local dockstates = (projectFile:getWorkspace() or (globalEditorState or {}).dockState) or {
+      world = {},
+      character = {},
+    }
+
+    log.info("Restoring imgui dock state")
+    dockspace:setState(dockstates[mode])
     views.assets:configure()
     event:bind(core, EngineEvent.STOPPING, saveSettings)
   end)
