@@ -944,6 +944,7 @@ namespace Gsage {
     lua["Modifiers"]["Shift"] = KeyboardEvent::Shift;
     lua["Modifiers"]["Alt"] = KeyboardEvent::Alt;
     lua["Modifiers"]["Win"] = KeyboardEvent::Win;
+    lua["Modifiers"]["Mode"] = KeyboardEvent::Mode;
 
     registerEvent<MouseEvent>("MouseEvent",
         "onMouse",
@@ -1119,6 +1120,8 @@ namespace Gsage {
     lua["bit"]["blshift"] = [](int n, size_t bits) { return bits << n; };
     lua["bit"]["band"] = [](size_t left, size_t right) { return left & right; };
     lua["bit"]["bor"] = [](size_t left, size_t right) { return left | right; };
+    lua["bit"]["bnot"] = [](size_t val) { return ~val; };
+    lua["bit"]["breset"] = [](size_t left, size_t right) { return left & ~right; };
 
     // serialization
     lua["json"] = lua.create_table();

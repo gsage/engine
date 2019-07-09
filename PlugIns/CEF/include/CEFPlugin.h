@@ -403,6 +403,7 @@ namespace Gsage {
       std::tuple<std::string, bool> handleProcessMessageSync(CefRefPtr<CefProcessMessage> msg);
 
       std::map<std::string, WebviewPtr> mViews;
+      std::vector<char*> mArgs;
       std::thread mCefRunner;
       std::atomic<bool> mRunning;
       std::mutex mViewsLock;

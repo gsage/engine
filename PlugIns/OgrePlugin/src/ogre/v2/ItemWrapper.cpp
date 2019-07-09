@@ -39,6 +39,7 @@ namespace Gsage {
   const std::string ItemWrapper::TYPE = "item";
 
   ItemWrapper::ItemWrapper()
+    : mQuery(STATIC)
   {
     BIND_ACCESSOR_WITH_PRIORITY("mesh", &ItemWrapper::setMesh, &ItemWrapper::getMesh, 1);
     BIND_ACCESSOR("query", &ItemWrapper::setQueryFlags, &ItemWrapper::getQueryFlags);
@@ -53,6 +54,8 @@ namespace Gsage {
   {
     mMeshName = model;
     mObject = mSceneManager->createItem(model, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+    mObject->setQueryFlags(mQuery | Ogre::SceneManager::QUERY_ENTITY_DEFAULT_MASK);
+    defineUserBindings();
     attachObject(mObject);
   }
 
@@ -73,7 +76,7 @@ namespace Gsage {
 
     if(mObject != 0)
     {
-      mObject->setQueryFlags(mQuery);
+      mObject->setQueryFlags(mQuery | Ogre::SceneManager::QUERY_ENTITY_DEFAULT_MASK);
     }
   }
 

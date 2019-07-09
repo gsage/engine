@@ -81,12 +81,6 @@ namespace Gsage {
     float matrixTranslation[3], matrixRotation[3], matrixScale[3];
     Ogre::Matrix4 model;
 
-    static const float identityMatrix[16] =
-    { 1.f, 0.f, 0.f, 0.f,
-      0.f, 1.f, 0.f, 0.f,
-      0.f, 0.f, 1.f, 0.f,
-      0.f, 0.f, 0.f, 1.f };
-
     bool positionsDirty = false;
 
     for(auto target : mTargets) {

@@ -264,9 +264,9 @@ namespace Gsage
 
       typedef std::vector<Entity*> Entities;
       /**
-       * Enumerable of Ogre::Entity
+       * Enumerable of Ogre::MovableObject
        */
-      typedef std::vector<OgreV1::Entity*> OgreEntities;
+      typedef std::vector<Ogre::MovableObject*> OgreEntities;
       /**
        * Gets all scene entities
        *
@@ -415,8 +415,9 @@ namespace Gsage
       Ogre::RenderSystem* mRenderSystem;
       Ogre::LogManager* mLogManager;
       Ogre::FontManager* mFontManager;
-      Ogre::ManualMovableTextRendererFactory* mManualMovableTextParticleFactory;
       Ogre::Viewport* mViewport;
+      // Gsage extensions for ogre
+      Ogre::ManualMovableTextRendererFactory* mManualMovableTextParticleFactory;
 
       OgreLogRedirect mLogRedirect;
       OgreObjectManager mObjectManager;

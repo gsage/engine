@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "ogre/SceneNodeWrapper.h"
 #include "ogre/OgreObjectManager.h"
+#include "ogre/MovableObjectWrapper.h"
 #include <OgreRoot.h>
 #include "Logger.h"
 
@@ -381,6 +382,15 @@ namespace Gsage {
       return 0;
 
     return child->mChildren[type][key];
+  }
+
+  IMovableObjectWrapper* SceneNodeWrapper::getMovableObject(const std::string& type, const std::string& name) {
+    OgreObject* obj = getChild(type, name, true);
+    if(!obj) {
+      return 0;
+    }
+
+    return static_cast<IMovableObjectWrapper*>(obj);
   }
 
   void SceneNodeWrapper::pitch(const Ogre::Radian &angle, Ogre::Node::TransformSpace relativeTo)

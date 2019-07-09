@@ -94,6 +94,7 @@ namespace Gsage {
           "getChild", &SceneNodeWrapper::getChild,
           "getSceneNode", &SceneNodeWrapper::getChildOfType<SceneNodeWrapper>,
           "getEntity", &SceneNodeWrapper::getChildOfType<EntityWrapper>,
+          "getMovableObject", &SceneNodeWrapper::getMovableObject,
           "getParticleSystem", &SceneNodeWrapper::getChildOfType<ParticleSystemWrapper>,
           "getCamera", &SceneNodeWrapper::getChildOfType<CameraWrapper>,
           "getBillboardSet", &SceneNodeWrapper::getChildOfType<BillboardSetWrapper>,
@@ -110,6 +111,12 @@ namespace Gsage {
           ),
           "lookAt", &SceneNodeWrapper::lookAt,
           "children", sol::property(&SceneNodeWrapper::writeChildren)
+      );
+
+      lua.new_usertype<IMovableObjectWrapper>("OgreMovableObject",
+        "setRenderQueueGroup", &EntityWrapper::setRenderQueueGroup,
+        "setVisibilityFlags", &EntityWrapper::setVisibilityFlags,
+        "resetVisibilityFlags", &EntityWrapper::resetVisibilityFlags
       );
 
       lua.new_usertype<EntityWrapper>("OgreEntity",
@@ -138,6 +145,7 @@ namespace Gsage {
             (void(CameraWrapper::*)(Ogre::Viewport* viewport))&CameraWrapper::attach,
             (void(CameraWrapper::*)(RenderTargetPtr renderTarget))&CameraWrapper::attach
           ),
+          "detach", &CameraWrapper::detach,
           "isActive", &CameraWrapper::isActive,
           "getProjectionMatrix", &CameraWrapper::getProjectionMatrix,
           "getViewMatrix", &CameraWrapper::getViewMatrix,
@@ -191,64 +199,77 @@ namespace Gsage {
           "getRenderer", &OgreRenderSystem::getRenderSystem
       );
 
-      lua["ogre"] = lua.create_table_with(
-          "AUTODETECT_RESOURCE_GROUP_NAME", Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,
-          // fixel formats
-          "PF_R8G8B8A8", Ogre::PF_R8G8B8A8,
-          // texture unit types
-          "TU_DEFAULT", Ogre::TU_DEFAULT,
-          "TU_RENDERTARGET", Ogre::TU_RENDERTARGET,
-          // texture types
-          "TEX_TYPE_1D", Ogre::TEX_TYPE_1D,
-          "TEX_TYPE_2D", Ogre::TEX_TYPE_2D,
-          "TEX_TYPE_3D", Ogre::TEX_TYPE_3D,
-          "TEX_TYPE_CUBE_MAP", Ogre::TEX_TYPE_CUBE_MAP,
-          "TEX_TYPE_2D_ARRAY", Ogre::TEX_TYPE_2D_ARRAY,
-          "TEX_TYPE_2D_RECT", Ogre::TEX_TYPE_2D_RECT,
-#if OGRE_VERSION_MAJOR == 2
-          "OT_POINT_LIST", Ogre::OT_POINT_LIST,
-          "OT_LINE_LIST", Ogre::OT_LINE_LIST,
-          "OT_LINE_STRIP", Ogre::OT_LINE_STRIP,
-          "OT_TRIANGLE_LIST", Ogre::OT_TRIANGLE_LIST,
-          "OT_TRIANGLE_STRIP", Ogre::OT_TRIANGLE_STRIP,
-          "OT_TRIANGLE_FAN", Ogre::OT_TRIANGLE_FAN,
-          "QUERY_ENTITY_DEFAULT_MASK", Ogre::SceneManager::QUERY_ENTITY_DEFAULT_MASK,
-          "QUERY_FRUSTUM_DEFAULT_MASK", Ogre::SceneManager::QUERY_FRUSTUM_DEFAULT_MASK,
-          "QUERY_FX_DEFAULT_MASK", Ogre::SceneManager::QUERY_FX_DEFAULT_MASK,
-          "QUERY_LIGHT_DEFAULT_MASK", Ogre::SceneManager::QUERY_LIGHT_DEFAULT_MASK,
-          "QUERY_STATICGEOMETRY_DEFAULT_MASK", Ogre::SceneManager::QUERY_STATICGEOMETRY_DEFAULT_MASK,
-          "RENDER_QUEUE_BACKGROUND", 0,
-          "RENDER_QUEUE_SKIES_EARLY", 5,
-          "RENDER_QUEUE_MAIN", 50,
-          "RENDER_QUEUE_6", 51,
-          "RENDER_QUEUE_OUTLINED", 49,
-          "RENDER_QUEUE_OVERLAY", 100,
-#else
-          "RENDER_QUEUE_BACKGROUND", Ogre::RENDER_QUEUE_BACKGROUND,
-          "RENDER_QUEUE_SKIES_EARLY", Ogre::RENDER_QUEUE_SKIES_EARLY,
-          "RENDER_QUEUE_6", 51,
-          "RENDER_QUEUE_OUTLINED", 49,
-          "RENDER_QUEUE_MAIN", Ogre::RENDER_QUEUE_MAIN,
-          "RENDER_QUEUE_OVERLAY", Ogre::RENDER_QUEUE_OVERLAY,
-          "OT_POINT_LIST", Ogre::RenderOperation::OT_POINT_LIST,
-          "OT_LINE_LIST", Ogre::RenderOperation::OT_LINE_LIST,
-          "OT_LINE_STRIP", Ogre::RenderOperation::OT_LINE_STRIP,
-          "OT_TRIANGLE_LIST", Ogre::RenderOperation::OT_TRIANGLE_LIST,
-          "OT_TRIANGLE_STRIP", Ogre::RenderOperation::OT_TRIANGLE_STRIP,
-          "OT_TRIANGLE_FAN", Ogre::RenderOperation::OT_TRIANGLE_FAN,
-          "QUERY_ENTITY_DEFAULT_MASK", Ogre::SceneManager::ENTITY_TYPE_MASK,
-          "QUERY_FRUSTUM_DEFAULT_MASK", Ogre::SceneManager::FRUSTUM_TYPE_MASK,
-          "QUERY_FX_DEFAULT_MASK", Ogre::SceneManager::FX_TYPE_MASK,
-          "QUERY_LIGHT_DEFAULT_MASK", Ogre::SceneManager::LIGHT_TYPE_MASK,
-          "QUERY_STATICGEOMETRY_DEFAULT_MASK", Ogre::SceneManager::STATICGEOMETRY_TYPE_MASK,
+      lua["ogre"] = lua.create_table();
+
+
+      lua["ogre"]["AUTODETECT_RESOURCE_GROUP_NAME"] = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
+      // fixel formats
+      lua["ogre"]["PF_R8G8B8A8"] = Ogre::PF_R8G8B8A8;
+      // texture unit types
+      lua["ogre"]["TU_DEFAULT"] = Ogre::TU_DEFAULT;
+      lua["ogre"]["TU_RENDERTARGET"] = Ogre::TU_RENDERTARGET;
+      lua["ogre"]["TU_DYNAMIC"] = Ogre::TU_DYNAMIC;
+      lua["ogre"]["TU_STATIC"] = Ogre::TU_STATIC;
+      lua["ogre"]["TU_WRITE_ONLY"] = Ogre::TU_STATIC;
+      lua["ogre"]["TU_STATIC_WRITE_ONLY"] = Ogre::TU_STATIC_WRITE_ONLY;
+      lua["ogre"]["TU_DYNAMIC_WRITE_ONLY"] = Ogre::TU_DYNAMIC_WRITE_ONLY;
+      lua["ogre"]["TU_DYNAMIC_WRITE_ONLY_DISCARDABLE"] = Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE;
+      lua["ogre"]["TU_AUTOMIPMAP"] = Ogre::TU_AUTOMIPMAP;
+#if OGRE_VERSION >= 0x020100
+      lua["ogre"]["TU_UAV"] = Ogre::TU_UAV;
+      lua["ogre"]["TU_AUTOMIPMAP_AUTO"] = Ogre::TU_AUTOMIPMAP_AUTO;
 #endif
-          "getMaterial", [] (const Ogre::String& name, const Ogre::String& group) {
-            return Ogre::MaterialManager::getSingletonPtr()->getByName(name, group);
-          },
-          "parseMaterial", [] (const std::string& name, const DataProxy& data) {
-            return MaterialBuilder::parse(name, data);
-          }
-      );
+      // texture types
+      lua["ogre"]["TEX_TYPE_1D"] = Ogre::TEX_TYPE_1D;
+      lua["ogre"]["TEX_TYPE_2D"] = Ogre::TEX_TYPE_2D;
+      lua["ogre"]["TEX_TYPE_3D"] = Ogre::TEX_TYPE_3D;
+      lua["ogre"]["TEX_TYPE_CUBE_MAP"] = Ogre::TEX_TYPE_CUBE_MAP;
+      lua["ogre"]["TEX_TYPE_2D_ARRAY"] = Ogre::TEX_TYPE_2D_ARRAY;
+      lua["ogre"]["TEX_TYPE_2D_RECT"] = Ogre::TEX_TYPE_2D_RECT;
+#if OGRE_VERSION_MAJOR == 2
+      lua["ogre"]["OT_POINT_LIST"] = Ogre::OT_POINT_LIST;
+      lua["ogre"]["OT_LINE_LIST"] = Ogre::OT_LINE_LIST;
+      lua["ogre"]["OT_LINE_STRIP"] = Ogre::OT_LINE_STRIP;
+      lua["ogre"]["OT_TRIANGLE_LIST"] = Ogre::OT_TRIANGLE_LIST;
+      lua["ogre"]["OT_TRIANGLE_STRIP"] = Ogre::OT_TRIANGLE_STRIP;
+      lua["ogre"]["OT_TRIANGLE_FAN"] = Ogre::OT_TRIANGLE_FAN;
+      lua["ogre"]["QUERY_ENTITY_DEFAULT_MASK"] = Ogre::SceneManager::QUERY_ENTITY_DEFAULT_MASK;
+      lua["ogre"]["QUERY_FRUSTUM_DEFAULT_MASK"] = Ogre::SceneManager::QUERY_FRUSTUM_DEFAULT_MASK;
+      lua["ogre"]["QUERY_FX_DEFAULT_MASK"] = Ogre::SceneManager::QUERY_FX_DEFAULT_MASK;
+      lua["ogre"]["QUERY_LIGHT_DEFAULT_MASK"] = Ogre::SceneManager::QUERY_LIGHT_DEFAULT_MASK;
+      lua["ogre"]["QUERY_STATICGEOMETRY_DEFAULT_MASK"] = Ogre::SceneManager::QUERY_STATICGEOMETRY_DEFAULT_MASK;
+      lua["ogre"]["RENDER_QUEUE_BACKGROUND"] = 0;
+      lua["ogre"]["RENDER_QUEUE_SKIES_EARLY"] = 5;
+      lua["ogre"]["RENDER_QUEUE_MAIN"] = 50;
+      lua["ogre"]["RENDER_QUEUE_6"] = 51;
+      lua["ogre"]["RENDER_QUEUE_OUTLINED"] = 49;
+      lua["ogre"]["RENDER_QUEUE_OVERLAY"] = 100;
+#else
+      lua["ogre"]["RENDER_QUEUE_BACKGROUND"] = Ogre::RENDER_QUEUE_BACKGROUND;
+      lua["ogre"]["RENDER_QUEUE_SKIES_EARLY"] = Ogre::RENDER_QUEUE_SKIES_EARLY;
+      lua["ogre"]["RENDER_QUEUE_6"] = 51;
+      lua["ogre"]["RENDER_QUEUE_OUTLINED"] = 49;
+      lua["ogre"]["RENDER_QUEUE_MAIN"] = Ogre::RENDER_QUEUE_MAIN;
+      lua["ogre"]["RENDER_QUEUE_OVERLAY"] = Ogre::RENDER_QUEUE_OVERLAY;
+      lua["ogre"]["OT_POINT_LIST"] = Ogre::RenderOperation::OT_POINT_LIST;
+      lua["ogre"]["OT_LINE_LIST"] = Ogre::RenderOperation::OT_LINE_LIST;
+      lua["ogre"]["OT_LINE_STRIP"] = Ogre::RenderOperation::OT_LINE_STRIP;
+      lua["ogre"]["OT_TRIANGLE_LIST"] = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+      lua["ogre"]["OT_TRIANGLE_STRIP"] = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+      lua["ogre"]["OT_TRIANGLE_FAN"] = Ogre::RenderOperation::OT_TRIANGLE_FAN;
+      lua["ogre"]["QUERY_ENTITY_DEFAULT_MASK"] = Ogre::SceneManager::ENTITY_TYPE_MASK;
+      lua["ogre"]["QUERY_FRUSTUM_DEFAULT_MASK"] = Ogre::SceneManager::FRUSTUM_TYPE_MASK;
+      lua["ogre"]["QUERY_FX_DEFAULT_MASK"] = Ogre::SceneManager::FX_TYPE_MASK;
+      lua["ogre"]["QUERY_LIGHT_DEFAULT_MASK"] = Ogre::SceneManager::LIGHT_TYPE_MASK;
+      lua["ogre"]["QUERY_STATICGEOMETRY_DEFAULT_MASK"] = Ogre::SceneManager::STATICGEOMETRY_TYPE_MASK;
+#endif
+      lua["ogre"]["RAYCAST_DEFAULT_MASK"] = sol::var(0xFF);
+      lua["ogre"]["getMaterial"] = [] (const Ogre::String& name, const Ogre::String& group) {
+        return Ogre::MaterialManager::getSingletonPtr()->getByName(name, group);
+      };
+      lua["ogre"]["parseMaterial"] = [] (const std::string& name, const DataProxy& data) {
+        return MaterialBuilder::parse(name, data);
+      };
 
       // Components
 

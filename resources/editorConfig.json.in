@@ -53,6 +53,13 @@
   },
 
   "cef": {
+    "args": [
+      "--off-screen-rendering-enabled",
+      "--off-screen-frame-rate=60",
+      "--disable-gpu",
+      "--disable-gpu-compositing",
+      "--enable-begin-frame-scheduling"
+    ],
     "dedicatedThread": false,
     "webRoot": "editor/webviews"
   },

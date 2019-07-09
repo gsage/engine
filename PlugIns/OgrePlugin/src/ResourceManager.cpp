@@ -69,7 +69,7 @@ namespace Gsage {
 
       path = join(pathList, GSAGE_PATH_SEPARATOR);
     }
-
+    
     path = FileLoader::getSingletonPtr()->searchFile(path);
     if(path.empty()) {
       // failure

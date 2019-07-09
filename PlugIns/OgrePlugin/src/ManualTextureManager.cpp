@@ -128,12 +128,13 @@ namespace Gsage {
     return created;
   }
 
-  OgreTexture::OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat)
+  OgreTexture::OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat, int flags)
     : Texture(name, params)
     , mHasData(false)
     , mDirty(false)
     , mCreate(false)
     , mScalingPolicy(std::move(createScalingPolicy(params)))
+    , mFlags(flags)
   {
     if(mParams.count("pixelFormat") == 0) {
       mParams.put("pixelFormat", pixelFormat);
@@ -230,21 +231,48 @@ namespace Gsage {
 
   void OgreTexture::update(const void* buffer, size_t size, int width, int height)
   {
+    update(
+      buffer, size, width, height,
+      Rect<int>(0, 0, width, height)
+    );
+  }
+
+  void OgreTexture::update(const void* buffer, size_t size, int width, int height, const Rect<int>& area)
+  {
     std::lock_guard<std::mutex> lock(mLock);
+    int pixelSize = size / (width * height);
 
     if(mSize < size) {
-      if(mBuffer) {
-        delete[] mBuffer;
-      }
-      mBuffer = new char[size]();
+      allocateBuffer(size);
     }
 
-    memcpy(mBuffer, buffer, size);
     mBufferWidth = width;
     mBufferHeight = height;
     mSize = size;
     mScalingPolicy->update(width, height);
+
+    size_t textureRowWidth = width * pixelSize;
+
+    size_t start = area.x * pixelSize + textureRowWidth * area.y;
+    size_t end = std::min(mSize, start + textureRowWidth * area.height);
+    size_t areaRowSize = area.width * pixelSize;
+
+    char* src = (char*)buffer;
+
+    if (start == 0 && end == mSize) {
+      memcpy(mBuffer, src, mSize);
+    } else {
+      while (start < end) {
+        memcpy(&mBuffer[start], &src[start], areaRowSize);
+        start += textureRowWidth;
+      }
+    }
+
     mDirty = true;
+    // no need to update dirty regions if the texture does not support partial write
+    if(mFlags & OgreTexture::BlitDirty) {
+      mDirtyRegions.push_back(area);
+    }
   }
 
   void OgreTexture::setSize(int width, int height)
@@ -268,11 +296,8 @@ namespace Gsage {
     }
   }
 
-  void OgreTexture::render()
+  bool OgreTexture::blitAll()
   {
-    std::lock_guard<std::mutex> lock(mLock);
-
-    bool wasCreated = mScalingPolicy->render();
     if(mValid && mSize > 0) {
       OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
       texBuf->lock(OgreV1::HardwareBuffer::HBL_DISCARD);
@@ -296,9 +321,70 @@ namespace Gsage {
       }
 
       texBuf->unlock();
-      mDirty = false;
-      mHasData = true;
+      mDirtyRegions.clear();
+
+      return true;
     }
+
+    return false;
+  }
+
+  bool OgreTexture::blitDirty()
+  {
+
+    size_t pixelSize = Ogre::PixelUtil::getNumElemBytes(mTexture->getFormat());
+    size_t textureSize = mTexture->getWidth() * mTexture->getHeight() * pixelSize;
+
+    if(mValid && mSize > 0 && textureSize >= mSize) {
+      OgreV1::HardwarePixelBufferSharedPtr texBuf = mTexture->getBuffer();
+
+      while(mDirtyRegions.size() > 0) {
+        Rect<int> area = *(mDirtyRegions.end() - 1);
+
+        const Ogre::PixelBox& pb = texBuf->lock(Ogre::Image::Box(area.x, area.y, area.x + area.width, area.y + area.height), OgreV1::HardwareBuffer::HBL_DISCARD);
+        char* dest = static_cast<char*>(pb.data);
+        size_t textureRowWidth = mBufferWidth * pixelSize;
+
+        size_t start = area.x * pixelSize + textureRowWidth * area.y;
+        size_t end = start + textureRowWidth * area.height;
+
+        size_t imageStart = 0;
+        size_t rowSize = pb.rowPitch * pixelSize;
+
+        while (start < end) {
+          memcpy(&dest[imageStart], &mBuffer[start], rowSize);
+          start += textureRowWidth;
+          imageStart += rowSize;
+        }
+
+        texBuf->unlock();
+
+        mDirtyRegions.pop_back();
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  void OgreTexture::render()
+  {
+    std::lock_guard<std::mutex> lock(mLock);
+    bool wasCreated = mScalingPolicy->render();
+
+    if(mTexture->getUsage() & Ogre::TU_RENDERTARGET) {
+      mHasData = true;
+    } else {
+      if(mFlags & OgreTexture::BlitDirty) {
+        mHasData = blitDirty();
+      } else {
+        mHasData = blitAll();
+      }
+    }
+
+    if(mHasData)
+      mDirty = false;
 
     if(wasCreated && mValid) {
       fireEvent(Event(Texture::RECREATE));
@@ -342,6 +428,8 @@ namespace Gsage {
     : mPixelFormat(Ogre::PF_R8G8B8A8)
     , mRenderSystem(renderSystem)
   {
+    mRenderSystemCapabilities["OpenGL 3+ Rendering Subsystem"] = OgreTexture::BlitDirty;
+    mRenderSystemCapabilities["OpenGL Rendering Subsystem"] = OgreTexture::BlitDirty;
   }
 
   ManualTextureManager::~ManualTextureManager()
@@ -368,7 +456,13 @@ namespace Gsage {
       return nullptr;
     }
 
-    OgreTexture* texture = new OgreTexture(handle, params, mPixelFormat);
+    int flags = 0;
+    Ogre::String rsName = mRenderSystem->getRenderSystem()->getName();
+    if(mRenderSystemCapabilities.find(rsName) != mRenderSystemCapabilities.end()) {
+      flags |= mRenderSystemCapabilities[rsName];
+    }
+
+    OgreTexture* texture = new OgreTexture(handle, params, mPixelFormat, flags);
     TexturePtr tex = TexturePtr(texture);
     std::string scalemode = params.get("scalemode", "keepAspect");
 

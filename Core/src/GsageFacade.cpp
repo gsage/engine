@@ -133,6 +133,12 @@ namespace Gsage {
       delete mLuaInterface;
   }
 
+  void GsageFacade::setEnvironment(const DataProxy& env)
+  {
+    mEnvironment = env;
+    FileLoader::init(mEnvironment);
+  }
+
   bool GsageFacade::initialize(const std::string& configFile,
       const std::string& resourcePath,
       FileLoader::Encoding configEncoding,
@@ -151,7 +157,8 @@ namespace Gsage {
     LOG(DEBUG) << "Using resource path " << rpath;
     DataProxy environment;
     environment.put("workdir", rpath);
-    FileLoader::init(configEncoding, environment);
+    environment.put<int>("configEncoding", configEncoding);
+    setEnvironment(environment);
     DataProxy config;
     if(!FileLoader::getSingletonPtr()->load(configFile, DataProxy(), config))
     {
@@ -184,11 +191,12 @@ namespace Gsage {
 
     addEventListener(&mEngine, EngineEvent::SHUTDOWN, &GsageFacade::onEngineShutdown);
     addEventListener(&mEngine, EngineEvent::LUA_STATE_CHANGE, &GsageFacade::onLuaStateChange);
-
+    
     DataProxy environment;
     environment.put("workdir", rpath);
+    setEnvironment(environment);
 
-    if(!mEngine.initialize(config, environment))
+    if(!mEngine.initialize(config, mEnvironment))
       return false;
 
     mGameDataManager = new GameDataManager(&mEngine);

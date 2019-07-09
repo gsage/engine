@@ -29,7 +29,7 @@ describe("test game data manager #ogre", function()
         }
       }
     })
-    local orbit = camera:create('orbit', 'camera', {target=ninja.id, cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=REUSE})
+    local orbit = camera:create('orbit', 'testgdmcamera', {target=ninja.id, cameraOffset=Vector3.new(0, 4, 0), distance=20, policy=REUSE})
     orbit:attach()
     game:dumpSave("savetest")
     game:reset()

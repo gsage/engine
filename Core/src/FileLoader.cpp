@@ -163,14 +163,16 @@ namespace Gsage {
     return mInstance;
   }
 
-  void FileLoader::init(FileLoader::Encoding format, const DataProxy& environment)
+  void FileLoader::init(const DataProxy& environment)
   {
-    FileLoader::mInstance = new FileLoader(format, environment);
+    if(FileLoader::mInstance) {
+      return;
+    }
+    FileLoader::mInstance = new FileLoader(environment);
   }
 
-  FileLoader::FileLoader(FileLoader::Encoding format, const DataProxy& environment)
-    : mFormat(format)
-    , mEnvironment(environment)
+  FileLoader::FileLoader(const DataProxy& environment)
+    : mEnvironment(environment)
     , mInjaEnv(new inja::Environment())
   {
     // add main workdir with low priority
@@ -178,6 +180,8 @@ namespace Gsage {
 
     // add current directory
     mResourceSearchFolders[99999] = Poco::Path::current();
+
+    mFormat = (FileLoader::Encoding) mEnvironment.get<int>("configEncoding", FileLoader::Encoding::Json);
   }
 
   FileLoader::~FileLoader()

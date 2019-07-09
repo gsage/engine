@@ -38,6 +38,11 @@ namespace Gsage {
   class OgreTexture : public Texture, public Ogre::Texture::Listener
   {
     public:
+      enum Flags {
+        // Enables partial texture update
+        BlitDirty = 1,
+      };
+
       class ScalingPolicy
       {
         public:
@@ -89,7 +94,7 @@ namespace Gsage {
           float mScalingFactor;
       };
 
-      OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat);
+      OgreTexture(const std::string& name, const DataProxy& params, Ogre::PixelFormat pixelFormat, int flags = 0);
       virtual ~OgreTexture();
 
       /**
@@ -101,6 +106,17 @@ namespace Gsage {
        * @param height buffer height
        */
       void update(const void* buffer, size_t size, int width, int height);
+
+      /**
+       * Update texture data using changed rectangle
+       *
+       * @param buffer buffer to use
+       * @param size provided buffer size
+       * @param width buffer width
+       * @param height buffer height
+       * @param area changed rect
+       */
+      virtual void update(const void* buffer, size_t size, int width, int height, const Rect<int>& area);
 
       /**
        * Check if the texture has actual data
@@ -152,6 +168,9 @@ namespace Gsage {
 
       std::unique_ptr<OgreTexture::ScalingPolicy> createScalingPolicy(const DataProxy& params);
 
+      bool blitDirty();
+      bool blitAll();
+
       Ogre::TexturePtr mTexture;
       std::string mName;
       std::unique_ptr<OgreTexture::ScalingPolicy> mScalingPolicy;
@@ -159,7 +178,11 @@ namespace Gsage {
       bool mHasData;
       bool mDirty;
       bool mCreate;
+      int mFlags;
+
+      std::vector<Rect<int>> mDirtyRegions;
   };
+
 
   /**
    * This class is used to handle manual texture management and update
@@ -235,6 +258,9 @@ namespace Gsage {
       std::map<RenderSystem::TextureHandle, TexturePtr> mTextures;
       Ogre::PixelFormat mPixelFormat;
       OgreRenderSystem* mRenderSystem;
+
+      typedef std::unordered_map<Ogre::String, int> RenderSystemCapabilities;
+      RenderSystemCapabilities mRenderSystemCapabilities;
   };
 }
 

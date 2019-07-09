@@ -99,7 +99,7 @@ namespace Gsage {
     : mValid(false)
     , mWidth(0)
     , mHeight(0)
-    , mBuffer(0)
+    , mBuffer(nullptr)
     , mSize(0)
     , mBufferWidth(0)
     , mBufferHeight(0)
@@ -121,6 +121,24 @@ namespace Gsage {
 
   Texture::~Texture()
   {
+    deleteBuffer();
+  }
+
+  void Texture::deleteBuffer()
+  {
+    if(mBuffer) {
+      delete[] mBuffer;
+      mBuffer = nullptr;
+      mSize = 0;
+    }
+  }
+
+  char* Texture::allocateBuffer(size_t size)
+  {
+    deleteBuffer();
+    mBuffer = new char[size]();
+    mSize = size;
+    return mBuffer;
   }
 
   Texture::UVs Texture::getUVs() const

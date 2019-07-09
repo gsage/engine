@@ -5,12 +5,12 @@ compositor_node default_node
     {
         pass clear
         {
-            colour_value 0 0 0 1
+            colour_value 0.2 0.4 0.6 1.0
         }
         pass render_scene
         {
             rq_first    0
-            rq_last     100
+            rq_last     255
         }
         pass custom overlay
         {

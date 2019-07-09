@@ -53,7 +53,8 @@ extern "C" {
       std::string coreConfig(argv[1]);
       Gsage::DataProxy env;
       env.put("workdir", RESOURCES_FOLDER);
-      Gsage::FileLoader::init(Gsage::FileLoader::Json, env);
+      env.put<int>("configEncoding", Gsage::FileLoader::Json);
+      Gsage::FileLoader::init(env);
       Gsage::DataProxy config;
       if(!Gsage::FileLoader::getSingletonPtr()->load(coreConfig, Gsage::DataProxy(), config))
       {

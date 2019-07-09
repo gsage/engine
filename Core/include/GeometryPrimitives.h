@@ -35,6 +35,19 @@ THE SOFTWARE.
 
 namespace Gsage {
 
+  template<class C>
+  struct Rect {
+    Rect(C px, C py, C pwidth, C pheight)
+     : x(px), y(py), width(pwidth), height(pheight)
+    {
+    }
+
+    C x;
+    C y;
+    C width;
+    C height;
+  };
+
   struct BoundingBox {
     enum Extent {
       EXTENT_NULL,

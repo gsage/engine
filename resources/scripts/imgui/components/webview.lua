@@ -179,8 +179,10 @@ function WebView:render(width, height)
       height = height,
       scalingPolicy = {
         type = "allocate",
-        scalingFactor = 1.5,
+        scalingFactor = 1.5
+
       },
+      usage = ogre.HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE
     })
 
     self.image:setTexture(self.textureID)

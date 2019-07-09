@@ -111,6 +111,13 @@ local views = {}
 local modalView = ModalView()
 local viewsMenu = {}
 
+-- set global editor views
+editorViews = views
+
+function testit(target)
+  views.sceneEditor:createCamera("orbit", "orbitlock", {utility = true, target='entity4', distance=20})
+end
+
 local function createViews()
   views.luaConsole = Console(256, true)
   views.sceneEditor = SceneEditor(modalView, "viewport", "viewport", true)
