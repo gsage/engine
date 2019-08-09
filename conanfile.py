@@ -49,6 +49,8 @@ class GsageConan(ConanFile):
         ("inja/2.0.1@gsage/master",),
         ("jsonformoderncpp/3.5.0@gsage/master",),
         ("Poco/1.9.0@pocoproject/stable",),
+        ("imgui/1.71@gsage/master",),
+        ("imgui-node-editor/1.0.0@gsage/master",),
     )
 
     def source(self):

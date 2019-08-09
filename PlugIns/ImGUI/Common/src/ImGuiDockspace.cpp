@@ -1148,7 +1148,7 @@ namespace Gsage {
         float leftCurveRadius = first ? mStyle.windowRounding : 0.0f;
         DockPtr next = dockTab->getNextTab();
         float rightCurveRadius = next && next->anyTabOpen() ? 0.0f : mStyle.windowRounding;
-        ImVec2 tabButtonSize = ImVec2(size.x - 30, size.y);
+        ImVec2 tabButtonSize = ImVec2(std::max(1.0f, size.x - 30), std::max(1.0f, size.y));
 
         if (ImGui::InvisibleButton(dockTab->getLabel(), tabButtonSize))
         {
@@ -1172,7 +1172,6 @@ namespace Gsage {
 
         bool hovered = ImGui::IsItemHovered();
 
-        drawList->PathClear();
         drawList->PathLineTo(pos + ImVec2(0, size.y));
         drawList->PathLineTo(pos + ImVec2(0, leftCurveRadius));
         if(leftCurveRadius > 0) {
@@ -1203,7 +1202,6 @@ namespace Gsage {
         }
 
         ImU32 black = ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 0.5f));
-        drawList->PathClear();
         drawList->PathLineTo(pos + ImVec2(0, size.y));
         drawList->PathLineTo(pos + size);
         drawList->PathStroke(black, false, 1.0f);
@@ -1217,7 +1215,8 @@ namespace Gsage {
         ImGui::SetCursorScreenPos(pos + ImVec2(tabButtonSize.x, 0));
         std::stringstream ss;
         ss << dockTab->getLabel() << ".close";
-        if(ImGui::InvisibleButton(ss.str().c_str(), ImVec2(size.x - tabButtonSize.x, size.y))) {
+
+        if(ImGui::InvisibleButton(ss.str().c_str(), ImVec2(std::max(1.0f, size.x - tabButtonSize.x), std::max(1.0f, size.y)))) {
           dockTab->setOpened(false);
           dockTab->mDirty = true;
         }
@@ -1230,7 +1229,6 @@ namespace Gsage {
         ImVec2 crossSize = ImVec2(5.0f * io.DisplayFramebufferScale.x, 5.0f * io.DisplayFramebufferScale.y);
 
         if (ImGui::IsItemHovered()) {
-          drawList->PathClear();
           drawList->AddLine(
               center + ImVec2(-crossSize.x, -crossSize.y), center + ImVec2(crossSize.x, crossSize.y), black, 5);
           drawList->AddLine(
@@ -1239,7 +1237,6 @@ namespace Gsage {
 
         crossSize = ImVec2(4.0f * io.DisplayFramebufferScale.x, 4.0f * io.DisplayFramebufferScale.y);
 
-        drawList->PathClear();
         drawList->AddLine(
             center + ImVec2(-crossSize.x, -crossSize.y), center + ImVec2(crossSize.x, crossSize.y), color, 2);
         drawList->AddLine(
@@ -1290,7 +1287,6 @@ namespace Gsage {
       ImVec2 size = dock->getSize() - margin;
       float curveRadius = mStyle.windowRounding;
 
-      drawList->PathClear();
       drawList->PathLineTo(pos + ImVec2(0, topCurveRadius));
       if(topCurveRadius > 0) {
         drawList->PathBezierCurveTo(pos + ImVec2(0, topCurveRadius),
@@ -1323,7 +1319,6 @@ namespace Gsage {
       }
       drawList->PathFillConvex(mStyle.windowBGColor);
       ImU32 col = ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 0.5f));
-      drawList->PathClear();
       drawList->PathLineTo(pos + ImVec2(topCurveRadius, 0.5f));
       drawList->PathLineTo(pos + ImVec2(size.x - topCurveRadius, 0.5f));
       drawList->PathStroke(mStyle.tabHoveredColor, false, 0.5f);
@@ -1399,7 +1394,9 @@ namespace Gsage {
 
       ImVec2 screenPos = ImGui::GetCursorScreenPos();
       ImGui::SetCursorScreenPos(pos);
-      ImGui::InvisibleButton("split", size);
+      if(size.x > 0 && size.y > 0) {
+        ImGui::InvisibleButton("split", size);
+      }
 
       if (ImGui::IsItemHovered() && !ImGui::IsMouseDragging()) {
         dock->mResized = ImGui::IsMouseDown(0);
@@ -1480,7 +1477,7 @@ namespace Gsage {
   bool ImGuiDockspaceRenderer::dockSlots(DockPtr destDock, const ImRect& rect, const std::vector<Dock::Location>& locations)
   {
     ImGuiContext* ctx = ImGui::GetCurrentContext();
-    ImDrawList* canvas = &ctx->OverlayDrawList;
+    ImDrawList* canvas = &ctx->ForegroundDrawList;
 
     ImVec2 mousePos = ImGui::GetIO().MousePos;
 
@@ -1518,7 +1515,6 @@ namespace Gsage {
           ImVec2 br = ImVec2(tr.x, dockedRect.Max.y - thickness / 2);
           ImVec2 bl = ImVec2(tl.x, br.y);
 
-          canvas->PathClear();
           canvas->PathLineTo(tl);
           canvas->PathLineTo(tr);
           canvas->PathLineTo(br);

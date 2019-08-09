@@ -60,16 +60,17 @@ function SettingsView:__call()
     local currentLocale = lm:getLocale()
     local w = imgui.GetContentRegionAvail()
     imgui.Text(lm("settings.lang"))
-    imgui.ListBoxHeader("language", w, 200)
-    for _, info in pairs(lm.availableLocales) do
-      if imgui.Selectable(info.name, info.id == currentLocale) then
-        lm:setLocale(info.id)
-        editor:putToGlobalState("settings", {
-          locale = info.id
-        })
+    if imgui.ListBoxHeader("language", w, 200) then
+      for _, info in pairs(lm.availableLocales) do
+        if imgui.Selectable(info.name, info.id == currentLocale) then
+          lm:setLocale(info.id)
+          editor:putToGlobalState("settings", {
+            locale = info.id
+          })
+        end
       end
+      imgui.ListBoxFooter()
     end
-    imgui.ListBoxFooter()
     imgui.Separator()
     imgui.Text(lm("settings.bindings"))
     local bcfg = bindings:getConfig()

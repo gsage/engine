@@ -26,7 +26,10 @@
       </style>
       <script>
       function updateProgress(percent, total, msg, color, fatalError) {
-        $("#logs").append("<div class=\"item\" style=\"color: " + color + " !important;\">" + msg + "</div>");
+        if(msg != "") {
+          $("#logs").append("<div class=\"item\" style=\"color: " + color + " !important;\">" + msg + "</div>");
+        }
+
         $("#progress").progress({
           percent : percent,
           text     : {
