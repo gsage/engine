@@ -1,5 +1,16 @@
 {
   "plugins": [],
   "systems": {},
-  "resources": []
+  "resources": [
+    {
+      "source": "folder",
+      "install": "models",
+      "type": "render"
+    },
+    {
+      "source": "folder",
+      "install": "materials",
+      "type": "render"
+    }
+  ]
 }

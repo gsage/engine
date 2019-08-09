@@ -266,6 +266,16 @@ function ProjectManager:create(settings, onProgress, onComplete)
     onComplete(success)
   end
 
+  local function addProgress(step)
+    percent = percent + step
+    onProgress({
+      percent = percent
+    })
+    if percent >= 99.9 then
+      finalize(true)
+    end
+  end
+
   local success, err = pcall(projectFile.read, projectFile)
   if success then
     percent = 100
@@ -295,7 +305,6 @@ function ProjectManager:create(settings, onProgress, onComplete)
     if filesCount[id] then
       p = step / filesCount[id]
     end
-    percent = percent + p
 
     local msg = ""
     local color = "#FFFFFF"
@@ -306,10 +315,7 @@ function ProjectManager:create(settings, onProgress, onComplete)
       color = "#FF0000"
     end
     message(msg, color)
-
-    if percent >= 99.9 then
-      finalize(true)
-    end
+    addProgress(p)
   end
 
   local workdir = core.settings.workdir
@@ -334,14 +340,20 @@ function ProjectManager:create(settings, onProgress, onComplete)
       color = "#FF0000"
     end
     message(msg, color)
-    percent = percent + step / filecount
-
-    if percent >= 99.9 then
-      finalize(true)
-    end
+    addProgress(step / filecount)
   end
 
   local function processFolder(resource)
+    if not resource.folder then
+      print("Creating folder " .. fs.path.join(sourcePath, resource.install) .. " " .. tostring(step))
+      addProgress(step)
+      if not createFolder(fs.path.join(sourcePath, resource.install)) then
+        message(lm("wizard.create.progress.failed_to_create_directory", {directory = destPath}), "#FF0000", true)
+        finalize(false)
+      end
+      return
+    end
+
     local folder = fs.path.join(workdir, resource.folder)
     local files = {}
     if not fs.path.isDirectory(folder) then
@@ -375,11 +387,11 @@ function ProjectManager:create(settings, onProgress, onComplete)
   for _, resource in ipairs(settings.resources) do
     if resource.source == "folder" then
       processFolder(resource)
-    elseif parts[1] == "http" then
-      percent = percent + step
+    elseif resource.source == "http" then
+      addProgress(step)
       log.error("HTTP hosted resources is not supported yet")
     else
-      percent = percent + step
+      addProgress(step)
       log.error("Unknown resource type")
     end
 

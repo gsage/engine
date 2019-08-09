@@ -51,7 +51,7 @@ ProjectWizard = class(ImguiWindow, function(self, textureID, title, open)
   cef:addMessageHandler("createProject", function(settings)
     self.webview:openPage("client:/projectWizard/create.progress.html.template", {settings=settings}, function()
       projectManager:create(settings, function(progress)
-        local jsCode = [[updateProgress(]] .. tostring(math.floor(progress.percent)) .. [[, 100,"]] .. progress.msg .. [[", "]] .. tostring(progress.color or "#FFFFFF") .. [[", ]] .. tostring(progress.fatalError or false) .. [[)]]
+        local jsCode = [[updateProgress(]] .. tostring(math.floor(progress.percent)) .. [[, 100,"]] .. (progress.msg or '') .. [[", "]] .. tostring(progress.color or "#FFFFFF") .. [[", ]] .. tostring(progress.fatalError or false) .. [[)]]
         self.webview:executeJavascript(jsCode)
       end,
       function(success)

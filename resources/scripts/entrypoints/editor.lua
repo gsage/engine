@@ -248,12 +248,13 @@ imgui.manager:addView("sidePanel", {
           mode = "world"
           dockspace:setState(dockstates[mode] or {})
         end
-        if imgui.Button("    " .. icons.directions_run .. "\n" .. lm("side_panel.models"), size, size) then
+        -- TODO: this functionality is still WIP, so disabled for now
+        --[[if imgui.Button("    " .. icons.directions_run .. "\n" .. lm("side_panel.models"), size, size) then
           hideWizard()
           dockstates[mode] = dockspace:getState()
           mode = "character"
           dockspace:setState(dockstates[mode] or {})
-        end
+        end]]--
       end
       imgui.PopStyleVar(2)
       imgui.End()

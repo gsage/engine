@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <imgui.h>
 #include <imgui_extensions.h>
+#include <imgui_node_editor.h>
 #include <deque>
 
 #include "systems/RenderSystem.h"
@@ -666,6 +667,45 @@ namespace Gsage {
     imgui["Scale"] = []() {
       ImGuiIO io = ImGui::GetIO();
       return std::make_tuple(io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    };
+
+    imgui["CreateEditor"] = [](const char* configFile) -> void* {
+      ax::NodeEditor::Config config;
+      config.SettingsFile = configFile;
+      return ax::NodeEditor::CreateEditor(&config);
+    };
+
+    imgui["DestroyEditor"] = [](void* ctx) {
+      ax::NodeEditor::DestroyEditor((ax::NodeEditor::EditorContext*)ctx);
+    };
+
+    imgui["NodeEditorBegin"] = [](void* ctx, const char* id, float x, float y) {
+      ax::NodeEditor::SetCurrentEditor((ax::NodeEditor::EditorContext*)ctx);
+      ax::NodeEditor::Begin(id, ImVec2(x, y));
+    };
+
+    imgui["BeginNode"] = [](int uniqueId) {
+      ax::NodeEditor::BeginNode(uniqueId);
+    };
+    imgui["EndNode"] = [](){
+      ax::NodeEditor::EndNode();
+    };
+
+    imgui["BeginPin"] = [](int uniqueId, ax::NodeEditor::PinKind kind){
+      ax::NodeEditor::BeginPin(uniqueId, kind);
+    };
+    imgui["EndPin"] = []() {
+      ax::NodeEditor::EndPin();
+    };
+
+    imgui["NodeEditorPinKind"] = lua.create_table_with(
+      "Input", ax::NodeEditor::PinKind::Input,
+      "Output", ax::NodeEditor::PinKind::Output
+    );
+
+    imgui["NodeEditorEnd"] = []() {
+      ax::NodeEditor::End();
+      ax::NodeEditor::SetCurrentEditor(nullptr);
     };
   }
 }
