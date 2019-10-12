@@ -102,7 +102,8 @@ namespace Gsage {
           mFontTexHeight,
           1,
           1,
-          Ogre::PF_R8G8B8A8
+          Ogre::PF_R8G8B8A8,
+          Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE
       );
 
       const Ogre::PixelBox& lockBox = mFontTex->getBuffer()->lock(Ogre::Image::Box(0, 0, mFontTexWidth, mFontTexHeight), OgreV1::HardwareBuffer::HBL_DISCARD);

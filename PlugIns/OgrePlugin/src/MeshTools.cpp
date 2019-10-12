@@ -148,10 +148,10 @@ namespace Ogre {
     MeshInformation::Flags flags
   )
   {
-    bool added_shared = false;
-    size_t current_offset = 0;
-    size_t shared_offset = 0;
-    size_t next_offset = 0;
+    bool addedShared = false;
+    size_t currentOffset = 0;
+    size_t sharedOffset = 0;
+    size_t nextOffset = 0;
     size_t index_offset = 0;
 
     size_t vertex_count = 0;
@@ -165,10 +165,10 @@ namespace Ogre {
       // We only need to add the shared vertices once
       if(submesh->useSharedVertices)
       {
-        if( !added_shared )
+        if( !addedShared )
         {
           vertex_count += GET_IV_DATA(mesh->sharedVertexData)->vertexCount;
-          added_shared = true;
+          addedShared = true;
         }
       }
       else
@@ -181,36 +181,36 @@ namespace Ogre {
     }
 
     dest.allocate(vertex_count, index_count, flags);
-    added_shared = false;
+    addedShared = false;
 
     // Run through the submeshes again, adding the data into the arrays
     for ( unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i)
     {
       OgreV1::SubMesh* submesh = mesh->getSubMesh(i);
-      OgreV1::VertexData* vertex_data = submesh->useSharedVertices ? GET_IV_DATA(mesh->sharedVertexData) : GET_IV_DATA(submesh->vertexData);
+      OgreV1::VertexData* vertexData = submesh->useSharedVertices ? GET_IV_DATA(mesh->sharedVertexData) : GET_IV_DATA(submesh->vertexData);
 
-      if((!submesh->useSharedVertices)||(submesh->useSharedVertices && !added_shared))
+      if((!submesh->useSharedVertices)||(submesh->useSharedVertices && !addedShared))
       {
         if(submesh->useSharedVertices)
         {
-          added_shared = true;
-          shared_offset = current_offset;
+          addedShared = true;
+          sharedOffset = currentOffset;
         }
 
         // read vertices
         if(dest.vertices || dest.normals) {
           const OgreV1::VertexElement* normElem = nullptr;
           const OgreV1::VertexElement* posElem =
-            vertex_data->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
+            vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
 
           OgreV1::HardwareVertexBufferSharedPtr vbuf =
-            vertex_data->vertexBufferBinding->getBuffer(posElem->getSource());
+            vertexData->vertexBufferBinding->getBuffer(posElem->getSource());
 
           unsigned char* vertex =
             static_cast<unsigned char*>(vbuf->lock(OgreV1::HardwareBuffer::HBL_READ_ONLY));
 
           if(dest.normals) {
-            normElem = vertex_data->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL);
+            normElem = vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL);
           }
 
           // There is _no_ baseVertexPointerToElement() which takes an Ogre::Ogre::Real or a double
@@ -222,7 +222,7 @@ namespace Ogre {
           // Read into short if using 16 bit floats for vertices
           unsigned short* pShort;
 
-          for( size_t j = 0; j < vertex_data->vertexCount; ++j, vertex += vbuf->getVertexSize())
+          for( size_t j = 0; j < vertexData->vertexCount; ++j, vertex += vbuf->getVertexSize())
           {
             Ogre::Vector3 pt;
 
@@ -237,26 +237,26 @@ namespace Ogre {
                 pt = Ogre::Vector3(pReal[0], pReal[1], pReal[2]);
               }
 
-              dest.vertices[current_offset + j] = transform * pt;
+              dest.vertices[currentOffset + j] = transform * pt;
             }
 
             if(dest.normals) {
               normElem->baseVertexPointerToElement(vertex, &pReal);
               pt = Ogre::Vector3(pReal[0], pReal[1], pReal[2]);
-              dest.normals[current_offset + j] = transform * pt;
+              dest.normals[currentOffset + j] = transform * pt;
             }
           }
 
           vbuf->unlock();
         }
-        next_offset += vertex_data->vertexCount;
+        nextOffset += vertexData->vertexCount;
       }
 
       // read indices
       if(dest.indices) {
 
         OgreV1::IndexData* index_data = GET_IV_DATA(submesh->indexData);
-        size_t numTris = index_data->indexCount / 3;
+        size_t numTris = index_data->indexCount;
         OgreV1::HardwareIndexBufferSharedPtr ibuf = index_data->indexBuffer;
 
         bool use32bitindexes = (ibuf->getType() == OgreV1::HardwareIndexBuffer::IT_32BIT);
@@ -265,18 +265,18 @@ namespace Ogre {
         unsigned short* pShort = reinterpret_cast<unsigned short*>(pLong);
 
 
-        size_t offset = (submesh->useSharedVertices)? shared_offset : current_offset;
+        size_t offset = (submesh->useSharedVertices)? sharedOffset : currentOffset;
 
         if ( use32bitindexes )
         {
-          for ( size_t k = 0; k < numTris*3; ++k)
+          for ( size_t k = 0; k < numTris; ++k)
           {
             dest.indices[index_offset++] = pLong[k] + static_cast<Ogre::uint32>(offset);
           }
         }
         else
         {
-          for ( size_t k = 0; k < numTris*3; ++k)
+          for ( size_t k = 0; k < numTris; ++k)
           {
             dest.indices[index_offset++] = static_cast<Ogre::uint32>(pShort[k]) +
               static_cast<Ogre::uint32>(offset);
@@ -286,7 +286,7 @@ namespace Ogre {
         ibuf->unlock();
       }
 
-      current_offset = next_offset;
+      currentOffset = nextOffset;
     }
   }
 

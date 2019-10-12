@@ -79,6 +79,7 @@ local function decorate(cls)
     local renderData = self.render.props
     renderData.root.children[1].children[1].children = {{
       type = "model",
+      query = "dynamic",
       mesh = meshName,
       name = meshID,
       renderQueue = RENDER_QUEUE_ASSET_VIEWER,

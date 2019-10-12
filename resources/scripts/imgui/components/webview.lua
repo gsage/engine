@@ -182,7 +182,7 @@ function WebView:render(width, height)
         scalingFactor = 1.5
 
       },
-      usage = ogre.HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE
+      usage = ogre.TU_DYNAMIC_WRITE_ONLY_DISCARDABLE
     })
 
     self.image:setTexture(self.textureID)

@@ -96,7 +96,7 @@ namespace Gsage {
     float lineHeight = ImGui::GetTextLineHeight();
     ImGuiDockspaceStyle style;
     style.tabbarHeight = lineHeight * 1.2f;
-    style.splitterThickness = lineHeight / 6.5f;
+    style.splitterThickness = lineHeight / 5.0f;
     style.tabbarTextMargin = lineHeight / 1.7f;
     style.tabbarPadding = lineHeight / 26.0f;
     style.windowRounding = ImGui::GetStyle().WindowRounding;
@@ -1361,6 +1361,7 @@ namespace Gsage {
       ImGuiIO& io = ImGui::GetIO();
       float rounding = ImGui::GetStyle().WindowRounding;
       ImVec2 margin(rounding, rounding);
+      ImVec2 overlapMultiplier = ImVec2(0, 0);
 
       switch(dock->getLayout()) {
         case Dock::Horizontal:
@@ -1372,6 +1373,7 @@ namespace Gsage {
           pos.x += child->getSize().x;
           size = ImVec2(mStyle.splitterThickness, dock->getSize().y);
           cursor = ImGuiMouseCursor_ResizeEW;
+          overlapMultiplier.x = 1;
           break;
         case Dock::Vertical:
           if(dock->mResized) {
@@ -1382,6 +1384,7 @@ namespace Gsage {
           pos.y += child->getSize().y;
           size = ImVec2(dock->getSize().x, mStyle.splitterThickness);
           cursor = ImGuiMouseCursor_ResizeNS;
+          overlapMultiplier.y = 1;
           break;
         default:
           LOG(INFO) << "Can't draw splitters for layout " << dock->getLayout();
@@ -1393,10 +1396,13 @@ namespace Gsage {
       }
 
       ImVec2 screenPos = ImGui::GetCursorScreenPos();
-      ImGui::SetCursorScreenPos(pos);
       if(size.x > 0 && size.y > 0) {
-        ImGui::InvisibleButton("split", size);
+        ImVec2 buttonPos = pos - overlapMultiplier * size;
+        ImVec2 buttonSize = size + size * overlapMultiplier * 2;
+        ImGui::SetCursorScreenPos(buttonPos);
+        ImGui::InvisibleButton("split", buttonSize);
       }
+      ImGui::SetCursorScreenPos(pos);
 
       if (ImGui::IsItemHovered() && !ImGui::IsMouseDragging()) {
         dock->mResized = ImGui::IsMouseDown(0);
@@ -1412,8 +1418,10 @@ namespace Gsage {
         ImGui::SetMouseCursor(cursor);
       }
 
+      ImVec2 min = pos;
+      ImVec2 max = pos + size;
       canvas->AddRectFilled(
-          ImGui::GetItemRectMin() + margin, ImGui::GetItemRectMax() - margin, over ? mStyle.splitterHoveredColor : mStyle.splitterNormalColor);
+          min + margin, max - margin, over ? mStyle.splitterHoveredColor : mStyle.splitterNormalColor);
       ImGui::PopID();
       ImGui::SetCursorScreenPos(screenPos);
     }

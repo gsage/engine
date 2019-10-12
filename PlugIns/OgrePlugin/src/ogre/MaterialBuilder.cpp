@@ -28,6 +28,14 @@ THE SOFTWARE.
 #include <OgreMaterialManager.h>
 #include <OgreTechnique.h>
 #include <OgrePass.h>
+#include "OgreConverters.h"
+#if OGRE_VERSION >= 0x020100
+#include <OgreRoot.h>
+#include <OgreHlmsDatablock.h>
+#include <OgreHlmsManager.h>
+#include <OgreHlmsPbs.h>
+#include <OgreHlmsPbsDatablock.h>
+#endif
 
 namespace Gsage {
 
@@ -112,5 +120,68 @@ namespace Gsage {
 
     return material;
   }
+
+#if OGRE_VERSION >= 0x020100
+
+  Ogre::Vector3 colToVector(const Ogre::ColourValue& cv)
+  {
+    return Ogre::Vector3(cv.r, cv.g, cv.b) * cv.a;
+  }
+
+
+  Ogre::HlmsDatablock* MaterialBuilder::parseHlms(const std::string& name, const DataProxy& data, bool rebuild)
+  {
+
+    Ogre::Root& root = Ogre::Root::getSingleton();
+
+    Ogre::HlmsPbs* pbs = static_cast<Ogre::HlmsPbs*>(root.getHlmsManager()->getHlms(Ogre::HLMS_PBS));
+
+    Ogre::HlmsMacroblock macroblock;
+    Ogre::HlmsBlendblock blendblock;
+    Ogre::HlmsParamVec params;
+    Ogre::HlmsDatablock* db = pbs->getDatablock(name);
+    if(!db) {
+      db = pbs->createDatablock(
+          name,
+          name,
+          macroblock,
+          blendblock,
+          params
+      );
+    } else if(!rebuild) {
+      return static_cast<Ogre::HlmsPbsDatablock*>(db);
+    }
+
+    int nPasses = 0;
+    int nTechs = 0;
+    Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(db);
+    datablock->setReceiveShadows(data.get("receiveShadows", false));
+    for(auto& t : data.get("techniques", DataProxy::create(DataWrapper::JSON_OBJECT))) {
+      if(nTechs++ == 1) {
+        LOG(WARNING) << "Only one technique is supported when converting old style material to Hlms";
+        break;
+      }
+      for(auto& p : t.second.get("passes", DataProxy::create(DataWrapper::JSON_OBJECT))) {
+        if(nPasses++ == 1) {
+          LOG(WARNING) << "Only one pass is supported when converting old style material to Hlms";
+          break;
+        }
+
+        auto diffuse = p.second.get<Ogre::ColourValue>("colors.diffuse");
+        auto selfIllumination = p.second.get<Ogre::ColourValue>("colors.illumination");
+
+        if(diffuse.second) {
+          datablock->setDiffuse(colToVector(diffuse.first));
+        }
+
+        if(selfIllumination.second) {
+          datablock->setEmissive(colToVector(selfIllumination.first));
+        }
+      }
+    }
+    return datablock;
+  }
+
+#endif
 
 }
