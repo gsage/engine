@@ -110,6 +110,9 @@ namespace Gsage {
     float cellSize;
     int tileSize, maxTiles, maxPolys;
 
+    tileSize = 300;
+    cellSize = 0.3;
+
     config.read("cellSize", cellSize);
     config.read("tileSize", tileSize);
 

@@ -522,7 +522,7 @@ namespace Gsage {
     WindowPtr window = mFacade->getWindowManager()->getWindow(name);
     float scale = 1.0f;
     if(window) {
-      scale = std::max(1.0f, window->getScaleFactor() * .75f);
+      scale = std::max(1.0f, window->getScaleFactor() * .9f);
     }
 
     LOG(INFO) << "Creating ImGui context " << name;

@@ -13,9 +13,9 @@ function recast.visualizePath(points, drawPoints, name)
           passes = {{
             depthCheckEnabled = false,
             colors = {
-              diffuse = "0xFFCC00",
-              ambient = "0xffcc00",
-              illumination = "0xFFCC00",
+              diffuse = "0xFFFFCC00",
+              ambient = "0xFFffcc00",
+              illumination = "0xFFFFCC00",
             },
             vertexProgram = "stdquad_vp",
             fragmentProgram = "stdquad_fp",
@@ -63,6 +63,67 @@ function recast.visualizePath(points, drawPoints, name)
   })
 end
 
+function recast.visualizeGeom()
+  local bounds = BoundingBox.new(BoundingBox.EXTENT_INFINITE)
+  local geom = core:render():getGeometry(bounds, RenderComponent.STATIC)
+
+  local verts = geom:verts()
+  local tris = geom:tris()
+  local norms = geom:normals()
+
+  local points = {}
+  for i = 1,#verts do
+    points[i] = verts[i]
+  end
+
+  local indices = {}
+  for i = 1,#tris do
+    indices[i] = tris[i]
+  end
+
+  local normals = {}
+  for i = 1,#norms do
+    normals[i] = norms[i]
+  end
+
+  return data:createEntity({
+    id = "geom",
+    render = {
+      root = {
+        position = Vector3.new(0, 0, 0),
+        rotation = Quaternion.new(1, 0, 0, 0),
+        children = {
+          {
+            type = "manualObject",
+            name = "rawgeom",
+            data = {
+              material = {
+                techniques = {{
+                  passes = {{
+                    colors = {
+                      diffuse = "0xFF335555",
+                      ambient = "0xFF335555",
+                      illumination = "0xFF114499",
+                    },
+                    vertexProgram = "stdquad_vp",
+                    fragmentProgram = "stdquad_fp",
+                  },}
+                },}
+              },
+              renderOperation = ogre.OT_TRIANGLE_LIST,
+              points = points,
+              indices = indices,
+              normals = normals,
+            }
+          }
+        }
+      },
+      vertexProgram = "stdquad_vp",
+      fragmentProgram = "stdquad_fp",
+    }
+  })
+end
+
 function recast.visualizeNavmesh()
   if core.navigation then
     local points = core:navigation():getNavMeshRawPoints()
@@ -75,9 +136,9 @@ function recast.visualizeNavmesh()
           techniques = {{
             passes = {{
               colors = {
-                diffuse = "0x335555",
-                ambient = "0x335555",
-                illumination = "0x114499",
+                diffuse = "0xFF335555",
+                ambient = "0xFF335555",
+                illumination = "0xFF114499",
               },
               vertexProgram = "stdquad_vp",
               fragmentProgram = "stdquad_fp",
@@ -95,9 +156,9 @@ function recast.visualizeNavmesh()
           techniques = {{
             passes = {{
               colors = {
-                diffuse = "0x335555",
-                ambient = "0x335555",
-                illumination = "0x1199FF",
+                diffuse = "0xFF335555",
+                ambient = "0xFF335555",
+                illumination = "0xFF1199FF",
               },
               vertexProgram = "stdquad_vp",
               fragmentProgram = "stdquad_fp",
@@ -129,9 +190,9 @@ function recast.visualizeNavmesh()
             techniques = {{
               passes = {{
                 colors = {
-                  diffuse = "0x114444",
-                  ambient = "0x114444",
-                  illumination = "0x113355",
+                  diffuse = "0xFF114444",
+                  ambient = "0xFF114444",
+                  illumination = "0xFF113355",
                 },
                 vertexProgram = "stdquad_vp",
                 fragmentProgram = "stdquad_fp",

@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "ogre/MovableObjectWrapper.h"
 
 namespace Gsage {
+
   class ManualObjectWrapper : public MovableObjectWrapper<Ogre::ManualObject>
   {
     public:
@@ -38,6 +39,23 @@ namespace Gsage {
 
       ManualObjectWrapper();
       virtual ~ManualObjectWrapper();
+
+      /**
+       * Set manual object data
+       *
+       * @param data to create manual object from
+       */
+      void setData(const DataProxy& data);
+
+      /**
+       * Get manual object data
+       *
+       * @return data
+       */
+      const DataProxy& getData() const;
+
+    private:
+      DataProxy mData;
   };
 }
 

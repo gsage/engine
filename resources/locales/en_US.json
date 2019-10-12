@@ -361,6 +361,7 @@
       "merge": "Merge Into Existing Mavmesh"
     },
     "visualize": {
+      "show_rawgeom": "Show Raw Geometry (source)",
       "show_navmesh": "Show Navigation Mesh",
       "show_path": "Show Navigation Path"
     }

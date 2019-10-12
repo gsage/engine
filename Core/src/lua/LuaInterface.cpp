@@ -425,6 +425,17 @@ namespace Gsage {
           }
           return res;
         },
+        "normals", [](Geom* geom){
+          float* normals;
+          int count;
+          std::tie(normals, count) = geom->getNormals();
+          std::vector<Gsage::Vector3> res;
+          res.reserve(count / 3);
+          for(int i = 0; i < count; i += 3) {
+            res.emplace_back(normals[i], normals[i + 1], normals[i + 2]);
+          }
+          return res;
+        },
         "tris", [](Geom* geom){
           int* tris;
           int count;

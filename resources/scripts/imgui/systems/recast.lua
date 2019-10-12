@@ -67,6 +67,14 @@ local RecastEditorView = class(ImguiWindow, function(self, open, dockable)
           self.navmeshDraw = nil
         end
       end},
+      showRawGeom = {"recast.visualize.show_rawgeom", function(enabled)
+        if enabled then
+          self.geomDraw = recast.visualizeGeom()
+        elseif self.geomDraw then
+          core:removeEntity(self.geomDraw.id)
+          self.geomDraw = nil
+        end
+      end},
       showPath = {"recast.visualize.show_path", function(enabled)
         self:setShowNavPathEnabled(enabled)
       end},
@@ -160,6 +168,13 @@ function RecastEditorView:__call()
           self.navmeshDraw = nil
         end
         self.navmeshDraw = recast.visualizeNavmesh()
+      end
+      if self.buildOptions.showRawGeom then
+        if self.geomDraw then
+          core:removeEntity(self.geomDraw.id)
+          self.geomDraw = nil
+        end
+        self.geomDraw = recast.visualizeGeom()
       end
     end
     self:imguiEnd()

@@ -45,6 +45,13 @@ namespace Gsage {
        * @return true if succeed
        */
       static Ogre::MaterialPtr parse(const std::string& name, const DataProxy& data);
+
+#if OGRE_VERSION >= 0x020100
+      /**
+       * Create hlms material from json data
+       */
+      static Ogre::HlmsDatablock* parseHlms(const std::string& name, const DataProxy& data, bool rebuild = false);
+#endif
   };
 }
 
